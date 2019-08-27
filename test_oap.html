@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: #1d1d1d;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        svg {
+            border: 1px solid #222;
+            margin: .5em;
+            background-color: #202020;
+        }
+
+        text {
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+
+        .axis path, .axis line{
+            stroke: #444; 
+        }
+
+        .axis text {
+            fill: #444;
+        }
+    </style>
+</head>
+<body>
+    <script src="dist/druid.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+<script>
+
+
+    const DEBUG = false;
+    let run = true;
+    const _SPOTIFY = true;
+    const _IRIS = true && !DEBUG;
+    const _WAVES = true && !DEBUG;
+    const _SWISSROLL = true && !DEBUG;
+    const _MNIST = true && !DEBUG;
+    const _RANDOM = true && !DEBUG;
+
+    const width = 370;
+    const pph = 200;
+    const lh = 50;
+    const height = width + pph + lh;
+    const margin = 20;
+    const max_iter = 100;
+    let testdr = null;
+
+    var labels
+    var data
+
+    let depth_field_lag = 5;
+    let step_size = .2;
+    let depth_weight = 1;
+    let type = `l = ${depth_field_lag} | τ = ${step_size} | w = ${depth_weight} | OAP: `;
+    DR = (X, K) => new druid.OAP(X, depth_field_lag, step_size, depth_weight, 2, druid.euclidean);
+
+
+
+    if (_SPOTIFY) d3.csv("data/spotify.csv").then( content => {
+        let name = "SPOTIFY"
+        let values = content.map(d => [+d.acousticness, +d.danceability, +d.energy, +d.instrumentalness, +d.liveness, +d.popularity, +d.valence])
+        data = druid.Matrix.from(values)
+        labels = content.map(d => {
+            return {
+                "name": d.songname,
+                "class": d.subgenre
+            }
+        })
+        let svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g");
+        let p = d3.select(svg.node().parentElement)
+            .append("g")
+            .attr("transform", `translate(0, ${width})`);
+
+        try {    
+            draw(DR(data, labels.map(l => l.class)), labels, svg, type + name, p)
+        } catch (err) {
+            console.log(err)
+        }
+    })
+        if (_IRIS) d3.csv("data/iris.csv").then( content => {
+            let name = "IRIS"
+            let values = content.map(d => [+d.sepallength,+d.sepalwidth,+d.petallength,+d.petalwidth])
+            data = druid.Matrix.from(values)
+            labels = content.map(d => {
+                return {
+                    "name": d.name,
+                    "class": d.class
+                }
+            })
+            let svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g");
+            let p = d3.select(svg.node().parentElement)
+                .append("g")
+                .attr("transform", `translate(0, ${width})`);
+            
+            draw(DR(data, labels.map(l => l.class)), labels, svg, type + name, p)
+        })
+
+        
+        if (_SWISSROLL) d3.csv("data/swissroll.csv").then( content => {
+            let name = "SWISSROLL"
+            let values = content.map(d => [+d.X,+d.Y,+d.Z * 4.5])
+            data = druid.Matrix.from(values)
+            labels = content.map(d => {
+                return {
+                    "name": d.name,
+                    "class": d.class
+                }
+            })
+            let svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g");
+            let p = d3.select(svg.node().parentElement)
+                .append("g")
+                .attr("transform", `translate(0, ${width})`);
+            
+                draw(DR(data, labels.map(l => l.class)), labels, svg, type + name, p)
+        })
+        
+        if (_WAVES) d3.csv("data/waves.csv").then( content => {
+            let name = "WAVES"
+            let values = content.map(d => [+d.x,+d.y,+d.z])
+            data = druid.Matrix.from(values)
+            labels = content.map(d => {
+                return {
+                    "name": d.name,
+                    "class": d.class
+                }
+            })
+            let svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g");
+            let p = d3.select(svg.node().parentElement)
+                .append("g")
+                .attr("transform", `translate(0, ${width})`);
+
+                let new_dr = DR(data, labels.map(l => l.class));
+                testdr = new_dr
+                if (DEBUG) console.log(new_dr)
+                draw(new_dr, labels, svg, type + name, p)
+        })
+        
+        if (_MNIST) d3.csv("data/mnist.csv").then( content => {
+            let name = "MNIST"
+            let values = content.map(d => Array.from(Object.keys(d).map(key => +d[key] / 255)))
+            const XXX = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
+            //console.log(values)
+            data = druid.Matrix.from(values)
+            labels = content.map(d => {
+                return {
+                    "name": d.name,
+                    "class": XXX[+d.class]
+                }
+            })
+            //console.log("mnist", labels.map(l => l.class))
+            let svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+            let p = d3.select(svg.node().parentElement)
+                .append("g")
+                .attr("transform", `translate(0, ${width})`);
+            
+                let new_dr = DR(data, labels.map(l => l.class));
+                if (DEBUG) console.log(new_dr)
+                draw(new_dr, labels, svg, type + name, p)
+        })
+
+        if (_RANDOM) {
+            let r = new druid.Randomizer(19870307);            
+            let svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g");
+            let p = d3.select(svg.node().parentElement)
+                .append("g")
+                .attr("transform", `translate(0, ${width})`);
+
+            let N = 500;
+            let D = 10;
+            let clusters = 8;
+            let offset = new druid.Matrix(clusters, D, () => (r.random -.5) * 1.5)
+            offset = offset.to2dArray
+            let X = new druid.Matrix(N, D, (row, i) => (r.random - .5) + offset[row % clusters][i]);
+            
+            let name = `RANDOM ${N} x ${D} | CLUSTERS = ${clusters}`;
+            let labels = d3.range(N).map((d, i) => {
+                return {"name": d, "class": i % clusters}
+            })
+
+            draw(DR(X, labels.map(l => l.class)), labels, svg, type + name, p)
+        }
+     
+
+    function draw(dr, labels, svg, label, p) {
+        dr.init();
+        // draw parallel plot
+        let X = dr._X.to2dArray;
+        let [N, D] = dr._X.shape;
+        
+        if ( D < width - 2*margin) {
+            let c = d3.scaleOrdinal(d3.schemeDark2)
+            let h = d3.scaleSqrt()
+                .domain(d3.extent(dr._h))
+                .range([0.05, .2]);
+            let h2 = d3.scaleSqrt()
+                .domain(d3.extent(dr._h))
+                .range([0, 1]);
+
+            let x = d3.scaleLinear()
+                .domain([0, D-1])
+                .range([margin, width - margin]);
+
+            let y = new Array(D);
+            for (let d = 0; d < D; ++d) {
+                y[d] = d3.scaleLinear()
+                    .domain(d3.extent(X, x => x[d])).nice()
+                    .range([margin, 200 - margin]);
+            }
+
+            if (D <= 7) {
+                let axises = p.append("g")
+                    .attr("class", "axis")
+                    .selectAll("g")
+                    .data(y)
+                    .enter()
+                    .append("g")
+                        .attr("transform", (d,i) => `translate(${x(i)}, 0)`)
+
+                axises.each( function(_, i) {
+                    d3.select(this).call(d3.axisLeft(y[i]))
+                })
+            }
+            
+            p.append("g").selectAll("path")
+                .data(X)
+                .enter()
+                .append("path")
+                    .attr("d", (d,i) => {
+                        let vals = d.map((d_i, i) => x(i) + "," + y[i](d_i));
+                        return "M" + vals.join(",") 
+                    })
+                    .attr("fill", "transparent")
+                    .attr("stroke", (d,i) => c(labels[i].class))
+                    .attr("stroke-width", (d,i) => 1 + h2(dr._h[i]))
+                    .attr("opacity", (d,i) => h(dr._h[i]))
+
+            // draw legend
+            let labelset = new Set(labels.map(l => l.class));
+            labelset = Array.from(labelset)
+            let legend = p.append("g")
+                    .attr("transform", `translate(0, ${pph})`)
+
+            let xl = d3.scaleLinear()
+                .domain([0, labelset.length])
+                .range([margin, width - margin]);
+
+            legend.selectAll("rect")
+                .data(labelset)
+                .enter()
+                .append("rect")
+                    .attr("x", (d,i) => xl(i))
+                    .attr("width", (width - 2 * margin) / labelset.length)
+                    .attr("height", 20)
+                    .attr("fill", d => c(d))
+
+            legend.selectAll("text")
+                .data(labelset)
+                .enter()
+                .append("text")
+                    .style("font-size", "6px")
+                    .attr("x", (d,i) => xl(i) + ((width - 2 * margin) / labelset.length) / 2) // + (xl(1) / 2)
+                    .attr("y", 10)
+                    .attr("dominant-baseline", "center")
+                    .attr("text-anchor", "middle")
+                    .text(d => d)
+        }
+        // do the dimensionality reduction
+
+        let result = dr.transform_iter();
+        //if (DEBUG) console.log(label, labels, result)
+        let iter = 0
+        let r = result.next()
+        let f = () => {
+            //console.log(r)
+            _draw(r.value.to2dArray, labels, svg, label + " | " + iter++, dr, p)
+            
+            if (!r.done && run && iter <= max_iter) {//iter < 1000) {
+                r = result.next();
+                window.requestAnimationFrame(f);
+            }
+        }
+
+        window.requestAnimationFrame(f)
+        
+    }
+
+    function _draw(result, labels, svg, label, dr) {
+        let x_extent = d3.extent(result, d => d[0]);
+        let y_extent = d3.extent(result, d => d[1]);
+
+        let x_span = x_extent[1] - x_extent[0];
+        let y_span = y_extent[1] - y_extent[0];
+
+        if (x_span > y_span) {
+            let diff = (x_span - y_span) / 2;
+            y_extent[0] -= diff;
+            y_extent[1] += diff;
+        } else {
+            let diff = (y_span - x_span) / 2;
+            x_extent[0] -= diff;
+            x_extent[1] += diff;
+        }
+        let x = d3.scaleLinear()
+            .domain(x_extent)
+            .range([margin, width - margin])
+
+        let y = d3.scaleLinear()
+            .domain(y_extent)
+            .range([margin, width - margin])
+
+        let h = d3.scaleLinear()
+            .domain(d3.extent(dr._h))
+            .range([2, 5]);
+
+
+        let c = d3.scaleOrdinal(d3.schemeDark2)
+
+        if (svg.select("path").nodes().length === 0)
+        svg.append("path")
+
+        const hull = d3.polygonHull(result)
+        svg.select("path")
+            .datum(hull)
+            .attr("d", d => "M" + d.map(v => [x(v[0]), y(v[1])]).join(",") + "Z")
+            .attr("stroke", "#222")
+            .attr("stroke-width", 30)
+            .attr("stroke-linejoin", "round")
+            .attr("fill", "#222")
+  /*      const a = 20;
+        const values = new Array(a * a)
+        const M = dr._M;
+        for (let i = 0, k = 0; i < a; ++i) {
+            for (let j = 0; j < a; ++j, ++k) {
+                values[k] = M([(i-a/2)/a,(j-a/2)/a])
+            }
+        }
+
+       
+        const contours = d3.contours()
+            .size([width, width])
+            .thresholds(d3.range(0,10).map(d => d/10))
+            (values)
+        console.log(values)
+
+        svg.selectAll("path")
+        .remove()
+        svg.selectAll("path")
+            .data(contours)
+                .enter().append("path").attr("d", d3.geoPath())
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-linejoin", "round")
+*/
+        svg.selectAll("circle")
+            .data(result)
+            .enter()
+            .append("circle")
+
+        svg.selectAll("circle")
+            .data(result)
+                .attr("cx", d => x(d[0]))
+                .attr("cy", d => y(d[1]))
+                .attr("r", (d, i) => h(dr._h[i]))
+                .attr("stroke-width", 1)
+                .attr("stroke", (d,i) => c(labels[i].class))
+                .attr("fill", (d,i) => i === dr._deepest_point ? c(labels[i].class) : "transparent")
+
+        if (svg.select("text").nodes().length === 0)
+            svg.append("text")
+                .attr("x", 15)
+                .attr("y", 15)
+                .attr("fill", "#ddd")
+                
+        //console.log(label)
+        svg.select("text")
+                .text(label)
+
+    }
+
+
+</script>
+</body>
+</html>

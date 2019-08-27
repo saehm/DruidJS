@@ -1,0 +1,151 @@
+import * as metric from '../metrics/index';
+import { Heap } from '../datastructure/Heap';
+
+const euclidean = metric.euclidean;
+
+export class HNSW {
+    /**
+     * 
+     * @param {*} metric 
+     * @param {*} heuristic use heuristics or naive selection
+     * @param {*} m 
+     * @param {*} ef 
+     * @param {*} m0 
+     */
+    constructor(metric = euclidean, heuristic = true, m = 5, ef = 200, m0 = null) {
+        this._metric = metric;
+        this._select = heuristic ? this._select_heuristic : this._select_naive;
+        this._m = m;
+        this._ef = ef;
+        this._m0 = m0 || 2 * m;
+        this._level_mult = 1 / Math.log2(m);
+        this._data = [];        
+        this._graphs = new Map();
+        this._enter_point = null;
+    }
+
+    add(elem, ef = null) {
+        ef = ef || this._ef;
+        let metric = this._metric;
+        let data = this._data;
+        let graphs = this._graphs;
+        let point = this._enter_point;
+        let level = Math.floor(-Math.log2(Math.random()) * this._level_mult) + 1;
+        let idx = data.length;
+        data.push(elem)
+
+        if (point) {
+            let distance = metric(elem, data[point])
+            for (let l = level; l > graphs.size; --l) {
+                let layer = graphs.get(l);
+                [point, distance] = this._search_graph_ef1(elem, point, distance, layer);
+            }
+            let ep = [[point]]
+            let layer0 = graphs.get(0);
+            for (let l = level; l < graphs.size; ++l) {
+                let layer = graphs.get(l);
+                let level_m = l !== 0 ? this.m : this.m0;
+                ep = this._search_graph(elem, ep, layer, ef);
+                layer.set(idx, new Map())
+                let layer_idx = layer.get(idx);
+                this._select(layer_idx, ep, level_m, layer)
+                for (let e = 0, n = layer.size; e < n; ++e) {
+                    this._select(layer.get(e), [[idx, distance]], level_m, layer)
+                }
+            }
+        }
+
+        for (let i = graphs.size; i < level; ++i) {
+            graphs.set(idx, new Map());
+            this._enter_point = idx;
+        }
+        return this;
+    }
+
+    _search_graph_ef1(q, entry, dist, layer) {
+        const metric = this._metric
+        let data = this._data;
+        let best = entry;
+        let best_dist = dist;
+        let candidates = new Heap([entry], d => metric(data[d], q));
+        let visited = new Set([entry])
+
+        while (!candidates.empty) {
+            let { element: c, value: dist } = candidates.pop()
+            if (dist < best_dist) {
+                break;
+            }
+            let edges = []
+            for (let e of layer.get(c)) {
+                if (!visited.has(e)) {
+                    edges.push(e)
+                    visited.add(e)
+                }
+            }
+            let dists = edges.map(e => metric(data[e], q));
+            for (let i = 0, n = dists.length; i < n; ++i) {
+                let dist = dists[i];
+                if (dist < best_dist) {
+                    best = e;
+                    best_dist = dist;
+                    candidates.push(e)
+                }
+            }
+        }
+        return [best, best_dist]
+    }
+
+    _search_graph(q, ep, layer, ef) {
+        const metric = this._metric
+        let data = this._data;
+        /*let best = entry;
+        let best_dist = dist;*/
+        let candidates = new Heap(ep, e => {
+            console.log(e, data, q)
+            return -metric(data[e], q)
+        });
+        let visited = new Set([...ep])
+
+        while (!candidates.empty) {
+            let { element: c, value: dist } = candidates.pop()
+            let mref = -metric(data[ep[0]], q);
+            if (dist > -mref) {
+                break;
+            }
+            let edges = []
+            for (let e of layer.get(c)) {
+                if (!visited.has(e)) {
+                    edges.push(e)
+                    visited.add(e)
+                }
+            }
+            let dists = edges.map(e => metric(data[e], q));
+            for (let i = 0, n = dists.length; i < n; ++i) {
+                let dist = dists[i];
+                let e = edge[i];
+                let mdist = -dist;
+                if (ep.length < ef) {
+                    candidates.push(e)
+                    ep.push(e);
+                    mref = ep[0][0];
+                } else if (mdist > mref) {
+                    candidates.push(e);
+                    //heapreplace(ep, (mdist, e))
+                    ep[0] = e
+                    mref = ep[0][0];
+                }
+            }
+        }
+        return ep
+    }
+
+    _select_heuristic() {
+
+    }
+
+    _select_naive() {
+
+    }
+
+
+}

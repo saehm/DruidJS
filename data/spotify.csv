@@ -1,0 +1,309 @@
+genre,subgenre,songname,danceability,popularity,energy,acousticness,instrumentalness,liveness,valence
+metal,black metal,Key to the Gate,0.0966,0.19,0.88,0.0000388,0.662,0.105,0.256
+metal,black metal,Trumpets Of Doom,0.24,0.14,0.996,0.0000134,0.00266,0.179,0.147
+metal,black metal,Tunnel of Set XIII,0.285,0.04,0.0945,0.835,0.927,0.0898,0.0432
+metal,black metal,Hail Murder - Live In South America 2003,0.152,0.13,0.983,0.0000206,0.00531,0.953,0.0482
+metal,black metal,Moti Ragnarokum,0.481,0.18,0.281,0.937,0.91,0.226,0.259
+metal,black metal,Hail Murder,0.208,0.26,0.934,0.00000124,0.00174,0.928,0.0347
+metal,black metal,Key To The Gate,0.153,0.27,0.778,0.00893,0.903,0.403,0.112
+metal,black metal,Tunnel of Set XIII,0.327,0.06,0.102,0.863,0.863,0.456,0.0397
+metal,black metal,Krigaren si gravferd,0.351,0.11,0.839,0.000625,0.0813,0.203,0.0372
+metal,black metal,PERVERTOR OF THE 7 GATES,0.277,0.03,0.993,0.00304,0.428,0.179,0.141
+metal,black metal,Love In A Void,0.103,0.03,0.997,0.00728,0.0185,0.385,0.0487
+metal,black metal,Osiris,0.46,0.19,0.975,0.00000343,0.639,0.309,0.242
+metal,black metal,A World Of Bones,0.242,0.04,0.718,0.0000136,0.923,0.134,0.416
+metal,black metal,Pervertor Of The 7 Gates,0.276,0.04,0.994,0.00334,0.417,0.406,0.149
+metal,black metal,Tunnel of Set XIII,0.303,0,0.116,0.815,0.955,0.377,0.0601
+metal,black metal,Bellum Omnium Contra Omnes,0.284,0.05,0.633,0.00000109,0.0195,0.0949,0.0349
+metal,black metal,Ghastly Indoctrination,0.332,0.12,0.813,0.000022,0.812,0.203,0.04
+metal,death metal,Fear of Napalm,0.224,0.17,0.946,0.0000077,0.861,0.216,0.374
+metal,death metal,Go To Hell,0.22,0.23,0.971,0.00000732,0.198,0.0852,0.346
+metal,death metal,Pull the Plug - Live in L.A. Death & Raw – 1998,0.175,0.16,0.957,0.000149,0.0234,0.722,0.285
+metal,death metal,Tomorrow's Victim,0.377,0.18,0.717,0.000219,0.831,0.121,0.302
+metal,death metal,Stillborn Saviour,0.187,0.23,0.912,0.00000442,0.0000345,0.558,0.176
+metal,death metal,Divine in fire,0.322,0.04,0.995,0.000164,0.00188,0.323,0.104
+metal,death metal,Lunatic Of God's Creation - Reissue,0.298,0.29,0.996,0.0000218,0.218,0.0947,0.0649
+metal,death metal,Thrasher's Abbatoir,0.148,0.26,0.998,0.0000031,0.184,0.184,0.0602
+metal,death metal,Silent Violence,0.378,0.06,0.92,0.0000261,0.845,0.0849,0.495
+metal,death metal,Sacred Serenity,0.444,0.03,0.99,0.0000148,0.374,0.0392,0.326
+metal,death metal,Evidence In The Furnace,0.521,0.24,0.991,0.000207,0.597,0.0707,0.17
+metal,death metal,Misanthrope,0.397,0.29,0.987,0.000232,0.00282,0.145,0.213
+metal,death metal,Oxidised Razor Masticator,0.21,0.05,0.87,0.00162,0.667,0.342,0.0396
+metal,death metal,Misanthrope,0.397,0.28,0.987,0.000232,0.00282,0.145,0.213
+metal,death metal,Pull the Plug - Live at Backstreets,0.164,0.14,0.957,0.609,0.212,0.855,0.0442
+metal,death metal,Go to Hell,0.319,0.18,0.969,0.0000519,0.506,0.0874,0.0379
+metal,death metal,No Sympathy For Fools,0.431,0.18,0.903,0.0000261,0.0362,0.273,0.389
+metal,death metal,Year One Now,0.13,0.16,0.943,0.0000017,0.000174,0.299,0.18
+metal,death metal,Misanthrope - Demo,0.286,0.18,0.824,0.00109,0.572,0.16,0.544
+metal,death metal,Together as One,0.311,0.21,0.945,0.0000123,0.286,0.0915,0.386
+metal,death metal,Silent Violence,0.429,0.23,0.941,0.00032,0.728,0.0882,0.342
+metal,death metal,Shreds Of Flesh,0.173,0.12,0.98,0.00000668,0.404,0.175,0.104
+metal,death metal,Pull the Plug,0.226,0.41,0.978,0.0000036,0.533,0.0436,0.252
+metal,death metal,Nothing Is Everything,0.379,0.25,0.974,0.00000651,0.233,0.0203,0.225
+metal,death metal,The Ancient Ones,0.303,0.21,0.882,0.000327,0.00378,0.134,0.535
+metal,death metal,Addicted to Vaginal Skin,0.244,0.34,0.987,0.0000566,0.779,0.0664,0.256
+metal,death metal,Deathrow (no regrets),0.167,0.07,0.454,0.00531,0.0347,0.108,0.215
+metal,death metal,Livestock Marketplace,0.447,0.09,0.941,0.0000616,0.155,0.0935,0.577
+metal,death metal,Amok,0.437,0.1,0.886,0.0000399,0.0248,0.122,0.268
+metal,death metal,Bible Basher,0.335,0.22,0.944,0.00243,0.419,0.103,0.436
+metal,death metal,Pull the Plug - 12/05/87 Rehearsals,0.154,0.16,0.938,0.0994,0.52,0.355,0.167
+metal,death metal,Shreds Of Flesh,0.181,0.04,0.974,0.00000634,0.308,0.255,0.128
+metal,death metal,So You Die,0.318,0.33,0.947,0.00000135,0.909,0.0694,0.311
+metal,death metal,Let the Stillborn Come to Me,0.224,0.21,0.963,0.0000019,0.164,0.368,0.201
+metal,death metal,Silent Violence,0.321,0.15,0.955,0.0000416,0.898,0.973,0.196
+metal,death metal,Deathrow (no Regrets),0.27,0.07,0.485,0.00319,0.0574,0.199,0.261
+metal,death metal,Thrasher's Abbatoir,0.148,0.19,0.998,0.0000031,0.184,0.184,0.0602
+metal,death metal,Painkiller,0.428,0.38,0.995,0.0000206,0.429,0.305,0.135
+metal,death metal,Nothing Is Everything,0.412,0.22,0.943,0.0000923,0.0956,0.166,0.159
+metal,death metal,Out Of Touch,0.261,0.23,0.961,0.0000322,0.0543,0.155,0.364
+metal,death metal,By The Light,0.256,0.19,0.709,0.000136,0.2,0.183,0.476
+metal,death metal,Crucified For The Innocence,0.258,0.19,0.993,0.000224,0.631,0.125,0.122
+metal,death metal,Together As One,0.268,0.28,0.962,0.000169,0.325,0.0599,0.193
+metal,death metal,War is Coming,0.34,0.23,0.936,0.003,0.0455,0.445,0.381
+metal,death metal,Silent Violence,0.368,0.14,0.883,0.000453,0.87,0.351,0.107
+metal,death metal,Shreds Of Flesh,0.179,0.02,0.972,0.00000715,0.38,0.2,0.144
+metal,death metal,Room 101,0.338,0.24,0.855,0.00000716,0.184,0.118,0.386
+metal,death metal,Together as One,0.311,0.24,0.945,0.0000123,0.286,0.0915,0.386
+metal,death metal,Deathrow (no regrets),0.239,0.09,0.508,0.00375,0.0334,0.258,0.227
+metal,death metal,Addicted to Vaginal Skin (Live),0.195,0.14,0.955,0.437,0.769,0.903,0.234
+metal,death metal,Oxidised Razor Masticator,0.209,0.1,0.87,0.0216,0.878,0.482,0.0929
+metal,death metal,Livestock Marketplace - Bonus Track,0.447,0.18,0.941,0.0000616,0.155,0.0935,0.577
+metal,death metal,Spiritual Healing,0.343,0.32,0.942,0.0000263,0.0136,0.0701,0.366
+metal,death metal,Behold The Throne Of Chaos,0.211,0.09,0.988,0.0000384,0.0481,0.318,0.0393
+metal,gothic metal,On Most Surfaces,0.336,0.24,0.688,0.00142,0.000472,0.158,0.245
+metal,gothic metal,Faster,0.503,0.44,0.923,0.00119,0.000474,0.117,0.519
+metal,gothic metal,Draconian trilogy (Live in Miskolc),0.402,0.18,0.686,0.00844,0.453,0.92,0.144
+metal,gothic metal,When the Sun Hits,0.252,0.17,0.729,0.0017,0.0458,0.0515,0.17
+metal,gothic metal,Secret of the runes,0.496,0.19,0.952,0.00000417,0.611,0.281,0.173
+metal,gothic metal,Lorelei,0.524,0.31,0.717,0.00538,0.209,0.0922,0.381
+metal,gothic metal,Enter,0.457,0.22,0.718,0.0000219,0.0214,0.385,0.162
+metal,gothic metal,When the Sun Hits,0.234,0.11,0.728,0.0791,0.000622,0.0557,0.161
+metal,gothic metal,Estranged - A Timeless Spell,0.363,0.29,0.915,0.00529,0.0563,0.3,0.339
+metal,gothic metal,Face Your Demons - Session Version,0.402,0.13,0.817,0.00127,0,0.11,0.57
+metal,gothic metal,Murder,0.514,0.28,0.958,0.00781,0.00000892,0.0827,0.341
+metal,gothic metal,Anagram,0.495,0.05,0.873,0.0000115,0.00439,0.492,0.573
+metal,gothic metal,Face Your Demons - Alternative Version,0.451,0.17,0.923,0.000524,0.00728,0.0968,0.539
+metal,gothic metal,Short Glance,0.526,0.06,0.728,0.000133,0.841,0.178,0.172
+metal,gothic metal,Inimical Chimera - Remaster,0.434,0.18,0.865,0.000132,0.0873,0.279,0.214
+metal,gothic metal,Nobody Dares,0.426,0.05,0.136,0.918,0.00073,0.0992,0.106
+metal,gothic metal,Memories,0.425,0.39,0.677,0.165,0.00000435,0.158,0.197
+metal,gothic metal,Forgiven,0.524,0.27,0.342,0.938,0.00102,0.132,0.165
+metal,gothic metal,Frail,0.504,0.21,0.542,0.254,0.00829,0.244,0.138
+metal,gothic metal,Who I Am,0.451,0.3,0.898,0.0000276,0.00507,0.268,0.179
+metal,gothic metal,Pale Tortured Blue,0.334,0.32,0.531,0.00183,0.00294,0.31,0.102
+metal,gothic metal,Restless,0.531,0.24,0.66,0.000417,0.000932,0.267,0.0406
+metal,gothic metal,When the Sun Hits,0.252,0.06,0.718,0.00191,0.0561,0.0721,0.147
+metal,gothic metal,Candles,0.459,0.19,0.643,0.0026,0.569,0.159,0.0563
+metal,gothic metal,Liberty Bell,0.373,0.22,0.912,0.000119,0.00359,0.395,0.061
+metal,industrial,Lava,0.441,0.26,0.828,0.000132,0.763,0.0875,0.338
+metal,industrial,Survivalism - deadmau5 Remix,0.771,0.4,0.457,0.539,0.000311,0.104,0.576
+metal,industrial,You Know Who You Are,0.738,0.17,0.87,0.0544,0.905,0.119,0.389
+metal,industrial,Capital G,0.352,0.39,0.895,0.03,0.00000181,0.105,0.638
+metal,industrial,The Frail,0.177,0.37,0.00401,0.953,0.868,0.244,0.159
+metal,industrial,Far Too Frail,0.631,0.17,0.732,0.00292,0.00072,0.168,0.773
+metal,industrial,Another Version of the Truth - kronos and enrique gonzalez muller,0.289,0.23,0.73,0.644,0.732,0.373,0.284
+metal,industrial,Starved for Truth - Part 1,0.448,0.04,0.903,0.325,0,0.398,0.225
+metal,industrial,In The Army Now,0.588,0.04,0.676,0.0294,0.000118,0.846,0.515
+metal,industrial,Capital G - Paul Epworth Phones 666 Revolutions Mix,0.8,0.25,0.764,0.000948,0.000739,0.0596,0.58
+metal,industrial,Sharp Dressed Man,0.304,0.16,0.927,0.0000123,0.278,0.294,0.155
+metal,industrial,The Frail - Remix Version,0.163,0.23,0.374,0.591,0.409,0.486,0.319
+metal,industrial,Dead Eyes Opened 12",0.668,0.07,0.866,0.00153,0.915,0.403,0.861
+metal,industrial,Dead Eyes Opened (USA 2015),0.785,0.11,0.711,0.155,0.905,0.0669,0.964
+metal,industrial,Bullet,0.734,0.12,0.889,0.000178,0.803,0.328,0.355
+metal,industrial,Copy of a,0.635,0.44,0.832,0.0238,0.384,0.223,0.693
+metal,industrial,Mount,0.5,0.14,0.982,0.00986,0.9,0.196,0.61
+metal,industrial,My Thorny Thorny Crown,0.351,0.03,0.345,0.625,0.19,0.431,0.251
+metal,industrial,Sin,0.63,0.38,0.865,0.000966,0.607,0.817,0.742
+metal,industrial,So What,0.682,0.34,0.607,0.000024,0.384,0.178,0.509
+metal,industrial,End Of Days Part 2 (Extreme Mayan Makeover Mix),0.407,0.06,0.966,0.0000124,0.86,0.356,0.15
+metal,industrial,Sharp Dressed Man,0.303,0.12,0.948,0.0000118,0.32,0.341,0.134
+metal,industrial,My Thorny Thorny Crown,0.356,0.02,0.338,0.658,0.0846,0.391,0.241
+metal,industrial,She's Got A Cause,0.685,0.19,0.494,0.117,0.00366,0.0915,0.959
+metal,industrial,Dead Eyes Opened,0.664,0.26,0.961,0.000984,0.934,0.191,0.856
+metal,industrial metal,Bitch,0.652,0.34,0.983,0.000729,0.00108,0.347,0.428
+metal,industrial metal,Pantomime,0.469,0.27,0.812,0.0000869,0.0000199,0.337,0.422
+metal,industrial metal,On the Surface of Scardonia,0.0642,0.2,0.304,0.303,0.927,0.076,0.0321
+metal,industrial metal,Crucified,0.706,0.17,0.967,0.000737,0.00000422,0.313,0.716
+metal,industrial metal,Sweet Dreams (Are Made Of This),0.199,0.65,0.622,0.00745,0.794,0.204,0.142
+metal,industrial metal,A Hole In The Wall,0.503,0.18,0.936,0.00000516,0.593,0.15,0.24
+metal,industrial metal,Tough Guy,0.414,0.28,0.933,0.000338,0.00619,0.26,0.433
+metal,industrial metal,Living Dead Girl - Subliminal Seduction Mix,0.595,0.29,0.868,0.000319,0.292,0.739,0.373
+metal,industrial metal,Living Dead Girl,0.524,0.4,0.944,0.00513,0.0269,0.236,0.532
+metal,industrial metal,Living Dead Girl - Photek Remix,0.661,0.32,0.78,0.00744,0.782,0.126,0.804
+metal,industrial metal,Spine For You,0.513,0.25,0.965,0.0000301,0.281,0.525,0.345
+metal,industrial metal,Spookshow Baby,0.562,0.36,0.995,0.0135,0.0268,0.0728,0.197
+metal,industrial metal,Falls Apart,0.537,0.2,0.774,0.000158,0.164,0.544,0.474
+metal,industrial metal,Dreamtime,0.613,0.24,0.662,0.0022,0.817,0.085,0.0547
+metal,industrial metal,Birds Of Hell Awaiting,0.623,0.16,0.84,0.00031,0.00225,0.208,0.484
+metal,industrial metal,Stillborn,0.52,0.23,0.931,0.0000412,0.736,0.0857,0.395
+metal,industrial metal,Come On - Go Off - Rotersand Remix,0.531,0.09,0.928,0.000797,0.621,0.138,0.212
+metal,industrial metal,Rowboat,0.496,0.08,0.696,0.00279,0.313,0.312,0.185
+metal,industrial metal,Come On - Go Off,0.484,0.16,0.767,0.00158,0.765,0.111,0.0472
+metal,industrial metal,Living Dead Girl,0.512,0.47,0.952,0.00385,0.07,0.211,0.51
+metal,industrial metal,Falls Apart,0.421,0.24,0.965,0.00000693,0.0251,0.219,0.637
+metal,industrial metal,Coward,0.526,0.29,0.893,0.000408,0.00000614,0.0603,0.61
+metal,industrial metal,Reload,0.465,0.43,0.829,0.000154,0.00445,0.324,0.255
+metal,industrial metal,Birds Of Hell Awaiting,0.393,0.15,0.833,0.000329,0.00318,0.214,0.523
+metal,industrial metal,The Vaults of Re:Memory,0.171,0.28,0.433,0.0539,0.868,0.104,0.0335
+metal,industrial metal,WO BIST DU,0.449,0.39,0.814,0.00897,0.399,0.112,0.199
+metal,industrial metal,Birds Of Hell Awaiting,0.605,0.38,0.842,0.000314,0.00158,0.257,0.46
+metal,industrial metal,Thirteen,0.333,0.27,0.666,0.504,0.971,0.394,0.439
+metal,industrial metal,Over My Head,0.466,0.22,0.987,0.000845,0.00000262,0.719,0.255
+metal,industrial metal,I Hate Today,0.208,0.16,0.489,0.00941,0.951,0.0649,0.114
+metal,industrial metal,WO BIST DU,0.46,0.35,0.772,0.00705,0.254,0.116,0.196
+metal,industrial metal,Fadeaway,0.437,0.3,0.816,0.0000256,0.0000798,0.109,0.326
+metal,industrial metal,Survive,0.482,0.31,0.992,0.0000348,0.0605,0.123,0.434
+metal,industrial metal,Dragula,0.565,0.63,0.949,0.0000464,0.0000107,0.0822,0.63
+metal,industrial metal,OHNE DICH,0.252,0.44,0.596,0.00462,0.000283,0.112,0.19
+metal,industrial metal,Sucks (Live),0.49,0.14,0.866,0.00161,0.643,0.424,0.535
+metal,industrial metal,Rowboat,0.496,0.31,0.696,0.00279,0.313,0.312,0.185
+metal,industrial metal,Everything Is Boring,0.589,0.31,0.886,0.003,0.00781,0.434,0.462
+metal,industrial metal,Living Dead Girl - Live,0.514,0.32,0.982,0.00431,0.0000501,0.968,0.227
+metal,industrial metal,Blue Monday,0.589,0.52,0.696,0.0000865,0.0000343,0.0779,0.933
+metal,industrial metal,Candy-O,0.477,0.23,0.97,0.000121,0.0107,0.308,0.675
+metal,industrial metal,OHNE DICH - RMX BY LAIBACH,0.486,0.33,0.841,0.00473,0.000825,0.0708,0.157
+metal,industrial metal,Spookshow Baby - Black Leather Catsuit Mix,0.562,0.25,0.838,0.000547,0.088,0.416,0.359
+metal,industrial metal,Keep It Clean,0.629,0.07,0.971,0.00283,0.0164,0.0961,0.432
+metal,industrial metal,Ego Tripp,0.389,0.23,0.927,0.0207,0.00307,0.943,0.217
+metal,industrial metal,Vapor Transmission - Intro Album Version,0.418,0.22,0.386,0.0323,0.192,0.347,0.0378
+metal,industrial metal,Lunchbox,0.434,0.41,0.962,0.00558,0.301,0.223,0.286
+metal,industrial metal,What?,0.551,0.39,0.976,0.00257,0.000191,0.328,0.842
+metal,industrial metal,Living Dead Girl,0.518,0.36,0.95,0.00419,0.0414,0.221,0.523
+metal,industrial metal,Dogma,0.474,0.33,0.895,0.000418,0.0508,0.442,0.271
+metal,industrial metal,Dogma,0.639,0.27,0.882,0.000346,0.541,0.0803,0.353
+metal,industrial metal,Fadeaway,0.441,0.22,0.821,0.0000249,0.0000735,0.11,0.321
+metal,industrial metal,Mesopotamia,0.526,0.23,0.985,0.000618,0.389,0.294,0.441
+metal,industrial metal,Fadeaway - Instrumental,0.444,0.15,0.706,0.0000312,0.793,0.109,0.432
+metal,industrial metal,Spookshow Baby - Black Leather Catsuit Mix,0.564,0,0.837,0.000476,0.212,0.354,0.413
+metal,industrial metal,Living Dead Girl,0.485,0.58,0.907,0.00302,0.00617,0.326,0.46
+metal,industrial metal,Light In The Shadows,0.592,0.24,0.983,0.00114,0,0.258,0.28
+metal,industrial metal,Birds Of Hell Awaiting,0.4,0.35,0.853,0.000363,0.00198,0.241,0.403
+metal,industrial metal,Make Up Your Mind,0.478,0.2,0.948,0.0185,0,0.165,0.556
+metal,industrial metal,Fadeaway - Live,0.403,0.16,0.941,0.00378,0.287,0.876,0.0909
+metal,industrial metal,Keine Lust,0.545,0.49,0.906,0.000194,0.0162,0.303,0.233
+metal,industrial metal,Solaris,0.461,0.22,0.913,0.000696,0.771,0.0911,0.417
+metal,industrial metal,Midnight Train,0.728,0.17,0.965,0.00822,0.908,0.164,0.911
+metal,industrial metal,Tough Guy - Tim Ismag Remix,0.529,0.25,0.946,0.00108,0.0613,0.102,0.48
+metal,industrial metal,House Of 1000 Corpses/Unholy 3,0.346,0.39,0.815,0.00849,0.878,0.117,0.154
+metal,metal,Rainmaker,0.349,0.35,0.955,0.00247,0,0.29,0.536
+metal,metal,Tears of the Dragon - Live At The Marquee,0.177,0.05,0.764,0.00042,0.000115,0.851,0.253
+metal,metal,The Nomad,0.336,0.34,0.924,0.0747,0.00226,0.137,0.4
+metal,metal,Melt The Ice Away,0.465,0.43,0.973,0.000151,0.000685,0.241,0.674
+metal,metal,Living After Midnight,0.61,0.6,0.824,0.0136,0.00000175,0.0606,0.822
+metal,metal,Painkiller,0.435,0.59,0.987,0.000195,0.0847,0.268,0.0993
+metal,metal,Fear of the Dark,0.301,0.56,0.813,0.000674,0.000631,0.197,0.234
+metal,metal,The Rage,0.344,0.37,0.751,0.00441,0.0285,0.133,0.567
+metal,metal,Anthem To The Estranged,0.298,0.23,0.693,0.00104,0.134,0.131,0.251
+metal,metal,Never Walk Alone..A Call To Arms,0.362,0.35,0.976,0.000303,0.0000368,0.0496,0.545
+metal,metal,Lightning Strikes Twice,0.224,0.21,0.964,0.106,0.000104,0.314,0.358
+metal,metal,The Haunting,0.34,0.27,0.621,0.00000733,0.0794,0.11,0.317
+metal,metal,When the Wild Wind Blows,0.304,0.33,0.742,0.00392,0.306,0.231,0.249
+metal,metal,Come And Get It,0.214,0.18,0.992,0.0000627,0.524,0.0769,0.209
+metal,metal,Louie Louie - Alternative Version,0.693,0.2,0.807,0.0194,0.00000267,0.137,0.95
+metal,metal,Do or Die,0.208,0.25,0.808,0.00000538,0.00765,0.21,0.291
+metal,metal,Enter Sandman,0.579,0.77,0.824,0.00206,0.00903,0.059,0.64
+metal,metal,Get Back In Line - Live in Wacken,0.199,0.26,0.988,0.079,0.074,0.323,0.197
+metal,metal,Get Back In Line,0.35,0.22,0.991,0.0213,0.000718,0.126,0.456
+metal,metal,Greenhouse Effect,0.387,0.24,0.988,0.00299,0.000589,0.0541,0.271
+metal,metal,The Fallen Angel,0.27,0.36,0.983,0.00177,0.00000388,0.333,0.321
+metal,metal,Purgatory,0.13,0.33,0.957,0.000843,0.0966,0.52,0.523
+metal,metal,Come and Get It,0.41,0.3,0.98,0.00844,0.0439,0.476,0.0956
+metal,metal,Electric Eye - Live from Battle Cry,0.326,0.38,0.979,0.00000448,0.414,0.676,0.188
+metal,metal,Parasite,0.51,0.27,0.966,0.00116,0.000929,0.183,0.367
+metal,metal,Tears of the Dragon (Acoustic Chillout) [Bonus Track],0.507,0.1,0.479,0.0388,0,0.118,0.114
+metal,metal,Through The Never (Live in Mexico City),0.379,0.4,0.991,0.0000639,0.00113,0.8,0.0562
+metal,metal,Escape,0.265,0.52,0.937,0.00227,0.526,0.161,0.531
+metal,metal,Get Back In Line - Live,0.287,0.26,0.996,0.0438,0.0000114,0.496,0.152
+metal,metal,Electric Eye - Live from the San Antonio Civic Center,0.0777,0.27,0.953,0.000957,0.0488,0.718,0.132
+metal,metal,Johnny B. Goode,0.333,0.4,0.944,0.181,0.000664,0.349,0.398
+metal,metal,Rainmaker,0.321,0.19,0.95,0.00223,0,0.253,0.523
+metal,metal,Tears of the Dragon,0.493,0.11,0.698,0.0141,0,0.119,0.277
+metal,metal,Trapped Under Ice,0.254,0.54,0.985,0.0000526,0.363,0.0558,0.0485
+metal,metal,Battery (Live in Mexico City),0.274,0.4,0.964,0.0000201,0.0337,0.979,0.115
+metal,metal,The Four Horsemen (Live in Mexico City),0.373,0.4,0.92,0.0000263,0.0188,0.989,0.126
+metal,metal,Tears Of A Clown,0.311,0.41,0.874,0.00696,0.0000117,0.0861,0.492
+metal,metal,The Threat Is Real,0.403,0.36,0.988,0.0000482,0.0141,0.266,0.106
+metal,metal,Electric Eye - Live,0.371,0.29,0.934,0.000997,0.000313,0.951,0.115
+metal,metal,Electric Eye,0.431,0.4,0.947,0.000779,0.000253,0.356,0.363
+metal,metal,Electric Eye,0.437,0.53,0.948,0.000716,0.000261,0.146,0.371
+metal,metal,The Unforgiven (Live in Mexico City),0.292,0.43,0.94,0.00263,0.00181,0.984,0.215
+metal,metal,Up to the Limit,0.357,0.24,0.651,0.000138,0.00667,0.375,0.685
+metal,metal,Blood Money,0.234,0.24,0.931,0.0000134,0.919,0.134,0.417
+metal,metal,Battery,0.487,0.64,0.944,0.000135,0.601,0.0905,0.376
+metal,metal,Agony,0.251,0.23,0.956,0.00927,0.000027,0.138,0.352
+metal,metal,So What,0.533,0.5,0.983,0.00118,0.0000313,0.378,0.393
+metal,metal,Bare Bones,0.311,0.22,0.765,0.0000785,0.78,0.148,0.459
+metal,metal,Carry On,0.497,0.5,0.904,0.000389,0.00122,0.0939,0.425
+metal,metal,Nightmare/The Dreamtime,0.356,0.21,0.781,0.0867,0.00901,0.309,0.374
+metal,metal,Call To Arms,0.449,0.3,0.647,0.0119,0.0000417,0.0907,0.124
+metal,metal,Another Life,0.201,0.32,0.939,0.00113,0.603,0.173,0.678
+metal,metal,The Thin Line Between Love And Hate,0.239,0.34,0.96,0.00215,0.185,0.855,0.269
+metal,metal,Louie Louie,0.668,0.29,0.767,0.00858,0.000219,0.378,0.829
+metal,metal,Burnin' Up,0.451,0.23,0.932,0.0255,0.000105,0.0983,0.168
+metal,metal,Tears of the Dragon - Live In Brazil,0.229,0.05,0.786,0.004,0.000133,0.954,0.171
+metal,metal,Souls Of Black (Alcatraz Revisit),0.439,0.05,0.88,0.000503,0.221,0.537,0.611
+metal,metal,Enter Sandman (Live),0.323,0.52,0.914,0.00265,0.000381,0.953,0.183
+metal,metal,No More Lies - Live,0.212,0.19,0.889,0.00208,0.00224,0.978,0.119
+metal,metal,Painkiller - Live from Battle Cry,0.322,0.38,0.972,0.00000559,0.675,0.954,0.0375
+metal,metal,Electric Eye,0.22,0.29,0.952,0.000706,0.000203,0.37,0.35
+metal,metal,No More Lies,0.211,0.34,0.845,0.012,0.00507,0.148,0.16
+metal,metal,Enter Sandman (Live with the SFSO),0.278,0.49,0.97,0.000144,0.0481,0.966,0.142
+metal,metal,Rainmaker - Live,0.292,0.2,0.987,0.000513,0.00000553,0.984,0.24
+metal,metal,Tears of the Dragon,0.235,0.08,0.782,0.000731,0.00152,0.134,0.273
+metal,metal,Red Star Falling,0.418,0.17,0.843,0.0912,0.00000801,0.0943,0.33
+metal,metal,The Threat Is Real,0.221,0.5,0.988,0.000049,0.0104,0.27,0.0894
+metal,metal,Rainmaker,0.321,0.27,0.95,0.00223,0,0.253,0.523
+metal,metal,Together as One,0.273,0.2,0.979,0.00000258,0.736,0.354,0.277
+metal,metal,One,0.444,0.7,0.703,0.00112,0.0761,0.127,0.425
+metal,metal,Capricorn,0.291,0.26,0.873,0.0736,0.00205,0.176,0.456
+metal,metal,Up To The Limit,0.349,0.14,0.976,0.000216,0.0000347,0.949,0.246
+metal,metal,Wish You Were Dead,0.235,0.11,0.998,0.0000312,0.0107,0.18,0.484
+metal,metal,Get Back In Line - Live Manchester,0.295,0.23,0.991,0.0634,0.712,0.306,0.295
+metal,metal,All Nightmare Long,0.271,0.59,0.985,0.000568,0.00112,0.0809,0.351
+metal,metal,Battery (Live),0.341,0.5,0.982,0.000157,0.00246,0.412,0.081
+metal,metal,Tears of the Dragon,0.496,0.32,0.62,0.00386,0.00000147,0.114,0.275
+metal,metal,Wish You Were Dead,0.232,0.15,0.998,0.0000329,0.0123,0.142,0.508
+metal,metal,Battery (Live with the SFSO),0.239,0.47,0.976,0.000109,0.362,0.954,0.123
+metal,metal,Rock 'N' Roll,0.399,0.3,0.988,0.00435,0.00000137,0.592,0.211
+metal,metal,Red Star Falling - orchestral version,0.403,0.17,0.847,0.0722,0.0000198,0.108,0.323
+metal,metal,All Men Play On Ten,0.39,0.31,0.947,0.00515,0.0000253,0.538,0.171
+metal,metal,Afraid to Shoot Strangers,0.271,0.39,0.74,0.00395,0.0289,0.0828,0.346
+metal,metal,Electric Funeral,0.448,0.17,0.94,0.0000699,0.173,0.102,0.339
+metal,metal,For Whom The Bell Tolls (Live in Mexico City),0.265,0.43,0.959,0.0000476,0.14,0.977,0.0898
+metal,metal,No More Lies,0.212,0.18,0.84,0.0141,0.00597,0.147,0.174
+metal,metal,Go to Hell,0.217,0.18,0.913,0.000354,0.0342,0.0636,0.59
+metal,metal,Go To Hell,0.349,0.34,0.864,0.000433,0.891,0.173,0.499
+metal,metal,Tears Of The Dragon,0.237,0.17,0.764,0.000824,0.00434,0.183,0.276
+metal,metal,Jack The Ripper,0.446,0.28,0.931,0.00664,0.194,0.199,0.517
+metal,metal,No More Lies,0.212,0.25,0.84,0.0141,0.00597,0.147,0.174
+metal,power metal,Let Me Out,0.403,0.23,0.978,0.000135,0.0000353,0.314,0.119
+metal,power metal,One Of A Kind,0.249,0.2,0.923,0.00322,0.000557,0.116,0.116
+metal,power metal,The Riddle,0.257,0.3,0.915,0.000549,0,0.153,0.51
+metal,power metal,The Haunting,0.496,0.38,0.572,0.0126,0,0.1,0.252
+metal,power metal,Written in stone,0.396,0.12,0.948,0.00266,0.0000984,0.358,0.344
+metal,power metal,Full Moon,0.284,0.33,0.942,0.0126,0.00433,0.351,0.183
+metal,power metal,Draconian Love,0.578,0.39,0.815,0.0314,0.000114,0.114,0.518
+metal,power metal,Ain't Your Fairytale,0.371,0.3,0.879,0.00000388,0.00000862,0.322,0.491
+metal,power metal,Ghost Division,0.339,0.51,0.945,0.0000878,0.0000151,0.2,0.476
+metal,power metal,Neverland,0.579,0.43,0.914,0.0000984,0.000901,0.153,0.512
+metal,power metal,The champion,0.475,0.18,0.934,0.000768,0.0000369,0.123,0.381
+metal,power metal,The dragon lies bleeding,0.4,0.31,0.987,0.0000312,0.617,0.146,0.486
+metal,power metal,Back To Back,0.535,0.17,0.985,0.0000369,0.0628,0.067,0.159
+metal,power metal,Hero of Zeroes,0.232,0.17,0.946,0.0000295,0.0318,0.322,0.432
+metal,power metal,Dreamland,0.51,0.34,0.993,0.000022,0.0224,0.22,0.372
+metal,power metal,We're Gonna Make It,0.401,0.16,0.849,0.000203,0.0000132,0.155,0.444
+metal,power metal,Not Like You,0.435,0.2,0.965,0.000104,0.00000147,0.359,0.586
+metal,power metal,Zeroes,0.245,0.24,0.876,0.0000132,0.102,0.648,0.343
+metal,power metal,In the Army Now (Bonus Track),0.584,0.31,0.759,0.000459,0.00000388,0.102,0.071
+metal,power metal,Back to back,0.54,0.19,0.988,0.0000437,0.066,0.0578,0.149
+metal,power metal,The bitch is back,0.489,0.17,0.956,0.0000502,0.029,0.252,0.506
+metal,folk metal,Carry the Torch,0.493,0.22,0.993,0.00077,0.0000359,0.252,0.207
+metal,folk metal,Carry the Torch (Track Commentary),0.743,0.14,0.115,0.49,0,0.284,0.765
+metal,folk metal,The Golden Spiral,0.116,0.08,0.742,0.000114,0.289,0.95,0.63
+metal,folk metal,Vosstanie Roda,0.275,0.07,0.977,0.00575,0.000274,0.955,0.236
+metal,folk metal,Suden joiku,0.396,0.17,0.939,0.047,0.000429,0.205,0.557
+metal,folk metal,The Golden Spiral,0.222,0.15,0.945,0.0000037,0.901,0.18,0.229
+metal,folk metal,A Burning Arrow,0.196,0.08,0.835,0.0000046,0.821,0.113,0.214
+metal,folk metal,Carry the Torch,0.493,0.27,0.993,0.00077,0.0000359,0.252,0.207
+metal,folk metal,Vosstanie Roda,0.294,0.13,0.937,0.0000686,0.00471,0.342,0.307
+metal,folk metal,Neverland,0.542,0.23,0.996,0.000881,0,0.379,0.169

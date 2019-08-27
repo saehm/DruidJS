@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script src="dist/druid.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+<script>
+    let A = druid.linspace(0,300)
+    let G = new druid.Heap(A)
+
+    let width = 1200
+    let height = 600
+
+    let svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+
+    let h = Math.floor(Math.log2(A.length));
+
+    for (let i = 0, n = G.length; i < n; ++i) {
+        let e = Math.floor(Math.log2(i + 1))
+        let x = 2 ** e;
+        let j = i - druid.linspace(0,e - 1).map(d => 2 ** d).reduce((a,b) => a + b)
+        console.log(e, x, j)
+
+        let cx =  width / 2 - (((width - 20) / x) * (x / 2)) + ((width - 20) / x * j)
+        svg.append("circle")
+            .attr("cy", 10 + (height - 20) / h * e)
+            .attr("cx", cx)
+            .attr("r", 5)
+            .attr("fill", "transparent")
+            .attr("stroke", "black")
+
+        svg.append("text")
+            .attr("dy", 10 + (height - 20) / h * e)
+            .attr("dx", cx)
+            .text(G._container[i].value)
+    }
+
+</script>
+</body>
+</html>
