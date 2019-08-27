@@ -1,5 +1,5 @@
 ## druid: Dimensionality Reduction Und IrgenDwas.
-**druid** is a JavaScript library for dimensionality reduction with all necessary matrix operations and other needed data mining algorithms built in. **druid** is influenced by the JavaScript visualization library [**d3**](https://d3js.org) and the python library [**scikit-learn**](https://scikit-learn.org/stable/).
+**druid** is a JavaScript library for dimensionality reduction with all necessary matrix operations and other needed algorithms built in. **druid** is influenced by the JavaScript visualization library [**d3**](https://d3js.org) and the python library [**scikit-learn**](https://scikit-learn.org/stable/).
 
 The idea of **druid** is, ...
 - deliver tools for dimensionality reduction and matrix operations
