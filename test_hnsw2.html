@@ -12,7 +12,7 @@
     <script src="dist/druid.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
 <script>
-    
+    //import {* as druid} from "./index";
     let width = 800
     let height = 800
     let margin = 4
@@ -21,9 +21,10 @@
         .attr("height", height)
         .style("border", "1px solid lightgrey")
 
-    let N = 10000
+    let rand = new druid.Randomizer(1987)
+    let N = 1000
     let D = 2
-    let data = druid.linspace(1, N).map(_ => druid.linspace(1, D).map(_ => (Math.random() - .5) * 8))
+    let data = druid.linspace(1, N).map(_ => druid.linspace(1, D).map(_ => (rand.random - .5) * 8))
     console.log(data)
     
     let x = d3.scaleLinear().domain(d3.extent(data, d => d[0])).range([margin, width - margin])
@@ -38,10 +39,23 @@
             .attr("r", d => 2)
             .attr("fill", "transparent")
             .attr("stroke", "darkgrey")
+            
+    let metric_counter = 0;
+    const _metric = druid.euclidean;
+    const metric = (a, b) => {
+        metric_counter++;
+        return _metric(a, b)
+    }
 
-    let kd = new druid.HNSW(druid.euclidean);
-    //kd.add(data)
-    data.forEach(d => kd.addOne(d))
+    let start = Date.now()
+    console.log("start", start)
+    let kd = new druid.HNSW(metric);
+    kd.add(data)
+    let end = Date.now()
+    console.log("end", end)
+    console.log((end - start) / 1000 + "s", "\nmetric_counter", metric_counter)
+    //data.forEach(d => kd.addOne(d))
+    
     console.log(kd)
 
     svg.on("mousemove", function() {
@@ -52,7 +66,7 @@
         let q = [mx, my, ...q_]
         let nn = kd.search(q, 5)
         console.log(nn)
-        nn = nn.map(d => d.element.element)
+        nn = nn.map(d => d)
         draw_nn(nn);
     }).on("mouseleave", function() {
         draw_nn([])

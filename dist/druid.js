@@ -1948,233 +1948,136 @@ class Randomizer {
     }
 }
 
-/*export class Heap {
-    constructor(arr = null, accessor = (d) => d, comparator = "min") {
-        this.root = null;
-        this.accessor = accessor;
-
-        if (comparator == "min") {
-            this._comparator = (a, b) => a <= b;
-        } else if (comparator == "max") {
-            this._comparator = (a, b) => a >= b;
-        } else {
-            this._comparator = comparator;
-        }
-
-        if (arr && arr.length > 0) {
-            let self = this;
-            arr.forEach(d => self.push(d));
-        }
-    }
-
-    push(element) {
-        const value = this.accessor(element);
-        const newNode = new Node(element, value);
-        if (!this.root || this._comparator(value, this.root.value)) {
-            newNode.next = this.root;
-            this.root = newNode;
-        } else {
-            let pointer = this.root;
-            while (pointer.next && !this._comparator(value, pointer.next.value)) {
-                pointer = pointer.next;
-            }
-            newNode.next = pointer.next;
-            pointer.next = newNode;
-        }
-        return this;
-    }
-
-    pop() {
-        if (!this.root) {
-            return null;
-        }
-        const root = this.root;
-        this.root = this.root.next;
-        return root;
-    }
-
-    get first() {
-        return this.root;
-    }
-
-    * iterate() {
-        let pointer = this.root;
-        while (pointer) {
-            yield pointer.element;
-            pointer = pointer.next;
-        }
-    }
-
-    toArray() {
-        let res = [];
-        let pointer = this.root;
-        while (pointer) {
-            res.push(pointer.element)
-            pointer = pointer.next;
-        }
-        return res;
-    }
-
-    get length() {
-        let len = 0;
-        let pointer = this.root;
-        while (pointer) {
-            len += 1;
-            pointer = pointer.next;
-        }
-        return len;
-    }
-
-    get empty() {
-        return this.root === null;
-    }
-}
-
-class Node {
-    constructor(element, value) {
-        this.element = element;
-        this.value = value;
-        this.next = null;
-    }
-}*/
-
+/**
+ * @class
+ * @alias Heap
+ */
 class Heap {
-    constructor(arr = null, accessor = (d) => d, comparator = "min") {
-        //this.root = null;
-        this._accessor = accessor;
-        this._container = [];
-
-        if (comparator == "min") {
-            this._comparator = (a, b) => a <= b;
-        } else if (comparator == "max") {
-            this._comparator = (a, b) => a >= b;
+    /**
+     * A heap is a datastructure holding its elements in a specific way, so that the top element would be the first entry of an ordered list.
+     * @constructor
+     * @memberof module:datastructure
+     * @alias Heap
+     * @param {Array=} elements - Contains the elements for the Heap. {@link elements} can be null.
+     * @param {Function} [accessor = (d) => d] - Function returns the value of the element.
+     * @param {(String|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
+     * @returns {Heap}
+     * @see {@link https://en.wikipedia.org/wiki/Binary_heap}
+     */
+    constructor(elements = null, accessor = d => d, comparator = "min") {
+        if (elements) {
+            return Heap.heapify(elements, accessor, comparator);
         } else {
-            this._comparator = comparator;
+            this._accessor = accessor;
+            this._container = [];
+            if (comparator == "min") {
+                this._comparator = (a, b) => a < b;
+            } else if (comparator == "max") {
+                this._comparator = (a, b) => b > a;
+            } else {
+                this._comparator = comparator;
+            }
+            return this
         }
+    }
 
-        //console.log(arr)
-        if (arr && arr.length > 0) {
-            let self = this;
-            arr.forEach(d => self.push(d));
+    /**
+     * Creates a Heap from an Array
+     * @param {Array=} elements - Contains the elements for the Heap.
+     * @param {Function=} accessor - Function returns the value of the element.
+     * @param {(String=|Function)} comparator - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
+     * @returns {Heap}
+     */
+    static heapify(elements, accessor = d => d, comparator = "min") {
+        const heap = new Heap(null, accessor, comparator);
+        const container = heap._container;
+        for (const e of elements) {
+            container.push({
+                "element": e,
+                "value": accessor(e),
+            });
         }
-
-    }
-
-    /* constructor(arr = null, accessor = (d) => d, comparator = "min") {
-        this._accessor = accessor;
-
-        if (comparator === "min") {
-            this._comparator = (a, b) => a <= b;
-        } else if (comparator === "max") {
-            this._comparator = (a, b) => a >= b;
-        } else {
-            this._comparator = comparator;
+        for (let i = Math.floor((elements.length / 2) - 1); i >= 0; --i) {
+            heap._heapify_down(i);
         }
-
-        console.log(arr)
-        this._container = []
-        if (arr && arr.length > 0) {
-            let self = this;
-            arr.forEach(d => self.push(d)) 
-        }
-    } */
-
-    _get_left_child_index(index) {
-        return (index * 2) + 1;
-    }
-
-    _get_right_child_index(index) {
-        return (index * 2) + 2;
-    }
-
-    _get_parent_index(index) {
-        return Math.floor((index - 1) / 2);
-    }
-
-    _has_parent(index) {
-        return this._get_parent_index(index) >= 0;
-    }
-
-    _has_left_child(index) {
-        return this._get_left_child_index(index) < this._container.length;
-    }
-
-    _has_right_child(index) {
-        return this._get_right_child_index(index) < this._container.length;
-    }
-
-    _left_child(index) {
-        return this._container[this._get_left_child_index(index)];
-    }
-
-    _right_child(index) {
-        return this._container[this._get_right_child_index(index)];
-    }
-
-    _parent(index) {
-        return this._container[this._get_parent_index(index)];
+        return heap;
     }
 
     _swap(index_a, index_b) {
-        //[this._container[index_b], this._container[index_a]] = [this._container[index_a], this._container[index_b]];
-        let tmp = this._container[index_b];
-        this._container[index_b] = this._container[index_a];
-        this._container[index_a] = tmp;
+        const container = this._container;
+        let tmp = container[index_b];
+        container[index_b] = container[index_a];
+        container[index_a] = tmp;
+        return;
     }
 
+    _heapify_up() {
+        const container = this._container;
+        let index = container.length - 1;
+        while (index > 0) {
+            let parentIndex = Math.floor((index - 1) / 2);
+            if (!this._comparator(container[index].value, container[parentIndex].value)) {
+                break;
+            } else {
+            this._swap(parentIndex, index);
+            index = parentIndex;
+            }
+        }
+    }
+
+    /**
+     * Pushes the element to the heap.
+     * @param {} element
+     * @returns {Heap}
+     */
     push(element) {
         const value = this._accessor(element);
-        const node = new Node(element, value);
+        //const node = new Node(element, value);
+        const node = {"element": element, "value": value};
         this._container.push(node);
         this._heapify_up();
         return this;
     }
 
-    _heapify_up(start_index) {
-        let index = start_index || this._container.length - 1;
-        while (this._has_parent(index) && !this._comparator(this._parent(index).value, this._container[index].value)) {
-            this._swap(index, this._get_parent_index(index));
-            index = this._get_parent_index(index);
+    _heapify_down(start_index=0) {
+        const container = this._container;
+        const comparator = this._comparator;
+        const length = container.length;
+        let left = 2 * start_index + 1;
+        let right = 2 * start_index + 2;
+        let index = start_index;
+        if (index > length) throw "index higher than length"
+        if (left < length && comparator(container[left].value, container[index].value)) {
+            index = left;
+        }
+        if (right < length && comparator(container[right].value, container[index].value)) {
+            index = right;
+        }
+        if (index !== start_index) {
+            this._swap(start_index, index);
+            this._heapify_down(index);
         }
     }
 
+    /**
+     * Removes and returns the top entry of the heap.
+     */
     pop() {
-        if (this._container.length === 0) {
+        const container = this._container;
+        if (container.length === 0) {
             return null;
+        } else if (container.length === 1) {
+            return container.pop();
         }
-        if (this._container.length === 1) {
-            return this._container.pop().element;
-        }
-        
-        const item = this._container[0];
-
-        this._container[0] = this._container.pop();
+        this._swap(0, container.length - 1);
+        const item = container.pop();
         this._heapify_down();
-
         return item;
     }
 
-    _heapify_down(start_index=0) {
-        let index = start_index;
-        let next_index = null;
-
-        while (this._has_left_child(index)) {
-            if (this._has_right_child(index) && this._comparator(this._right_child(index).value, this._left_child(index).value)) {
-                next_index = this._get_right_child_index(index);
-            } else {
-                next_index = this._get_left_child_index(index);
-            }
-
-            if (this._comparator(this._comparator(this._container[index].value, this._container[next_index].value))) {
-                break;
-            }
-
-            this._swap(index, next_index);
-            index = next_index;
-        }
-    }
-
-    // peek
+    /**
+     * Returns the top entry of the heap without removing it.
+     */
     get first() {
         return this._container.length > 0 ? this._container[0] : null;
     }
@@ -2185,33 +2088,44 @@ class Heap {
         }
     }
 
+    /**
+     * Returns the heap as ordered array.
+     */
     toArray() {
-        const comparator = this._comparator;
-        const accessor = this._accessor;
-        let container = this._container;//.map(d => d.element);
-        return container.sort((a, b) => comparator(accessor(a.element), accessor(b.element)) ? -1 : 1)
-        //return this._container.sort((a, b) => comparator(a.value, b.value))//.map(d => d.element);
+        return this._container
+            .map(d => d.element)
+            .sort((a,b) => this._comparator(a, b) ? -1 : 0)
     }
 
+    /**
+     * The size of the heap.
+     */
     get length() {
         return this._container.length;
     }
 
+    /**
+     * Returns false if the the heap has entries, true if the heap has no entries.
+     */
     get empty() {
         return this.length === 0;
     }
 }
 
-class Node {
-    constructor(element, value) {
-        this.element = element;
-        this.value = value;
-    }
-}
+/**
+ * @module datastructure
+ */
 
+/**
+ * @class
+ * @alias HNSW
+ */
 class HNSW {
     /**
-     * 
+     * Hierarchical navigable small world graph. Efficient and robust approximate nearest neighbor search.
+     * @constructor
+     * @memberof module:knn
+     * @alias HNSW
      * @param {*} metric metric to use: (a, b) => distance
      * @param {*} heuristic use heuristics or naive selection
      * @param {*} m max number of connections
@@ -2219,7 +2133,7 @@ class HNSW {
      * @param {*} m0 max number of connections for ground layer 
      * @see {@link https://arxiv.org/abs/1603.09320}
      */
-    constructor(metric = euclidean, heuristic = true, m = 5, ef = 200, m0 = null, mL = null) {
+    constructor(metric = euclidean, heuristic = true, m = 5, ef = 200, m0 = null, mL = null, seed = 1987) {
         this._metric = metric;
         this._select = heuristic ? this._select_heuristic : this._select_simple;
         this._m = m;
@@ -2228,81 +2142,88 @@ class HNSW {
         this._graph = [];
         this._ep = null;
         this._L = null;
-        this._mL = mL === null ? 1 / Math.log2(m) : mL;
-        this.search = this.search;
+        this._mL = mL || 1 / Math.log2(m);
+        this._randomizer = new Randomizer(seed);
     }
 
     addOne(element) {
         this.add([element]);
     }
 
-    add(...elements) {
+    /**
+     * 
+     * @param {Array} elements - new elements.
+     * @returns {HNSW}
+     */
+    add(elements) {
         const m = this._m;
         const ef = this._ef;
         const m0 = this._m0;
-        //const metric = this._metric;
         const mL = this._mL;
-        let graph = this._graph;
+        const randomizer = this._randomizer;
+        const graph = this._graph;
         for (const element of elements) {
-            let ep = this._ep ? Array.from(this._ep): null;
+            let ep = this._ep ? this._ep.slice() : null;
             let W = [];
             let L = this._L;
-            let l = Math.floor(-Math.log(Math.random() * mL));
+            const rand = Math.min(randomizer.random + 1e-8, 1);
+            let l = Math.floor(-Math.log(rand * mL));
             let min_L_l = Math.min(L, l);
+
             if (L) {
                 for (let l_c = graph.length - 1; l_c > min_L_l; --l_c) {
                     ep = this._search_layer(element, ep, 1, l_c);
                 }
                 for (let l_c = min_L_l; l_c >= 0; --l_c) {
-                    let layer_c = graph[l_c];
+                    const layer_c = graph[l_c];
                     layer_c.points.push(element);
                     W = this._search_layer(element, ep, ef, l_c);
-                    let neighbors = this._select(element, W, m, l_c);
-                    neighbors.forEach(p => {
+                    const neighbors = l_c > 3 ? this._select(element, W, m, l_c) : this._select_simple(element, W, m);
+                    for (const p of neighbors) {
                         if (p !== element) {
                             //let distance = metric(p, element);
                             layer_c.edges.push({
-                                idx1: p, 
-                                idx2: element, 
+                                "idx1": p, 
+                                "idx2": element, 
                                 ///distance: distance
                             });
                             layer_c.edges.push({
-                                idx1: element, 
-                                idx2: p, 
+                                "idx1": element, 
+                                "idx2": p, 
                                 //distance: distance
                             });
                         }
-                    });
-                    let max = (l_c === 0 ? m0 : m);
-                    for (let e of neighbors) {
-                        let e_conn = layer_c.edges
+                    }
+                    const max = (l_c === 0 ? m0 : m);
+                    for (const e of neighbors) {
+                        const e_conn = layer_c.edges
                             .filter(edge => edge.idx1 === e)
                             .map(edge => edge.idx2);
                         if (e_conn.length > max) {
-                            let neighborhood = this._select(e, e_conn, max, l_c);
+                            const neighborhood = this._select(e, e_conn, max, l_c);
                             layer_c.edges = layer_c.edges
                                 .filter(edge => edge.idx1 !== e);
-                            neighborhood.forEach(neighbor => {
+                            for (const neighbor of neighborhood) {
                                 if (e !== neighbor) {
                                     //let distance = metric(e, neighbor);
                                     layer_c.edges.push({
-                                        idx1: e, 
-                                        idx2: neighbor, 
+                                        "idx1": e, 
+                                        "idx2": neighbor, 
                                         //distance: distance
                                     });
                                 }
-                            });
+                            }
                         }
                     }
                     ep = W;
                 }
             }
             if (graph.length < l || l > L) {
-                for (let i = l, n = graph.length; i >= n; --i) {
-                    let new_layer = {
-                        l_c: i, 
-                        points: [element], 
-                        edges: new Array()
+                for (let i = graph.length; i <= l; ++i) {
+                    const new_layer = {
+                        "l_c": i, 
+                        "points": [element], 
+                        "edges": [],
                     };
                     graph.push(new_layer);
                     if (i === l) {
@@ -2310,30 +2231,42 @@ class HNSW {
                         this._L = l;
                     }
                 }
-                graph = graph.sort((a, b) => a.l_c - b.l_c);
+                //graph = graph.sort((a, b) => a.l_c - b.l_c);
             }
         }
         return this;
     }
 
+    /**
+     * 
+     * @param {*} q - base element.
+     * @param {*} candidates - candidate elements.
+     * @param {*} M - number of neighbors to return.
+     * @param {*} l_c - layer number.
+     * @param {*} extend_candidates - flag indicating wheter or not to extend candidate list.
+     * @param {*} keep_pruned_connections - flag indicating wheter or not to add discarded elements.
+     * @returns M elements selected by the heuristic.
+     */
     _select_heuristic(q, candidates, M, l_c, extend_candidates = true, keep_pruned_connections = true) {
         if (l_c > this._graph.length - 1) return candidates
         const metric = this._metric;
+        const randomizer = this._randomizer;
         const layer = this._graph[l_c];
         let R = [];
         let W_set = new Set(candidates);
         if (extend_candidates) {
-            for (let c of candidates) {
-                for (let {idx2: c_adj} of layer.edges.filter(edge => edge.idx1 === c)) {
+            for (const c of candidates) {
+                const edges = layer.edges.filter(edge => edge.idx1 === c);
+                for (const {idx2: c_adj} of edges) {
                     W_set.add(c_adj);
                 }
             }
         }
-        let W = new Heap(Array.from(W_set), d => metric(d, q), "min");
+        let W = new Heap(W_set, d => metric(d, q), "min");
         let W_d = new Heap(null, d => metric(d, q), "min");
-        while (W.first && R.length < M) {
+        while (!W.empty && R.length < M) {
             let e = W.pop();
-            let random_r = Math.floor(Math.random() * R.length);
+            let random_r = randomizer.random_int % R.length;
             if (R.length === 0 || e.value < metric(R[random_r], q)) {
                 R.push(e.element);
             } else {
@@ -2341,36 +2274,52 @@ class HNSW {
             }
         }
         if (keep_pruned_connections) {
-            while (W_d.first && R.length < M) {
+            while (!W_d.empty && R.length < M) {
                 R.push(W_d.pop().element);
             }
         }
         return R
     }
 
+    /**
+     * 
+     * @param {*} q - base element.
+     * @param {*} C - candidate elements.
+     * @param {*} M - number of neighbors to return.
+     * @returns M nearest elements from C to q.
+     */
     _select_simple(q, C, M) {
         const metric = this._metric;
         let res = C.sort((a,b) => metric(a, q) - metric(b, q)).slice(0,M);
         return res
     }
 
+    /**
+     * 
+     * @param {*} q - query element.
+     * @param {*} ep - enter points.
+     * @param {*} ef - number of nearest to {@link q} elements to return.
+     * @param {*} l_c - layer number.
+     * @returns ef closest neighbors to q.
+     */
     _search_layer(q, ep, ef, l_c) {
         const metric = this._metric;
-        const layer = this._graph.find(l => l.l_c === l_c);
-        let v = new Set(ep);
-        let C = new Heap(ep, d => metric(d, q), "min");
-        let W = new Heap(ep, d => metric(d, q), "max");
-        while (C.length > 0) {
-            let c = C.pop();
-            let f = W.first;
+        const layer = this._graph[l_c];
+        if (layer.edges.length === 0) return ep;
+        const v = new Set(ep);
+        const C = new Heap(v, d => metric(d, q), "min");
+        const W = new Heap(v, d => metric(d, q), "max");
+        while (!C.empty) {
+            const c = C.pop();
+            const f = W.first;
             if (c.value > f.value) {
                 break;
             }
-            for (let {idx2: e} of layer.edges.filter(e => e.idx1 === c.element)) {
+            const edges = layer.edges.filter(e => e.idx1 === c.element);
+            for (const {idx2: e} of edges) {
                 if (!v.has(e)) {
                     v.add(e);
-                    f = W.first.element;
-                    if (metric(e, q) < metric(f, q) || W.length < ef) {
+                    if (metric(e, q) < metric(f.element, q) || W.length < ef) {
                         C.push(e);
                         W.push(e);
                         if (W.length > ef) {
@@ -2380,12 +2329,18 @@ class HNSW {
                 }
             }
         }
-        return W.toArray().reverse().slice(0, ef);
+        return W.toArray()//.reverse().slice(0, ef);
     }
 
-    search(q, K, ef = null) {
-        ef = ef || 1;
-        let ep = this._ep;
+    /**
+     * 
+     * @param {*} q - query element.
+     * @param {*} K - number of nearest neighbors to return.
+     * @param {*} ef - size of the dynamic cnadidate list.
+     * @returns K nearest elements to q.
+     */
+    search(q, K, ef = 1) {
+        let ep = this._ep.slice();
         let L = this._L;
         for (let l_c = L; l_c > 0; --l_c) {
             ep = this._search_layer(q, ep, ef, l_c);
@@ -2394,19 +2349,18 @@ class HNSW {
         return ep;
     }
 
-    * search_iter(q, K, ef = null) {
-        ef = ef || 1;
-        let ep = this._ep ? Array.from(this._ep): null;
+    * search_iter(q, K, ef = 1) {
+        let ep = this._ep.slice();
         let L = this._L;
-        yield {l_c: L, ep: [q]};
+        yield {"l_c": L, "ep": [q]};
         for (let l_c = L; l_c > 0; --l_c) {
-            yield {l_c: l_c, ep: ep};
+            yield {"l_c": l_c, "ep": ep};
             ep = this._search_layer(q, ep, ef, l_c);
-            yield {l_c: l_c, ep: ep};
+            yield {"l_c": l_c, "ep": ep};
         }
-        yield {l_c: 0, ep: ep};
+        yield {"l_c": 0, "ep": ep};
         ep = this._search_layer(q, ep, K, 0);
-        yield {l_c: 0, ep: ep};
+        yield {"l_c": 0, "ep": ep};
     }
 }
 

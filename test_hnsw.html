@@ -13,14 +13,15 @@
     <script src="dist/druid.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
 <script>
-    let h = new sci.HNSW(sci.euclidean);
-    //let h = new druid.HNSW(druid.euclidean);
+    //let h = new sci.HNSW(sci.euclidean);
+    let r = new druid.Randomizer(1987);
+    let h = new druid.HNSW(druid.euclidean, true);
     const dim = 2;
-    const from = 0;
+    const from = 20;
     const to = 100;
     const N = 1000;
 
-    create = (a = null) => {
+    /*create = (a = null) => {
         let res = [];
         for (let i = 0; i < dim; ++i) {
             let val = a || (Math.random() * Math.abs(to - from) + from);
@@ -42,7 +43,10 @@
     add(N)
 
     console.log(h)
-    let s = create(1);
+    let s = create(1);*/
+    let list = new druid.Matrix(N, dim, (i) => true ? (r.random * (to - from) + from) : -(r.random * (to - from) + from)).to2dArray
+    h.add(list)
+    console.log(list)
     let K = 5;
     //let search = h.search(s, K);
     //console.log(K, "neighbors from", s, ":", search)

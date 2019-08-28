@@ -21,7 +21,7 @@
         .attr("height", height)
         .style("border", "1px solid lightgrey")
 
-    let N = 10000
+    let N = 1000
     let D = 2
     let data = druid.linspace(1, N).map(_ => druid.linspace(1, D).map(_ => (Math.random() - .5) * 8))
     console.log(data)
@@ -39,16 +39,26 @@
             .attr("fill", "transparent")
             .attr("stroke", "darkgrey")
 
-    let kd = new druid.BallTree(data, druid.euclidean);
-    console.log(kd)
-
+    let metric_counter = 0;
+    const _metric = druid.euclidean;
+    const metric = (a, b) => {
+        metric_counter++;
+        return _metric(a, b)
+    }
+    let start = Date.now()
+    console.log("start", start)
+    let kd = new druid.BallTree(data, metric);
+    let end = Date.now()
+    console.log("end", end)
+    console.log((end - start) / 1000 + "s", "\nmetric_counter", metric_counter)
+    
     svg.on("mousemove", function() {
         let { offsetX: mx, offsetY: my } = d3.event;
         mx = x.invert(mx)
         my = y.invert(my)
         let q_ = new Array(D - 2).fill(0)
         let q = [mx, my, ...q_]
-        let nn = kd.search(q).toArray().map(d => d.element.element)
+        let nn = kd.search(q).toArray().map(d => d.element)
         console.log(nn)
         draw_nn(nn);
     }).on("mouseleave", function() {

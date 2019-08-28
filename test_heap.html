@@ -10,17 +10,106 @@
     <script src="dist/druid.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
 <script>
-    let A = druid.linspace(0,300)
-    let G = new druid.Heap(A)
-
+    let r = new druid.Randomizer(1987);
+    let A = r.choice(druid.linspace(0,300), 200);
+    console.log(A)
+    let G = new druid.Heap(null, d => d, "min")
+    //
+    console.log(G)
     let width = 1200
     let height = 600
+    const body = d3.select("body")
+    body.append("button")
+        .text("pop")
+        .on("click", () => {
+            p.text(p.text() + ", " + G.pop().element)
+            g.text(G.toArray())
+            draw_heap()
+        })
 
+    body.append("button")
+        .text("push")
+        .on("click", () => {
+            G.push(A.pop())
+            g.text(G.toArray())
+            draw_heap()
+        })
+
+    body.append("button")
+        .text("push all")
+        .on("click", () => A.forEach(a => {
+            G.push(a)
+            g.text(G.toArray())
+            draw_heap()
+        }));
+    body.append("p")
+        .text(A)
+    body.append("p")
+        .attr("height", "1rem")
+        .text(" " + G.toArray())
+    let g = body.append("p")
+
+        .text(" " + G.toArray())
+    let p = body.append("p")
+
+    
     let svg = d3.select("body").append("svg")
         .attr("width", width)
         .attr("height", height)
 
-    let h = Math.floor(Math.log2(A.length));
+    draw_heap()
+    function draw_heap() {
+        let data = G._container
+        
+        let path = d3.line(d3.curveNatural)
+        svg.selectAll("path")
+            .data(data)
+            .exit().remove()
+        svg.selectAll("path")
+            .data(data)
+            .enter()
+                .append("path")
+                .attr("fill", "transparent")
+                .attr("stroke", "grey")
+            .merge(svg.selectAll("path"))
+                .attr("d", (d, i) => {
+                    let node = getXY(i)
+                    let child1 = getXY(2 * i + 1)
+                    let child2 = getXY(2 * i + 2)
+                    
+                    let p1 = path([node, child1])
+                    let p2 = path([node, child2])
+                    let p = ""
+                    if (2 * i + 1 < G._container.length) p += p1
+                    if (2 * i + 2 < G._container.length) p += " " + p2
+                    return p
+                })
+
+        svg.selectAll("text")
+            .data(data)
+                .exit().remove()
+        svg.selectAll("text")
+            .data(data)
+            .enter()
+                .append("text")
+                .attr("text-anchor", "middle")
+            .merge(svg.selectAll("text"))
+                .attr("x", (d,i) => getXY(i)[0])
+                .attr("y", (d,i) => getXY(i)[1])
+                .text(d => d.element)
+
+        
+    }
+
+    function getXY(i) {
+        const l = 2 ** Math.floor(Math.log2(G.length)) * 30 / 2;
+        return [
+            i * 30 + 5 - 2 ** Math.floor(Math.log2(i + 1)) * 45 + l, 
+            40 + Math.floor(Math.log2(i + 1)) * 40
+        ]
+    }
+
+    /*let h = Math.floor(Math.log2(A.length));
 
     for (let i = 0, n = G.length; i < n; ++i) {
         let e = Math.floor(Math.log2(i + 1))
@@ -40,7 +129,7 @@
             .attr("dy", 10 + (height - 20) / h * e)
             .attr("dx", cx)
             .text(G._container[i].value)
-    }
+    }*/
 
 </script>
 </body>

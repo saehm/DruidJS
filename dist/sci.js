@@ -1463,7 +1463,7 @@ class Heap {
             this._comparator = comparator;
         }
 
-        console.log(arr)
+        //console.log(arr)
         if (arr && arr.length > 0) {
             let self = this;
             arr.forEach(d => self.push(d));
