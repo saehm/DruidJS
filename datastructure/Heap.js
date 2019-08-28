@@ -23,7 +23,7 @@ export class Heap {
             if (comparator == "min") {
                 this._comparator = (a, b) => a < b;
             } else if (comparator == "max") {
-                this._comparator = (a, b) => b > a;
+                this._comparator = (a, b) => a > b;
             } else {
                 this._comparator = comparator;
             }
@@ -145,6 +145,13 @@ export class Heap {
         return this._container
             .map(d => d.element)
             .sort((a,b) => this._comparator(a, b) ? -1 : 0)
+    }
+
+    /**
+     * Returns raw data
+     */
+    data() {
+        return this._container.map(d => d.element)
     }
 
     /**

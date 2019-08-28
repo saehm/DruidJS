@@ -25,7 +25,7 @@ export class HNSW {
         this._m = m;
         this._ef = ef;
         this._m0 = m0 || 2 * m;
-        this._graph = new Map();
+        this._graph = [];
         this._ep = null;
         this._L = null;
         this._mL = mL || 1 / Math.log2(m);
@@ -47,62 +47,77 @@ export class HNSW {
         const m0 = this._m0;
         const mL = this._mL;
         const randomizer = this._randomizer;
-        let graph = this._graph;
+        const graph = this._graph;
         for (const element of elements) {
             let ep = this._ep ? this._ep.slice() : null;
             let W = [];
-            const L = this._L;
+            let L = this._L;
             const rand = Math.min(randomizer.random + 1e-8, 1);
             let l = Math.floor(-Math.log(rand * mL))
-            const min_L_l = Math.min(L, l);
+            let min_L_l = Math.min(L, l);
+
             if (L) {
-                for (let l_c = graph.size - 1; l_c > min_L_l; --l_c) {
+                for (let l_c = graph.length - 1; l_c > min_L_l; --l_c) {
                     ep = this._search_layer(element, ep, 1, l_c);
                 }
                 for (let l_c = min_L_l; l_c >= 0; --l_c) {
-                    const layer_c = graph.get(l_c);//[l_c];
+                    const layer_c = graph[l_c];
                     layer_c.points.push(element)
                     W = this._search_layer(element, ep, ef, l_c);
                     const neighbors = l_c > 3 ? this._select(element, W, m, l_c) : this._select_simple(element, W, m);
                     for (const p of neighbors) {
                         if (p !== element) {
-                            const edges_p = layer_c.edges.get(p);
-                            if (!edges_p) {
-                                layer_c.edges.set(p, [element]) ;
-                            }else {
-                                edges_p.push(element);
-                            }
-                            const edges_e = layer_c.edges.get(element);
-                            if (!edges_e) {
-                                layer_c.edges.set(element, [p]) ;
-                            } else {
-                                edges_e.push(p);
-                            }
+                            //let distance = metric(p, element);
+                            layer_c.edges.push({
+                                "idx1": p, 
+                                "idx2": element, 
+                                ///distance: distance
+                            });
+                            layer_c.edges.push({
+                                "idx1": element, 
+                                "idx2": p, 
+                                //distance: distance
+                            });
                         }
                     }
                     const max = (l_c === 0 ? m0 : m);
                     for (const e of neighbors) {
-                        const e_conn = layer_c.edges.get(e);
+                        const e_conn = layer_c.edges
+                            .filter(edge => edge.idx1 === e)
+                            .map(edge => edge.idx2);
                         if (e_conn.length > max) {
                             const neighborhood = this._select(e, e_conn, max, l_c);
-                            layer_c.edges.delete(e);
-                            layer_c.edges.set(e, neighborhood);
+                            layer_c.edges = layer_c.edges
+                                .filter(edge => edge.idx1 !== e);
+                            for (const neighbor of neighborhood) {
+                                if (e !== neighbor) {
+                                    //let distance = metric(e, neighbor);
+                                    layer_c.edges.push({
+                                        "idx1": e, 
+                                        "idx2": neighbor, 
+                                        //distance: distance
+                                    });
+                                }
+                            }
                         }
                     }
                     ep = W;
                 }
             }
-            let N = graph.size;
-            if (N < l || l > L) {
-                for (let i = N; i <= l; ++i) {
-                    graph.set(i, {
+            if (graph.length < l || l > L) {
+                for (let i = graph.length; i <= l; ++i) {
+                    const new_layer = {
                         "l_c": i, 
                         "points": [element], 
-                        "edges": new Map(),
-                    });
+                        "edges": [],
+                    };
+                    graph.push(new_layer);
+                    if (i === l) {
+                        this._ep = [element];
+                        this._L = l;
+                    }
                 }
-                this._ep = [element];
-                this._L = l;
+                //graph = graph.sort((a, b) => a.l_c - b.l_c);
             }
         }
         return this;
@@ -119,17 +134,16 @@ export class HNSW {
      * @returns M elements selected by the heuristic.
      */
     _select_heuristic(q, candidates, M, l_c, extend_candidates = true, keep_pruned_connections = true) {
-        if (l_c > this._graph.size - 1) return candidates
+        if (l_c > this._graph.length - 1) return candidates
         const metric = this._metric;
         const randomizer = this._randomizer;
-        const layer = this._graph.get(l_c);
+        const layer = this._graph[l_c];
         let R = [];
         let W_set = new Set(candidates);
         if (extend_candidates) {
             for (const c of candidates) {
-                const edges = layer.edges.get(c);
-                if (!edges) break;
-                for (const c_adj of edges) {
+                const edges = layer.edges.filter(edge => edge.idx1 === c)
+                for (const {idx2: c_adj} of edges) {
                     W_set.add(c_adj)
                 }
             }
@@ -176,23 +190,21 @@ export class HNSW {
      */
     _search_layer(q, ep, ef, l_c) {
         const metric = this._metric;
-        const layer = this._graph.get(l_c)//.find(l => l.l_c === l_c);//[l_c];
-        if (layer.edges.size === 0) return ep;
-        let v = new Set(ep);
-        let C = new Heap(v, d => metric(d, q), "min");
-        let W = new Heap(v, d => metric(d, q), "max");
+        const layer = this._graph[l_c];
+        if (layer.edges.length === 0) return ep;
+        const v = new Set(ep);
+        const C = new Heap(v, d => metric(d, q), "min");
+        const W = new Heap(v, d => metric(d, q), "max");
         while (!C.empty) {
             const c = C.pop();
-            let f = W.first;
+            const f = W.first;
             if (c.value > f.value) {
                 break;
             }
-            const edges = layer.edges.get(c.element);
-            if (!edges) break;
-            for (const e of edges) {
+            const edges = layer.edges.filter(e => e.idx1 === c.element)
+            for (const {idx2: e} of edges) {
                 if (!v.has(e)) {
                     v.add(e);
-                    f = W.first;
                     if (metric(e, q) < metric(f.element, q) || W.length < ef) {
                         C.push(e);
                         W.push(e);
@@ -202,8 +214,9 @@ export class HNSW {
                     }
                 }
             }
+            console.log(W.toArray(), C.toArray())
         }
-        return W.data();
+        return W.toArray()//.reverse().slice(0, ef);
     }
 
     /**
