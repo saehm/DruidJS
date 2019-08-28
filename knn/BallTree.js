@@ -1,15 +1,20 @@
 import { euclidean } from "../metrics/index";
 import { Heap } from "../datastructure/index";
 /**
- * @memberof module:knn
+ * @class
+ * @alias BallTree
  */
 export class BallTree {
     /**
      * Generates a BallTree with given {@link elements}.
-     * @param {Array} elements - Elements which should be added to the BallTree
-     * @param {function} metric metric to use: (a, b) => distance
+     * @constructor
+     * @memberof module:knn
+     * @alias BallTree
+     * @param {Array=} elements - Elements which should be added to the BallTree
+     * @param {Function} [metric = euclidean] metric to use: (a, b) => distance
      * @see {@link https://en.wikipedia.org/wiki/Ball_tree}
      * @see {@link https://github.com/invisal/noobjs/blob/master/src/tree/BallTree.js}
+     * @returns {BallTree}
      */
     constructor(elements = null, metric = euclidean) {
         this._Node = class {
@@ -32,6 +37,11 @@ export class BallTree {
         return this;
     }
 
+    /**
+     * 
+     * @param {Array<*>} elements - new elements.
+     * @returns {BallTree}
+     */
     add(elements) {
         elements = elements.map((element, index) => {
             return {index: index, element: element}
@@ -40,6 +50,11 @@ export class BallTree {
         return this;
     }
 
+    /**
+     * @private
+     * @param {Array<*>} elements 
+     * @returns {Node} root of balltree.
+     */
     _construct(elements) {
         if (elements.length === 1) {
             return new this._Leaf(elements);
@@ -58,13 +73,15 @@ export class BallTree {
             } else {
                 B = new this._Leaf(elements)
             }
-            //if (this._root === null) this._root = B;
             return B;
-        } /*else {
-            return null;
-        }*/
+        }
     }
 
+    /**
+     * @private
+     * @param {Node} B 
+     * @returns {Number}
+     */
     _greatest_spread(B) {
         let d = B[0].element.length;
         let start = new Array(d);
@@ -89,10 +106,23 @@ export class BallTree {
         return c
     }
 
-    search(t, k=5) {
+    /**
+     * 
+     * @param {*} t - query element.
+     * @param {Number} [k = 5] - number of nearest neighbors to return.
+     * @returns {Heap} - Heap consists of the {@link k} nearest neighbors.
+     */
+    search(t, k = 5) {
         return this._search(t, k, new Heap(null, d => this._metric(d.element, t), "max"), this._root);
     }
 
+    /**
+     * @private
+     * @param {*} t - query element.
+     * @param {Number} [k = 5] - number of nearest neighbors to return.
+     * @param {Heap} Q - Heap consists of the currently found {@link k} nearest neighbors.
+     * @param {Node|Leaf} B 
+     */
     _search(t, k, Q, B) {
         // B is Node
         if (Q.length >= k && B.pivot && B.radius && this._metric(t, B.pivot.element) - B.radius >= Q.first.value) {

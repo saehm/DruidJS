@@ -10,7 +10,7 @@ export class Heap {
      * @alias Heap
      * @param {Array=} elements - Contains the elements for the Heap. {@link elements} can be null.
      * @param {Function} [accessor = (d) => d] - Function returns the value of the element.
-     * @param {(String|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
+     * @param {("min"|"max"|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
      * @returns {Heap}
      * @see {@link https://en.wikipedia.org/wiki/Binary_heap}
      */
@@ -33,9 +33,9 @@ export class Heap {
 
     /**
      * Creates a Heap from an Array
-     * @param {Array=} elements - Contains the elements for the Heap.
-     * @param {Function=} accessor - Function returns the value of the element.
-     * @param {(String=|Function)} comparator - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
+     * @param {Array|Set} elements - Contains the elements for the Heap.
+     * @param {Function=} [accessor = (d) => d] - Function returns the value of the element.
+     * @param {(String=|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
      * @returns {Heap}
      */
     static heapify(elements, accessor = d => d, comparator = "min") {
@@ -53,14 +53,21 @@ export class Heap {
         return heap;
     }
 
+    /**
+     * Swaps elements of container array.
+     * @private
+     * @param {Number} index_a 
+     * @param {Number} index_b 
+     */
     _swap(index_a, index_b) {
         const container = this._container;
-        let tmp = container[index_b];
-        container[index_b] = container[index_a];
-        container[index_a] = tmp;
+        [container[index_b], container[index_a]] = [container[index_a], container[index_b]];
         return;
     }
 
+    /**
+     * @private
+     */
     _heapify_up() {
         const container = this._container;
         let index = container.length - 1;
@@ -89,6 +96,10 @@ export class Heap {
         return this;
     }
 
+    /**
+     * @private
+     * @param {Number} [start_index = 0] 
+     */
     _heapify_down(start_index=0) {
         const container = this._container;
         const comparator = this._comparator;
@@ -111,6 +122,7 @@ export class Heap {
 
     /**
      * Removes and returns the top entry of the heap.
+     * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).
      */
     pop() {
         const container = this._container;
@@ -127,11 +139,17 @@ export class Heap {
 
     /**
      * Returns the top entry of the heap without removing it.
+     * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).
      */
     get first() {
         return this._container.length > 0 ? this._container[0] : null;
     }
 
+
+    /**
+     * Yields the raw data
+     * @yields {Object} Object consists of the element and its value (computed by {@link accessor}).
+     */
     * iterate() {
         for (let i = 0, n = this._container.length; i < n; ++i) {
             yield this._container[i].element;
@@ -140,6 +158,7 @@ export class Heap {
 
     /**
      * Returns the heap as ordered array.
+     * @returns {Array} Array consisting the elements ordered by {@link comparator}.
      */
     toArray() {
         return this._container
@@ -149,6 +168,7 @@ export class Heap {
 
     /**
      * Returns raw data
+     * @returns {Array} Array consisting the elements.
      */
     data() {
         return this._container.map(d => d.element)
@@ -156,6 +176,7 @@ export class Heap {
 
     /**
      * The size of the heap.
+     * @returns {Number}
      */
     get length() {
         return this._container.length;
@@ -163,6 +184,7 @@ export class Heap {
 
     /**
      * Returns false if the the heap has entries, true if the heap has no entries.
+     * @returns {Boolean}
      */
     get empty() {
         return this.length === 0;

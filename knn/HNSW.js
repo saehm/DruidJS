@@ -12,12 +12,15 @@ export class HNSW {
      * @constructor
      * @memberof module:knn
      * @alias HNSW
-     * @param {*} metric metric to use: (a, b) => distance
-     * @param {*} heuristic use heuristics or naive selection
-     * @param {*} m max number of connections
-     * @param {*} ef size of candidate list
-     * @param {*} m0 max number of connections for ground layer 
+     * @param {Function} [metric = euclidean] - metric to use: (a, b) => distance.
+     * @param {Boolean} [heuristic = true] - use heuristics or naive selection.
+     * @param {Number} [m = 5] - max number of connections.
+     * @param {Number} [ef = 200] - size of candidate list.
+     * @param {Number} [m0 = 2 * m] - max number of connections for ground layer.
+     * @param {Number} [mL = 1 / Math.log2(m)] - normalization factor for level generation.
+     * @param {Number} [seed = 1987] - seed for random number generator.
      * @see {@link https://arxiv.org/abs/1603.09320}
+     * @see {@link https://arxiv.org/pdf/1904.02077}
      */
     constructor(metric = euclidean, heuristic = true, m = 5, ef = 200, m0 = null, mL = null, seed = 1987) {
         this._metric = metric;
@@ -38,7 +41,7 @@ export class HNSW {
 
     /**
      * 
-     * @param {Array} elements - new elements.
+     * @param {Array<*>} elements - new elements.
      * @returns {HNSW}
      */
     add(elements) {
@@ -109,13 +112,13 @@ export class HNSW {
     }
 
     /**
-     * 
+     * @private
      * @param {*} q - base element.
-     * @param {*} candidates - candidate elements.
-     * @param {*} M - number of neighbors to return.
-     * @param {*} l_c - layer number.
-     * @param {*} extend_candidates - flag indicating wheter or not to extend candidate list.
-     * @param {*} keep_pruned_connections - flag indicating wheter or not to add discarded elements.
+     * @param {Array} candidates - candidate elements.
+     * @param {Number} M - number of neighbors to return.
+     * @param {Number} l_c - layer number.
+     * @param {Boolean} [extend_candidates = true] - flag indicating wheter or not to extend candidate list.
+     * @param {Boolean} [keep_pruned_connections = true] - flag indicating wheter or not to add discarded elements.
      * @returns M elements selected by the heuristic.
      */
     _select_heuristic(q, candidates, M, l_c, extend_candidates = true, keep_pruned_connections = true) {
@@ -154,11 +157,11 @@ export class HNSW {
     }
 
     /**
-     * 
+     * @private
      * @param {*} q - base element.
-     * @param {*} C - candidate elements.
-     * @param {*} M - number of neighbors to return.
-     * @returns M nearest elements from C to q.
+     * @param {Array} C - candidate elements.
+     * @param {Number} M - number of neighbors to return.
+     * @returns {Array} M nearest elements from C to q.
      */
     _select_simple(q, C, M) {
         const metric = this._metric;
@@ -167,12 +170,12 @@ export class HNSW {
     }
 
     /**
-     * 
+     * @private
      * @param {*} q - query element.
-     * @param {*} ep - enter points.
-     * @param {*} ef - number of nearest to {@link q} elements to return.
-     * @param {*} l_c - layer number.
-     * @returns ef closest neighbors to q.
+     * @param {Array} ep - enter points.
+     * @param {Number} ef - number of nearest to {@link q} elements to return.
+     * @param {Number} l_c - layer number.
+     * @returns {Array} ef closest neighbors to q.
      */
     _search_layer(q, ep, ef, l_c) {
         const metric = this._metric;
@@ -211,7 +214,7 @@ export class HNSW {
      * @param {*} q - query element.
      * @param {*} K - number of nearest neighbors to return.
      * @param {*} ef - size of the dynamic cnadidate list.
-     * @returns K nearest elements to q.
+     * @returns {Array} K nearest elements to q.
      */
     search(q, K, ef = 1) {
         let ep = this._ep.slice();
@@ -223,6 +226,13 @@ export class HNSW {
         return ep;
     }
 
+    /**
+     * Iterator for searching the HNSW graphs
+     * @param {*} q - query element.
+     * @param {*} K - number of nearest neighbors to return.
+     * @param {*} ef - size of the dynamic cnadidate list.
+     * @yields {Array} K nearest elements to q.
+     */
     * search_iter(q, K, ef = 1) {
         let ep = this._ep.slice();
         let L = this._L;

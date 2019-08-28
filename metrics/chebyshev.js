@@ -1,10 +1,10 @@
 /**
- * Computes the Chebyshev distance between vector {@link a} and {@link b}.
+ * Computes the chebyshev distance (l_∞) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias chebyshev
- * @param {Array} a 
- * @param {Array} b 
- * @returns {float64} the Chebyshev distance between vector {@link a} and {@link b}.  
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the chebyshev distance between {@link a} and {@link b}.  
  */
 export default function(a, b) {
     if (a.length != b.length) return undefined
