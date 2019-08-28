@@ -1,3 +1,6 @@
 node_modules
 doc
 dist
+data
+.vscode
+test*.html
