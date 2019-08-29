@@ -6,7 +6,7 @@ export default function(A, metric = euclidean) {
     let n = A.length;
     let D = new Array(n);
     for (let i = 0; i < n; ++i) {
-        D[i] = new Float64Array(n);
+        D[i] = new Array(n);
     }
     for (let i = 0; i < n; ++i) {
         for (let j = i + 1; j < n; ++j) {
