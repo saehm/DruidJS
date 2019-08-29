@@ -1,5 +1,12 @@
 import { neumair_sum } from "../numerical/index";
-
+/**
+ * Computes the squared euclidean distance (l_2^2) between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias euclidean_squared
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the squared euclidean distance between {@link a} and {@link b}.  
+ */
 export default function(a, b) {
     if (a.length != b.length) return undefined
     let n = a.length

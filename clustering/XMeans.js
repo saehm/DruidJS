@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Source: clustering/XMeans.js</title>
-
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
-
-<body>
-
-<div id="main">
-
-    <h1 class="page-title">Source: clustering/XMeans.js</h1>
-
-    
-
-
-
-    
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>import { euclidean, euclidean_squared } from "../metrics/index";
+import { euclidean, euclidean_squared } from "../metrics/index";
 import { Matrix, linspace } from "../matrix/index";
 import { KMeans } from "../clustering/index";
 /**
@@ -78,10 +50,10 @@ export class XMeans{
             const child_kmeans = [];
             const child_indices = [];
             // foreach cluster
-            for (let j = 0; j &lt; K; ++j) {
+            for (let j = 0; j < K; ++j) {
                 const cluster = clusters[j];
                 console.log(cluster.length)
-                if (cluster.length &lt; K_max) continue;
+                if (cluster.length < K_max) continue;
                 const subset = Matrix.from(cluster.map(d => A.row(d)));
                 const subset_kmeans = new KMeans(subset, 2, metric, 1987, false);
                 subset_kmeans._randomizer = randomizer;
@@ -93,11 +65,11 @@ export class XMeans{
                 child_kmeans.push(subset_kmeans);
                 child_indices.push(j);
             }
-            //if (child_bic.length &lt; (K )) break;
+            //if (child_bic.length < (K )) break;
             //choose best
             let best_split = child_indices[0];
             let best_bic = child_bic[0];
-            for (let i = 0; i &lt; child_bic.length; ++i) {
+            for (let i = 0; i < child_bic.length; ++i) {
                 if (best_bic > child_bic[i]) {
                     best_split = child_indices[i];
                     best_bic = child_bic[i];
@@ -133,7 +105,7 @@ export class XMeans{
             }
             
 
-        } while (++K &lt; K_max)
+        } while (++K < K_max)
 
 
         // return best candidate.
@@ -146,11 +118,11 @@ export class XMeans{
         const candidates = this._candidates;
         let best_score = candidates[K_min].score;
         let best_candidate = candidates[K_min].kmeans;
-        for (let i = K_min + 1; i &lt; K_max; ++i) {
+        for (let i = K_min + 1; i < K_max; ++i) {
             if (!(i in candidates)) break;
             const candidate = candidates[i];
             const score = candidate.score
-            if (best_score &lt; score) {
+            if (best_score < score) {
                 best_score = score;
                 best_candidate = candidate.kmeans;
             }
@@ -166,11 +138,11 @@ export class XMeans{
         let result = 0;
 
         let variance = 0;
-        for (let i = 0; i &lt; K; ++i) {
+        for (let i = 0; i < K; ++i) {
             const cluster = clusters[i];
             const centroid = centroids[i];
             const n = cluster.length;
-            for (let j = 0; j &lt; n; ++j) {
+            for (let j = 0; j < n; ++j) {
                 variance += euclidean_squared(centroid, A.row(indices[cluster[j]])) ** 2;
             }
         }
@@ -178,7 +150,7 @@ export class XMeans{
         const p = (K - 1) + D * K + 1;
         variance /= (N - K);
 
-        for (let i = 0; i &lt; K; ++i) {
+        for (let i = 0; i < K; ++i) {
             const n = clusters[i].length;
             const log_likelihood = 
                 (n * Math.log(2 * Math.PI) -
@@ -192,26 +164,3 @@ export class XMeans{
     }
     
 }
-</code></pre>
-        </article>
-    </section>
-
-
-
-
-</div>
-
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3>
-</nav>
-
-<br class="clear">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Thu Aug 29 2019 19:53:30 GMT+0200 (Mitteleuropäische Sommerzeit)
-</footer>
-
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
-</html>

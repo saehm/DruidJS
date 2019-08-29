@@ -1,8 +1,20 @@
 import { euclidean } from "../metrics/index";
 
-// https://github.com/jasondavies/science.js/blob/master/src/stats/hcluster.js
-
+/**
+ * @class
+ * @alias Hierarchical_Clustering
+ */
 export class Hierarchical_Clustering {
+    /**
+     * @constructor
+     * @memberof module:clustering
+     * @alias Hierarchical_Clustering
+     * @todo needs restructuring. 
+     * @param {Matrix} matrix 
+     * @param {("single"|"complete"|"average")} [linkage = "single"] 
+     * @param {Function} [metric = euclidean] 
+     * @returns {Hierarchical_Clustering}
+     */
     constructor(matrix, linkage="single", metric=euclidean) {
         this._id = 0;
         this._matrix = matrix;
@@ -13,6 +25,12 @@ export class Hierarchical_Clustering {
         return this;
     }
 
+    /**
+     * 
+     * @param {Number} value - value where to cut the tree.
+     * @param {("distance"|"depth")} [type = "distance"] - type of value.
+     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     */
     get_clusters(value, type="distance") {
         let clusters = [];
         let accessor;
@@ -30,6 +48,13 @@ export class Hierarchical_Clustering {
         return clusters
     }
 
+    /**
+     * @private
+     * @param {} node 
+     * @param {*} f 
+     * @param {*} value 
+     * @param {*} result 
+     */
     _traverse(node, f, value, result) {
         if (f(node) <= value) {
             result.push(node.leaves())
@@ -39,6 +64,9 @@ export class Hierarchical_Clustering {
         }
     }
 
+    /**
+     * computes the tree.
+     */
     init() {
         const metric = this._metric;
         const A = this._matrix;
@@ -55,7 +83,6 @@ export class Hierarchical_Clustering {
                 }
             }
         }
-
         const clusters = this._clusters = new Array(n);
         const c_size = this._c_size = new Uint16Array(n);
         for (let i = 0; i < n; ++i) {
@@ -66,6 +93,9 @@ export class Hierarchical_Clustering {
         return this;
     }
 
+    /**
+     * computes the tree.
+     */
     do() {
         const n = this._n;
         const d_min = this._d_min;
@@ -74,7 +104,6 @@ export class Hierarchical_Clustering {
         const c_size = this._c_size;
         const linkage = this._linkage;
         let root = null;
-
         for (let p = 0, p_max = n - 1; p < p_max; ++p) {
             let c1 = 0;
             for (let i = 0; i < n; ++i) {
@@ -83,14 +112,11 @@ export class Hierarchical_Clustering {
                 }
             }
             let c2 = d_min[c1];
-
             let c1_cluster = clusters[c1][0];
             let c2_cluster = clusters[c2][0];
-
             let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2]);
             clusters[c1].unshift(new_cluster);
             c_size[c1] += c_size[c2];
-
             for (let j = 0; j < n; ++j) {
                 switch(linkage) {
                     case "single":
@@ -108,9 +134,7 @@ export class Hierarchical_Clustering {
                         break;
                 }
             }
-
             D[c1][c1] = Infinity;
-
             for (let i = 0; i < n; ++i) {
                 D[i][c2] = D[c2][i] = Infinity;
             }
@@ -122,10 +146,8 @@ export class Hierarchical_Clustering {
                     d_min[c1] = j;
                 }
             }
-
             root = new_cluster
         }
-
         return root;
     }
     
@@ -141,16 +163,6 @@ class Cluster {
         this.size = size != null ? size : left.size + right.size;
         this.depth = depth != null ? depth : 1 + Math.max(left.depth, right.depth);
         this.centroid = centroid != null ? centroid : this._calculate_centroid(left, right);
-        /*if (centroid == null) {
-            const n = left.centroid.length;
-            const new_centroid = this.centroid = new Float64Array(n);
-            for (let i = 0; i < n; ++i) {
-                new_centroid[i] = (left.size * left.centroid[i] + right.size * right.centroid[i]) / this.size;
-            }
-        } else {
-            this.centroid = centroid;
-        }
-        console.log(left, right, this)*/
         return this;
     }
 
@@ -162,7 +174,6 @@ class Cluster {
         const size = this.size;
         const n = left.centroid.length;
         const new_centroid = new Float64Array(n);
-
         for (let i = 0; i < n; ++i) {
             new_centroid[i] = (l_size * l_centroid[i] + r_size * r_centroid[i]) / size;
         }

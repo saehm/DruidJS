@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Source: clustering/KMeans.js</title>
-
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
-
-<body>
-
-<div id="main">
-
-    <h1 class="page-title">Source: clustering/KMeans.js</h1>
-
-    
-
-
-
-    
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>import { euclidean } from "../metrics/index";
+import { euclidean } from "../metrics/index";
 import { Randomizer } from "../util/index";
 import { Heap } from "../datastructure/index";
 import { linspace } from "../matrix/index";
@@ -64,7 +36,7 @@ export class KMeans {
     }
 
     /**
-     * @returns {Array&lt;Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
+     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
      */
     get_clusters() {
         const K = this._K;
@@ -88,7 +60,7 @@ export class KMeans {
             (d) => {
                 const Ad = A.row(d)
                 let sum = 0;
-                for (let j = 0; j &lt; i; ++j) {
+                for (let j = 0; j < i; ++j) {
                     sum += metric(Ad, points[j])
                 }
                 return sum;
@@ -108,7 +80,7 @@ export class KMeans {
         cluster_centroids[0] = A.row(random_point);
         const init_points = [random_point];
         const sample_size = Math.floor((N - K) / K);// / K
-        for (let i = 1; i &lt; K; ++i) {
+        for (let i = 1; i < K; ++i) {
             // sampling + kmeans++ improvement?
             const sample = randomizer.choice(indices.filter(d => init_points.indexOf(d) == -1), sample_size);
             const furthest_point = this._furthest_point(cluster_centroids.slice(0, i), sample);
@@ -127,13 +99,13 @@ export class KMeans {
         const clusters = this._clusters;
         let clusters_changed = false;
         // find nearest cluster centroid.
-        for (let i = 0; i &lt; N; ++i) {
+        for (let i = 0; i < N; ++i) {
             const Ai = A.row(i)
             let min_dist = Infinity;
             let min_cluster = null;
-            for (let j = 0; j &lt; K; ++j) {
+            for (let j = 0; j < K; ++j) {
                 let d = metric(cluster_centroids[j], Ai);
-                if (d &lt; min_dist) {
+                if (d < min_dist) {
                     min_dist = d;
                     min_cluster = j; 
                 }
@@ -145,24 +117,24 @@ export class KMeans {
         }
         // update cluster centroid
         // reset cluster centroids to 0
-        for (let i = 0; i &lt; K; ++i) {
+        for (let i = 0; i < K; ++i) {
             const centroid = cluster_centroids[i];
-            for (let j = 0; j &lt; D; ++j) {
+            for (let j = 0; j < D; ++j) {
                 centroid[j] = 0;
             }
         }
         // compute centroid
         const cluster_counter = new Array(K).fill(0)
-        for (let i = 0; i &lt; N; ++i) {
+        for (let i = 0; i < N; ++i) {
             const Ai = A.row(i);
             const ci = clusters[i];
             cluster_counter[ci]++;
             const centroid = cluster_centroids[ci];
-            for (let j = 0; j &lt; D; ++j) {
+            for (let j = 0; j < D; ++j) {
                 centroid[j] += Ai[j];
             }
         }
-        for (let i = 0; i &lt; K; ++i) {
+        for (let i = 0; i < K; ++i) {
             const n = cluster_counter[i];
             cluster_centroids[i] = cluster_centroids[i].map(c => {
                 return c / n;
@@ -190,26 +162,3 @@ export class KMeans {
     }
     
 }
-</code></pre>
-        </article>
-    </section>
-
-
-
-
-</div>
-
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3>
-</nav>
-
-<br class="clear">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Thu Aug 29 2019 19:53:30 GMT+0200 (Mitteleuropäische Sommerzeit)
-</footer>
-
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
-</html>
