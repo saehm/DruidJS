@@ -2209,6 +2209,10 @@ class Node {
     }
 }
 
+/**
+ * @memberof module:knn
+ */
+
 class HNSW {
     /**
      * 

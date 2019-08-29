@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: BallTree</title>
+    <title>JSDoc: Class: HNSW</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: BallTree</h1>
+    <h1 class="page-title">Class: HNSW</h1>
 
     
 
@@ -29,7 +29,7 @@
 <header>
     
         <h2><span class="attribs"><span class="type-signature"></span></span>
-            <span class="ancestors"><a href="module-knn.html">knn</a>#</span>BallTree<span class="signature">(elements, metric)</span><span class="type-signature"></span></h2>
+            <span class="ancestors"><a href="module-knn.html">knn</a>#</span>HNSW<span class="signature">(metric, heuristic, m, ef, m0)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -42,16 +42,12 @@
     
 
     
-    <h4 class="name" id="BallTree"><span class="type-signature"></span>new BallTree<span class="signature">(elements, metric)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="HNSW"><span class="type-signature"></span>new HNSW<span class="signature">(metric, heuristic, m, ef, m0)</span><span class="type-signature"></span></h4>
     
 
     
 
 
-
-<div class="description">
-    <p>Generates a BallTree with given <code>elements</code>.</p>
-</div>
 
 
 
@@ -88,13 +84,127 @@
 
         <tr>
             
-                <td class="name"><code>elements</code></td>
+                <td class="name"><code>metric</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array</span>
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>metric to use: (a, b) =&gt; distance</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>heuristic</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>use heuristics or naive selection</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>m</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    5
+                
+                </td>
+            
+
+            <td class="description last"><p>max number of connections</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>ef</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    200
+                
+                </td>
+            
+
+            <td class="description last"><p>size of candidate list</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>m0</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
 
 
             
@@ -110,34 +220,7 @@
                 </td>
             
 
-            <td class="description last"><p>Elements which should be added to the BallTree</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>metric</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>metric to use: (a, b) =&gt; distance</p></td>
+            <td class="description last"><p>max number of connections for ground layer</p></td>
         </tr>
 
     
@@ -178,7 +261,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="knn_BallTree.js.html">knn/BallTree.js</a>, <a href="knn_BallTree.js.html#line14">line 14</a>
+        <a href="knn_HNSW.js.html">knn/HNSW.js</a>, <a href="knn_HNSW.js.html#line17">line 17</a>
     </li></ul></dd>
     
 
@@ -188,9 +271,7 @@
     <dt class="tag-see">See:</dt>
     <dd class="tag-see">
         <ul>
-            <li><a href="https://en.wikipedia.org/wiki/Ball_tree">https://en.wikipedia.org/wiki/Ball_tree</a></li>
-        
-            <li><a href="https://github.com/invisal/noobjs/blob/master/src/tree/BallTree.js">https://github.com/invisal/noobjs/blob/master/src/tree/BallTree.js</a></li>
+            <li><a href="https://arxiv.org/abs/1603.09320">https://arxiv.org/abs/1603.09320</a></li>
         </ul>
     </dd>
     
