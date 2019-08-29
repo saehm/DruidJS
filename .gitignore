@@ -1,0 +1,7 @@
+node_modules
+doc
+dist
+data
+.vscode
+test*.html
+*.bak[0-9]*
