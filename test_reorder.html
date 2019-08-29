@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        div {
+            display: inline-block;
+        }
+
+        body {
+            background-color: #222
+        }
+
+        svg {
+            background-color: #2a2a2a
+            /*border: 1px solid #111*/
+        }
+    </style>
+</head>
+<body>
+    <script src="dist/druid.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+<script>
+    const width = 600;
+    const height = width;
+    const margin = 10;
+
+    const color_scale = d3.scaleOrdinal(d3.schemeDark2)
+    /*let svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);*/
+
+    setup_canvas = (canvas) => {
+        let dpr = window.devicePixelRatio || 1;
+        let rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        let context = canvas.getContext("2d");
+        context.scale(dpr, dpr);
+        return context;
+    }
+    
+    const canvas = d3.select("body").append("div").append("canvas")
+        .attr("width", width)
+        .attr("height", height)
+        .style("width", width + "px")
+        .style("height", height + "px");
+
+    const context = setup_canvas(canvas.node());
+    const canvas2 = d3.select("body").append("div").append("canvas")
+        .attr("width", width)
+        .attr("height", height)
+        .style("width", width + "px")
+        .style("height", height + "px");
+    const context2 = setup_canvas(canvas2.node());
+
+    const c = d3.scaleOrdinal(d3.schemeDark2);
+
+    let randomizer = new druid.Randomizer(19870307);
+    let rand_c = d3.randomNormal(0, 6);
+    let rand = d3.randomNormal(0, 1);
+
+    let click
+    let A, clusters, N, D;
+    function init(para_clusters, para_N) {
+        clusters = para_clusters
+        N = para_N
+        const cluster_offsets = [];
+        for (let i = 0; i < clusters; ++i) {
+            cluster_offsets.push([rand_c() * 2, rand_c() * 2])
+        }
+        A = d3.range(N).map((d, i) => {
+            return [
+                rand() + cluster_offsets[Math.floor(i / (N / clusters))][0], 
+                rand() + cluster_offsets[Math.floor(i / (N / clusters))][1]]
+        })
+        A = druid.Matrix.from(druid.Randomizer.choice(druid.Matrix.from(A), A.length))
+
+        D = new druid.Matrix(N, N, (i,j) => druid.euclidean(A.row(i), A.row(j)))
+
+        draw(D)
+
+
+        click = (type) => {
+                let start = Date.now()
+                let re = new druid.Reorder(D)
+                let ordering = re.reorder(type, druid.euclidean)
+                console.log(ordering)
+                A = new druid.Matrix(N, 2, (i, j) => {
+                    return A.row(ordering[i])[j]
+                })
+                D = new druid.Matrix(N, N, (i,j) => druid.euclidean(A.row(i), A.row(j)))
+
+
+                draw(D)
+                let end = Date.now()
+                console.log((end - start) / 1000 + "sec")
+            }
+
+        //return {clusters: clusters, N: N, A: A, D: D}
+
+    }
+
+    init(10, 200)
+
+    let div = d3.select("body").append("div")
+    
+    let Ninput = div
+        .append("input")
+        .attr("type", "range")
+        .attr("min", 15)
+        .attr("max", 400)
+        .property("value", N)
+        .on("input", () => Ntext.text(Ninput.property("value")))
+    
+    let Ntext = div.append("label").text(N)
+    
+    div = d3.select("body").append("div")
+    let Cinput = div
+        .append("input")
+        .attr("type", "range")
+        .attr("min", 3)
+        .attr("max", 12)
+        .property("value", clusters)
+        .on("input", () => Ctext.text(Cinput.property("value")))
+    
+    let Ctext = div.append("label").text(clusters)
+
+
+    Ninput.on("change", () => init(Cinput.property("value"), Ninput.property("value")))
+    Cinput.on("change", () => init(Cinput.property("value"), Ninput.property("value")))
+    
+
+    /*click = (type) => {
+                let start = Date.now()
+                let re = new druid.Reorder(D)
+                console.log(type)
+                let ordering = re.reorder(type, druid.euclidean)
+                console.log(ordering)
+                A = new druid.Matrix(N, 2, (i, j) => {
+                    return A.row(ordering[i])[j]
+                })
+                D = new druid.Matrix(N, N, (i,j) => druid.euclidean(A.row(i), A.row(j)))
+
+
+                draw(D)
+                let end = Date.now()
+                console.log((end - start) / 1000 + "sec")
+            }*/
+
+
+    let button = d3.select("body")
+        .selectAll("button")
+        .data(["optimal_leaf_order", "spectral_order"])
+        .enter()
+        .append("button")
+        .text(d => "sort " + d)
+            .on("click", (d) => click(d))
+    
+    function draw(D) {
+        let x = d3.scaleLinear()
+            .domain([0, N])
+            .range([margin, width - margin])
+            .nice()
+        let y = d3.scaleLinear()
+            .domain([0, N])
+            .range([margin, height - margin])
+            .nice()
+
+        let c = d3.scaleLinear()
+            .domain(d3.extent(D._data))
+            .range(["darkseagreen", "seagreen"])
+        let data = D.to2dArray
+
+        /*svg.selectAll(".row")
+            .data(data)
+            .enter()
+            .append("g")
+                .attr("class", "row")
+                .attr("transform", (d,i) => `translate(0, ${y(i)})`)
+            .merge(svg.selectAll(".row"))
+                .each(function(d, i) {
+                    const g = d3.select(this)
+
+                    g.selectAll("rect")
+                        .data(d)
+                        .enter()
+                        .append("rect")
+                        .merge(g.selectAll("rect"))
+                            .attr("x", (d,i) => x(i))
+                            .attr("width", x(1) - x(0))
+                            .attr("height", y(1) - y(0))
+                            .attr("fill", d => c(d))
+                })*/
+        const w = x(1) - x(0)
+        const h = y(1) - y(0)
+        context.clearRect(0, 0, width, height)
+        for (let i = 0, n = data.length; i < n; ++i) {
+            for (let j = 0; j < n; ++j) {
+                context.fillStyle = c(data[i][j])
+                context.fillRect(x(i), y(j), w, h)
+            }
+        }
+
+        let data2 = A.to2dArray;
+        let x1 = d3.scaleLinear()
+            .domain(d3.extent(data2, d => d[0]))
+            .range([margin, width - margin])
+        let y1 = d3.scaleLinear()
+            .domain(d3.extent(data2, d => d[1]))
+            .range([margin, height - margin])
+
+        context2.clearRect(0,0,width, height);
+        for (let i = 0, n = data2.length; i < n; ++i) {
+            context2.beginPath()
+            //console.log(Math.floor(i / (N / clusters)))
+            context2.strokeStyle = "grey"; //color_scale(Math.floor(ordering[i] / (N / clusters)));
+            context2.arc(x1(data2[i][0]), y1(data2[i][1]), 2, 0, Math.PI * 2)
+            context2.stroke();
+        }
+    }
+
+</script>
+</body>
+</html>
