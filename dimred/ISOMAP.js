@@ -4,14 +4,33 @@ import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
 import { Heap } from "../datastructure/index";
 
+/**
+ * @class
+ * @alias ISOMAP
+ */
 export class ISOMAP{
-    constructor(X, neighbors, d=2, metric=euclidean) {
+
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias ISOMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {number} neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
+     * @param {number} [d = 2] - the dimensionality of the projection. 
+     * @param {function} [metric = euclidean] - the metric which defines the distance between two points. 
+     */
+    constructor(X, neighbors, d = 2, metric = euclidean) {
         this.X = X;
-        this.k = neighbors || Math.floor(this.X.shape[0] / 10)
+        this.k = neighbors || Math.floor(X.shape[0] / 10)
         this.d = d;
         this._metric = metric;
     }
 
+    /**
+     * Computes the projection.
+     * @returns {Matrix} Returns the projection.
+     */
     transform() {
         let X = this.X;
         let rows = X.shape[0];
@@ -33,6 +52,7 @@ export class ISOMAP{
         /*D = dijkstra(kNearestNeighbors);*/
         // compute shortest paths
         // TODO: make extern
+        /** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */
         let G = new Matrix(rows, rows, (i,j) => {
             let other = kNearestNeighbors[i].find(n => n.index === j);
             return other ? other.distance : Infinity
@@ -74,6 +94,9 @@ export class ISOMAP{
         return this.Y
     }
 
+    /**
+     * @returns {Matrix} Returns the projection.
+     */
     get projection() {
         return this.Y
     }

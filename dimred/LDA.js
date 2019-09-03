@@ -3,8 +3,23 @@ import { euclidean } from "../metrics/index";
 import { Randomizer } from "../util/index";
 import { simultaneous_poweriteration} from "../linear_algebra/index"
 
+/**
+ * @class
+ * @alias LDA
+ */
 export class LDA{
-    constructor(X, labels, d=2, metric=euclidean) {
+
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias LDA
+     * @param {Matrix} X - the high-dimensional data.
+     * @param {Array} labels - the label / class of each data point.
+     * @param {number} [d = 2] - the dimensionality of the projection.
+     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
+     */
+    constructor(X, labels, d = 2, metric = euclidean) {
         this.X = X;
         this._labels = labels;
         this.d = d;

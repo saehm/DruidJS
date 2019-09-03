@@ -1,8 +1,21 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
 import { Randomizer } from "../util/randomizer";
-
+/**
+ * @class
+ * @alias FASTMAP
+ */
 export class FASTMAP{
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias FASTMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {number} [d = 2] - the dimensionality of the projection.
+     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @returns {FASTMAP}
+     */
     constructor(X, d=2, metric=euclidean) {
         this.X = X;
         this.d = d;
@@ -11,6 +24,12 @@ export class FASTMAP{
         this.randomizer = new Randomizer(1212)
     }
 
+    /**
+     * Chooses two points which are the most distant in the actual projection.
+     * @private
+     * @param {function} dist 
+     * @returns {Array} An array consisting of first index, second index, and distance between the two points.
+     */
     _choose_distant_objects(dist) {
         let X = this.X;
         let N = X.shape[0];
@@ -35,6 +54,10 @@ export class FASTMAP{
         return [a_index, b_index, max_dist];
     }
 
+    /**
+     * Computes the projection.
+     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
+     */
     transform() {
         let X = this.X;
         let [ rows, D ] = X.shape;
@@ -76,6 +99,9 @@ export class FASTMAP{
         return this.Y;
     }
 
+    /**
+     * @returns {Matrix}
+     */
     get projection() {
         return this.Y
     }

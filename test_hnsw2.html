@@ -52,7 +52,7 @@
         let q = [mx, my, ...q_]
         let nn = kd.search(q, 5)
         console.log(nn)
-        nn = nn.map(d => d.element.element)
+        //nn = nn.map(d => d.element.element)
         draw_nn(nn);
     }).on("mouseleave", function() {
         draw_nn([])

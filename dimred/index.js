@@ -1,3 +1,6 @@
+/**
+ * @module dimensionality_reduction
+ */
 export { PCA } from "./PCA";
 export { MDS } from "./MDS";
 export { ISOMAP } from "./ISOMAP";

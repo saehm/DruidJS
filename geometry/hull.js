@@ -1,4 +1,4 @@
-import { euclidean } from "../metrics";
+import { euclidean } from "../metrics/index";
 
 // https://www.researchgate.net/profile/Hannu_Huhdanpaa/publication/242414606_The_Quickhull_Algorithm_for_Convex_Hulls/links/54e5f6970cf2bff5a4f1e7db.pdf
 export default function(X, metric = euclidean) {

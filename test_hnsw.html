@@ -9,12 +9,11 @@
 <body>
     <div id="div1"></div>
     <div id="div2" style="float:left"></div>
-    <script src="dist/sci.js"></script>
     <script src="dist/druid.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
 <script>
-    let h = new sci.HNSW(sci.euclidean);
-    //let h = new druid.HNSW(druid.euclidean);
+    //let h = new sci.HNSW(sci.euclidean);
+    let h = new druid.HNSW(druid.euclidean);
     const dim = 2;
     const from = 0;
     const to = 100;
@@ -37,7 +36,7 @@
             list.push(elem)
             ll.push(elem)
         }
-        h.add(...ll)
+        h.add(ll)
     }
     add(N)
 
@@ -73,11 +72,11 @@
 
     let svg2 = d3.select("#div2").append("svg")
         .attr("width", width * (Math.sqrt(2)))
-        .attr("height", (width / Math.sqrt(1 + 1/2)) * h._graph.length)
+        .attr("height", (width / Math.sqrt(1 + 1/2)) * h._graph.size)
         .style("background-color", "transparent")
 
     let layers = svg2.selectAll(".layer")
-        .data(h._graph.reverse())
+        .data(Array.from(h._graph.values()).reverse())
         .enter()
         .append("g")
             .attr("transform", (d,i) => `translate(${width / Math.sqrt(2)}, ${i * (width / Math.sqrt(1 + 1/2))}) matrix(0.707 0.409 -0.707 0.409 0 -0.816) `)
@@ -97,7 +96,18 @@
         .attr("stroke", "lightgrey")
             
     layers.selectAll("line")
-        .data(d => d.edges)
+        .data(d => {
+            const lines = []
+            for (const [idx1, v] of d.edges) {
+                for (const idx2 of v) {
+                    lines.push({
+                        idx1: idx1,
+                        idx2: idx2,
+                    })
+                }
+            }
+            return lines
+        })
         .enter()
         .append("line")
             .attr("x1", d => x(d.idx1[0]))
@@ -122,7 +132,6 @@
         .attr("transform", `translate(${width / Math.sqrt(2)}, ${0}) matrix(0.707 0.409 -0.707 0.409 0 -0.816) `)
     
     svg.on("mousemove", function() {
-        
         let { clientX: mx, clientY: my } = d3.event;
         mx = x.invert(mx)
         my = y.invert(my)
@@ -168,7 +177,7 @@
         go()
 
         function go() {
-            let duration = 400
+            let duration = 200
             let next = iter.next()
             let done = next.done
             if (done) {
@@ -187,11 +196,11 @@
                     .attr("fill", "crimson")
                 .merge(layer0.selectAll(".search"))
                 .transition().duration(duration)
-                    .attr("cx", d => x(d[0]) + (h._graph.length - 1 - l_c) * width)
-                    .attr("cy", d => y(d[1]) + (h._graph.length - 1 - l_c) * width)
+                    .attr("cx", d => x(d[0]) + (h._graph.size - 1 - l_c) * width)
+                    .attr("cy", d => y(d[1]) + (h._graph.size - 1 - l_c) * width)
             q_circle.transition().duration(duration)
-                .attr("cx", x(mx) + (h._graph.length - 1 - l_c) * width)                
-                .attr("cy", y(my) + (h._graph.length - 1 - l_c) * width)                
+                .attr("cx", x(mx) + (h._graph.size - 1 - l_c) * width)                
+                .attr("cy", y(my) + (h._graph.size - 1 - l_c) * width)                
             setTimeout(function(){ 
                 if (!done) {
                     go()

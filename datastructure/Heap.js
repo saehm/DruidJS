@@ -161,8 +161,7 @@ export class Heap {
      * @returns {Array} Array consisting the elements ordered by {@link comparator}.
      */
     toArray() {
-        return this._container
-            .map(d => d.element)
+        return this.data()
             .sort((a,b) => this._comparator(a, b) ? -1 : 0)
     }
 
@@ -171,7 +170,8 @@ export class Heap {
      * @returns {Array} Array consisting the elements.
      */
     data() {
-        return this._container.map(d => d.element)
+        return this._container
+            .map(d => d.element)
     }
 
     /**
