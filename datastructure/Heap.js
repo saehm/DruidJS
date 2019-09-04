@@ -166,12 +166,20 @@ export class Heap {
     }
 
     /**
-     * Returns raw data
+     * Returns elements of container array.
      * @returns {Array} Array consisting the elements.
      */
     data() {
         return this._container
             .map(d => d.element)
+    }
+
+    /**
+     * Returns the container array.
+     * @returns {Array} The container array.
+     */
+    raw_data() {
+        return this._container;
     }
 
     /**

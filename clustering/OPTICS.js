@@ -1,8 +1,5 @@
 import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/index";
 import { Heap } from "../datastructure/index";
-import { linspace } from "../matrix/index";
-import { ENETUNREACH } from "constants";
 
 /**
  * @class
@@ -28,7 +25,7 @@ export class OPTICS {
         this._metric = metric;
         this._ordered_list = [];
         this._clusters = [];
-        this._DB = new Array(N).fill();
+        this._DB = new Array(matrix.shape[0]).fill();
         this.init();
         return this;
     }
@@ -41,6 +38,9 @@ export class OPTICS {
         const matrix = this._matrix;
         const N = matrix.shape[0];
         const DB = this._DB;
+        const clusters = this._clusters;
+        let cluster_index = this._cluster_index = 0;
+
         for (let i = 0; i < N; ++i) {
             const e = matrix.row(i);
             DB[i] = {
@@ -50,10 +50,6 @@ export class OPTICS {
                 "processed": false,
             }
         }
-        
-        const clusters = this._clusters;
-        let cluster_index = this._cluster_index = 0;
-
         for (const p of DB) {
             if (p.processed) continue;
             p.neighbors = this._get_neighbors(p);
@@ -70,7 +66,7 @@ export class OPTICS {
     }
 
     _get_neighbors(p) {
-        //if ("neighbors" in p) return p.neighbors;
+        if ("neighbors" in p) return p.neighbors;
         const DB = this._DB;
         const metric = this._metric;
         const epsilon = this._epsilon;
@@ -111,19 +107,19 @@ export class OPTICS {
         const metric = this._metric;
         const core_distance = this._core_distance(p);
         const neighbors = this._get_neighbors(p);//p.neighbors;
-        for (const o of neighbors) {
-            if (o.processed) continue;
-            const new_reachability_distance = Math.max(core_distance, metric(p.element, o.element));
-            if (o.reachability_distance == undefined) { // o is not in seeds
-                o.reachability_distance = new_reachability_distance;
-                seeds.push(o);
-            } else { // o is in seeds
-                if (new_reachability_distance < o.reachability_distance) {
-                    o.reachability_distance = new_reachability_distance;
+        for (const q of neighbors) {
+            if (q.processed) continue;
+            const new_reachability_distance = Math.max(core_distance, metric(p.element, q.element));
+            //if (q.reachability_distance == undefined) { // q is not in seeds
+            if (seeds.raw_data().findIndex(d => d.element == q) < 0) {
+                q.reachability_distance = new_reachability_distance;
+                seeds.push(q);
+            } else { // q is in seeds
+                if (new_reachability_distance < q.reachability_distance) {
+                    q.reachability_distance = new_reachability_distance;
                     seeds = Heap.heapify(seeds.data(), d => d.reachability_distance, "min"); // seeds change key =/
                 }
             }
-            
         }
     }
 
@@ -142,7 +138,7 @@ export class OPTICS {
         }
     }
 
-    get_clusters(threshold) {
+    get_clusters() {
         /*const ordered_list = this._ordered_list;
         console.log(ordered_list.map(e => e.reachability_distance))
         const N = ordered_list.length;
