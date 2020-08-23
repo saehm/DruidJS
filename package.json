@@ -1,5 +1,5 @@
 {
-  "name": "druidjs",
+  "name": "@saehm/druidjs",
   "version": "0.1.0",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
@@ -14,8 +14,7 @@
     "url": "https://github.com/saehm/druidjs.git"
   },
   "publishConfig": { 
-    "registry": "http://npm.pkg.github.com/",
-    "strict-ssl": false
+    "registry": "https://npm.pkg.github.com/"
   },
   "author": {
     "name": "Rene Cutura",
