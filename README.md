@@ -1,2 +1,2 @@
-## DruidJS --- A JavaScript Library for Dimensionality Reduction.
+## DruidJS — A JavaScript Library for Dimensionality Reduction.
 
