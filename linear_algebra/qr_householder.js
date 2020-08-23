@@ -1,34 +1,40 @@
 import { Matrix, norm } from "../matrix/index";
 
+/**
+ * Computes the QR Decomposition of the Matrix {@link A} with householder transformations.
+ * @memberof module:linear_algebra
+ * @alias qr_householder
+ * @param {Matrix} A 
+ * @returns {{R: Matrix, Q: Matrix}}
+ * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections}
+ * @see {@link http://mlwiki.org/index.php/Householder_Transformation}
+ */
 export default function(A) {
-    let [rows, cols] = A.shape;
-    let Q = new Matrix(rows, rows, "identity");
-    let R = A.clone()
+    const [rows, cols] = A.shape;
+    const Q = new Matrix(rows, rows, "I");
+    const R = A.clone();
 
     for (let j = 0; j < cols; ++j) {
-        let x = R.get_block(j, j).col(0);
-        let x_norm = norm(x)
-        let x0 = x[0]
-        let rho = -Math.sign(x0);
-        let u1 = x0 - rho * x_norm;
-        let u = x.map(e => e / u1);
-        u[0] = 1;
-        let beta = -rho * u1 / x_norm;
+        const x = Matrix.from(R.col(j).slice(j));
+        const x_norm = norm(x);
+        const x0 = x.entry(0, 0)
+        const rho = -Math.sign(x0);
+        const u1 = x0 - rho * x_norm;
+        const u = x.divide(u1).set_entry(0, 0, 1);
+        const beta = -rho * u1 / x_norm;
 
-        //let u_outer_u = new Matrix(cols - j, cols - j, (i, j) => u[i] * u[j]);
-        u = Matrix.from(u, "col");
-        let R_j_0 = R.get_block(j, 0);
-        R.set_block(j, 0, R_j_0.sub(u.dot(u.T.dot(R_j_0)).mult(beta)))
-        let Q_0_j = Q.get_block(0, j);
-        Q.set_block(0, j, Q_0_j.sub(Q_0_j.dot(u).dot(u.T))) 
-    }
-
-    // repair R // numerical unstability?
-    for (let i = 1; i < rows; ++i) {
-        for (let j = 0; j < i; ++j) {
-            R.set_entry(i, j, 0)
+        const u_outer_u = u.outer(u);
+        const R_block = R.get_block(j, 0);
+        const new_R = R_block.sub(u_outer_u.dot(R_block).mult(beta));
+        const Q_block = Q.get_block(0, j);
+        const new_Q = Q_block.sub(Q_block.dot(u_outer_u).mult(beta));
+        R.set_block(j, 0, new_R);
+        Q.set_block(0, j, new_Q);
+        // numerical instability
+        for (let k = j + 1; k < rows; ++k) {
+            R.set_entry(k, j, 0);
         }
     }
-    return { R: R, Q: Q };
+    return {"R": R, "Q": Q};
 }
 

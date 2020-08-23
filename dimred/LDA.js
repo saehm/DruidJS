@@ -1,13 +1,14 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/index";
-import { simultaneous_poweriteration} from "../linear_algebra/index"
+import { simultaneous_poweriteration} from "../linear_algebra/index";
+import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias LDA
  */
-export class LDA{
+export class LDA extends DR {
+    static parameter_list = ["labels"];
 
     /**
      * 
@@ -18,14 +19,18 @@ export class LDA{
      * @param {Array} labels - the label / class of each data point.
      * @param {number} [d = 2] - the dimensionality of the projection.
      * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
      */
-    constructor(X, labels, d = 2, metric = euclidean) {
-        this.X = X;
-        this._labels = labels;
-        this.d = d;
-        this._metric = metric;
+    constructor(X, labels, d = 2, metric = euclidean, seed=1212) {
+        super(X, d, metric, seed);
+        super.parameter_list = druid.LDA.parameter_list;
+        this.parameter("labels", labels);
+        return this;
     }
 
+    /**
+     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     */
     transform() {
         let X = this.X;
         let [ rows, cols ] = X.shape;
@@ -81,10 +86,6 @@ export class LDA{
         this.Y = X.dot(V)
 
         // return embedding
-        return this.Y;
-    }
-
-    get projection() {
-        return this.Y;
+        return this.projection;
     }
 }

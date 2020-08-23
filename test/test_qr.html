@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>qr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0rem;
+            padding: 0rem;
+            font-family: sans-serif;
+        }
+
+        body > div {
+            margin: 0rem;
+            padding: 1rem;
+            background-color: #eee;
+        }
+
+        div > div {
+            padding: .25rem;
+        }
+
+        table {
+            background-color: white;
+            font-family: monospace;
+            font-size: .6rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        td {
+            border-left: 0px solid lightgrey;
+            font-weight: bold;
+            padding: .1rem;
+            margin: 0rem;
+            min-width: 3rem;
+            text-align: center;
+        }
+
+        td:nth-child(1) {
+            border-left: none;
+        }
+
+        tr {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+    <script src="dist/druid.js"></script>
+    <script src="test/d3.js"></script>
+</head>
+<body>
+    <script>
+        const N = 22;
+        const M = 12;
+        let A = new druid.Matrix(N, M, () => (Math.random() - .5) * 3);
+
+        let start = Date.now();
+        let qrh = druid.qr_householder(A)
+        let end = Date.now()
+        let qrh_time =  end - start;
+
+        start = Date.now();
+        let qr = druid.qr(A)
+        end = Date.now()
+        let qr_time =  end - start;
+
+        start = Date.now();
+        let qrg = druid.qr_givens(A)
+        end = Date.now()
+        let qrg_time =  end - start;
+
+        let div_data = d3.select("body").append("div").style("background-color", "#8b8");
+        div_data.append("h3")
+            .text("DATA")
+        
+        let div_err = d3.select("body").append("div").style("background-color", "lightsalmon");
+        div_err.append("h3").text("ERROR Q R - A")
+        
+        let div_ort = d3.select("body").append("div").style("background-color", "lightsteelblue");
+        div_ort.append("h3").text("ORTHOGONALITY Q^T Q should be I")
+        
+        let div_r = d3.select("body").append("div");
+        div_r.append("h3").text("R")
+        
+        let div_q = d3.select("body").append("div");
+        div_q.append("h3").text("Q")
+        
+        function draw_table(div, text, data) {
+            const c = div.append("div")
+                .style("display", "inline-block")
+            c.append("p").text(text + " Σ=" + druid.neumair_sum(data.flat()).toPrecision(5))
+            let d = c.append("table")
+            .selectAll("tr")
+            .data(data)
+            .enter()
+            .append("tr")
+                .selectAll("td")
+                .data(d => d)
+                .enter()
+                .append("td")
+                    .text(d => d.toPrecision(4))
+                    
+            if (div == div_err || div == div_ort) {
+                const [e1, e2] = d3.extent(data.flat())
+                const color = d3.scaleLinear()
+
+                if (e1 < 0 && e2 > 0)
+                    color
+                        .domain([e1, 0, e2])
+                        .range(["steelblue", "#555", "salmon"])
+                else if (e1 > 0 && e2 > 0)
+                    color
+                        .domain([0, e2])
+                        .range(["#555", "salmon"])
+                else (e1 < 0 && e2 < 0)
+                    color
+                        .domain([e1, 0])
+                        .range(["steelblue", "#555"])
+
+                d.style("color", d => color(d))
+            }
+
+            if (div == div_r) {
+                d.style("color", d => d == 0 ? "salmon" : "#555")
+            }
+        }
+
+        draw_table(div_data, "A", A.to2dArray)
+        let div_data_time = div_data.append("div")
+        div_data_time.append("p").text("QR time: " + qr_time)    
+        div_data_time.append("p").text("QR Householder time: " + qrh_time)    
+        div_data_time.append("p").text("QR Given time: " + qrg_time)    
+        
+
+        draw_table(div_ort, "qr Givens ORTHOGONALITY", qrg.Q.T.dot(qrg.Q).to2dArray)
+        draw_table(div_ort, "qr Householder ORTHOGONALITY", qrh.Q.T.dot(qrh.Q).to2dArray)
+        draw_table(div_ort, "qr ORTHOGONALITY", qr.Q.T.dot(qr.Q).to2dArray)
+
+        draw_table(div_err, "qr Givens error", qrg.Q.dot(qrg.R).sub(A).to2dArray)
+        draw_table(div_err, "qr Householder error", qrh.Q.dot(qrh.R).sub(A).to2dArray)
+        draw_table(div_err, "qr error", qr.Q.dot(qr.R).sub(A).to2dArray)
+
+        draw_table(div_q, "qr Givens Q", qrg.Q.to2dArray)
+        draw_table(div_q, "qr Householder Q", qrh.Q.to2dArray)
+        draw_table(div_q, "qr Q", qr.Q.to2dArray)
+
+        draw_table(div_r, "qr Givens R", qrg.R.to2dArray)
+        draw_table(div_r, "qr Householder R", qrh.R.to2dArray)
+        draw_table(div_r, "qr R", qr.R.to2dArray)
+        
+        /*let maxn = Math.min(qr.Q.shape[0], qrh.Q.shape[0]);
+        let maxm = Math.min(qr.Q.shape[1], qrh.Q.shape[1]);
+        let qrhq = qrh.Q;
+        let qrq = qr.Q;
+        let qrhr = qrh.R;
+        let qrr = qr.R;
+        draw_table(div_div, "div Q", new druid.Matrix(maxn, maxm, (i,j) => qrhq.entry(i,j) - qrq.entry(i,j)).to2dArray)
+        draw_table(div_div, "div R", new druid.Matrix(M, M, (i,j) => qrhr.entry(i,j) - qrr.entry(i,j)).to2dArray)*/
+    </script>
+</body>
+</html>

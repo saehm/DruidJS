@@ -1,5 +1,3 @@
-import { simultaneous_poweriteration } from "../linear_algebra/index";
-import { norm } from "../matrix/index";
 import { neumair_sum } from "../numerical/index";
 
 /**
@@ -79,17 +77,17 @@ export class Matrix{
             }
         }
         return this;
-        
     }
 
     /**
      * Creates a Matrix out of {@link A}.
      * @param {(Matrix|Array|Float64Array|number)} A - The matrix, array, or number, which should converted to a Matrix.
-     * @param {string} [type = "row"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector. 
+     * @param {"row"|"col"|"diag"} [type = "row"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector. 
      * @returns {Matrix}
      * 
      * @example
      * let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.
+     * let S = Matrix.from([1, 2, 3], "diag"); // creates a three by three matrix with 1, 2, 3 on its diagonal.
      */
     static from(A, type="row") {
         if (A instanceof Matrix) {
@@ -103,6 +101,8 @@ export class Matrix{
                     return new Matrix(1, m, (_, j) => A[j]);
                 } else if (type === "col") {
                     return new Matrix(m, 1, (i) => A[i]);
+                } else if (type === "diag") {
+                    return new Matrix(m, m, (i, j) => (i == j) ? A[i] : 0);
                 } else {
                     throw "1d array has NaN entries"
                 }
@@ -288,7 +288,11 @@ export class Matrix{
     dot(B) {
         if (B instanceof Matrix) {
             let A = this;
-            if (A.shape[1] !== B.shape[0]) return undefined;
+            if (A.shape[1] !== B.shape[0]) {
+                throw `A.dot(B): A is a ${A.shape.join(" x ")}-Matrix, B is a ${B.shape.join(" x ")}-Matrix: 
+                A has ${A.shape[1]} cols and B ${B.shape[0]} rows. 
+                Must be equal!`;
+            }
             let I = A.shape[1];
             let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
                 let A_i = A.row(row);
@@ -301,14 +305,16 @@ export class Matrix{
             return C;
         } else if (Array.isArray(B) || (B instanceof Float64Array)) {
             let rows = this._rows;
-            if (B.length !== rows) return undefined;
+            if (B.length !== rows)  {
+                throw `A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`
+            }
             let C = new Array(rows)
             for (let row = 0; row < rows; ++row) {
                 C[row] = neumair_sum(this.row(row).map(e => e * B[row]));
             }
             return C;
         } else {
-            return undefined;
+            throw `B must be Matrix or Array`;
         }
     }
 
@@ -334,45 +340,43 @@ export class Matrix{
     }
 
     /**
-     * Transforms A to bidiagonal form. (With Householder transformations)
-     * @param {Matrix} A 
+     * Appends matrix {@link B} to the matrix.
+     * @param {Matrix} B - matrix to append.
+     * @param {"horizontal"|"vertical"|"diag"} [type = "horizontal"] - type of concatenation.
+     * @returns {Matrix}
+     * @example
+     * 
+     * let A = Matrix.from([[1, 1], [1, 1]]); // 2 by 2 matrix filled with ones.
+     * let B = Matrix.from([[2, 2], [2, 2]]); // 2 by 2 matrix filled with twos.
+     * 
+     * A.concat(B, "horizontal"); // 2 by 4 matrix. [[1, 1, 2, 2], [1, 1, 2, 2]]
+     * A.concat(B, "vertical"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]
+     * A.concat(B, "diag"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]
      */
-    static bidiagonal(A) {
-        A = A.clone()
-        let [ rows, cols ] = A.shape;
-        for (let k = 0; k < cols; ++k) {
-            let x = A.col(k).slice(k);
-            let x_norm = norm(x);
-            let u = A.col(k).slice(k);
-            u[0] = x[0] + (x[0] < 0 ? -1 : 1) * x_norm;
-            let u_norm = norm(u);
-            u = u.map(u_i => u_i /= u_norm);
-            u = Matrix.from(u, "col");
-            let A_ = A.get_block(k, k);
-            A_ = A_.sub(u.mult(2).outer(u).dot(A_));
-            A.set_block(k, k, A_); /** @todo repair numerical unstability? */
-            // repair numerical unstability?
-            for (let r = k + 1; r < rows; ++r) {
-                A.set_entry(r, k, 0);
-            }
-            if (k <= cols - 2) {
-                let y = A.row(k).slice(k + 1);
-                let y_norm = norm(y);
-                let v = A.row(k).slice(k + 1);
-                v[0] = y[0] + (y[0] < 0 ? -1 : 1) * y_norm;
-                let v_norm = norm(v)
-                v = v.map(v_i => v_i /= v_norm);
-                v = Matrix.from(v, "col");
-                let _A = A.get_block(k, k + 1);
-                _A = _A.sub(_A.dot(v.mult(2).outer(v))) 
-                A.set_block(k, k + 1, _A);
-                // repair numerical unstability?
-                for (let c = k + 2; c < cols; ++c) {
-                    A.set_entry(k, c, 0);
-                }
-            }
+    concat(B, type="horizontal") {
+        const A = this;
+        const [rows_A, cols_A] = A.shape;
+        const [rows_B, cols_B] = B.shape;
+        if (type == "horizontal") {
+            if (rows_A != rows_B) throw `A.concat(B, "horizontal"): A and B need same number of rows, A has ${rows_A} rows, B has ${rows_B} rows.`;
+            const X = new Matrix(rows_A, cols_A + cols_B, "zeros");
+            X.set_block(0, 0, A);
+            X.set_block(0, cols_A, B);
+            return X;
+        } else if (type == "vertical") {
+            if (cols_A != cols_B) throw `A.concat(B, "vertical"): A and B need same number of columns, A has ${cols_A} columns, B has ${cols_B} columns.`;
+            const X = new Matrix(rows_A + rows_B, cols_A, "zeros");
+            X.set_block(0, 0, A);
+            X.set_block(rows_A, 0, B);
+            return X;
+        } else if (type == "diag") {
+            const X = new Matrix(rows_A + rows_B, cols_A + cols_B, "zeros");
+            X.set_block(0, 0, A);
+            X.set_block(rows_A, cols_A, B);
+            return X;
+        } else {
+            throw `type must be "horizontal" or "vertical", but type is ${type}!`;
         }
-        return A;
     }
 
     /**
@@ -395,14 +399,45 @@ export class Matrix{
     }
 
     /**
-     * Extracts the entries of A at an offset position given by {@link offset_row} and {@link offset_col}.
-     * @param {int} offset_row 
-     * @param {int} offset_col 
-     * @returns {Matrix}
+     * Extracts the entries from the {@link start_row}th row to the {@link end_row}th row, the {@link start_col}th column to the {@link end_col}th column of the matrix.
+     * If {@link end_row} or {@link end_col} is empty, the respective value is set to {@link this.rows} or {@link this.cols}.
+     * @param {Number} start_row 
+     * @param {Number} start_col
+     * @param {Number} [end_row = null]
+     * @param {Number} [end_col = null] 
+     * @returns {Matrix} Returns a end_row - start_row times end_col - start_col matrix, with respective entries from the matrix.
+     * @example
+     * 
+     * let A = Matrix.from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // a 3 by 3 matrix.
+     * 
+     * A.get_block(1, 1).to2dArray; // [[5, 6], [8, 9]]
+     * A.get_block(0, 0, 1, 1).to2dArray; // [[1]]
+     * A.get_block(1, 1, 2, 2).to2dArray; // [[5]]
+     * A.get_block(0, 0, 2, 2).to2dArray; // [[1, 2], [4, 5]]
      */
-    get_block(offset_rows, offset_cols) {
-        let [ rows, cols ] = this.shape;
-        return new Matrix(rows - offset_rows, cols - offset_cols, (i, j) => this.entry(i + offset_rows, j + offset_cols));
+    get_block(start_row, start_col, end_row = null, end_col = null) {
+        const [ rows, cols ] = this.shape;
+        /*if (!end_row)) {
+            end_row = rows;
+        }
+            end_col = cols;
+        }*/
+        end_row = end_row || rows;
+        end_col = end_col || cols;
+        if (end_row <= start_row || end_col <= start_col) {
+            throw `
+                end_row must be greater than start_row, and 
+                end_col must be greater than start_col, but
+                end_row = ${end_row}, start_row = ${start_row}, end_col = ${end_col}, and start_col = ${start_col}!`;
+        }
+        const X = new Matrix(end_row - start_row, end_col - start_col, "zeros");
+        for (let row = start_row, new_row = 0; row < end_row; ++row, ++new_row) {
+            for (let col = start_col, new_col = 0; col < end_col; ++col, ++new_col) {
+                X.set_entry(new_row, new_col, this.entry(row, col));
+            }
+        }
+        return X;
+        //return new Matrix(end_row - start_row, end_col - start_col, (i, j) => this.entry(i + start_row, j + start_col));
     }
 
     /**
@@ -442,24 +477,24 @@ export class Matrix{
         return this; 
     }
 
-    /*_apply_pointwise_number(value, f) {
-
-    }*/
-
     _apply(value, f) {
         let data = this._data;
         if (value instanceof Matrix) {
             let [ value_rows, value_cols ] = value.shape;
             let [ rows, cols ] = this.shape;
             if (value_rows === 1) {
-                if (cols !== value_cols) return undefined;
+                if (cols !== value_cols) {
+                    throw `cols !== value_cols`;
+                }
                 for (let row = 0; row < rows; ++row) {
                     for (let col = 0; col < cols; ++col) {
                         data[row * cols + col] = f(data[row * cols + col], value.entry(0, col))
                     }
                 }
             } else if (value_cols === 1) {
-                if (rows !== value_rows) return undefined;
+                if (rows !== value_rows) {
+                    throw `rows !== value_rows`;
+                }
                 for (let row = 0; row < rows; ++row) {
                     for (let col = 0; col < cols; ++col) {
                         data[row * cols + col] = f(data[row * cols + col], value.entry(row, 0))
@@ -471,7 +506,9 @@ export class Matrix{
                         data[row * cols + col] = f(data[row * cols + col], value.entry(row, col))
                     }
                 }
-            } else return undefined;
+            } else {
+                throw `error`;
+            }
         } else if (Array.isArray(value)) {
             let rows = this._rows;
             let cols = this._cols;
@@ -488,7 +525,7 @@ export class Matrix{
                     }
                 }
             } else {
-                return undefined;
+                throw `error`;
             }
         } else {
             for (let i = 0, n = this._rows * this._cols; i < n; ++i) {
@@ -511,19 +548,19 @@ export class Matrix{
     }
 
     mult(value) {
-        return this.clone()._apply(value, (a,b) => a * b)
+        return this.clone()._apply(value, (a,b) => a * b);
     }
 
     divide(value) {
-        return this.clone()._apply(value, (a,b) => a / b)
+        return this.clone()._apply(value, (a,b) => a / b);
     }
 
     add(value) {
-        return this.clone()._apply(value, (a,b) => a + b)
+        return this.clone()._apply(value, (a,b) => a + b);
     }
 
     sub(value) {
-        return this.clone()._apply(value, (a,b) => a - b)
+        return this.clone()._apply(value, (a,b) => a - b);
     }
 
     /**
@@ -539,7 +576,7 @@ export class Matrix{
      * @param {Array} parameter - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.
      * @returns {Matrix}
      */
-    set shape([ rows, cols, value = () => 0 ]) {
+    set shape([rows, cols, value = () => 0]) {
         this._rows = rows;
         this._cols = cols;
         this._data = new Float64Array(rows * cols);
@@ -635,15 +672,38 @@ export class Matrix{
         return result;
     }
 
+    static solve_CG(A, b, randomizer, tol=1e-3) {
+        const rows = A.shape[0];
+        const cols = b.shape[1];
+        let result = new Matrix(rows, 0);
+        for (let i = 0; i < cols; ++i) {
+            let x = new Matrix(rows, 1, () => randomizer.random);
+            let b_i = Matrix.from(b.col(i)).T;
+            let r = b_i.sub(A.dot(x));
+            let d = r.clone();
+            do {
+                const z = A.dot(d);
+                const alpha = r.T.dot(r).entry(0, 0) / d.T.dot(z).entry(0, 0);
+                x = x.add(d.mult(alpha));
+                const r_next = r.sub(z.mult(alpha));
+                const beta = r_next.T.dot(r_next).entry(0, 0) / r.T.dot(r).entry(0, 0);
+                d = r_next.add(d.mult(beta));
+                r = r_next;
+            } while (Math.abs(r.mean) > tol);
+            result = result.concat(x, "horizontal");
+        }
+        return result;
+    }
+
     /**
      * Solves the equation {@link A}x = {@link b}. Returns the result x.
-     * @param {Matrix} A - Matrix
+     * @param {Matrix} A - Matrix or LU Decomposition
      * @param {Matrix} b - Matrix
      * @returns {Matrix}
      */
     static solve(A, b) {
-        let rows = A.shape[0];
-        let { L: L, U: U } = Matrix.LU(A);//lu(A);
+        let { L: L, U: U } = ("L" in A && "U" in A) ? A : Matrix.LU(A);
+        let rows = L.shape[0];
         let x = b.clone();
         
         // forward
@@ -671,43 +731,26 @@ export class Matrix{
      * @returns {{L: Matrix, U: Matrix}} result - Returns the left triangle matrix {@link L} and the upper triangle matrix {@link U}.
      */
     static LU(A) {
-        let rows = A.shape[0];
-        let L = new Matrix(rows, rows, "zeros");
-        let U = new Matrix(rows, rows, "identity");
-        let sum;
-
+        const rows = A.shape[0];
+        const L = new Matrix(rows, rows, "zeros");
+        const U = new Matrix(rows, rows, "identity");
+        
         for (let j = 0; j < rows; ++j) {
             for (let i = j; i < rows; ++i) {
-                sum = 0
+                let sum = 0
                 for (let k = 0; k < j; ++k) {
                     sum += L.entry(i, k) * U.entry(k, j)
                 }
-                /*sum = neumair_sum(linspace(0, j).map((k) => L.entry(i, k) * U.entry(k, j)))
-                console.log("lsum1", sum)
-                sum = []
-                for (let k = 0; k < j; ++k) {
-                    sum.push(L.entry(i, k) * U.entry(k, j))
-                }
-                sum = neumair_sum(sum)
-                console.log("lsum2", sum)*/
                 L.set_entry(i, j, A.entry(i, j) - sum);
             }
             for (let i = j; i < rows; ++i) {
                 if (L.entry(j, j) === 0) {
                     return undefined;
                 }
-                sum = 0
+                let sum = 0
                 for (let k = 0; k < j; ++k) {
                     sum += L.entry(j, k) * U.entry(k, i)
                 }
-                /*sum = neumair_sum(linspace(0, j).map((k) => L.entry(j, k) * U.entry(k, i)))
-                console.log("usum1", sum)
-                sum = []
-                for (let k = 0; k < j; ++k) {
-                    sum.push(L.entry(j, k) * U.entry(k, i))
-                }
-                sum = neumair_sum("usum2", sum)
-                console.log(sum)*/
                 U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));
             }
         }
@@ -717,145 +760,26 @@ export class Matrix{
 
     /**
      * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
-     * @param {Matrix} M 
+     * @param {Matrix} A 
      * @param {int} [k=2] 
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
-    static SVD(M, k=2) {
-        let MtM = M.transpose().dot(M);
-        let MMt = M.dot(M.transpose());
+    static SVD(A, k=2) {
+        /*const MT = M.T;
+        let MtM = MT.dot(M);
+        let MMt = M.dot(MT);
         let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
         let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
-
-        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };
-        /*const [ rows, cols ] = matrix.shape;
-        // 1.
-        let U = new Matrix();
-        U.shape = [rows, cols, (i, j) => i === j ? 1 : 0];
-        let Sigma = matrix.clone();
-        let Vt = new Matrix();
-        Vt.shape = [cols, cols, (i, j) => i === j ? 1 : 0];
-        let I = new Matrix();
-        I.shape = [cols, cols, (i, j) => i === j ? 1 : 0];
-
-        function householder_vector(x) {
-            let dot_1on = norm(x.col(0).slice(1));
-            let v = x.clone();
-            v.set_entry(0, 0, 1);
-            let beta = 0;
-            if (dot_1on > 1e-63) {
-                let x_0 = x.entry(0, 0);
-                let x_norm = Math.sqrt(x_0 ** 2 + dot_1on);
-                let v_0;
-                if (x_0 <= 0) {
-                    v_0 = x_0 - x_norm;
-                } else {
-                    v_0 = -dot_1on / (x_0 + x_norm);
-                }
-                v.set_entry(0, 0, v_0)
-                beta = 2 * v_0 ** 2 / (dot_1on + v_0 ** 2)
-                v.divide(v_0)
-            }
-            return {"v": v, "beta": beta}
-        }
-
-        function householder_matrix(size, col, v, beta) {
-            let vvt = v.dot(v.transpose())
-            let V = new Matrix()
-            V.shape = [size, size, (r, c) => {
-                if (r < col || c < col) {
-                    return r === c ? 1 : 0;
-                }
-                return (r === c ? 1 : 0) - (beta * vvt.entry(r - col, c - col));
-            }]
-
-            console.log(V, vvt)
-            return V;
-        }
-
-        for (let col = 0; col < cols; ++col) {
-            let x = Matrix.from(Sigma.col(col), "col")
-            let { v: u, beta: beta } = householder_vector(x);
-            let Q = householder_matrix(cols, col, u, beta);
-            console.log("u", u, Q)
-            U = U.dot(Q)
-            Sigma = Q.dot(Sigma);
-
-            if (col < cols - 2) {
-                let x = Matrix.from(Sigma.row(col).slice(1), "col")
-                let { v: v, beta: beta } = householder_vector(x);
-                Q = householder_matrix(cols, col + 1, v, beta);
-                console.log("v", v, Q)
-                Vt = Q.dot(Vt)
-                Sigma = Sigma.dot(Q);
-            }
-
-            /*let u = Sigma.col(col);
-            let u_norm = norm(u);
-            let sign_u = u[col] >= 0 ? 1 : -1;
-            u[col] = sign_u * (Math.abs(u[col]) + u_norm);
-            u_norm = norm(u);
-            //u = u.map(u_i => u_i / u_norm);
-            for (let c = 0; c < cols; ++c) {
-                u[c] = u[c] / u_norm;
-            }
-            u = Matrix.from(u, "col")
-            let H = I.sub(u.dot(u.transpose()).mult(2))
-            console.log(u.to2dArray, H.to2dArray)
-            Sigma = H.dot(Sigma);
-            U = U.dot(H.transpose())
-
-            if (col < cols - 1) {
-
-            }*/
-
-            /*let u = Sigma.col(col).slice(col);
-            let u_norm = norm(u);
-            let sign_u = u[0] >= 0 ? 1 : -1;
-            u[0] = sign_u * (Math.abs(u[0]) + u_norm);//+= sign_u * u_norm;
-            u_norm = norm(u)//Math.sqrt(2 * u_norm * (u_norm + u[0]))//norm(u);
-            u = u.map(u_i => u_i / u_norm);
-            u = Matrix.from(u, "col")
-            let A_k_m = new Matrix()
-            A_k_m.shape = [rows - col, cols - col, (i, j) => Sigma.entry(i + col, j + col)];
-            let U_k = u.dot(u.transpose().dot(A_k_m)).mult(2)
-            for (let r = 0; r < rows - col; ++r) {
-                for (let c = 0; c < cols - col; ++c) {
-                    let val = Sigma.entry(col + r, col + c) - U_k.entry(r, c);
-                    val = Math.abs(val) < 1e-15 ? 0 : val;
-                    Sigma.set_entry(col + r, col + c, val)
-                }
-            }
-            console.log(Sigma)
-
-
-
-            /*if (col <= cols - 2) {
-                let col_1 = col + 1
-                let v = Sigma.row(col).slice(col_1);
-                let v_norm = norm(v);
-                let sign_v = v[0] >= 0 ? 1 : -1;
-                v[0] += sign_v * (Math.abs(v[0]) + v_norm);//sign_v * v_norm;
-                v_norm = norm(v);
-                v = v.map(v_i => v_i / v_norm);
-                v = Matrix.from(v, "col")
-                let A_k1_n = new Matrix()
-                A_k1_n.shape = [rows - col, cols - col_1, (i, j) => Sigma.entry(col + i, col_1 + j)];
-                let V_k = A_k1_n.dot(v.dot(v.transpose())).mult(2)
-                for (let r = 0; r < rows - col; ++r) {
-                    for (let c = 0; c < cols - col_1; ++c) {
-                        let val = Sigma.entry(col + r, col_1 + c) - V_k.entry(r, c)
-                        console.log("V", [col + r, col_1 + c], 2 * Sigma.entry(col + r, col_1 + c) == V_k.entry(r, c))
-                        val = Math.abs(val) < 1e-15 ? 0 : val;
-                        Sigma.set_entry(col + r, col_1 + c, val)
-                    }
-                }
-            }
-
-            */
-            /*console.log(Sigma)
-        }*/
+        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };*/
+        
+        //Algorithm 1a: Householder reduction to bidiagonal form:
+        const [m, n] = A.shape;
+        let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);
+        console.log(U.to2dArray)
+        let V = new Matrix(n, m, (i, j) => i == j ? 1 : 0);
+        console.log(V.to2dArray)
+        let B = Matrix.bidiagonal(A.clone(), U, V);
+        console.log(U,V,B)
+        return { U: U, "Sigma": B, V: V };
     }
-
-    
 }

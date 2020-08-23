@@ -7,22 +7,25 @@ import { Heap } from "../datastructure/index";
  */
 export class OPTICS {
     /**
+     * **O**rdering **P**oints **T**o **I**dentify the **C**lustering **S**tructure.
      * @constructor
      * @memberof module:clustering
      * @alias OPTICS
      * @todo needs restructuring. 
-     * @param {Matrix} matrix 
-     * @param {Number} epsilon
-     * @param {Number} min_points 
-     * @param {Function} [metric = euclidean]
+     * @param {Matrix} matrix - the data.
+     * @param {Number} epsilon - the minimum distance which defines whether a point is a neighbor or not.
+     * @param {Number} min_points - the minimum number of points which a point needs to create a cluster. (Should be higher than 1, else each point creates a cluster.)
+     * @param {Function} [metric = euclidean] - the distance metric which defines the distance between two points of the {@link matrix}.
      * @returns {OPTICS}
      * @see {@link https://www.dbs.ifi.lmu.de/Publikationen/Papers/OPTICS.pdf}
+     * @see {@link https://en.wikipedia.org/wiki/OPTICS_algorithm}
      */
     constructor(matrix, epsilon, min_points, metric = euclidean) {
         this._matrix = matrix;
         this._epsilon = epsilon;
         this._min_points = min_points;
         this._metric = metric;
+
         this._ordered_list = [];
         this._clusters = [];
         this._DB = new Array(matrix.shape[0]).fill();
@@ -31,7 +34,7 @@ export class OPTICS {
     }
 
     /**
-     * 
+     * Computes the clustering.
      */
     init() {
         const ordered_list = this._ordered_list;
@@ -42,9 +45,8 @@ export class OPTICS {
         let cluster_index = this._cluster_index = 0;
 
         for (let i = 0; i < N; ++i) {
-            const e = matrix.row(i);
             DB[i] = {
-                "element": e,
+                "element": matrix.row(i),
                 "index": i,
                 "reachability_distance": undefined,
                 "processed": false,
@@ -65,26 +67,18 @@ export class OPTICS {
         }
     }
 
+    /**
+     * 
+     * @private
+     * @param {Object} p - a point of {@link matrix}.
+     * @returns {Array} An array consisting of the {@link epsilon}-neighborhood of {@link p}.
+     */
     _get_neighbors(p) {
         if ("neighbors" in p) return p.neighbors;
         const DB = this._DB;
         const metric = this._metric;
         const epsilon = this._epsilon;
         const neighbors = [];
-        /*const p_neighbors = Heap.heapify(DB, d => metric(d.element, p.element), "min");
-        let searching = true;
-        while (searching && !p_neighbors.empty) {
-            const { "element": neighbor, "value": distance } = p_neighbors.pop();
-            if (distance < epsilon) {
-                if (p != neighbor) {
-                    neighbors.push(neighbor)
-                }    
-            } else {
-                searching = false;
-            }
-        }
-        return neighbors.reverse();*/
-
         for (const q of DB) {
             if (q.index == p.index) continue;
             if (metric(p.element, q.element) < epsilon) {
@@ -94,6 +88,12 @@ export class OPTICS {
         return neighbors;
     }
 
+    /**
+     * 
+     * @private
+     * @param {Object} p - a point of {@link matrix}.
+     * @returns {Number} The distance to the {@link min_points}-th nearest point of {@link p}, or undefined if the {@link epsilon}-neighborhood has fewer elements than {@link min_points}.
+     */
     _core_distance(p) {
         const min_points = this._min_points;
         const metric = this._metric;
@@ -103,6 +103,12 @@ export class OPTICS {
         return metric(p.element, p.neighbors[min_points].element);
     }
 
+    /**
+     * Updates the reachability distance of the points.
+     * @private
+     * @param {Object} p 
+     * @param {Heap} seeds 
+     */
     _update(p, seeds) {
         const metric = this._metric;
         const core_distance = this._core_distance(p);
@@ -123,6 +129,12 @@ export class OPTICS {
         }
     }
 
+    /**
+     * Expands the {@link cluster} with points in {@link seeds}.
+     * @private
+     * @param {Heap} seeds 
+     * @param {Array} cluster 
+     */
     _expand_cluster(seeds, cluster) {
         const ordered_list = this._ordered_list;
         while (!seeds.empty) {
@@ -138,37 +150,11 @@ export class OPTICS {
         }
     }
 
+    /**
+     * Returns an array of clusters.
+     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     */
     get_clusters() {
-        /*const ordered_list = this._ordered_list;
-        console.log(ordered_list.map(e => e.reachability_distance))
-        const N = ordered_list.length;
-        const clusters = [];
-        const outliers = [];
-        let switched = true;
-        let cluster_index = -1;
-        for (const e of ordered_list) {
-            if (e.reachability_distance < threshold) {
-                if (switched) {
-                    switched = false;
-                    cluster_index++;
-                    clusters.push([]);
-                } else {
-
-                }
-                clusters[cluster_index].push(e.index);
-            } else {
-                if (switched) {
-                    outliers.push(e.index);
-                } else {
-                    outliers.push(e.index);
-                    switched = true;
-                }
-            }
-        }
-        //console.log(clusters, outliers)
-        clusters.push(outliers)
-        return clusters;*/
-
         const clusters = [];
         const outliers = [];
         const min_points = this._min_points;
@@ -181,9 +167,21 @@ export class OPTICS {
         }
         clusters.push(outliers);
         return clusters;
-
-        //return this._clusters
     }
 
-    
+    /**
+     * @returns {Array} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)
+     */
+    get_cluster_affirmation() {
+        const N = this._matrix.shape[0];
+        const result = new Array(N).fill();
+        const clusters = this.get_clusters();
+        for (let i = 0, n = clusters.length; i < n; ++i) {
+            const cluster = clusters[i]
+            for (const index of cluster) {
+                result[index] = (i < n - 1) ? i : -1;
+            }
+        }
+        return result;
+    }
 }

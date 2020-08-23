@@ -124,7 +124,22 @@ export class KMeans {
             }
         }
         // compute centroid
-        const cluster_counter = new Array(K).fill(0)
+        this._compute_centroid(cluster_centroids);
+
+        return {   
+            "clusters_changed": clusters_changed,
+            "cluster_centroids": cluster_centroids
+        };
+    }
+
+    _compute_centroid(cluster_centroids) {
+        const K = cluster_centroids.length;
+        const N = this._N;
+        const D = this._D;
+        const A = this._matrix;
+        const clusters = this._clusters;
+        const cluster_counter = new Array(K).fill(0);
+
         for (let i = 0; i < N; ++i) {
             const Ai = A.row(i);
             const ci = clusters[i];
@@ -136,14 +151,9 @@ export class KMeans {
         }
         for (let i = 0; i < K; ++i) {
             const n = cluster_counter[i];
-            cluster_centroids[i] = cluster_centroids[i].map(c => {
-                return c / n;
-            })
+            cluster_centroids[i] = cluster_centroids[i].map(c => c / n);
         }
-        return {   
-            "clusters_changed": clusters_changed,
-            "cluster_centroids": cluster_centroids
-        };
+        
     }
 
     /**

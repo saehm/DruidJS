@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="div1"></div>
+    <div id="div2" style="float:left"></div>
+    <script src="../dist/druid.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+    <script src="./js/d3-delaunay.js"></script>
+<script>
+    
+    let width = 800
+    let height = 800
+    let margin = 4
+    svg = d3.select("#div1").append("svg") 
+        .attr("width", width)
+        .attr("height", height)
+        .style("border", "1px solid lightgrey")
+
+    let N = 800
+    let D = 2
+    let data = druid.linspace(1, N).map(_ => druid.linspace(1, D).map(_ => (Math.random() - .5) * 8))
+    console.log(data)
+
+    let x = d3.scaleLinear().domain(d3.extent(data, d => d[0])).range([margin, width - margin])
+    let y = d3.scaleLinear().domain(d3.extent(data, d => d[1])).range([margin, height - margin])
+
+    let voronoi = d3.Delaunay
+        .from(data, d => x(d[0]), d => y(d[1]))
+        .voronoi([0, 0, width, height]);
+
+    const cells = svg.selectAll("path")
+        .data(data)
+            .enter()
+            .append("path")
+                .attr("d", (d, i) => {
+                    const cell = voronoi.cellPolygon(i);
+                    console.log(cell)
+                    return cell ? `M${cell.join("L")}Z` : null;
+                })
+                .attr("fill", "transparent")
+                .attr("stroke", "#eee")
+
+    svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+            .attr("cx", d => x(d[0]))
+            .attr("cy", d => y(d[1]))
+            .attr("r", d => 2)
+            .attr("fill", "transparent")
+            .attr("stroke", "darkgrey")
+
+    let kd = new druid.NNDescent(data, druid.euclidean);
+    console.log(kd)
+
+    cells.on("mousemove", function(d ,i ) {
+        /* let { offsetX: mx, offsetY: my } = d3.event;
+        mx = x.invert(mx)
+        my = y.invert(my)
+        let q = [mx, my] */
+        let nn = kd.search_index(i)?.map(d => d.element).map(([px, py]) => [x(px), y(py)])
+        console.log(nn)
+        if (nn) draw_nn(nn);
+    })
+
+    svg.on("mouseleave", () => draw_nn([]))
+    function draw_nn(nn) {
+        svg.selectAll(".nn")
+            .data(nn)
+            .enter()
+                .append("circle")
+                    .attr("class", "nn")
+                    .attr("fill", "red")
+                    .attr("stroke", "red")
+            .merge(svg.selectAll(".nn"))
+                .attr("cx", d => x(d[0]))
+                .attr("cy", d => y(d[1]))
+                .attr("r", d => 2)
+            
+        svg.selectAll(".nn")
+            .data(nn)
+            .exit()
+                .remove()
+    }
+</script>
+</body>
+</html>

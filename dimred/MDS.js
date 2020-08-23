@@ -1,14 +1,33 @@
 import { simultaneous_poweriteration} from "../linear_algebra/index";
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
+import { DR } from "./DR.js";
 
-export class MDS{
-    constructor(X, d=2, metric=euclidean) {
-        this.X = X;
-        this.d = d;
-        this._metric = metric;
+/**
+ * @class
+ * @alias MDS
+ */
+export class MDS extends DR{
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias MDS
+     * @param {Matrix} X - the high-dimensional data.
+     * @param {Number} neighbors - the label / class of each data point.
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     */
+    
+    constructor(X, d=2, metric=euclidean, seed=1212) {
+        super(X, d, metric, seed);
+        return this;
     }
 
+    /**
+     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     */
     transform() {
         const X = this.X;
         //let sum_reduce = (a,b) => a + b
@@ -41,14 +60,10 @@ export class MDS{
         const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
         //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
                 
-        const { eigenvectors: V } = simultaneous_poweriteration(B, this.d);
+        const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
         this.Y = Matrix.from(V).transpose()
         
-        return this.Y
-    }
-
-    get projection() {
-        return this.Y
+        return this.projection;
     }
 
     get stress() {

@@ -1,29 +1,29 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/randomizer";
 import { BallTree } from "../knn/index";
 import { neumair_sum } from "../numerical/index";
 import { linspace } from "../matrix/index";
 import { powell } from "../optimization/index";
+import { DR } from "./DR.js";
 
-export class UMAP{
-    constructor(X, local_connectivity, min_dist, d=2, metric=euclidean, seed=1212) {
-        this._X = X;
-        this._d = d;
+export class UMAP extends DR {
+    static parameter_list = ["local_connectivity", "min_dist"];
+
+    constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
+        super(X, d, metric, seed)
+        super.parameter_list = druid.UMAP.parameter_list;
         [ this._N, this._D ] = X.shape;
-        this._local_connectivity = local_connectivity;
-        this._min_dist = min_dist;
-        this._metric = metric;
+        this.parameter("local_connectivity", local_connectivity);
+        this.parameter("min_dist", min_dist);
         this._iter = 0;
         this._n_neighbors = 11;
         this._spread = 1;
         this._set_op_mix_ratio = 1;
         this._repulsion_strength = 1;
         this._negative_sample_rate = 5;
-        this._n_epochs = 200;
+        this._n_epochs = 350;
         this._initial_alpha = 1;
-        this._randomizer = new Randomizer(seed);
-        this._Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
     }
 
     _find_ab_params(spread, min_dist) {
@@ -47,7 +47,7 @@ export class UMAP{
             return Math.sqrt(neumair_sum(error.map(e => e * e)));
         }
       
-        var [ a, b ] = powell(err, [1,1])
+        var [ a, b ] = powell(err, [1, 1])
         return [ a, b ]
     }
 
@@ -74,12 +74,12 @@ export class UMAP{
         const target = Math.log2(k) * bandwidth
         const rhos = []
         const sigmas = []
-        const X = this._X
+        const X = this.X
 
         let distances = [];
         for (let i = 0, n = X.shape[0]; i < n; ++i) {
             let x_i = X.row(i);
-            distances.push(knn.search(x_i, Math.max(local_connectivity, k)).toArray().reverse())
+            distances.push(knn.search(x_i, Math.max(local_connectivity, k)).raw_data().reverse())
         }
 
         for (let i = 0, n = X.shape[0]; i < n; ++i) {
@@ -128,7 +128,11 @@ export class UMAP{
                 
             }
         }
-        return {distances: distances, sigmas: sigmas, rhos: rhos}
+        return {
+            "distances": distances, 
+            "sigmas": sigmas, 
+            "rhos": rhos
+        }
     }
 
     _fuzzy_simplicial_set(X, n_neighbors) {
@@ -182,7 +186,7 @@ export class UMAP{
         const [ a, b ] = this._find_ab_params(this._spread, this._min_dist);
         this._a = a;
         this._b = b;
-        this._graph = this._fuzzy_simplicial_set(this._X, this._n_neighbors);
+        this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
         this._epochs_per_sample = this._make_epochs_per_sample(this._graph, this._n_epochs);
         this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
         this._epoch_of_next_sample = this._epochs_per_sample.slice();
@@ -209,20 +213,23 @@ export class UMAP{
         return this._min_dist;
     }
 
-    transform(iterations = 1000) {
+    transform(iterations) {
+        this.check_init();
+        iterations = iterations || this._n_epochs;
         for (let i = 0; i < iterations; ++i) {
             this.next();
         }
-        return this._Y;
+        return this.projection;
     }
 
-    * transform_iter() {
+    * generator() {
+        this.check_init();
         this._iter = 0
         while (this._iter < this._n_epochs) {
             this.next();
-            yield this._Y;
+            yield this.projection;
         }
-        return this._Y;
+        return this.projection;
     }
 
     _clip(x) {
@@ -296,15 +303,11 @@ export class UMAP{
 
     next() {
         let iter = ++this._iter;
-        let Y = this._Y;
+        let Y = this.Y;
 
         this._alpha = (this._initial_alpha * (1 - iter / this._n_epochs));
-        this._Y = this._optimize_layout(Y, Y, this._head, this._tail);
+        this.Y = this._optimize_layout(Y, Y, this._head, this._tail);
 
-        return this._Y;
-    }
-
-    get projection() {
-        return this._Y;
+        return this.Y;
     }
 } 
