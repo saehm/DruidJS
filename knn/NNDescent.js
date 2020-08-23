@@ -158,7 +158,6 @@ export class NNDescent{
                     }
                 }
             }
-            console.log(c)
         } 
         return this;
     }
@@ -170,6 +169,12 @@ export class NNDescent{
      */
     search(x, k=5) {
         return this._B[this._randomizer.random_int % (this._N - 1)].toArray().slice(0, k);
+    }
+
+    search_index(i, k=5) {
+        const B = this._B[i];
+        const result = B.raw_data().sort((a, b) => a.value - b.value).slice(-k);
+        return result;
     }
 }
 

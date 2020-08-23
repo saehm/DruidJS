@@ -161,17 +161,25 @@ export class Heap {
      * @returns {Array} Array consisting the elements ordered by {@link comparator}.
      */
     toArray() {
-        return this._container
-            .map(d => d.element)
+        return this.data()
             .sort((a,b) => this._comparator(a, b) ? -1 : 0)
     }
 
     /**
-     * Returns raw data
+     * Returns elements of container array.
      * @returns {Array} Array consisting the elements.
      */
     data() {
-        return this._container.map(d => d.element)
+        return this._container
+            .map(d => d.element)
+    }
+
+    /**
+     * Returns the container array.
+     * @returns {Array} The container array.
+     */
+    raw_data() {
+        return this._container;
     }
 
     /**

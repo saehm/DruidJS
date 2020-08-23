@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Test numeric uncmin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        svg {
+            border: 1px solid grey
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+    <script src="dist/numeric.js"></script>
+    <script src="dist/druid.js"></script>
+</head>
+<body>
+    <form>
+        <label for="min_dist">Minimum Distance</label><input type="range" id="min_dist" min=0 max=3 step=.1 value=1>
+        <label for="spread">Spread</label><input type="range" id="spread" min=1 max=3 step=.01 value=1>
+        <label for="a_start">Start a</label><input type="range" id="a_start" min=0 max=10 step=.1 value=0>
+        <label for="b_start">Start b</label><input type="range" id="b_start" min=0 max=10 step=.1 value=1>
+    </form>
+    <script>
+        let min_dist = 1
+        let spread = 1
+        let a_start = 0.01
+        let b_start = 1
+        const width = 900
+        const height = 500
+        const margin = 40
+        const res = 300
+
+        function input() {
+            min_dist = +min_dist_input.property("value")
+            spread = +spread_input.property("value")
+            a_start = +a_start_input.property("value")
+            b_start = +b_start_input.property("value")
+            reset()
+        }
+
+        let body = d3.select("body")
+        let svg = body.append("svg")
+            .attr("width", width)
+            .attr("height", height)
+
+
+        svg.selectAll("text")
+            .data([{name:"numeric.uncmin", color:"crimson"}, {name:"druid.powell", color:"seagreen"}, {name:"adam", color:"steelblue"}])
+            .enter()
+            .append("text")
+                .attr("x", width - 20)
+                .attr("y", (d,i) => 20 + i * 15)
+                .text(d => d.name)
+                .attr("fill", d => d.color)
+                .attr("text-anchor", "end")
+
+        let min_dist_input = d3.select("#min_dist").on("input", input)
+        let spread_input = d3.select("#spread").on("input", input)
+        let a_start_input = d3.select("#a_start").on("input", input)
+        let b_start_input = d3.select("#b_start").on("input", input)
+
+        let xv = druid.linspace(0, spread * 3, res)
+        let yv = xv.map(x => x < min_dist ? 1 : Math.exp(-(x - min_dist) / spread))
+        let values = d3.zip(xv,yv)
+
+        let x_scale = d3.scaleLinear()
+            .domain(d3.extent(xv))
+            .range([0 + margin, width - margin])
+        let y_scale = d3.scaleLinear()
+            .domain([0,d3.max(yv)])
+            .range([height - margin, 0 + margin])
+
+        var x_axis = svg.append("g")
+            .attr("transform", `translate(${0}, ${height - margin})`)
+        x_axis.call(d3.axisBottom(x_scale))
+        var y_axis = svg.append("g")
+            .attr("transform", `translate(${margin}, ${0})`)
+        y_axis.call(d3.axisLeft(y_scale))
+
+        let line = svg.append("path")
+        let line2 = svg.append("path")
+        let line3 = svg.append("path")
+
+
+        let curve = (x,a,b) => 1 / (1 + (a * Math.pow(x, 2 * b)))
+        
+        function reset() {
+            let xv = druid.linspace(0, spread * 3, res)
+            let yv = xv.map(x => x < min_dist ? 1 : Math.exp(-(x - min_dist) / spread))
+
+            let err = p => Math.pow(druid.neumair_sum(yv.map((y,i) => y - curve(xv[i], p[0], p[1])).map(d => d**2)), 1/2)
+            
+            let x_scale = d3.scaleLinear()
+                .domain(d3.extent(xv))
+                .range([0 + margin, width - margin])
+            let y_scale = d3.scaleLinear()
+                .domain([0, d3.max(yv)])
+                .range([height - margin, 0 + margin])
+            
+            x_axis.call(d3.axisBottom(x_scale))
+            y_axis.call(d3.axisLeft(y_scale))
+
+            svg.selectAll(".dots")
+                .data(d3.zip(xv, yv))
+                .enter()
+                .append("circle")
+                    .attr("class", "dots")
+                .merge(svg.selectAll(".dots"))
+                    .attr("cx", d => x_scale(d[0]))
+                    .attr("cy", d => y_scale(d[1]))
+                    .attr("r", 1)
+
+            // numeric uncmin        
+            try {
+                var [a, b] = numeric.uncmin(err, [a_start, b_start]).solution
+                console.log("numeric", a,b)
+                var yc = xv.map(x => curve(x, a, b))
+            } catch(error) {
+                console.log("numeric error", error)
+                var yc = xv.map(x => 0)
+            }
+
+            line
+                .attr("d", "M" + d3.zip(xv, yc).map(p => [x_scale(p[0]), y_scale(p[1])]).join(" "))
+                .attr("fill", "transparent")
+                .attr("stroke", "crimson")
+                    .attr("opacity", .5)
+
+            svg.selectAll(".line")
+                .data([d3.zip(xv, yc)])
+                .exit().remove()
+
+            svg.selectAll(".cdots")
+                .data(d3.zip(xv, yc))
+                .enter()
+                .append("circle")
+                    .attr("class", "cdots")
+                .merge(svg.selectAll(".cdots"))
+                    .attr("fill", "crimson")
+                    .attr("cx", d => x_scale(d[0]))
+                    .attr("cy", d => y_scale(d[1]))
+                    .attr("r", 1)
+                    .attr("opacity", .5)
+            
+            // druid
+            try {
+                var [a, b] = druid.powell(err, [a_start, b_start])
+                console.log("powell", a,b)
+                var yc = xv.map(x => curve(x, a, b))
+            } catch(error) {
+                console.log("powell error", error)
+                var yc = xv.map(x => 0)
+            }
+
+            line2
+                .attr("d", "M" + d3.zip(xv, yc).map(p => [x_scale(p[0]), y_scale(p[1])]).join(" "))
+                .attr("fill", "transparent")
+                .attr("stroke", "seagreen")
+                    .attr("opacity", .5)
+
+            svg.selectAll(".line")
+                .data([d3.zip(xv, yc)])
+                .exit().remove()
+
+            svg.selectAll(".cdots2")
+                .data(d3.zip(xv, yc))
+                .enter()
+                .append("circle")
+                    .attr("class", "cdots2")
+                .merge(svg.selectAll(".cdots2"))
+                    .attr("fill", "seagreen")
+                    .attr("opacity", .5)
+                    .attr("cx", d => x_scale(d[0]))
+                    .attr("cy", d => y_scale(d[1]))
+                    .attr("r", 1)
+
+            // adam
+            try {
+                var [a, b] = adam(err, [a_start, b_start], 12)
+                console.log("adam", a,b)
+                var yc = xv.map(x => curve(x, a, b))
+            } catch(error) {
+                console.log("adam error", error)
+                var yc = xv.map(x => 0)
+            }
+
+            line3
+                .attr("d", "M" + d3.zip(xv, yc).map(p => [x_scale(p[0]), y_scale(p[1])]).join(" "))
+                .attr("fill", "transparent")
+                .attr("stroke", "steelblue")
+                    .attr("opacity", .5)
+
+            svg.selectAll(".line")
+                .data([d3.zip(xv, yc)])
+                .exit().remove()
+
+            svg.selectAll(".cdots3")
+                .data(d3.zip(xv, yc))
+                .enter()
+                .append("circle")
+                    .attr("class", "cdots3")
+                .merge(svg.selectAll(".cdots3"))
+                    .attr("fill", "steelblue")
+                    .attr("opacity", .5)
+                    .attr("cx", d => x_scale(d[0]))
+                    .attr("cy", d => y_scale(d[1]))
+                    .attr("r", 1)
+        }
+        reset()
+
+        function adam(E, theta_0) {
+            let n = theta_0.length
+            let alpha = 0.001
+            let beta_1 = 0.9
+            let beta_2 = 0.999
+            let epsilon = 1.e-8
+            let m_t = d3.range(n).map(d => 0)
+            let v_t = d3.range(n).map(d => 0)
+            let m_cap = d3.range(n).map(d => 0) 
+            let v_cap = d3.range(n).map(d => 0)
+            let theta_0_prev = new Array(n)
+            for (let t = 1; t < 500; ++t) {
+                let g_t = numeric.gradient(E, theta_0)
+                for (let i = 0, n = g_t.length; i < n; ++i) {
+                    m_t[i] = beta_1 * m_t[i] + (1 - beta_1) * g_t[i]
+                    v_t[i] = beta_2 * v_t[i] + (1 - beta_2) * (g_t[i] * g_t[i])
+                    m_cap[i] = m_t[i]/(1-(beta_1**t))
+                    v_cap[i] = v_t[i]/(1-(beta_2**t))
+                    
+                    theta_0[i] = theta_0[i] - ((alpha * m_cap[i]) / (Math.sqrt(v_cap[i]) + epsilon))
+    
+                }
+            }
+            return theta_0
+        }
+    </script>
+</body>
+</html>

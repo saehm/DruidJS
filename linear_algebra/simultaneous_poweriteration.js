@@ -3,8 +3,13 @@ import { Matrix } from "../matrix/Matrix";
 import { Randomizer } from "../util/index";
 import { neumair_sum } from "../numerical/index";
 
-export default function(A, k = 2, max_iterations = 100, seed = 19870307) {
-    let randomizer = new Randomizer(seed)
+export default function(A, k = 2, max_iterations=100, seed=1212) {
+    let randomizer
+    if (seed instanceof Randomizer) {
+        randomizer = seed;
+    } else {
+        randomizer = new Randomizer(seed);
+    }
     if (!(A instanceof Matrix)) A = Matrix.from(A);
     let n = A.shape[0]
     let { Q: Q, R: R } = qr(new Matrix(n, k, () => randomizer.random));

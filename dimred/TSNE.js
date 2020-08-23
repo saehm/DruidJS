@@ -1,49 +1,81 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/randomizer";
-/*import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { k_nearest_neighbors } from "../matrix/index";
-import { neumair_sum } from "../numerical/index";
-import { norm } from "../matrix/index";
-import { linspace } from "../matrix/index";*/
+import { DR } from "./DR.js";
 
-export class TSNE{
-    constructor(X, perplexity, epsilon, d=2, metric=euclidean, seed=1212) {
-        this._X = X;
-        this._d = d;
+/**
+ * @class
+ * @alias TSNE
+ */
+export class TSNE extends DR {
+    static parameter_list = ["perplexity", "epsilon"];
+
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias TSNE
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {Number} [perplexity = 50] - perplexity.
+     * @param {Number} [epsilon = 10] - learning parameter.
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @returns {TSNE}
+     */
+    
+    constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
+        super(X, d, metric, seed);
+        super.parameter_list = druid.TSNE.parameter_list;
         [ this._N, this._D ] = X.shape;
-        this._perplexity = perplexity;
-        this._epsilon = epsilon;
-        this._metric = metric;
+        this.parameter("perplexity", Math.min(perplexity, this._N - 1));
+        this.parameter("epsilon", epsilon);
         this._iter = 0;
-        this.randomizer = new Randomizer(seed);
-        this._Y = new Matrix(this._N, this._d, () => this.randomizer.random);
+        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        return this;
     }
 
     init(distance_matrix=null) {
         // init
-        let Htarget = Math.log(this._perplexity);
-        let D = distance_matrix || new Matrix(this._N, this._N, (i, j) => this._metric(this._X.row(i), this._X.row(j)));
-        let P = new Matrix(this._N, this._N, "zeros");
+        const Htarget = Math.log(this._perplexity);
+        const N = this._N;
+        const D = this._D;
+        const metric = this._metric;
+        const X = this.X;
+        let Delta;
+        if (distance_matrix) {
+            Delta = distance_matrix;
+        } else {
+            Delta = new Matrix(N, N);
+            for (let i = 0; i < N; ++i) {
+                for (let j = i + 1; j < N; ++j) {
+                    const distance = metric(X.row(i), X.row(j))
+                    Delta.set_entry(i, j, distance);
+                    Delta.set_entry(j, i, distance);
+                }
+            }
 
-        this._ystep = new Matrix(this._N, this._D, "zeros").to2dArray;
-        this._gains = new Matrix(this._N, this._D, 1).to2dArray;
+        } 
+            
+        const P = new Matrix(N, N, "zeros");
+
+        this._ystep = new Matrix(N, D, "zeros");
+        this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Array(this._N).fill(0);
-        for (let i = 0, N = this._N; i < N; ++i) {
+        let prow = new Array(N).fill(0);
+        const tol = 1e-4;
+        const maxtries = 50;
+        for (let i = 0; i < N; ++i) {
             let betamin = -Infinity;
             let betamax = Infinity;
             let beta = 1;
             let done = false;
-            let maxtries = 50;
-            let tol = 1e-4;
 
             let num = 0;
             while(!done) {
                 let psum = 0;
                 for (let j = 0; j < N; ++j) {
-                    let pj = Math.exp(-D.entry(i, j) * beta);
+                    let pj = Math.exp(-Delta.entry(i, j) * beta);
                     if (i === j) pj = 0;
                     prow[j] = pj;
                     psum += pj;
@@ -52,7 +84,9 @@ export class TSNE{
                 for (let j = 0; j < N; ++j) {
                     let pj = (psum === 0) ? 0 : prow[j] / psum;
                     prow[j] = pj;
-                    if (pj > 1e-7) Hhere -= pj * Math.log(pj);
+                    if (pj > 1e-7) {
+                        Hhere -= pj * Math.log(pj);
+                    }
                 }
                 if (Hhere > Htarget) {
                     betamin = beta;
@@ -72,72 +106,63 @@ export class TSNE{
         }
 
         //compute probabilities
-        let Pout = new Matrix(this._N, this._N, "zeros")
-        let N2 = this._N * 2;
-        for (let i = 0, N = this._N; i < N; ++i) {
-            for (let j = 0; j < N; ++j) {
-                Pout.set_entry(i, j, Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100));
+        const Pout = new Matrix(N, N, "zeros")
+        const N2 = N * 2;
+        for (let i = 0; i < N; ++i) {
+            for (let j = i; j < N; ++j) {
+                const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);
+                Pout.set_entry(i, j, p);
+                Pout.set_entry(j, i, p);
             }
         }
         this._P = Pout;
-        return this
+        return this;
     }
 
-    set perplexity(value) {
-        this._perplexity = value;
-    }
-
-    get perplexity() {
-        return this._perplexity;
-    }
-
-    set epsilon(value) {
-        this._epsilon = value;
-    }
-
-    get epsilon() {
-        return this._epsilon;
-    }
-
-    transform(iterations=1000) {
+    transform(iterations=500) {
+        this.check_init();
         for (let i = 0; i < iterations; ++i) {
             this.next();
         }
-        return this._Y;
+        return this.projection;
     }
 
-    * transform_iter() {
+    * generator() {
+        this.check_init();
         while (true) {
             this.next();
-            yield this._Y;
+            yield {
+                "projection": this.projection,
+                "iteration": this._iter,
+            }
         }
     }
 
     // perform optimization
     next() {
-        let iter = ++this._iter;
-        let P = this._P;
-        let ystep = this._ystep;
-        let gains = this._gains;
-        let Y = this._Y;
-        let N = this._N;
-        let epsilon = this._epsilon;
-        let dim = this._d;
+        const iter = ++this._iter;
+        const P = this._P;
+        const ystep = this._ystep;
+        const gains = this._gains;
+        const N = this._N;
+        const epsilon = this._epsilon;
+        const dim = this._d;
+        let Y = this.Y;
 
         //calc cost gradient;
-        let pmul = iter < 100 ? 4 : 1;
+        const pmul = iter < 100 ? 4 : 1;
         
         // compute Q dist (unnormalized)
-        let Qu = new Matrix(N, N, "zeros")
+        const Qu = new Matrix(N, N, "zeros")
         let qsum = 0;
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
                 let dsum = 0;
                 for (let d = 0; d < dim; ++d) {
-                    let dhere = Y.entry(i, d) - Y.entry(j, d);
+                    const dhere = Y.entry(i, d) - Y.entry(j, d);
                     dsum += dhere * dhere;
                 }
-                let qu = 1 / (1 + dsum);
+                const qu = 1 / (1 + dsum);
                 Qu.set_entry(i, j, qu);
                 Qu.set_entry(j, i, qu);
                 qsum += 2 * qu;
@@ -145,37 +170,46 @@ export class TSNE{
         }
 
         // normalize Q dist
-        let Q = new Matrix(N, N, (i, j) => Math.max(Qu.entry(i, j) / qsum, 1e-100));
-
-        let cost = 0;
-        let grad = [];
+        const Q = new Matrix(N, N, 0)
         for (let i = 0; i < N; ++i) {
-            let gsum = new Array(dim).fill(0);
+            for (let j = i + 1; j < N; ++j) {
+                const val = Math.max(Qu.entry(i, j) / qsum, 1e-100);
+                Q.set_entry(i, j, val);
+                Q.set_entry(j, i, val);
+            }
+        }
+
+        //let cost = 0;
+        //let grad = [];
+        const grad = new Matrix(N, dim, "zeros");
+        for (let i = 0; i < N; ++i) {
+            //let gsum = new Float64Array(dim);//Array(dim).fill(0);
             for (let j = 0; j < N; ++j) {
-                cost += -P.entry(i, j) * Math.log(Q.entry(i, j));
-                let premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
+                //cost += -P.entry(i, j) * Math.log(Q.entry(i, j));
+                const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    gsum[d] += premult * (Y.entry(i, d) - Y.entry(j, d));
+                    //gsum[d] += premult * (Y.entry(i, d) - Y.entry(j, d));
+                    grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
-            grad.push(gsum);
+            //grad.push(gsum);
         }
 
         // perform gradient step
-        let ymean = new Array(dim).fill(0);
+        let ymean = new Float64Array(dim);
         for (let i = 0; i < N; ++i) {
             for (let d = 0; d < dim; ++d) {
-                let gid = grad[i][d];
-                let sid = ystep[i][d];
-                let gainid = gains[i][d];
+                const gid = grad.entry(i, d);
+                const sid = ystep.entry(i, d);
+                const gainid = gains.entry(i, d);
                 
                 let newgain = Math.sign(gid) === Math.sign(sid) ? gainid * .8 : gainid + .2;
                 if (newgain < .01) newgain = .01;
-                gains[i][d] = newgain;
+                gains.set_entry(i, d, newgain);
 
-                let momval = iter < 250 ? .5 : .8;
-                let newsid = momval * sid - epsilon * newgain * grad[i][d];
-                ystep[i][d] = newsid;
+                const momval = iter < 250 ? .5 : .8;
+                const newsid = momval * sid - epsilon * newgain * gid;
+                ystep.set_entry(i, d, newsid);
 
                 Y.set_entry(i, d, Y.entry(i, d) + newsid);
                 ymean[d] += Y.entry(i, d);
@@ -188,10 +222,6 @@ export class TSNE{
             }
         }
 
-        return this._Y;
-    }
-
-    get projection() {
-        return this._Y;
+        return this.Y;
     }
 } 

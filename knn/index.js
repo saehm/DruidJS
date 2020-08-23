@@ -1,6 +1,6 @@
 /**
  * @module knn
  */
-export { HNSW } from './HNSW'
+//export { HNSW } from './HNSW'
 export { BallTree } from './BallTree'
-export { NNDescent } from "./NNDescent"
+//export { NNDescent } from "./NNDescent"

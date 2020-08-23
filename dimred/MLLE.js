@@ -57,7 +57,7 @@ export class MLLE{
             }
         }
         // find regularized weights // median
-        let theta = P.sort((ρ_i, ρ_j) => ρ_i - ρ_j)[Math.ceil(rows / 2)];
+        let theta = P.sort((rho_i, rho_j) => rho_i - rho_j)[Math.ceil(rows / 2)];
         
         for (let row = 0; row < rows; ++row) {
             let I_i = nN[row].map(n => n.j)

@@ -3,6 +3,5 @@ doc
 dist
 data
 .vscode
-test*.html
 *.bak
 *.bak[0-9]*

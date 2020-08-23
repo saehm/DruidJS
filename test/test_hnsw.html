@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="div1"></div>
+    <div id="div2" style="float:left"></div>
+    <script src="dist/druid.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.js"></script>
+<script>
+    //let h = new sci.HNSW(sci.euclidean);
+    let h = new druid.HNSW(druid.euclidean);
+    const dim = 2;
+    const from = 0;
+    const to = 100;
+    const N = 30;
+
+    create = (a = null) => {
+        let res = [];
+        for (let i = 0; i < dim; ++i) {
+            let val = a || (Math.random() * Math.abs(to - from) + from);
+            res.push(val);
+        }
+        return res;
+    }
+
+    let list = []
+    function add(n) {
+        let ll = []
+        for (let i = 0; i < n; ++i) {
+            var elem = create()
+            list.push(elem)
+            ll.push(elem)
+        }
+        h.add(ll)
+    }
+    add(N)
+
+    console.log(h)
+    let s = create(1);
+    let K = 5;
+    //let search = h.search(s, K);
+    //console.log(K, "neighbors from", s, ":", search)
+
+    let width = 200
+    let height = 200
+    let margin = 4
+    svg = d3.select("#div1").append("svg") 
+        .attr("width", width)
+        .attr("height", height)
+        .style("border", "1px solid lightgrey")
+
+    let x = d3.scaleLinear()
+        .domain([from, to]).range([margin, width - 2 * margin])
+    let y = d3.scaleLinear()
+        .domain([from, to]).range([margin, height - 2 * margin])
+
+    svg.selectAll("circle")
+        .data(list)
+        .enter()
+        .append("circle")
+            .attr("cx", d => x(d[0]))
+            .attr("cy", d => y(d[1]))
+            .attr("r", 2)
+            .attr("stroke", "grey")
+            .attr("fill", "transparent")
+
+
+    let svg2 = d3.select("#div2").append("svg")
+        .attr("width", width * (Math.sqrt(2)))
+        .attr("height", (width / Math.sqrt(1 + 1/2)) * h._graph.size)
+        .style("background-color", "transparent")
+
+    let layers = svg2.selectAll(".layer")
+        .data(Array.from(h._graph.values()).reverse())
+        .enter()
+        .append("g")
+            .attr("transform", (d,i) => `translate(${width / Math.sqrt(2)}, ${i * (width / Math.sqrt(1 + 1/2))}) matrix(0.707 0.409 -0.707 0.409 0 -0.816) `)
+    
+    layers.append("text")
+        .text(d => "layer " + d.l_c)
+        .attr("fill", "crimson")
+        .attr("x", width / 2)
+        .attr("y", -10)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+
+    layers.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "transparent")
+        .attr("stroke", "lightgrey")
+            
+    layers.selectAll("line")
+        .data(d => {
+            const lines = []
+            for (const [idx1, v] of d.edges) {
+                for (const idx2 of v) {
+                    lines.push({
+                        idx1: idx1,
+                        idx2: idx2,
+                    })
+                }
+            }
+            return lines
+        })
+        .enter()
+        .append("line")
+            .attr("x1", d => x(d.idx1[0]))
+            .attr("y1", d => x(d.idx1[1]))
+            .attr("x2", d => x(d.idx2[0]))
+            .attr("y2", d => x(d.idx2[1]))
+            .attr("fill", "transparent")
+            .attr("stroke", "lightgrey")
+
+    layers.selectAll("circle")
+        .data(d => d.points)
+        .enter()
+        .append("circle")
+            .attr("cx", d => x(d[0]))
+            .attr("cy", d => y(d[1]))
+            .attr("r", 2)
+            .attr("stroke", "black")
+            .attr("fill", "transparent")
+
+    let ddone = true;
+    let layer0 = svg2.append("g")
+        .attr("transform", `translate(${width / Math.sqrt(2)}, ${0}) matrix(0.707 0.409 -0.707 0.409 0 -0.816) `)
+    
+    svg.on("mousemove", function() {
+        let { clientX: mx, clientY: my } = d3.event;
+        mx = x.invert(mx)
+        my = y.invert(my)
+        let q = [mx, my]
+        
+        let res = h.search(q, 10)
+        
+        let c = svg.selectAll(".res")
+            .data(res)
+        svg.selectAll(".res")
+            .data(res).enter()
+            .append("circle")
+            .attr("class", "res")
+
+        svg.selectAll(".res")
+            .data(res)
+            .attr("cx", d => x(d[0]))
+            .attr("cy", d => y(d[1]))
+            .attr("r", 3)
+            .attr("fill", "crimson")
+         
+        svg.selectAll(".res")
+            .data(res).exit().remove()
+        
+        if (ddone == true) {
+            ddone = false;
+        } else {
+            return;   
+        }
+        let iter = h.search_iter(q, 10)
+        //let done = false;
+        layer0.select("#q").remove()
+        let q_circle = layer0.append("circle")
+            .attr("id", "q")
+            .attr("cx", x(mx))
+            .attr("cy", y(my))
+            .attr("r", 3)
+            .attr("fill", "seagreen")
+
+
+        let l_c = h._L;
+        let ep = h._ep;
+        go()
+
+        function go() {
+            let duration = 200
+            let next = iter.next()
+            let done = next.done
+            if (done) {
+                ddone = true;
+                return;
+            }
+            const { l_c, ep } = next.value
+            layer0.selectAll(".search").data(ep).exit().remove() 
+
+            layer0.selectAll(".search").data(ep).enter()
+                .append("circle")
+                .attr("class", "search")
+                    .attr("cx", d => layer0.select(".search").node() ? layer0.select(".search").attr("cx") : x(d[0]) + (h._graph.length - 1 - l_c) * width)
+                    .attr("cy", d => layer0.select(".search").node() ? layer0.select(".search").attr("cy") : y(d[1]) + (h._graph.length - 1 - l_c) * width)
+                    .attr("r", 3)
+                    .attr("fill", "crimson")
+                .merge(layer0.selectAll(".search"))
+                .transition().duration(duration)
+                    .attr("cx", d => x(d[0]) + (h._graph.size - 1 - l_c) * width)
+                    .attr("cy", d => y(d[1]) + (h._graph.size - 1 - l_c) * width)
+            q_circle.transition().duration(duration)
+                .attr("cx", x(mx) + (h._graph.size - 1 - l_c) * width)                
+                .attr("cy", y(my) + (h._graph.size - 1 - l_c) * width)                
+            setTimeout(function(){ 
+                if (!done) {
+                    go()
+                } else {
+                    ddone = true;
+                }
+            }, duration + 50);
+
+        }
+    })
+
+    svg.on("mouseleave", function() {
+        svg.selectAll(".res").remove()
+    })
+</script>
+</body>
+</html>

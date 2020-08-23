@@ -6,4 +6,3 @@ export {default as distance_matrix} from "./distance_matrix";
 export {default as linspace} from "./linspace";
 export {default as norm} from "./norm";
 export { Matrix } from "./Matrix";
-export { Reorder } from "./Reorder";

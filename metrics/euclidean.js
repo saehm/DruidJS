@@ -1,4 +1,4 @@
-import { euclidean_squared } from "../metrics/index";
+import { euclidean_squared } from "../metrics/index.js";
 /**
  * Computes the euclidean distance (l_2) between {@link a} and {@link b}.
  * @memberof module:metrics
