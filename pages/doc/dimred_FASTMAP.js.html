@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> dimred/FASTMAP.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>dimred/FASTMAP.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Matrix } from "../matrix/index";
+import { euclidean } from "../metrics/index";
+import { DR } from "./DR.js";
+/**
+ * @class
+ * @alias FASTMAP
+ */
+export class FASTMAP extends DR{
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias FASTMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @returns {FASTMAP}
+     */
+    constructor(X, d=2, metric=euclidean, seed=1212) {
+        super(X, d, metric, seed);
+        this._col = -1;
+        return this;
+    }
+
+    /**
+     * Chooses two points which are the most distant in the actual projection.
+     * @private
+     * @param {function} dist 
+     * @returns {Array} An array consisting of first index, second index, and distance between the two points.
+     */
+    _choose_distant_objects(dist) {
+        const X = this.X;
+        const N = X.shape[0];
+        let a_index = this._randomizer.random_int % N - 1;
+        let b_index = null;
+        let max_dist = -Infinity;
+        for (let i = 0; i &lt; N; ++i) {
+            const d_ai = dist(a_index, i)
+            if (d_ai > max_dist) {
+                max_dist = d_ai;
+                b_index = i;
+            }
+        }
+        max_dist = -Infinity;
+        for (let i = 0; i &lt; N; ++i) {
+            const d_bi = dist(b_index, i)
+            if (d_bi > max_dist) {
+                max_dist = d_bi;
+                a_index = i;
+            }
+        }
+        return [a_index, b_index, max_dist];
+    }
+
+    /**
+     * Computes the projection.
+     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
+     */
+    transform() {
+        const X = this.X;
+        const N = X.shape[0];
+        const d = this._d;
+        const metric = this._metric;
+        const Y = new Matrix(N, d);
+        let dist = (a, b) => metric(X.row(a), X.row(b));
+        let old_dist = dist;
+
+        while(this._col &lt; d - 1) {
+            this._col += 1;
+            let _col = this._col;
+            // choose pivot objects
+            const [a_index, b_index, d_ab] = this._choose_distant_objects(dist);
+            // record id of pivot objects
+            //PA[0].push(a_index);
+            //PA[1].push(b_index);
+            if (d_ab === 0) {
+                // because all inter-object distances are zeros
+                for (let i = 0; i &lt; N; ++i) {
+                    Y.set_entry(i, _col, 0);
+                }
+            } else {
+                // project the objects on the line (O_a, O_b)
+                for (let i = 0; i &lt; N; ++i) {
+                    const d_ai = dist(a_index, i);
+                    const d_bi = dist(b_index, i);
+                    const y_i = (d_ai ** 2 + d_ab ** 2 - d_bi ** 2) / (2 * d_ab);
+                    Y.set_entry(i, _col, y_i);
+                }
+                // consider the projections of the objects on a
+                // hyperplane perpendicluar to the line (a, b);
+                // the distance function D'() between two 
+                // projections is given by Eq.4
+                dist = (a, b) => Math.sqrt((old_dist(a, b) ** 2) - ((Y.entry(a, _col) - Y.entry(b, _col)) ** 2))
+            }
+        }
+        // return embedding
+        this.Y = Y;
+        return this.projection;
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

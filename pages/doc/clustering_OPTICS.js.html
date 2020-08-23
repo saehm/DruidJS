@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> clustering/OPTICS.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>clustering/OPTICS.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { euclidean } from "../metrics/index";
+import { Heap } from "../datastructure/index";
+
+/**
+ * @class
+ * @alias OPTICS
+ */
+export class OPTICS {
+    /**
+     * **O**rdering **P**oints **T**o **I**dentify the **C**lustering **S**tructure.
+     * @constructor
+     * @memberof module:clustering
+     * @alias OPTICS
+     * @todo needs restructuring. 
+     * @param {Matrix} matrix - the data.
+     * @param {Number} epsilon - the minimum distance which defines whether a point is a neighbor or not.
+     * @param {Number} min_points - the minimum number of points which a point needs to create a cluster. (Should be higher than 1, else each point creates a cluster.)
+     * @param {Function} [metric = euclidean] - the distance metric which defines the distance between two points of the {@link matrix}.
+     * @returns {OPTICS}
+     * @see {@link https://www.dbs.ifi.lmu.de/Publikationen/Papers/OPTICS.pdf}
+     * @see {@link https://en.wikipedia.org/wiki/OPTICS_algorithm}
+     */
+    constructor(matrix, epsilon, min_points, metric = euclidean) {
+        this._matrix = matrix;
+        this._epsilon = epsilon;
+        this._min_points = min_points;
+        this._metric = metric;
+
+        this._ordered_list = [];
+        this._clusters = [];
+        this._DB = new Array(matrix.shape[0]).fill();
+        this.init();
+        return this;
+    }
+
+    /**
+     * Computes the clustering.
+     */
+    init() {
+        const ordered_list = this._ordered_list;
+        const matrix = this._matrix;
+        const N = matrix.shape[0];
+        const DB = this._DB;
+        const clusters = this._clusters;
+        let cluster_index = this._cluster_index = 0;
+
+        for (let i = 0; i &lt; N; ++i) {
+            DB[i] = {
+                "element": matrix.row(i),
+                "index": i,
+                "reachability_distance": undefined,
+                "processed": false,
+            }
+        }
+        for (const p of DB) {
+            if (p.processed) continue;
+            p.neighbors = this._get_neighbors(p);
+            p.processed = true;
+            clusters.push([p.index])
+            cluster_index = clusters.length - 1;
+            ordered_list.push(p);
+            if (this._core_distance(p) != undefined) {
+                const seeds = new Heap(null, d => d.reachability_distance, "min")
+                this._update(p, seeds);
+                this._expand_cluster(seeds, clusters[cluster_index]);
+            }
+        }
+    }
+
+    /**
+     * 
+     * @private
+     * @param {Object} p - a point of {@link matrix}.
+     * @returns {Array} An array consisting of the {@link epsilon}-neighborhood of {@link p}.
+     */
+    _get_neighbors(p) {
+        if ("neighbors" in p) return p.neighbors;
+        const DB = this._DB;
+        const metric = this._metric;
+        const epsilon = this._epsilon;
+        const neighbors = [];
+        for (const q of DB) {
+            if (q.index == p.index) continue;
+            if (metric(p.element, q.element) &lt; epsilon) {
+                neighbors.push(q);
+            }
+        }
+        return neighbors;
+    }
+
+    /**
+     * 
+     * @private
+     * @param {Object} p - a point of {@link matrix}.
+     * @returns {Number} The distance to the {@link min_points}-th nearest point of {@link p}, or undefined if the {@link epsilon}-neighborhood has fewer elements than {@link min_points}.
+     */
+    _core_distance(p) {
+        const min_points = this._min_points;
+        const metric = this._metric;
+        if (p.neighbors &amp;&amp; p.neighbors.length &lt;= min_points) {
+            return undefined;
+        }
+        return metric(p.element, p.neighbors[min_points].element);
+    }
+
+    /**
+     * Updates the reachability distance of the points.
+     * @private
+     * @param {Object} p 
+     * @param {Heap} seeds 
+     */
+    _update(p, seeds) {
+        const metric = this._metric;
+        const core_distance = this._core_distance(p);
+        const neighbors = this._get_neighbors(p);//p.neighbors;
+        for (const q of neighbors) {
+            if (q.processed) continue;
+            const new_reachability_distance = Math.max(core_distance, metric(p.element, q.element));
+            //if (q.reachability_distance == undefined) { // q is not in seeds
+            if (seeds.raw_data().findIndex(d => d.element == q) &lt; 0) {
+                q.reachability_distance = new_reachability_distance;
+                seeds.push(q);
+            } else { // q is in seeds
+                if (new_reachability_distance &lt; q.reachability_distance) {
+                    q.reachability_distance = new_reachability_distance;
+                    seeds = Heap.heapify(seeds.data(), d => d.reachability_distance, "min"); // seeds change key =/
+                }
+            }
+        }
+    }
+
+    /**
+     * Expands the {@link cluster} with points in {@link seeds}.
+     * @private
+     * @param {Heap} seeds 
+     * @param {Array} cluster 
+     */
+    _expand_cluster(seeds, cluster) {
+        const ordered_list = this._ordered_list;
+        while (!seeds.empty) {
+            const q = seeds.pop().element;
+            q.neighbors = this._get_neighbors(q);
+            q.processed = true;
+            cluster.push(q.index);
+            ordered_list.push(q);
+            if (this._core_distance(q) != undefined) {
+                this._update(q, seeds);
+                this._expand_cluster(seeds, cluster);
+            }
+        }
+    }
+
+    /**
+     * Returns an array of clusters.
+     * @returns {Array&lt;Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     */
+    get_clusters() {
+        const clusters = [];
+        const outliers = [];
+        const min_points = this._min_points;
+        for (const cluster of this._clusters) {
+            if (cluster.length &lt; min_points) {
+                outliers.push(...cluster);
+            } else {
+                clusters.push(cluster);
+            }
+        }
+        clusters.push(outliers);
+        return clusters;
+    }
+
+    /**
+     * @returns {Array} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)
+     */
+    get_cluster_affirmation() {
+        const N = this._matrix.shape[0];
+        const result = new Array(N).fill();
+        const clusters = this.get_clusters();
+        for (let i = 0, n = clusters.length; i &lt; n; ++i) {
+            const cluster = clusters[i]
+            for (const index of cluster) {
+                result[index] = (i &lt; n - 1) ? i : -1;
+            }
+        }
+        return result;
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>
