@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> knn/NNDescent.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer.html">Randomizer</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>knn/NNDescent.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { euclidean } from "../metrics/index";
+import { Randomizer } from "../util/index";
+import { Heap } from "../datastructure/index";
+/**
+ * @class
+ * @alias NNDescent
+ */
+export class NNDescent{
+    /**
+     * @constructor
+     * @memberof module:knn
+     * @alias NNDescent
+     * @param {Array&lt;*>=} elements - called V in paper.
+     * @param {Function} [metric = euclidean] - called sigma in paper.
+     * @param {Number} [K = 10] - number of neighbors {@link search} should return.
+     * @param {Number} [rho = .8] - sample rate.
+     * @param {Number} [delta = 0.0001] - precision parameter.
+     * @param {Number} [seed = 1987] - seed for the random number generator.
+     * @returns {NNDescent}
+     * @see {@link http://www.cs.princeton.edu/cass/papers/www11.pdf}
+     */
+    constructor(elements, metric=euclidean, K = 10, rho = 1, delta = 1e-3, seed=19870307) {
+        this._metric = metric;
+        this._randomizer = new Randomizer(seed);
+        this._K = K;
+        this._rho = rho;
+        this._sample_size = K * rho;
+        this._delta = delta;
+        if (elements) {
+            this.add(elements)
+        }
+        return this;   
+    }
+
+    /**
+     * Samples Array A with sample size.
+     * @private
+     * @param {Array&lt;*>} A 
+     */
+    _sample(A) {
+        const n = A.length;
+        const sample_size = this._sample_size;
+        if (sample_size > n) {
+            return A;
+        } else {
+            const randomizer = this._randomizer;
+            return randomizer.choice(A, sample_size);
+        }
+    }
+
+    /**
+     * Updates the KNN heap and returns 1 if changed, or 0 if not.
+     * @private
+     * @param {KNNHeap} B 
+     * @param {*} u 
+     */
+    _update(B, u) {
+        if (B.push(u)) {
+            u.flag = true;
+            B.pop();
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Collects for each element where it is neighbor from.
+     * @private
+     * @param {Array&lt;KNNHeap>} B 
+     */
+    _reverse(B) {
+        const N = this._N;
+        const R = new Array(N).fill().map(() => new Array());
+        for (let i = 0; i &lt; N; ++i) {
+            for (let j = 0; j &lt; N; ++j) {
+                const Bjdata = B[j].data()
+                const val = Bjdata.find(d => d.index === i)
+                if (val) R[j].push(val);
+            }
+        }
+        return R;
+    }
+
+    /**
+     * 
+     * @param {Array} elements 
+     */
+    add(elements) {
+        this._elements = elements = elements.map((e, i) => {
+            return {
+                "element": e,
+                "index": i,
+                "flag": true,
+            }
+        })
+        const randomizer = this._randomizer;
+        const metric = this._metric;
+        const K = this._K;
+        const delta = this._delta;
+        const N = this._N = elements.length;
+        const B = this._B = new Array();
+        // B[v] &lt;-- Sample(V,K)
+        for (let i = 0; i &lt; N; ++i) {
+            const e = elements[i];
+            const sample = randomizer.choice(elements, K);
+            const Bi = new KNNHeap(sample, (d) => metric(d.element, e.element), "max"); // "max" to pop the futherst elements away
+            B.push(Bi);
+        }
+
+        // loop
+        let c = Infinity;
+        let old_c = -Infinity;
+        //let min_iter = 10;
+        //let max_iter = 20;
+        //while (min_iter-- > 0 || (c &lt; delta * N * K) &amp;&amp; max_iter-- > 0) {
+        while (c > (delta * N * K) &amp;&amp; c != old_c) {
+            // parallel for v e V do
+            const old_ = new Array(N);
+            const new_ = new Array(N);
+            for (let i = 0; i &lt; N; ++i) {
+                const e = elements[i];
+                const Bi = B[i].data();
+                const falseBs = Bi.filter(d => !d.flag);
+                const trueBs = this._sample(Bi.filter(d => d.flag));
+                trueBs.forEach(d => d.flag = false);
+                old_[i] = new KNNHeap(falseBs, (d) => metric(d.element, e.element), "max");
+                new_[i] = new KNNHeap(trueBs, (d) => metric(d.element, e.element), "max");
+            }
+            const old_reverse = this._reverse(old_);
+            const new_reverse = this._reverse(new_);
+            old_c = c;
+            c = 0;
+            // parallel for v e V do
+            for (let i = 0; i &lt; N; ++i) {
+                this._sample(old_reverse[i]).forEach(o => old_[i].push(o));
+                this._sample(new_reverse[i]).forEach(n => new_[i].push(n));
+                const new_i = new_[i].data();
+                const old_i = old_[i].data();
+                const n1 = new_i.length;
+                const n2 = old_i.length;
+                for (let j = 0; j &lt; n1; ++j) {
+                    const u1 = new_i[j];
+                    const Bu1 = B[u1.index];
+                    for (let k = 0; k &lt; n1; ++k) {
+                        const u2 = new_i[k];
+                        if (u1 == u2) continue;
+                        const Bu2 = B[u2.index];
+                        c += this._update(Bu2, u1);
+                        c += this._update(Bu1, u2);
+                    }
+                    for (let k = 0; k &lt; n2; ++k) {
+                        const u2 = old_i[k];
+                        if (u1 == u2) continue;
+                        const Bu2 = B[u2.index];
+                        c += this._update(Bu2, u1);
+                        c += this._update(Bu1, u2);
+                    }
+                }
+            }
+        } 
+        return this;
+    }
+
+    /**
+     * @todo not implemented yet
+     * @param {*} x 
+     * @param {*} k 
+     */
+    search(x, k=5) {
+        return this._B[this._randomizer.random_int % (this._N - 1)].toArray().slice(0, k);
+    }
+
+    search_index(i, k=5) {
+        const B = this._B[i];
+        const result = B.raw_data().sort((a, b) => a.value - b.value).slice(-k);
+        return result;
+    }
+}
+
+class KNNHeap extends Heap{
+    constructor(elements, accessor, comparator) {
+        super(null, accessor, comparator)
+        this.set = new Set();
+        if (elements) {
+            for (const element of elements) {
+                this.push(element);
+            }
+        }
+    }
+
+    push(element) {
+        const set = this.set;
+        if (set.has(element)){
+            return false;
+        } else {
+            set.add(element);
+            super.push(element);
+            return true;
+        }    
+    }
+
+    pop() {
+        super.pop().element;
+        //const element = super.pop().element;
+        // once popped it should not return into the heap.
+        // used as max heap. therefore, if popped the furthest 
+        // element in the knn list gets removed.
+        // this.set.delete(element); 
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

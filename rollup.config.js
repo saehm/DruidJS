@@ -27,7 +27,7 @@ export default [
         }),
 
       jsdoc({
-        args: ["-r", "-d", "pages/doc"],
+        args: ["-r", "-d", "docs"],
         config: "jsdoc.config.json",
       }),
       //eslint()

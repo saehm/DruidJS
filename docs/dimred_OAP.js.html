@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> dimred/OAP.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer.html">Randomizer</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>dimred/OAP.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>//import { Matrix } from "../matrix/index";
+import { euclidean, chebyshev } from "../metrics/index";
+import { MDS } from "../dimred/MDS";
+import { Randomizer } from "../util/index";
+import { BallTree } from "../knn/BallTree";
+import { Matrix } from "../matrix/index";
+import { neumair_sum } from "../numerical/index";
+
+/**
+ * 
+ */
+export class OAP {
+    constructor(X, depth_field_lag, step_size, depth_weight, d = 2, metric = euclidean, seed = 1212) {
+        this._X = X;
+        this._d = d;
+        [this._N, this._D] = X.shape;
+        this._depth_field_lag = depth_field_lag;
+        this._step_size = step_size;
+        this._depth_weight = depth_weight;
+        this._J = 3;
+        this._max_iter = 1;
+        this._metric = metric;
+        this._seed = seed;
+        this._randomizer = new Randomizer(seed);
+    }
+
+    _data_depth(technique = "chebyshev") {
+        const X = this._X;
+        const N = this._N;
+        const h = new Float32Array(N);
+        let deepest_point = 0;
+        if (technique === "mdb") {
+            h.fill(1)
+
+            /*
+            // Modified Band Depth 
+            // https://www.tandfonline.com/doi/pdf/10.1198/jasa.2009.0108?casa_token=E1Uzntgs-5AAAAAA:Eo8mUpJDhpLQ5RHBkCB3Mdz0tbGM3Q0v78bwyCIAv7-peLGwfG3TcXLqShIaYuJLEqKc7GvaKlgvUg 
+            const randomizer = this._randomizer;
+            const h = new Float32Array(this._N);
+            const J = this._J;
+            const N = this._N;
+            const D = this._D;
+            const X = this._X;
+
+            const one_div_by_n_choose_j = 1;
+            for (let row = 0; row &lt; N; ++row) {
+                const x = X.row(row);
+                const B_min = new Float32Array(D).fill(Infinity);
+                const B_max = new Float32Array(D).fill(-Infinity);
+                let r = Math.floor(randomizer.random * N);
+                for (let i = 0; i &lt; J; ++i) {
+                    const x_j = X.row(r);
+                    for (let d = 0; d &lt; D; ++d) {
+                        const x_jd = x_j[d]
+                        B_min[d] = Math.min(B_min[d], x_jd);
+                        B_max[d] = Math.max(B_max[d], x_jd);
+                    }
+                    r += Math.floor(randomizer.random * (N - 1));
+                    r = r % N;
+                }
+                for (let d = 0; d &lt; D; ++d) {
+                    const x_d = x[d];
+                    if (x_d >= B_min[d] &amp;&amp; x_d &lt;= B_max[d]) {
+                        ++h[row]
+                    }
+                }
+            }
+            this._h = h;*/
+        } else if (technique === "chebyshev") {
+            // L∞ Depth
+            // https://arxiv.org/pdf/1506.01332.pdf
+            for (let i = 0; i &lt; N; ++i) {
+                let x = X.row(i);
+                let sum = 0;
+                for (let j = 0; j &lt; N; ++j) {
+                    if (i !== j) {
+                        sum += chebyshev(x, X.row(j));
+                    }
+                }
+                h[i] = 1 / (1 + sum / N);
+                if (h[deepest_point] &lt; h[i]) {
+                    deepest_point = i;
+                }
+            }
+        }
+        this._h = h;
+        this._deepest_point = deepest_point;
+
+    }
+
+    init() {
+        this._iter = 0;
+        // init with MDS
+        const init_MDS = new MDS(this._X, this._d, this._metric);
+        //console.log(init_MDS)
+        this._Y = init_MDS.transform();
+
+        // try häääh?
+        this._X_distances = init_MDS._d_X
+        /*let max = -Infinity
+        init_MDS._d_X._data.forEach(dx => max = Math.max(dx, max));
+        this._X_distances = init_MDS._d_X.divide(max);*/
+        // end try hääääh?
+        
+        // compute order statistics
+        this._data_depth();
+        this._M = this._monotonic_field(this._Y)
+        //
+        return this;
+    }
+
+    set depth_field_lag(value) {
+        this._depth_field_lag = value;
+    }
+
+    get depth_field_lag() {
+        return this._depth_field_lag;
+    }
+
+    set step_size(value) {
+        this._step_size = value;
+    }
+
+    get step_size() {
+        return this._step_size;
+    }
+
+    set depth_weight(value) {
+        this._depth_weight = value;
+    }
+
+    get depth_weight() {
+        return this._depth_weight;
+    }
+
+    transform(iterations = this._max_iter) {
+        for (let i = 0; i &lt; iterations; ++i) {
+            this.next();
+        }
+        return this._Y;
+    }
+
+    * transform_iter() {
+        while (true) {
+            this.next();
+            yield this._Y;
+        }
+    }
+
+    _monotonic_field(Y) {
+        const h = this._h;
+        const Y_ = this._Y_;
+        Y, h, Y_;
+        const nn = new BallTree();
+        nn.add(Y.to2dArray);
+
+        const N = 5
+        let M = (x) => {
+            let neighbors = nn.search(x, N).toArray();
+            let d_sum = 0;//neighbors.reduce((a, b) => a + b.value, 0);
+            let m = 0
+            for (let i = 0; i &lt; N; ++i) {
+                d_sum += neighbors[i].value
+                m += h[neighbors[i].element.index] * neighbors[i].value
+            }
+            //console.log(m, d_sum)
+            m /= d_sum;
+            return m;
+        }
+        return M;
+    }
+
+    next() {
+        const iter = ++this._iter;
+        const l = this._depth_field_lag;
+        const step_size = this._step_size;
+        const w = this._depth_weight;
+        const N = this._N;
+        const dim = this._d;
+        const d_X = this._X_distances;
+        const h = this._h;
+        let Y = this._Y;
+
+        if ((iter % l) === 1) {
+            // compute monotonic field
+            this._Y_ = this._Y.clone()
+            this._M = this._monotonic_field(Y)
+        }
+        const M = this._M;
+        // perform gradient step
+
+        // MDS stress step
+        /*for (let i = 0; i &lt; N; ++i) {
+            const d_x = d_X.row(i);
+            const y_i = Y.row(i)
+            const delta_mds_stress = new Float32Array(dim);
+            for (let j = 0; j &lt; N; ++j) {
+                if (i !== j) {
+                    const y_j = Y.row(j)
+                    const d_y = metric(y_i, y_j);
+                    const d_x_j = d_x[j] === 0 ? 1e-2 : d_x[j]
+                    const mult = 1 - (d_x_j / d_y)
+                    for (let d = 0; d &lt; dim; ++d) {
+                        delta_mds_stress[d] += (mult * (y_i[d] - y_j[d]));
+                    }
+                }
+            }
+            for (let d = 0; d &lt; dim; ++d) {
+                Y.set_entry(i, d, Y.entry(i, d) - step_size * delta_mds_stress[d] / N)
+            }
+        }*/
+        
+        // MDS stress step
+        const d_Y = new Matrix();
+        d_Y.shape = [N, N, (i, j) => {
+            return i &lt; j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
+        }]
+        const ratio = new Matrix();//d_X.divide(d_Y).mult(-1);
+        ratio.shape = [N, N, (i, j) => {
+            if (i === j) return 1e-8
+            return i &lt; j ? -d_X.entry(i, j) / d_Y.entry(i, j) : ratio.entry(j, i);
+        }]
+        for (let i = 0; i &lt; N; ++i) {
+            ratio.set_entry(i, i, ratio.entry(i, i) - neumair_sum(ratio.row(i)));
+        }
+        const mds_Y = ratio.dot(Y).divide(N);
+
+        // Data depth step
+        const diff_Y = new Matrix(N, dim, (i, j) => mds_Y.entry(i, j) - Y.entry(i, j));
+
+        for (let i = 0; i &lt; N; ++i) {
+            const m = M(Y.row(i));
+            const dm = M(mds_Y.row(i));
+            const h_i = h[i];
+            for (let d = 0; d &lt; dim; ++d) {
+                Y.set_entry(i, d, Y.entry(i, d) + step_size * (diff_Y.entry(i, d) + w * 2 * (m - h_i) * dm));
+            }
+        }
+
+        this._Y = Y;
+
+        return this._Y;
+    }
+
+    get projection() {
+        return this._Y;
+    }
+} </code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

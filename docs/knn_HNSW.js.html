@@ -1,0 +1,364 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> knn/HNSW.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer.html">Randomizer</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>knn/HNSW.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { euclidean } from '../metrics/index';
+import { Heap } from '../datastructure/index';
+import { Randomizer } from '../util/index';
+
+/**
+ * @class
+ * @alias HNSW
+ */
+export class HNSW {
+    /**
+     * Hierarchical navigable small world graph. Efficient and robust approximate nearest neighbor search.
+     * @constructor
+     * @memberof module:knn
+     * @alias HNSW
+     * @param {Function} [metric = euclidean] - metric to use: (a, b) => distance.
+     * @param {Boolean} [heuristic = true] - use heuristics or naive selection.
+     * @param {Number} [m = 5] - max number of connections.
+     * @param {Number} [ef = 200] - size of candidate list.
+     * @param {Number} [m0 = 2 * m] - max number of connections for ground layer.
+     * @param {Number} [mL = 1 / Math.log2(m)] - normalization factor for level generation.
+     * @param {Number} [seed = 1987] - seed for random number generator.
+     * @see {@link https://arxiv.org/abs/1603.09320}
+     * @see {@link https://arxiv.org/pdf/1904.02077}
+     */
+    constructor(metric = euclidean, heuristic = true, m = 5, ef = 200, m0 = null, mL = null, seed = 1987) {
+        this._metric = metric;
+        this._select = heuristic ? this._select_heuristic : this._select_simple;
+        this._m = m;
+        this._ef = ef;
+        this._m0 = m0 || 2 * m;
+        this._graph = new Map();
+        this._ep = null;
+        this._L = null;
+        this._mL = mL || 1 / Math.log2(m);
+        this._randomizer = new Randomizer(seed);
+    }
+
+    addOne(element) {
+        this.add([element])
+    }
+
+    /**
+     * 
+     * @param {Array&lt;*>} elements - new elements.
+     * @returns {HNSW}
+     */
+    add(elements) {
+        const m = this._m;
+        const ef = this._ef;
+        const m0 = this._m0;
+        const mL = this._mL;
+        const randomizer = this._randomizer;
+        let graph = this._graph;
+        for (const element of elements) {
+            let ep = this._ep ? this._ep.slice() : null;
+            let W = [];
+            const L = this._L;
+            const rand = Math.min(randomizer.random + 1e-8, 1);
+            let l = Math.floor(-Math.log(rand * mL))
+            const min_L_l = Math.min(L, l);
+            if (L) {
+                for (let l_c = graph.size - 1; l_c > min_L_l; --l_c) {
+                    ep = this._search_layer(element, ep, 1, l_c);
+                }
+                for (let l_c = min_L_l; l_c >= 0; --l_c) {
+                    const layer_c = graph.get(l_c);//[l_c];
+                    layer_c.points.push(element)
+                    W = this._search_layer(element, ep, ef, l_c);
+                    const neighbors = l_c > 3 ? this._select(element, W, m, l_c) : this._select_simple(element, W, m);
+                    for (const p of neighbors) {
+                        if (p !== element) {
+                            const edges_p = layer_c.edges.get(p);
+                            if (!edges_p) {
+                                layer_c.edges.set(p, [element]) ;
+                            }else {
+                                edges_p.push(element);
+                            }
+                            const edges_e = layer_c.edges.get(element);
+                            if (!edges_e) {
+                                layer_c.edges.set(element, [p]) ;
+                            } else {
+                                edges_e.push(p);
+                            }
+                        }
+                    }
+                    const max = (l_c === 0 ? m0 : m);
+                    for (const e of neighbors) {
+                        const e_conn = layer_c.edges.get(e);
+                        if (e_conn.length > max) {
+                            const neighborhood = this._select(e, e_conn, max, l_c);
+                            layer_c.edges.delete(e);
+                            layer_c.edges.set(e, neighborhood);
+                        }
+                    }
+                    ep = W;
+                }
+            }
+            let N = graph.size;
+            if (N &lt; l || l > L) {
+                for (let i = N; i &lt;= l; ++i) {
+                    graph.set(i, {
+                        "l_c": i, 
+                        "points": [element], 
+                        "edges": new Map(),
+                    });
+                }
+                this._ep = [element];
+                this._L = l;
+            }
+        }
+        return this;
+    }
+
+    /**
+     * @private
+     * @param {*} q - base element.
+     * @param {Array} candidates - candidate elements.
+     * @param {Number} M - number of neighbors to return.
+     * @param {Number} l_c - layer number.
+     * @param {Boolean} [extend_candidates = true] - flag indicating wheter or not to extend candidate list.
+     * @param {Boolean} [keep_pruned_connections = true] - flag indicating wheter or not to add discarded elements.
+     * @returns M elements selected by the heuristic.
+     */
+    _select_heuristic(q, candidates, M, l_c, extend_candidates = true, keep_pruned_connections = true) {
+        if (l_c > this._graph.size - 1) return candidates
+        const metric = this._metric;
+        const randomizer = this._randomizer;
+        const layer = this._graph.get(l_c);
+        let R = [];
+        let W_set = new Set(candidates);
+        if (extend_candidates) {
+            for (const c of candidates) {
+                const edges = layer.edges.get(c);
+                if (!edges) break;
+                for (const c_adj of edges) {
+                    W_set.add(c_adj)
+                }
+            }
+        }
+        let W = new Heap(W_set, d => metric(d, q), "min")
+        let W_d = new Heap(null, d => metric(d, q), "min");
+        while (!W.empty &amp;&amp; R.length &lt; M) {
+            let e = W.pop()
+            let random_r = randomizer.random_int % R.length;
+            if (R.length === 0 || e.value &lt; metric(R[random_r], q)) {
+                R.push(e.element);
+            } else {
+                W_d.push(e.element)
+            }
+        }
+        if (keep_pruned_connections) {
+            while (!W_d.empty &amp;&amp; R.length &lt; M) {
+                R.push(W_d.pop().element)
+            }
+        }
+        return R
+    }
+
+    /**
+     * @private
+     * @param {*} q - base element.
+     * @param {Array} C - candidate elements.
+     * @param {Number} M - number of neighbors to return.
+     * @returns {Array} M nearest elements from C to q.
+     */
+    _select_simple(q, C, M) {
+        const metric = this._metric;
+        let res = C.sort((a,b) => metric(a, q) - metric(b, q)).slice(0,M);
+        return res
+    }
+
+    /**
+     * @private
+     * @param {*} q - query element.
+     * @param {Array} ep - enter points.
+     * @param {Number} ef - number of nearest to {@link q} elements to return.
+     * @param {Number} l_c - layer number.
+     * @returns {Array} ef closest neighbors to q.
+     */
+    _search_layer(q, ep, ef, l_c) {
+        const metric = this._metric;
+        const layer = this._graph.get(l_c)//.find(l => l.l_c === l_c);//[l_c];
+        if (layer.edges.size === 0) return ep;
+        let v = new Set(ep);
+        let C = new Heap(v, d => metric(d, q), "min");
+        let W = new Heap(v, d => metric(d, q), "max");
+        while (!C.empty) {
+            const c = C.pop();
+            let f = W.first;
+            if (c.value > f.value) {
+                break;
+            }
+            const edges = layer.edges.get(c.element);
+            if (!edges) break;
+            for (const e of edges) {
+                if (!v.has(e)) {
+                    v.add(e);
+                    f = W.first;
+                    if (metric(e, q) &lt; metric(f.element, q) || W.length &lt; ef) {
+                        C.push(e);
+                        W.push(e);
+                        if (W.length > ef) {
+                            W.pop();
+                        }
+                    }
+                }
+            }
+        }
+        return W.data();
+    }
+
+    /**
+     * 
+     * @param {*} q - query element.
+     * @param {*} K - number of nearest neighbors to return.
+     * @param {*} ef - size of the dynamic cnadidate list.
+     * @returns {Array} K nearest elements to q.
+     */
+    search(q, K, ef = 1) {
+        let ep = this._ep.slice();
+        let L = this._L;
+        for (let l_c = L; l_c > 0; --l_c) {
+            ep = this._search_layer(q, ep, ef, l_c);
+        }
+        ep = this._search_layer(q, ep, K, 0);
+        return ep;
+    }
+
+    /**
+     * Iterator for searching the HNSW graphs
+     * @param {*} q - query element.
+     * @param {*} K - number of nearest neighbors to return.
+     * @param {*} ef - size of the dynamic cnadidate list.
+     * @yields {Array} K nearest elements to q.
+     */
+    * search_iter(q, K, ef = 1) {
+        let ep = this._ep.slice();
+        let L = this._L;
+        yield{"l_c": L, "ep": [q]}
+        for (let l_c = L; l_c > 0; --l_c) {
+            yield {"l_c": l_c, "ep": ep}
+            ep = this._search_layer(q, ep, ef, l_c);
+            yield {"l_c": l_c, "ep": ep}
+        }
+        yield {"l_c": 0, "ep": ep}
+        ep = this._search_layer(q, ep, K, 0);
+        yield {"l_c": 0, "ep": ep}
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>
