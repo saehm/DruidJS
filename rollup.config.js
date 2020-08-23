@@ -1,6 +1,6 @@
 //import ascii from "rollup-plugin-ascii";
 import resolve from "@rollup/plugin-node-resolve";
-//import {terser} from "rollup-plugin-terser";
+import {terser} from "rollup-plugin-terser";
 //import {eslint} from 'rollup-plugin-eslint';
 import * as meta from "./package.json";
 import jsdoc from 'rollup-plugin-jsdoc';
@@ -10,7 +10,6 @@ const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).g
 
 export default [
   {
-    external: ["@tensorflow/tfjs"],
     input: "index",
     output: {
       extend: true,
@@ -18,7 +17,7 @@ export default [
       file: "dist/druid.js",
       format: "umd",
       indent: false,
-      name: "druid"
+      name: "DruidJS"
     },
     plugins: [
         resolve({
@@ -27,14 +26,14 @@ export default [
               }
         }),
 
-      /* jsdoc({
-        args: ["-r", "-d", "doc"],
+      jsdoc({
+        args: ["-r", "-d", "pages/doc"],
         config: "jsdoc.config.json",
-      }), */
+      }),
       //eslint()
     ]
   },
-  /*{
+  {
     input: "index",
     plugins: [
       terser({output: {preamble: copyright}}),
@@ -45,7 +44,7 @@ export default [
       file: "dist/druid.min.js",
       format: "umd",
       indent: false,
-      name: "druid"
+      name: "DruidJS"
     }
-  }*/
+  }
 ];

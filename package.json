@@ -13,6 +13,10 @@
     "type": "git",
     "url": "https://github.com/saehm/druidjs.git"
   },
+  "publishConfig": { 
+    "registry": "http://npm.pkg.github.com/",
+    "strict-ssl": false
+  },
   "author": {
     "name": "Rene Cutura",
     "url": "http://renecutura.eu"
