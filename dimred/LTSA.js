@@ -24,7 +24,7 @@ export class LTSA extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LTSA.parameter_list;
+        super.parameter_list = LTSA.parameter_list;
         this.parameter("k", neighbors || Math.max(Math.floor(this.X.shape[0] / 10), 2));
         return this;
     }

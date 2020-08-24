@@ -27,7 +27,7 @@ export class LSP extends DR {
      */
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LSP.parameter_list;
+        super.parameter_list = LSP.parameter_list;
         this.parameter("k", k || Math.max(Math.floor(this.X.shape[0] / 10), 2));
         this.parameter("control_points", control_points || Math.ceil(Math.sqrt(this._N)));
         this._is_initialized = false;

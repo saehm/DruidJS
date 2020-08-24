@@ -23,7 +23,7 @@ export class LDA extends DR {
      */
     constructor(X, labels, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LDA.parameter_list;
+        super.parameter_list = LDA.parameter_list;
         this.parameter("labels", labels);
         return this;
     }

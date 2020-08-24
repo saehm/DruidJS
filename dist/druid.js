@@ -1786,6 +1786,7 @@ class MDS extends DR{
  * @alias ISOMAP
  */
 class ISOMAP extends DR {
+    static parameter_list = ["k"];
     /**
      * 
      * @constructor
@@ -1799,8 +1800,8 @@ class ISOMAP extends DR {
      */
     constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = ["k"];
-        this._k = neighbors || Math.max(Math.floor(X.shape[0] / 10), 2);
+        super.parameter_list = ISOMAP.parameter_list;
+        this.parameter("k", neighbors || Math.max(Math.floor(X.shape[0] / 10), 2));
     }
 
     /**
@@ -2018,7 +2019,7 @@ class LDA extends DR {
      */
     constructor(X, labels, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LDA.parameter_list;
+        super.parameter_list = LDA.parameter_list;
         this.parameter("labels", labels);
         return this;
     }
@@ -2105,7 +2106,7 @@ class LLE extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LLE.parameter_list;
+        super.parameter_list = LLE.parameter_list;
         this.parameter("k", neighbors);
         return this;
     }
@@ -2174,7 +2175,7 @@ class LTSA extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LTSA.parameter_list;
+        super.parameter_list = LTSA.parameter_list;
         this.parameter("k", neighbors || Math.max(Math.floor(this.X.shape[0] / 10), 2));
         return this;
     }
@@ -2245,7 +2246,7 @@ class TSNE extends DR {
     
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.TSNE.parameter_list;
+        super.parameter_list = TSNE.parameter_list;
         [ this._N, this._D ] = X.shape;
         this.parameter("perplexity", Math.min(perplexity, this._N - 1));
         this.parameter("epsilon", epsilon);
@@ -2480,7 +2481,7 @@ class UMAP extends DR {
 
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.UMAP.parameter_list;
+        super.parameter_list = UMAP.parameter_list;
         [ this._N, this._D ] = X.shape;
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
@@ -2804,7 +2805,7 @@ class TriMap extends DR{
      */
     constructor(X, weight_adj = 500, c = 5, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.TriMap.parameter_list;
+        super.parameter_list = TriMap.parameter_list;
         this.parameter("weight_adj", weight_adj);
         this.parameter("c", c);
         return this;
@@ -4060,7 +4061,7 @@ class LSP extends DR {
      */
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LSP.parameter_list;
+        super.parameter_list = LSP.parameter_list;
         this.parameter("k", k || Math.max(Math.floor(this.X.shape[0] / 10), 2));
         this.parameter("control_points", control_points || Math.ceil(Math.sqrt(this._N)));
         this._is_initialized = false;

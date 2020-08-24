@@ -27,7 +27,7 @@ export class TriMap extends DR{
      */
     constructor(X, weight_adj = 500, c = 5, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.TriMap.parameter_list;
+        super.parameter_list = TriMap.parameter_list;
         this.parameter("weight_adj", weight_adj);
         this.parameter("c", c)
         return this;

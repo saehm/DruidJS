@@ -25,7 +25,7 @@ export class TSNE extends DR {
     
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.TSNE.parameter_list;
+        super.parameter_list = TSNE.parameter_list;
         [ this._N, this._D ] = X.shape;
         this.parameter("perplexity", Math.min(perplexity, this._N - 1));
         this.parameter("epsilon", epsilon);

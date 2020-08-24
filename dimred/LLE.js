@@ -25,7 +25,7 @@ export class LLE extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = druid.LLE.parameter_list;
+        super.parameter_list = LLE.parameter_list;
         this.parameter("k", neighbors);
         return this;
     }

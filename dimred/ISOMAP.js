@@ -9,6 +9,7 @@ import { DR } from "./DR.js";
  * @alias ISOMAP
  */
 export class ISOMAP extends DR {
+    static parameter_list = ["k"];
     /**
      * 
      * @constructor
@@ -22,8 +23,8 @@ export class ISOMAP extends DR {
      */
     constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = ["k"];
-        this._k = neighbors || Math.max(Math.floor(X.shape[0] / 10), 2);
+        super.parameter_list = ISOMAP.parameter_list;
+        this.parameter("k", neighbors || Math.max(Math.floor(X.shape[0] / 10), 2));
     }
 
     /**
