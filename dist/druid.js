@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.1.0 Copyright 2020 Rene Cutura
+// https://renecutura.eu v0.1.1 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -2247,7 +2247,7 @@ class TSNE extends DR {
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = TSNE.parameter_list;
-        [ this._N, this._D ] = X.shape;
+        [ this._N, this._D ] = this.X.shape;
         this.parameter("perplexity", Math.min(perplexity, this._N - 1));
         this.parameter("epsilon", epsilon);
         this._iter = 0;
@@ -2482,7 +2482,7 @@ class UMAP extends DR {
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = UMAP.parameter_list;
-        [ this._N, this._D ] = X.shape;
+        [ this._N, this._D ] = this.X.shape;
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
         this._iter = 0;

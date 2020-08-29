@@ -12,7 +12,7 @@ export class UMAP extends DR {
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed)
         super.parameter_list = UMAP.parameter_list;
-        [ this._N, this._D ] = X.shape;
+        [ this._N, this._D ] = this.X.shape;
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
         this._iter = 0;
