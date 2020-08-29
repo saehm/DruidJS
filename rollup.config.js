@@ -1,7 +1,5 @@
-//import ascii from "rollup-plugin-ascii";
 import resolve from "@rollup/plugin-node-resolve";
-import {terser} from "rollup-plugin-terser";
-//import {eslint} from 'rollup-plugin-eslint';
+import { terser } from "rollup-plugin-terser";
 import * as meta from "./package.json";
 import jsdoc from 'rollup-plugin-jsdoc';
 //import babel from "rollup-plugin-babel";
@@ -10,14 +8,14 @@ const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).g
 
 export default [
   {
-    input: "index",
+    input: "index.js",
     output: {
       extend: true,
       banner: copyright,
       file: "dist/druid.js",
       format: "umd",
       indent: false,
-      name: "DruidJS"
+      name: "druid"
     },
     plugins: [
         resolve({
@@ -25,26 +23,28 @@ export default [
                 moduleDirectory: 'node_modules'
               }
         }),
-
-      jsdoc({
-        args: ["-r", "-d", "docs"],
-        config: "jsdoc.config.json",
-      }),
-      //eslint()
+        jsdoc({
+            args: ["-r", "-d", "docs"],
+            config: "jsdoc.config.json",
+        }),
     ]
   },
   {
-    input: "index",
+    input: "index.js",
     plugins: [
-      terser({output: {preamble: copyright}}),
-      //eslint()
+        resolve({
+            customResolveOptions: {
+                moduleDirectory: 'node_modules'
+              }
+        }),
+        terser()
     ],
     output: {
       extend: true,
       file: "dist/druid.min.js",
       format: "umd",
       indent: false,
-      name: "DruidJS"
+      name: "druid"
     }
   }
 ];
