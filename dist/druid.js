@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.1.1 Copyright 2020 Rene Cutura
+// https://renecutura.eu v0.1.2 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
