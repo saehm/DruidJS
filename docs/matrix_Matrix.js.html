@@ -220,6 +220,31 @@ export class Matrix{
         }
         return result_row;
     }
+    
+    /**
+     * Returns an generator yielding each row of the Matrix.
+     */
+    *iterate_rows() {
+        const cols = this._cols;
+        const rows = this._rows;
+        const bytes_per_row = cols * this._data.BYTES_PER_ELEMENT; // Float64 = 8Byte
+        const buffer = this._data.buffer;
+
+        for (let row = 0; row &lt; rows; ++row) {
+            const start = row * bytes_per_row;
+            const dv = new Float64Array(buffer.slice(start, start + bytes_per_row));
+            if (row &lt; rows) {
+                yield dv;
+            } else {
+                return dv;
+            }
+        }
+    }
+
+    /**
+     * Makes a {@link Matrix} object an iterable object.
+     */
+    [Symbol.iterator] = this.iterate_rows;
 
     /**
      * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.

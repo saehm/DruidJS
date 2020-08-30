@@ -131,10 +131,7 @@ export class TSNE extends DR {
         this.check_init();
         while (true) {
             this.next();
-            yield {
-                "projection": this.projection,
-                "iteration": this._iter,
-            }
+            yield this.projection;
         }
     }
 
@@ -179,20 +176,14 @@ export class TSNE extends DR {
             }
         }
 
-        //let cost = 0;
-        //let grad = [];
         const grad = new Matrix(N, dim, "zeros");
         for (let i = 0; i < N; ++i) {
-            //let gsum = new Float64Array(dim);//Array(dim).fill(0);
             for (let j = 0; j < N; ++j) {
-                //cost += -P.entry(i, j) * Math.log(Q.entry(i, j));
                 const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    //gsum[d] += premult * (Y.entry(i, d) - Y.entry(j, d));
                     grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
-            //grad.push(gsum);
         }
 
         // perform gradient step

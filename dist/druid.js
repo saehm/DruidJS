@@ -376,6 +376,31 @@ class Matrix{
         }
         return result_row;
     }
+    
+    /**
+     * Returns an generator yielding each row of the Matrix.
+     */
+    *iterate_rows() {
+        const cols = this._cols;
+        const rows = this._rows;
+        const bytes_per_row = cols * this._data.BYTES_PER_ELEMENT; // Float64 = 8Byte
+        const buffer = this._data.buffer;
+
+        for (let row = 0; row < rows; ++row) {
+            const start = row * bytes_per_row;
+            const dv = new Float64Array(buffer.slice(start, start + bytes_per_row));
+            if (row < rows) {
+                yield dv;
+            } else {
+                return dv;
+            }
+        }
+    }
+
+    /**
+     * Makes a {@link Matrix} object an iterable object.
+     */
+    [Symbol.iterator] = this.iterate_rows;
 
     /**
      * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.
@@ -2352,10 +2377,7 @@ class TSNE extends DR {
         this.check_init();
         while (true) {
             this.next();
-            yield {
-                "projection": this.projection,
-                "iteration": this._iter,
-            };
+            yield this.projection;
         }
     }
 
@@ -2400,20 +2422,14 @@ class TSNE extends DR {
             }
         }
 
-        //let cost = 0;
-        //let grad = [];
         const grad = new Matrix(N, dim, "zeros");
         for (let i = 0; i < N; ++i) {
-            //let gsum = new Float64Array(dim);//Array(dim).fill(0);
             for (let j = 0; j < N; ++j) {
-                //cost += -P.entry(i, j) * Math.log(Q.entry(i, j));
                 const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    //gsum[d] += premult * (Y.entry(i, d) - Y.entry(j, d));
                     grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
-            //grad.push(gsum);
         }
 
         // perform gradient step

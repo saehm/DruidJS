@@ -37,7 +37,10 @@ export default [
                 moduleDirectory: 'node_modules'
               }
         }),
-        terser()
+        terser({
+            format: {
+                preamble: copyright
+            }})
     ],
     output: {
       extend: true,
