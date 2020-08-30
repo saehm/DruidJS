@@ -352,9 +352,10 @@ export class TriMap extends DR{
     * generator() {
         this.check_init();
         for (let iter = 0; iter < 800; ++iter) {
-            yield this._next(iter);
+            this._next(iter);
+            yield this.projection;
         }
-        return this.Y;
+        return this.projection;
     }
 
     /**
