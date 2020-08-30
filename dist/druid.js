@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.1.4 Copyright 2020 Rene Cutura
+// https://renecutura.eu v0.1.5 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -2132,7 +2132,7 @@ class LLE extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LLE.parameter_list;
-        this.parameter("k", neighbors);
+        this.parameter("k", neighbors || Math.max(Math.floor(X.shape[0] / 10), 2));
         return this;
     }
 
@@ -2167,10 +2167,10 @@ class LLE extends DR {
             }
         }
         // comp embedding
-        let I = new Matrix(rows, rows, "identity");
-        let IW = I.sub(W);
-        let M = IW.transpose().dot(IW);
-        let { eigenvectors: V } = simultaneous_poweriteration(M.transpose().inverse(), d + 1);
+        const I = new Matrix(rows, rows, "identity");
+        const IW = I.sub(W);
+        const M = IW.transpose().dot(IW);
+        const { eigenvectors: V } = simultaneous_poweriteration(M.transpose().inverse(), d + 1);
         
         this.Y = Matrix.from(V.slice(1, 1 + d)).transpose();
 
