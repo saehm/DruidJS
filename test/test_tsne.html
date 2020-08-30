@@ -165,7 +165,7 @@
 
     function draw(dr, labels, svg, label) {
         dr.init();
-        let result = dr.transform_iter();
+        let result = dr.generator();
         //if (DEBUG) console.log(label, labels, result)
         let iter = 0
         let r = result.next()

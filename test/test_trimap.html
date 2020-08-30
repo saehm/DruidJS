@@ -174,7 +174,7 @@
         dr.init(new druid.Matrix(dr.X.shape[0], 2, () => Math.random() / 1));
         //dr.init(new druid.UMAP(dr.X, 1, 1).init().transform().mult(.001));
         //dr._generate_triplets(2, 2, 2);
-        let result = dr.transform_iter();
+        let result = dr.generator();
         //if (DEBUG) console.log(label, labels, result)
         let iter = 0
         let r = result.next()
