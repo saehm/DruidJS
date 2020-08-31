@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.1.5 Copyright 2020 Rene Cutura
+// https://renecutura.eu v0.1.6 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -383,17 +383,10 @@ class Matrix{
     *iterate_rows() {
         const cols = this._cols;
         const rows = this._rows;
-        const bytes_per_row = cols * this._data.BYTES_PER_ELEMENT; // Float64 = 8Byte
-        const buffer = this._data.buffer;
+        const data = this._data;
 
         for (let row = 0; row < rows; ++row) {
-            const start = row * bytes_per_row;
-            const dv = new Float64Array(buffer.slice(start, start + bytes_per_row));
-            if (row < rows) {
-                yield dv;
-            } else {
-                return dv;
-            }
+            yield data.subarray(row * cols, (row + 1) * cols);
         }
     }
 
@@ -1033,22 +1026,22 @@ class Matrix{
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
     static SVD(A, k=2) {
-        /*const MT = M.T;
+        const MT = M.T;
         let MtM = MT.dot(M);
         let MMt = M.dot(MT);
         let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
         let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
-        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };*/
+        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };
         
         //Algorithm 1a: Householder reduction to bidiagonal form:
-        const [m, n] = A.shape;
+        /* const [m, n] = A.shape;
         let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);
-        console.log(U.to2dArray);
+        console.log(U.to2dArray)
         let V = new Matrix(n, m, (i, j) => i == j ? 1 : 0);
-        console.log(V.to2dArray);
+        console.log(V.to2dArray)
         let B = Matrix.bidiagonal(A.clone(), U, V);
-        console.log(U,V,B);
-        return { U: U, "Sigma": B, V: V };
+        console.log(U,V,B)
+        return { U: U, "Sigma": B, V: V }; */
     }
 }
 
@@ -1557,7 +1550,7 @@ function qr(A) {
     return {"R": R, "Q": Q};
 }
 
-function simultaneous_poweriteration(A, k = 2, max_iterations=100, seed=1212) {
+function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) {
     let randomizer;
     if (seed instanceof Randomizer) {
         randomizer = seed;
@@ -1713,7 +1706,7 @@ class PCA extends DR{
         let X_cent = X.dot(O);
 
         let C = X_cent.transpose().dot(X_cent);
-        let { eigenvectors: V } = simultaneous_poweriteration(C, this._d);
+        let { eigenvectors: V } = simultaneous_poweriteration$1(C, this._d);
         V = Matrix.from(V).transpose();
         this.Y = X.dot(V);
         return this.Y
@@ -1777,7 +1770,7 @@ class MDS extends DR{
         const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
         //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
                 
-        const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
+        const { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
         this.Y = Matrix.from(V).transpose();
         
         return this.projection;
@@ -1890,7 +1883,7 @@ class ISOMAP extends DR {
         let B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
              
         // compute d eigenvectors
-        let { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
+        let { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
         this.Y = Matrix.from(V).transpose();
         // return embedding
         return this.projection;
@@ -2102,7 +2095,7 @@ class LDA extends DR {
             }
         }
 
-        let { eigenvectors: V } = simultaneous_poweriteration(S_w.inverse().dot(S_b), this.d);
+        let { eigenvectors: V } = simultaneous_poweriteration$1(S_w.inverse().dot(S_b), this.d);
         V = Matrix.from(V).transpose();
         this.Y = X.dot(V);
 
@@ -2170,7 +2163,7 @@ class LLE extends DR {
         const I = new Matrix(rows, rows, "identity");
         const IW = I.sub(W);
         const M = IW.transpose().dot(IW);
-        const { eigenvectors: V } = simultaneous_poweriteration(M.transpose().inverse(), d + 1);
+        const { eigenvectors: V } = simultaneous_poweriteration$1(M.transpose().inverse(), d + 1);
         
         this.Y = Matrix.from(V.slice(1, 1 + d)).transpose();
 
@@ -2227,7 +2220,7 @@ class LTSA extends DR {
             X_i = X_i.dot(O);
             // correlation matrix
             const C = X_i.dot(X_i.transpose());
-            const { eigenvectors: g } = simultaneous_poweriteration(C, d);
+            const { eigenvectors: g } = simultaneous_poweriteration$1(C, d);
             //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
             // 2. Constructing alignment matrix
@@ -2240,7 +2233,7 @@ class LTSA extends DR {
         }
 
         // 3. Aligning global coordinates
-        const { eigenvectors: Y } = simultaneous_poweriteration(B, d + 1);
+        const { eigenvectors: Y } = simultaneous_poweriteration$1(B, d + 1);
         this.Y = Matrix.from(Y.slice(1)).transpose();
 
         // return embedding
@@ -4143,6 +4136,8 @@ class LSP extends DR {
     }
 }
 
+var version = "0.1.6";
+
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;
 exports.Heap = Heap;
@@ -4176,7 +4171,8 @@ exports.neumair_sum = neumair_sum;
 exports.norm = norm;
 exports.powell = powell;
 exports.qr = qr;
-exports.simultaneous_poweriteration = simultaneous_poweriteration;
+exports.simultaneous_poweriteration = simultaneous_poweriteration$1;
+exports.version = version;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

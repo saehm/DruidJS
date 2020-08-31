@@ -8,3 +8,4 @@ export * from './linear_algebra/index';
 export * from "./dimred/index";
 export * from "./optimization/index";
 export * from "./clustering/index";
+export {version} from "./package.json";

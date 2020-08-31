@@ -1,6 +1,6 @@
 {
   "name": "@saehrimnir/druidjs",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
     "dimensionality reduction",
@@ -17,6 +17,8 @@
     "name": "Rene Cutura",
     "url": "http://renecutura.eu"
   },
+  "main": "dist/druid.js",
+  "module": "index.js",
   "devDependencies": {
     "better-docs": "^2.3.1",
     "json2module": "0.0",
@@ -27,7 +29,8 @@
     "rollup-plugin-node-resolve": "3",
     "rollup-plugin-terser": "^7.0.1",
     "@rollup/plugin-node-resolve": "^8.4.0",
-    "tape": "^4.13.3"
+    "tape": "^4.13.3",
+    "@rollup/plugin-json": "^4.1.0"
   },
   "dependencies": {}
 }

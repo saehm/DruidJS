@@ -227,17 +227,10 @@ export class Matrix{
     *iterate_rows() {
         const cols = this._cols;
         const rows = this._rows;
-        const bytes_per_row = cols * this._data.BYTES_PER_ELEMENT; // Float64 = 8Byte
-        const buffer = this._data.buffer;
+        const data = this._data;
 
         for (let row = 0; row &lt; rows; ++row) {
-            const start = row * bytes_per_row;
-            const dv = new Float64Array(buffer.slice(start, start + bytes_per_row));
-            if (row &lt; rows) {
-                yield dv;
-            } else {
-                return dv;
-            }
+            yield data.subarray(row * cols, (row + 1) * cols)
         }
     }
 
@@ -877,22 +870,22 @@ export class Matrix{
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
     static SVD(A, k=2) {
-        /*const MT = M.T;
+        const MT = M.T;
         let MtM = MT.dot(M);
         let MMt = M.dot(MT);
         let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
         let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
-        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };*/
+        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };
         
         //Algorithm 1a: Householder reduction to bidiagonal form:
-        const [m, n] = A.shape;
+        /* const [m, n] = A.shape;
         let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);
         console.log(U.to2dArray)
         let V = new Matrix(n, m, (i, j) => i == j ? 1 : 0);
         console.log(V.to2dArray)
         let B = Matrix.bidiagonal(A.clone(), U, V);
         console.log(U,V,B)
-        return { U: U, "Sigma": B, V: V };
+        return { U: U, "Sigma": B, V: V }; */
     }
 }</code></pre>
         </article>
