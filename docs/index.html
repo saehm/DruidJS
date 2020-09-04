@@ -100,12 +100,51 @@
 
 
     <section>
-        <article><h1>DruidJS — A JavaScript Library for Dimensionality Reduction.</h1>
-<h2>Links</h2>
+        <article><h2>DruidJS — A JavaScript Library for Dimensionality Reduction.</h2>
+<h3>Resources</h3>
 <ul>
 <li><a href="https://saehm.github.io/DruidJS/index.html">Documentation</a></li>
 <li><a href="https://renecutura.eu/druid_demo">Demo</a></li>
-</ul></article>
+</ul>
+<h3>Installation</h3>
+<p>If you use npm, install with <code>npm install @saehrimnir/druidjs</code>, and use it with</p>
+<pre class="prettyprint source lang-js"><code>import * as druid from &quot;@saehrimnir/druidjs&quot;;
+</code></pre>
+<p>Otherwise download the files <a href="https://github.com/saehm/DruidJS/releases/latest">here</a>, or use for instance <a href="https://unpkg.com/@saehrimnir/druidjs">unpkg</a> this way:</p>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://unpkg.com/@saehrimnir/druidjs&quot;>&lt;/script>
+</code></pre>
+<h3>Matrix</h3>
+<p>DruidJS uses internally the Matrix class for storing data. You can use it by creating a <code>druid.Matrix</code> object for instance with the function <code>from</code>, in example:</p>
+<pre class="prettyprint source lang-js"><code>    import * as druid from '@saehrimnir/druidjs';
+
+    let data = [[...], [...], ...];
+    let matrix = druid.Matrix.from(data);
+</code></pre>
+<p>You can create a <code>druid.Matrix</code> object programmatically by:</p>
+<pre class="prettyprint source lang-js"><code>    let fn = (row, col) => row == col ? 1 : 0;
+    let matrix = new druid.Matrix(rows, columns, fn);
+</code></pre>
+<p>If <code>rows == columns</code>, then <code>matrix</code> would be a identity matrix.
+A shortcut for a identity matrix is:</p>
+<pre class="prettyprint source lang-js"><code>    let matrix = new druid.Matrix(rows, columns, &quot;I&quot;);
+    // or
+    let matrix = new druid.Matrix(rows, columnbs, &quot;identity&quot;);
+</code></pre>
+<p>There are more shortcuts for creating matrices:</p>
+<pre class="prettyprint source lang-js"><code>    let matrix = new druid.Matrix(3, 3, &quot;zeros&quot;); // matrix would be a 3x3 matrix with zeroes
+    let matrix = new druid.Matrix(3, 3, &quot;center&quot;); // matrix would be a 3x3 center matrix;
+    let number = 12;
+    let matrix = new druid.Matrix(3, 3, number); // matrix would b a 3x3 matrix filled with 'number'
+</code></pre>
+<p>If you want to use a <code>druid.Matrix</code> object, for instance, with <a href="https://d3js.org">d3</a> , you can use either the <code>to2dArray</code> property, the <code>iterate_rows</code> generator function, or just use the <code>druid.Matrix</code> object as an iterable (works with d3 since version 6).</p>
+<pre class="prettyprint source lang-js"><code>    let data = await d3.csv(&quot;data.csv&quot;);
+    let matrix = druid.Matrix.from(data);
+    d3.selectAll(&quot;datapoints&quot;).data(matrix.to2dArray)//...
+    d3.selectAll(&quot;datapoints&quot;).data(matrix.iterate_rows)//...
+    d3.selectAll(&quot;datapoints&quot;).data(matrix)//...
+</code></pre>
+<h3>DR methods</h3>
+<p>...</p></article>
     </section>
 
 
