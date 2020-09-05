@@ -136,7 +136,7 @@ A shortcut for a identity matrix is:</p>
     let number = 12;
     let matrix = new druid.Matrix(3, 3, number); // matrix would b a 3x3 matrix filled with 'number'
 </code></pre>
-<p>If you want to use a <code>druid.Matrix</code> object, for instance, with <a href="https://d3js.org">d3</a> , you can use either the <code>to2dArray</code> property, the <code>iterate_rows</code> generator function, or just use the <code>druid.Matrix</code> object as an iterable (works with d3 since version 6).</p>
+<p>If you want to use a <code>druid.Matrix</code> object, for instance, with <a href="https://d3js.org">d3</a>, you can use either the <code>to2dArray</code> property, the <code>iterate_rows</code> generator function, or just use the <code>druid.Matrix</code> object as an iterable (works with d3 since version 6).</p>
 <pre class="prettyprint source lang-js"><code>    let data = await d3.csv(&quot;data.csv&quot;);
     let matrix = druid.Matrix.from(data);
     d3.selectAll(&quot;datapoints&quot;).data(matrix.to2dArray)//...

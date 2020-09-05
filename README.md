@@ -44,7 +44,7 @@ There are more shortcuts for creating matrices:
     let matrix = new druid.Matrix(3, 3, number); // matrix would b a 3x3 matrix filled with 'number'
 ```
 
-If you want to use a `druid.Matrix` object, for instance, with [d3](https://d3js.org) , you can use either the `to2dArray` property, the `iterate_rows` generator function, or just use the `druid.Matrix` object as an iterable (works with d3 since version 6).
+If you want to use a `druid.Matrix` object, for instance, with [d3](https://d3js.org), you can use either the `to2dArray` property, the `iterate_rows` generator function, or just use the `druid.Matrix` object as an iterable (works with d3 since version 6).
 ```js
     let data = await d3.csv("data.csv");
     let matrix = druid.Matrix.from(data);
