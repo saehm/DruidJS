@@ -6,8 +6,6 @@ DruidJS is a JavaScript library for dimensionality reduction.
 With dimesionality reduction you can project high-dimensional data to a lower dimensionality while keeping method-specific properties of the data.
 DruidJS makes it easy to project a dataset with the implemented dimensionality reduction methods.
 
-<br/><br/>
-
 ### Resources
 - [Documentation](https://saehm.github.io/DruidJS/index.html) 
 - [Demo](https://renecutura.eu/druid_demo)
