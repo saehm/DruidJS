@@ -65,6 +65,7 @@ export class OPTICS {
                 this._expand_cluster(seeds, clusters[cluster_index]);
             }
         }
+        return this;
     }
 
     /**

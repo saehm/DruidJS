@@ -1,6 +1,6 @@
 {
   "name": "@saehrimnir/druidjs",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
     "dimensionality reduction",
@@ -17,9 +17,9 @@
     "name": "Rene Cutura",
     "url": "http://renecutura.eu"
   },
-  "main": "./dist/druid.js",
-  "unpkg": "./dist/druid.js",
-  "jsdelivr": "./dist/druid.js",
+  "main": "dist/druid.js",
+  "unpkg": "dist/druid.js",
+  "jsdelivr": "dist/druid.js",
   "module": "index.js",
   "devDependencies": {
     "better-docs": "^2.3.1",

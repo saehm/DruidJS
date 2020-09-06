@@ -1,5 +1,13 @@
 ## DruidJS — A JavaScript Library for Dimensionality Reduction.
 
+<a href="#"><img src="icon.svg" width=80 align="left" hspace="10" vspace="6"></a>
+
+DruidJS is a JavaScript library for dimensionality reduction. 
+With dimesionality reduction you can project high-dimensional data to a lower dimensionality while keeping method-specific properties of the data.
+DruidJS makes it easy to project a dataset with the implemented dimensionality reduction methods.
+
+<br/><br/>
+
 ### Resources
 - [Documentation](https://saehm.github.io/DruidJS/index.html) 
 - [Demo](https://renecutura.eu/druid_demo)
@@ -49,7 +57,7 @@ If you want to use a `druid.Matrix` object, for instance, with [d3](https://d3js
     let data = await d3.csv("data.csv");
     let matrix = druid.Matrix.from(data);
     d3.selectAll("datapoints").data(matrix.to2dArray)//...
-    d3.selectAll("datapoints").data(matrix.iterate_rows)//...
+    d3.selectAll("datapoints").data(matrix.iterate_rows())//...
     d3.selectAll("datapoints").data(matrix)//...
 ```
 ### DR methods
