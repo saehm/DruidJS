@@ -99,4 +99,13 @@ export class DR{
     async transform_async() {
         return this.transform();
     }
+
+    static transform(...args) {
+        let dr = new this(...args);
+        return dr.transform();
+    }
+
+    static async transform_async(...args) {
+        return this.transform(...args);
+    }
 } 
