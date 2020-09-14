@@ -24,6 +24,7 @@ export class UMAP extends DR {
         this._n_epochs = 350;
         this._initial_alpha = 1;
         this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        return this;
     }
 
     _find_ab_params(spread, min_dist) {
@@ -179,7 +180,11 @@ export class UMAP extends DR {
                 }
             }
         }
-        return {rows: rows, cols: cols, data: data};
+        return {
+            "rows": rows, 
+            "cols": cols, 
+            "data": data
+        };
     }
 
     init() {
@@ -194,7 +199,7 @@ export class UMAP extends DR {
         const { rows, cols } = this._tocoo(this._graph);
         this._head = rows;
         this._tail = cols;
-        return this
+        return this;
     }
 
     set local_connectivity(value) {

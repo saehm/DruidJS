@@ -34,6 +34,6 @@ export class PCA extends DR{
         let { eigenvectors: V } = simultaneous_poweriteration(C, this._d)
         V = Matrix.from(V).transpose()
         this.Y = X.dot(V)
-        return this.Y
+        return this.projection;
     }
 } 

@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.2.0 Copyright 2020 Rene Cutura
+// https://renecutura.eu v0.3.0 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -1675,6 +1675,15 @@ class DR{
     async transform_async() {
         return this.transform();
     }
+
+    static transform(...args) {
+        let dr = new this(...args);
+        return dr.transform();
+    }
+
+    static async transform_async(...args) {
+        return this.transform(...args);
+    }
 }
 
 /**
@@ -1709,7 +1718,7 @@ class PCA extends DR{
         let { eigenvectors: V } = simultaneous_poweriteration$1(C, this._d);
         V = Matrix.from(V).transpose();
         this.Y = X.dot(V);
-        return this.Y
+        return this.projection;
     }
 }
 
@@ -1819,7 +1828,8 @@ class ISOMAP extends DR {
     constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ISOMAP.parameter_list;
-        this.parameter("k", neighbors || Math.max(Math.floor(X.shape[0] / 10), 2));
+        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        return this;
     }
 
     /**
@@ -2125,7 +2135,7 @@ class LLE extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LLE.parameter_list;
-        this.parameter("k", neighbors || Math.max(Math.floor(X.shape[0] / 10), 2));
+        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
         return this;
     }
 
@@ -2194,7 +2204,7 @@ class LTSA extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LTSA.parameter_list;
-        this.parameter("k", neighbors || Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
         return this;
     }
 
@@ -2503,6 +2513,7 @@ class UMAP extends DR {
         this._n_epochs = 350;
         this._initial_alpha = 1;
         this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        return this;
     }
 
     _find_ab_params(spread, min_dist) {
@@ -2658,7 +2669,11 @@ class UMAP extends DR {
                 }
             }
         }
-        return {rows: rows, cols: cols, data: data};
+        return {
+            "rows": rows, 
+            "cols": cols, 
+            "data": data
+        };
     }
 
     init() {
@@ -2673,7 +2688,7 @@ class UMAP extends DR {
         const { rows, cols } = this._tocoo(this._graph);
         this._head = rows;
         this._tail = cols;
-        return this
+        return this;
     }
 
     set local_connectivity(value) {
@@ -3129,7 +3144,7 @@ class TriMap extends DR{
         for (let iter = 0; iter < max_iteration; ++iter) {
             this._next(iter);
         }
-        return this.Y;
+        return this.projection;
     }
 
     /**
@@ -4137,7 +4152,7 @@ class LSP extends DR {
     }
 }
 
-var version = "0.2.0";
+var version = "0.3.0";
 
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;

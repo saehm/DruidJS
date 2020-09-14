@@ -342,7 +342,7 @@ export class TriMap extends DR{
         for (let iter = 0; iter < max_iteration; ++iter) {
             this._next(iter)
         }
-        return this.Y;
+        return this.projection;
     }
 
     /**
