@@ -1,4 +1,3 @@
-// https://renecutura.eu v0.3.0 Copyright 2020 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -4152,7 +4151,7 @@ class LSP extends DR {
     }
 }
 
-var version = "0.3.0";
+var version="0.3.1";
 
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;

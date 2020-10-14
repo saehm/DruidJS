@@ -1,53 +1,72 @@
 import resolve from "@rollup/plugin-node-resolve";
 import { terser } from "rollup-plugin-terser";
-import json from '@rollup/plugin-json';
-import * as meta from "./package.json";
 import jsdoc from 'rollup-plugin-jsdoc';
+import json from '@rollup/plugin-json';
+import meta from "./package.json";
 
-const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).getFullYear()} ${meta.author.name}`;
+//const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).getFullYear()} ${meta.author.name}`;
 
 export default [
   {
     input: "index.js",
     output: {
       extend: true,
-      banner: copyright,
+      //banner: copyright,
       file: "dist/druid.js",
       format: "umd",
       indent: false,
       name: "druid"
     },
     plugins: [
-        resolve({
-            customResolveOptions: {
-                moduleDirectory: 'node_modules'
-              }
+        json({
+            compact: true,
+            exclude: 'node_modules/**',
         }),
+        resolve(),
         jsdoc({
             args: ["-r", "-d", "docs"],
             config: "jsdoc.config.json",
         }),
-        json()
     ]
   },
   {
     input: "index.js",
     plugins: [
-        resolve({
-            customResolveOptions: {
-                moduleDirectory: 'node_modules'
-              }
+        json({
+            compact: true
         }),
+        resolve(),
         terser({
             format: {
-                preamble: copyright
-            }}),
-        json()
+                //preamble: copyright
+            }
+        })
     ],
     output: {
       extend: true,
       file: "dist/druid.min.js",
       format: "umd",
+      indent: false,
+      name: "druid"
+    }
+  },
+  {
+    input: "index.js",
+    plugins: [
+        json({
+            compact: true
+        }),
+        resolve(),
+        terser({
+            format: {
+                //preamble: copyright
+            }
+        })
+    ],
+    output: {
+      extend: true,
+      file: "dist/druid.esm.js",
+      format: "es",
       indent: false,
       name: "druid"
     }
