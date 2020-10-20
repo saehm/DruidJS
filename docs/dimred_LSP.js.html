@@ -124,9 +124,10 @@ export class LSP extends DR {
     /**
      * 
      * @param {DR} DR - method used for position control points.
+     * @param {DR_parameters} DR_parameters - array containing parameters for the DR method which projects the control points
      * @returns {LSP} 
      */
-    init(DR=MDS, KNN=BallTree) {
+    init(DR=MDS, DR_parameters=[], KNN=BallTree) {
         if (this._is_initialized) return;
         const X = this.X;
         const N = this._N;
@@ -139,7 +140,7 @@ export class LSP extends DR {
         control_points.forEach((c_i, i) => {
             C.set_entry(i, c_i, 1);
         })
-        const Y_C = new DR(Matrix.from(control_points.map(c_i => X.row(c_i)))).transform();
+        const Y_C = new DR(Matrix.from(control_points.map(c_i => X.row(c_i))), ...DR_parameters, d).transform();
         
         const XA = X.to2dArray;
         const knn = new KNN(XA, metric);

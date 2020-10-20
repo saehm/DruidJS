@@ -2104,7 +2104,7 @@ class LDA extends DR {
             }
         }
 
-        let { eigenvectors: V } = simultaneous_poweriteration$1(S_w.inverse().dot(S_b), this.d);
+        let { eigenvectors: V } = simultaneous_poweriteration$1(S_w.inverse().dot(S_b), this._d);
         V = Matrix.from(V).transpose();
         this.Y = X.dot(V);
 
@@ -2295,8 +2295,9 @@ class TSNE extends DR {
         } else {
             Delta = new Matrix(N, N);
             for (let i = 0; i < N; ++i) {
+                const X_i = X.row(i);
                 for (let j = i + 1; j < N; ++j) {
-                    const distance = metric(X.row(i), X.row(j));
+                    const distance = metric(X_i, X.row(j));
                     Delta.set_entry(i, j, distance);
                     Delta.set_entry(j, i, distance);
                 }
@@ -4096,9 +4097,10 @@ class LSP extends DR {
     /**
      * 
      * @param {DR} DR - method used for position control points.
+     * @param {DR_parameters} DR_parameters - array containing parameters for the DR method which projects the control points
      * @returns {LSP} 
      */
-    init(DR=MDS, KNN=BallTree) {
+    init(DR=MDS, DR_parameters=[], KNN=BallTree) {
         if (this._is_initialized) return;
         const X = this.X;
         const N = this._N;
@@ -4111,7 +4113,7 @@ class LSP extends DR {
         control_points.forEach((c_i, i) => {
             C.set_entry(i, c_i, 1);
         });
-        const Y_C = new DR(Matrix.from(control_points.map(c_i => X.row(c_i)))).transform();
+        const Y_C = new DR(Matrix.from(control_points.map(c_i => X.row(c_i))), ...DR_parameters, d).transform();
         
         const XA = X.to2dArray;
         const knn = new KNN(XA, metric);
@@ -4151,7 +4153,7 @@ class LSP extends DR {
     }
 }
 
-var version="0.3.1";
+var version="0.3.2";
 
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;

@@ -168,7 +168,7 @@ export class LDA extends DR {
             }
         }
 
-        let { eigenvectors: V } = simultaneous_poweriteration(S_w.inverse().dot(S_b), this.d)
+        let { eigenvectors: V } = simultaneous_poweriteration(S_w.inverse().dot(S_b), this._d)
         V = Matrix.from(V).transpose()
         this.Y = X.dot(V)
 

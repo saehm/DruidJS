@@ -47,8 +47,9 @@ export class TSNE extends DR {
         } else {
             Delta = new Matrix(N, N);
             for (let i = 0; i < N; ++i) {
+                const X_i = X.row(i);
                 for (let j = i + 1; j < N; ++j) {
-                    const distance = metric(X.row(i), X.row(j))
+                    const distance = metric(X_i, X.row(j))
                     Delta.set_entry(i, j, distance);
                     Delta.set_entry(j, i, distance);
                 }
