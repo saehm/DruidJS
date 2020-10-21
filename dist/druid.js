@@ -1820,7 +1820,6 @@ class MDS extends DR{
  * @alias ISOMAP
  */
 class ISOMAP extends DR {
-    static parameter_list = ["k"];
     /**
      * 
      * @constructor
@@ -1834,7 +1833,7 @@ class ISOMAP extends DR {
      */
     constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = ISOMAP.parameter_list;
+        super.parameter_list = ["k"];
         this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N -1));
         return this;
     }
@@ -2038,8 +2037,6 @@ class FASTMAP extends DR{
  * @alias LDA
  */
 class LDA extends DR {
-    static parameter_list = ["labels"];
-
     /**
      * 
      * @constructor
@@ -2053,7 +2050,7 @@ class LDA extends DR {
      */
     constructor(X, labels, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = LDA.parameter_list;
+        super.parameter_list = ["labels"];
         this.parameter("labels", labels);
         return this;
     }
@@ -2125,8 +2122,6 @@ class LDA extends DR {
  * @alias LLE
  */
 class LLE extends DR {
-    static parameter_list = ["k"];
-
     /**
      * 
      * @constructor
@@ -2140,7 +2135,7 @@ class LLE extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = LLE.parameter_list;
+        super.parameter_list = ["k"];
         this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         return this;
     }
@@ -2193,8 +2188,6 @@ class LLE extends DR {
  * @alias LTSA
  */
 class LTSA extends DR {
-    static parameter_list = ["k"];
-
     /**
      * 
      * @constructor
@@ -2209,7 +2202,7 @@ class LTSA extends DR {
      */
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = LTSA.parameter_list;
+        super.parameter_list = ["k"];
         this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         if (this._D <= d) throw `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`;
         return this;
@@ -2263,8 +2256,6 @@ class LTSA extends DR {
  * @alias TSNE
  */
 class TSNE extends DR {
-    static parameter_list = ["perplexity", "epsilon"];
-
     /**
      * 
      * @constructor
@@ -2281,7 +2272,7 @@ class TSNE extends DR {
     
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = TSNE.parameter_list;
+        super.parameter_list = ["perplexity", "epsilon"];
         [ this._N, this._D ] = this.X.shape;
         this.parameter("perplexity", Math.min(perplexity, this._N - 1));
         this.parameter("epsilon", epsilon);
@@ -2504,11 +2495,9 @@ function powell(f, x0, max_iter=300) {
 }
 
 class UMAP extends DR {
-    static parameter_list = ["local_connectivity", "min_dist"];
-
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = UMAP.parameter_list;
+        super.parameter_list = ["local_connectivity", "min_dist"];
         [ this._N, this._D ] = this.X.shape;
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
@@ -2819,7 +2808,6 @@ class UMAP extends DR {
  * @alias TriMap
  */
 class TriMap extends DR{
-    static parameter_list = ["weight_adj", "c"];
     /**
      * 
      * @constructor
@@ -2837,7 +2825,7 @@ class TriMap extends DR{
      */
     constructor(X, weight_adj = 500, c = 5, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = TriMap.parameter_list;
+        super.parameter_list = ["weight_adj", "c"];
         this.parameter("weight_adj", weight_adj);
         this.parameter("c", c);
         return this;
@@ -4078,8 +4066,6 @@ class OPTICS {
  * @alias LSP
  */
 class LSP extends DR {
-    static parameter_list = ["k", "control_points"];
-
     /**
      * 
      * @constructor
@@ -4095,7 +4081,7 @@ class LSP extends DR {
      */
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = LSP.parameter_list;
+        super.parameter_list = ["k", "control_points"];
         this.parameter("k", Math.min(k || Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));
         this.parameter("control_points", Math.min(control_points || Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
@@ -4161,7 +4147,7 @@ class LSP extends DR {
     }
 }
 
-var version="0.3.2";
+var version="0.3.3";
 
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;

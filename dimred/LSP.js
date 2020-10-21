@@ -10,8 +10,6 @@ import { BallTree } from "../knn/index";
  * @alias LSP
  */
 export class LSP extends DR {
-    static parameter_list = ["k", "control_points"];
-
     /**
      * 
      * @constructor
@@ -27,7 +25,7 @@ export class LSP extends DR {
      */
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = LSP.parameter_list;
+        super.parameter_list = ["k", "control_points"];
         this.parameter("k", Math.min(k || Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));
         this.parameter("control_points", Math.min(control_points || Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;

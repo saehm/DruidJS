@@ -7,11 +7,9 @@ import { powell } from "../optimization/index";
 import { DR } from "./DR.js";
 
 export class UMAP extends DR {
-    static parameter_list = ["local_connectivity", "min_dist"];
-
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed)
-        super.parameter_list = UMAP.parameter_list;
+        super.parameter_list = ["local_connectivity", "min_dist"];
         [ this._N, this._D ] = this.X.shape;
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
