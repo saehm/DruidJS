@@ -16,7 +16,7 @@ export class UMAP extends DR {
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
         this._iter = 0;
-        this._n_neighbors = 11;
+        this._n_neighbors = Math.min(15, this._N -1);
         this._spread = 1;
         this._set_op_mix_ratio = 1;
         this._repulsion_strength = 1;

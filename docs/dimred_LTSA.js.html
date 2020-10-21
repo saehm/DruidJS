@@ -112,7 +112,8 @@ export class LTSA extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LTSA.parameter_list;
-        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        if (this._D &lt;= d) throw `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`;
         return this;
     }
 

@@ -1,0 +1,7 @@
+node_modules
+data
+.vscode
+*.bak
+*.bak[0-9]*
+test
+.github

@@ -1582,7 +1582,15 @@ function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) 
  * @alias DR
  */
 class DR{
-    static parameter_list = [];
+    //static parameter_list = [];
+    get parameter_list() {
+        return this._parameter_list;
+    }
+
+    set parameter_list(list) {
+        this._parameter_list = list;
+        return this;
+    }
     /**
      * 
      * @constructor
@@ -1827,7 +1835,7 @@ class ISOMAP extends DR {
     constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ISOMAP.parameter_list;
-        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N -1));
         return this;
     }
 
@@ -1933,7 +1941,7 @@ class ISOMAP extends DR {
  */
 class FASTMAP extends DR{
     /**
-     * 
+     * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias FASTMAP
@@ -1942,10 +1950,10 @@ class FASTMAP extends DR{
      * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      * @returns {FASTMAP}
+     * @see {@link https://doi.org/10.1145/223784.223812}
      */
     constructor(X, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        this._col = -1;
         return this;
     }
 
@@ -1988,24 +1996,23 @@ class FASTMAP extends DR{
         const N = X.shape[0];
         const d = this._d;
         const metric = this._metric;
-        const Y = new Matrix(N, d);
+        const Y = new Matrix(N, d, 0);
         let dist = (a, b) => metric(X.row(a), X.row(b));
-        let old_dist = dist;
 
-        while(this._col < d - 1) {
-            this._col += 1;
-            let _col = this._col;
+        for (let _col = 0; _col < d; ++_col) {
+            let old_dist = dist;
             // choose pivot objects
             const [a_index, b_index, d_ab] = this._choose_distant_objects(dist);
             // record id of pivot objects
             //PA[0].push(a_index);
             //PA[1].push(b_index);
-            if (d_ab === 0) {
+            /* if (d_ab === 0) {
                 // because all inter-object distances are zeros
                 for (let i = 0; i < N; ++i) {
                     Y.set_entry(i, _col, 0);
                 }
-            } else {
+            } else { */
+            if (d_ab !== 0) {
                 // project the objects on the line (O_a, O_b)
                 for (let i = 0; i < N; ++i) {
                     const d_ai = dist(a_index, i);
@@ -2017,7 +2024,7 @@ class FASTMAP extends DR{
                 // hyperplane perpendicluar to the line (a, b);
                 // the distance function D'() between two 
                 // projections is given by Eq.4
-                dist = (a, b) => Math.sqrt((old_dist(a, b) ** 2) - ((Y.entry(a, _col) - Y.entry(b, _col)) ** 2));
+                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);
             }
         }
         // return embedding
@@ -2134,7 +2141,7 @@ class LLE extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LLE.parameter_list;
-        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         return this;
     }
 
@@ -2203,7 +2210,8 @@ class LTSA extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LTSA.parameter_list;
-        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        if (this._D <= d) throw `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`;
         return this;
     }
 
@@ -2505,7 +2513,7 @@ class UMAP extends DR {
         this.parameter("local_connectivity", local_connectivity);
         this.parameter("min_dist", min_dist);
         this._iter = 0;
-        this._n_neighbors = 11;
+        this._n_neighbors = Math.min(15, this._N -1);
         this._spread = 1;
         this._set_op_mix_ratio = 1;
         this._repulsion_strength = 1;
@@ -4088,8 +4096,8 @@ class LSP extends DR {
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LSP.parameter_list;
-        this.parameter("k", k || Math.max(Math.floor(this.X.shape[0] / 10), 2));
-        this.parameter("control_points", control_points || Math.ceil(Math.sqrt(this._N)));
+        this.parameter("k", Math.min(k || Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));
+        this.parameter("control_points", Math.min(control_points || Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
         return this;
     }

@@ -1,6 +1,6 @@
 {
   "name": "@saehrimnir/druidjs",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
     "dimensionality reduction",
@@ -20,9 +20,12 @@
   "files": [
     "dist/**/*.js"
   ],
+  "scripts": {
+    "build": "rollup -c"
+  },
   "main": "dist/druid.js",
-  "unpkg": "dist/druid.js",
-  "jsdelivr": "dist/druid.js",
+  "unpkg": "dist/druid.min.js",
+  "jsdelivr": "dist/druid.min.js",
   "module": "dist/druid.esm.js",
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
@@ -37,6 +40,6 @@
     "tape": "^4.13.3"
   },
   "engines": {
-    "node": ">=14.12.0"
+    "node": ">=14"
   }
 }

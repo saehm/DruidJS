@@ -7,7 +7,15 @@ import { Randomizer } from "../util/randomizer";
  * @alias DR
  */
 export class DR{
-    static parameter_list = [];
+    //static parameter_list = [];
+    get parameter_list() {
+        return this._parameter_list;
+    }
+
+    set parameter_list(list) {
+        this._parameter_list = list;
+        return this;
+    }
     /**
      * 
      * @constructor

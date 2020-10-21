@@ -26,7 +26,7 @@ export class LLE extends DR {
     constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = LLE.parameter_list;
-        this.parameter("k", neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2));
+        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         return this;
     }
 
