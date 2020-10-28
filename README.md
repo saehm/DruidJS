@@ -9,7 +9,7 @@ DruidJS makes it easy to project a dataset with the implemented dimensionality r
 ### Resources
 - [Documentation](https://saehm.github.io/DruidJS/index.html) 
 - [Demo](https://renecutura.eu/druid_demo)
-- [Conference Talk](https://youtu.be/bi6FfsWV_9k?t=2463)
+- [Conference Talk](https://youtu.be/bi6FfsWV_9k?t=2463) [IEEEVIS2020](http://ieeevis.org/year/2020/welcome)
 
 ### Installation
 If you use npm, install with `npm install @saehrimnir/druidjs`, and use it with
