@@ -9,6 +9,7 @@ DruidJS makes it easy to project a dataset with the implemented dimensionality r
 ### Resources
 - [Documentation](https://saehm.github.io/DruidJS/index.html) 
 - [Demo](https://renecutura.eu/druid_demo)
+- [Conference Talk](https://youtu.be/bi6FfsWV_9k?t=2463)
 
 ### Installation
 If you use npm, install with `npm install @saehrimnir/druidjs`, and use it with
@@ -59,4 +60,12 @@ If you want to use a `druid.Matrix` object, for instance, with [d3](https://d3js
     d3.selectAll("datapoints").data(matrix)//...
 ```
 ### DR methods
+
+#### Transform
+[Example](https://observablehq.com/@saehrimnir/hello-druidjs)
+#### Generator
+[Example](https://observablehq.com/@saehrimnir/hello-druidjs/2)
+
+#### TopoMap Example
+[Example](https://observablehq.com/@saehrimnir/topomap)
 ...
