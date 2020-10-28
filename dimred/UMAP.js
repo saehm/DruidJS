@@ -5,6 +5,7 @@ import { neumair_sum } from "../numerical/index";
 import { linspace } from "../matrix/index";
 import { powell } from "../optimization/index";
 import { DR } from "./DR.js";
+import { max } from "../util/index";
 
 export class UMAP extends DR {
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
@@ -157,7 +158,7 @@ export class UMAP extends DR {
     _make_epochs_per_sample(graph, n_epochs) {
         const { data: weights } = this._tocoo(graph);
         let result = new Array(weights.length).fill(-1);
-        const weights_max = Math.max(...weights);
+        const weights_max = max(weights);
         const n_samples = weights.map(w => n_epochs * (w / weights_max));
         result = result.map((d, i) => (n_samples[i] > 0) ? Math.round(n_epochs / n_samples[i]) : d);
         return result;
