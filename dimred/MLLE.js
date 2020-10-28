@@ -1,11 +1,9 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/randomizer";
 import { simultaneous_poweriteration} from "../linear_algebra/index";
 import { k_nearest_neighbors } from "../matrix/index";
 import { neumair_sum } from "../numerical/index";
 import { norm } from "../matrix/index";
-import { linspace } from "../matrix/index";
 
 export class MLLE{
     constructor(X, neighbors, d=2, metric=euclidean) {

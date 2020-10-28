@@ -14,4 +14,5 @@ export { UMAP } from "./UMAP";
 //export { OAP } from "./OAP";
 export { TriMap } from "./TriMap";
 export { LSP } from "./LSP";
-//export { TopoMap } from "./TopoMap";
+export { TopoMap } from "./TopoMap";
+export { SAMMON } from "./SAMMON";

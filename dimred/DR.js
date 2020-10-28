@@ -116,4 +116,12 @@ export class DR{
     static async transform_async(...args) {
         return this.transform(...args);
     }
+
+    static *generator(...args) {
+        const dr = new this(...args);
+        const gen = dr.generator();
+        for (const res of gen) {
+            yield res;
+        }
+    }
 } 

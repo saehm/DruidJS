@@ -1,4 +1,3 @@
-//import { Matrix } from "../matrix/index";
 import { euclidean, chebyshev } from "../metrics/index";
 import { MDS } from "../dimred/MDS";
 import { Randomizer } from "../util/index";

@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> KMedoids</title>
+  <title> SAMMON</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -74,7 +74,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Class</p>
-                    <h1>KMedoids</h1>
+                    <h1>SAMMON</h1>
                 </header>
                 
 
@@ -86,7 +86,7 @@
 <header>
     
         <h2><span class="attribs"><span class="type-signature"></span></span>
-            <span class="ancestors"><a href="module-clustering.html">clustering</a></span>KMedoids<span class="signature">(matrix, K, max_iter<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="KMedoids.html">KMedoids</a>}</span></h2>
+            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>SAMMON<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="SAMMON.html">SAMMON</a>}</span></h2>
         
     
 </header>
@@ -105,12 +105,12 @@
 
 
     
-    <h4 class="name" id="KMedoids">
-        <a class="href-link" href="#KMedoids">#</a>
+    <h4 class="name" id="SAMMON">
+        <a class="href-link" href="#SAMMON">#</a>
         
         <span class="code-name">
             
-                new KMedoids<span class="signature">(matrix, K, max_iter<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="KMedoids.html">KMedoids</a>}</span>
+                new SAMMON<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="SAMMON.html">SAMMON</a>}</span>
             
         </span>
     </h4>
@@ -157,7 +157,7 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>matrix</code></td>
+      <td class="name"><code>X</code></td>
   
 
   <td class="type">
@@ -185,7 +185,7 @@
       </td>
   
 
-  <td class="description last"><p>data matrix</p></td>
+  <td class="description last"><p>the high-dimensional data.</p></td>
 </tr>
 
 
@@ -194,50 +194,13 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>K</code></td>
+      <td class="name"><code>d</code></td>
   
 
   <td class="type">
   
       
-<span class="param-type">Numbers</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>number of clusters</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>max_iter</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
+<span class="param-type">Number</span>
 
 
   
@@ -258,12 +221,12 @@
   
       <td class="default">
       
-          null
+          2
       
       </td>
   
 
-  <td class="description last"><p>maximum number of iterations. Default is 10 * Math.log10(N)</p></td>
+  <td class="description last"><p>the dimensionality of the projection.</p></td>
 </tr>
 
 
@@ -304,7 +267,7 @@
       </td>
   
 
-  <td class="description last"><p>metric defining the dissimilarity</p></td>
+  <td class="description last"><p>the metric which defines the distance between two points.</p></td>
 </tr>
 
 
@@ -345,7 +308,7 @@
       </td>
   
 
-  <td class="description last"><p>seed value for random number generator</p></td>
+  <td class="description last"><p>the dimensionality of the projection.</p></td>
 </tr>
 
 
@@ -389,25 +352,18 @@
     <dt class="tag-see">See:</dt>
     <dd class="tag-see">
         <ul>
-            <li><a href="https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16">https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16</a> Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms</li>
+            <li><a href="https://arxiv.org/pdf/2009.01512.pdf">https://arxiv.org/pdf/2009.01512.pdf</a></li>
         </ul>
     </dd>
     
 
-    
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>needs restructuring.</li>
-        </ul>
-    </dd>
     
 
     
         <p class="tag-source">
-            <a href="clustering_KMedoids.js.html" class="button">View Source</a>
+            <a href="dimred_SAMMON.js.html" class="button">View Source</a>
             <span>
-                <a href="clustering_KMedoids.js.html">clustering/KMedoids.js</a>, <a href="clustering_KMedoids.js.html#line23">line 23</a>
+                <a href="dimred_SAMMON.js.html">dimred/SAMMON.js</a>, <a href="dimred_SAMMON.js.html#line19">line 19</a>
             </span>
         </p>
     
@@ -442,7 +398,7 @@
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
         
-<span class="param-type"><a href="KMedoids.html">KMedoids</a></span>
+<span class="param-type"><a href="SAMMON.html">SAMMON</a></span>
 
 
     </div>
@@ -487,377 +443,12 @@
 
 
     
-    <h4 class="name" id="_get_random_medoids">
-        <a class="href-link" href="#_get_random_medoids">#</a>
-        
-        <span class="code-name">
-            
-                _get_random_medoids<span class="signature">(K)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>K</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>number of clusters</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="clustering_KMedoids.js.html" class="button">View Source</a>
-            <span>
-                <a href="clustering_KMedoids.js.html">clustering/KMedoids.js</a>, <a href="clustering_KMedoids.js.html#line264">line 264</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="_iteration">
-        <a class="href-link" href="#_iteration">#</a>
-        
-        <span class="code-name">
-            
-                _iteration<span class="signature">()</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Algorithm 2. FastPAM2: SWAP with multiple candidates</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="clustering_KMedoids.js.html" class="button">View Source</a>
-            <span>
-                <a href="clustering_KMedoids.js.html">clustering/KMedoids.js</a>, <a href="clustering_KMedoids.js.html#line137">line 137</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="get_clusters">
-        <a class="href-link" href="#get_clusters">#</a>
-        
-        <span class="code-name">
-            
-                get_clusters<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;Array>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="clustering_KMedoids.js.html" class="button">View Source</a>
-            <span>
-                <a href="clustering_KMedoids.js.html">clustering/KMedoids.js</a>, <a href="clustering_KMedoids.js.html#line52">line 52</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><ul>
-<li>Array of clusters with the indices of the rows in given <code>matrix</code>.</li>
-</ul></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<span class="param-type">Array.&lt;Array></span>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
     <h4 class="name" id="init">
         <a class="href-link" href="#init">#</a>
         
         <span class="code-name">
             
-                init<span class="signature">(K)</span><span class="type-signature"></span>
+                init<span class="signature">()</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -866,7 +457,7 @@
     
     
     <div class="description">
-        <p>Computes <code>K</code> clusters out of the <code>matrix</code>.</p>
+        <p>initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.</p>
     </div>
     
 
@@ -877,57 +468,6 @@
 
 
 
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>K</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>number of clusters.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
 
 
 
@@ -966,9 +506,106 @@
 
     
         <p class="tag-source">
-            <a href="clustering_KMedoids.js.html" class="button">View Source</a>
+            <a href="dimred_SAMMON.js.html" class="button">View Source</a>
             <span>
-                <a href="clustering_KMedoids.js.html">clustering/KMedoids.js</a>, <a href="clustering_KMedoids.js.html#line247">line 247</a>
+                <a href="dimred_SAMMON.js.html">dimred/SAMMON.js</a>, <a href="dimred_SAMMON.js.html#line30">line 30</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="transform">
+        <a class="href-link" href="#transform">#</a>
+        
+        <span class="code-name">
+            
+                transform<span class="signature">()</span><span class="type-signature"></span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Transforms the inputdata <code>X</code> to dimenionality 2.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="dimred_SAMMON.js.html" class="button">View Source</a>
+            <span>
+                <a href="dimred_SAMMON.js.html">dimred/SAMMON.js</a>, <a href="dimred_SAMMON.js.html#line104">line 104</a>
             </span>
         </p>
     

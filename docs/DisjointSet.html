@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> FASTMAP</title>
+  <title> DisjointSet</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -74,7 +74,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Class</p>
-                    <h1>FASTMAP</h1>
+                    <h1>DisjointSet</h1>
                 </header>
                 
 
@@ -85,8 +85,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>
-            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>FASTMAP<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="FASTMAP.html">FASTMAP</a>}</span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>DisjointSet<span class="signature">()</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -105,12 +104,12 @@
 
 
     
-    <h4 class="name" id="FASTMAP">
-        <a class="href-link" href="#FASTMAP">#</a>
+    <h4 class="name" id="DisjointSet">
+        <a class="href-link" href="#DisjointSet">#</a>
         
         <span class="code-name">
             
-                new FASTMAP<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="FASTMAP.html">FASTMAP</a>}</span>
+                new DisjointSet<span class="signature">()</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -118,10 +117,6 @@
 
     
     
-    <div class="description">
-        <p>FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets</p>
-    </div>
-    
 
 
 
@@ -130,196 +125,6 @@
 
 
 
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-            <th>Attributes</th>
-            
-
-            
-            <th>Default</th>
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>X</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>the high-dimensional data.</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>d</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          2
-      
-      </td>
-  
-
-  <td class="description last"><p>the dimensionality of the projection.</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>metric</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">function</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          euclidean
-      
-      </td>
-  
-
-  <td class="description last"><p>the metric which defines the distance between two points.</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>seed</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-          &lt;optional><br>
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-          1212
-      
-      </td>
-  
-
-  <td class="description last"><p>the dimensionality of the projection.</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
 
 
 
@@ -356,7 +161,7 @@
     <dt class="tag-see">See:</dt>
     <dd class="tag-see">
         <ul>
-            <li><a href="https://doi.org/10.1145/223784.223812">https://doi.org/10.1145/223784.223812</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Disjoint-set_data_structure">https://en.wikipedia.org/wiki/Disjoint-set_data_structure</a></li>
         </ul>
     </dd>
     
@@ -365,9 +170,9 @@
 
     
         <p class="tag-source">
-            <a href="dimred_FASTMAP.js.html" class="button">View Source</a>
+            <a href="dimred_TopoMap.js.html" class="button">View Source</a>
             <span>
-                <a href="dimred_FASTMAP.js.html">dimred/FASTMAP.js</a>, <a href="dimred_FASTMAP.js.html#line21">line 21</a>
+                <a href="dimred_TopoMap.js.html">dimred/TopoMap.js</a>, <a href="dimred_TopoMap.js.html#line303">line 303</a>
             </span>
         </p>
     
@@ -389,29 +194,6 @@
 
 
 
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<span class="param-type"><a href="FASTMAP.html">FASTMAP</a></span>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
 
 
 
@@ -438,135 +220,6 @@
 
     
 
-    
-        <div class='vertical-section'>
-            <h1>Methods</h1>
-            <div class="members">
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="transform">
-        <a class="href-link" href="#transform">#</a>
-        
-        <span class="code-name">
-            
-                transform<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Computes the projection.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="dimred_FASTMAP.js.html" class="button">View Source</a>
-            <span>
-                <a href="dimred_FASTMAP.js.html">dimred/FASTMAP.js</a>, <a href="dimred_FASTMAP.js.html#line60">line 60</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>The <code>d</code>-dimensional projection of the data matrix <code>X</code>.</p></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-</div>
-            
-            </div>
-        </div>
     
 
     

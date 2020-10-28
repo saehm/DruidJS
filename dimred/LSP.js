@@ -1,4 +1,3 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index";
 import { Matrix } from "../matrix/index";
 import { DR } from "./DR.js";
 import { MDS } from "./MDS.js";

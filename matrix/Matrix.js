@@ -127,11 +127,14 @@ export class Matrix{
      * @returns {Array}
      */
     row(row) {
-        let result_row = new Array(this._cols);
+        /* let result_row = new Array(this._cols);
         for (let col = 0; col < this._cols; ++col) {
             result_row[col] = this._data[row * this._cols + col];
         }
-        return result_row;
+        return result_row; */
+        const data = this._data;
+        const cols = this._cols;
+        return data.subarray(row * cols, (row + 1) * cols)
     }
     
     /**
@@ -644,13 +647,18 @@ export class Matrix{
      * @returns {float64}
      */
     get mean() {
-        const data = this._data;
+        const sum = this.sum;
         const n = this._rows * this._cols;
-        let sum = 0;
-        for (let i = 0; i < n; ++i) {
-            sum += data[i];
-        }
         return sum / n;
+    }
+
+    /**
+     * Returns the sum oof all entries of the Matrix.
+     * @returns {number}
+     */
+    get sum() {
+        const data = this._data;
+        return neumair_sum(data);
     }
 
     /**
