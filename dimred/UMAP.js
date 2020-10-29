@@ -155,7 +155,7 @@ export class UMAP extends DR {
     }
 
     _make_epochs_per_sample(graph, n_epochs) {
-        const { data: weights } = this._tocoo(graph);
+        const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
         const weights_max = max(weights);
         const n_samples = weights.map(w => n_epochs * (w / weights_max));
@@ -191,13 +191,14 @@ export class UMAP extends DR {
         this._a = a;
         this._b = b;
         this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
+        const { rows, cols, data: weights } = this._tocoo(this._graph);
+        this._head = rows;
+        this._tail = cols;
+        this._weights = weights;
         this._epochs_per_sample = this._make_epochs_per_sample(this._graph, this._n_epochs);
         this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
         this._epoch_of_next_sample = this._epochs_per_sample.slice();
         this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();
-        const { rows, cols } = this._tocoo(this._graph);
-        this._head = rows;
-        this._tail = cols;
         return this;
     }
 
