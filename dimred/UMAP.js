@@ -1,10 +1,11 @@
 import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
+import { euclidean, euclidean_squared } from "../metrics/index";
 import { BallTree } from "../knn/index";
 import { neumair_sum } from "../numerical/index";
 import { linspace } from "../matrix/index";
 import { powell } from "../optimization/index";
 import { DR } from "./DR.js";
+import { max } from "../util/index";
 
 export class UMAP extends DR {
     constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
@@ -138,7 +139,7 @@ export class UMAP extends DR {
         const knn = new BallTree(X.to2dArray, euclidean);
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
-        let result = new Matrix(X.shape[0], X.shape[0], "zeros");
+        const result = new Matrix(X.shape[0], X.shape[0], "zeros");
         for (let i = 0, n = X.shape[0]; i < n; ++i) {
             for (let j = 0; j < n_neighbors; ++j) {
                 result.set_entry(i, distances[i][j].element.index, distances[i][j].value);
@@ -146,20 +147,20 @@ export class UMAP extends DR {
         }
         const transposed_result = result.T;
         const prod_matrix = result.mult(transposed_result);
-        result = result
+        return result
             .add(transposed_result)
             .sub(prod_matrix)
             .mult(this._set_op_mix_ratio)
             .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
-        return result;
     }
 
     _make_epochs_per_sample(graph, n_epochs) {
-        const { data: weights } = this._tocoo(graph);
-        let result = new Array(weights.length).fill(-1);
-        const weights_max = Math.max(...weights);
+        const weights = this._weights;
+        const result = new Float32Array(weights.length).fill(-1);
+        const weights_max = max(weights);
         const n_samples = weights.map(w => n_epochs * (w / weights_max));
-        result = result.map((d, i) => (n_samples[i] > 0) ? Math.round(n_epochs / n_samples[i]) : d);
+        for (let i = 0; i < result.length; ++i) 
+          if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
         return result;
     }
 
@@ -190,13 +191,14 @@ export class UMAP extends DR {
         this._a = a;
         this._b = b;
         this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
+        const { rows, cols, data: weights } = this._tocoo(this._graph);
+        this._head = rows;
+        this._tail = cols;
+        this._weights = weights;
         this._epochs_per_sample = this._make_epochs_per_sample(this._graph, this._n_epochs);
         this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
         this._epoch_of_next_sample = this._epochs_per_sample.slice();
         this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();
-        const { rows, cols } = this._tocoo(this._graph);
-        this._head = rows;
-        this._tail = cols;
         return this;
     }
 
@@ -214,6 +216,11 @@ export class UMAP extends DR {
 
     get min_dist() {
         return this._min_dist;
+    }
+
+    graph() {
+        this.check_init();
+        return { cols: this._head, rows: this._tail, weights: this._weights };
     }
 
     transform(iterations) {
@@ -262,7 +269,7 @@ export class UMAP extends DR {
                 const k = tail[i];
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
-                const dist = euclidean(current, other)//this._metric(current, other);
+                const dist = euclidean_squared(current, other)//this._metric(current, other);
                 let grad_coeff = 0;
                 if (dist > 0) {
                     grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
@@ -281,7 +288,7 @@ export class UMAP extends DR {
                 for (let p = 0; p < n_neg_samples; ++p) {
                     const k = Math.floor(this._randomizer.random * tail_length);
                     const other = tail_embedding.row(tail[k]);
-                    const dist = euclidean(current, other)//this._metric(current, other);
+                    const dist = euclidean_squared(current, other)//this._metric(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
                         grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));
