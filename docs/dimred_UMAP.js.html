@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> dimred/UMAP.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="UMAP_UMAP.html">UMAP</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>dimred/UMAP.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Matrix } from "../matrix/index";
+import { euclidean, euclidean_squared } from "../metrics/index";
+import { BallTree } from "../knn/index";
+import { neumair_sum } from "../numerical/index";
+import { linspace } from "../matrix/index";
+import { powell } from "../optimization/index";
+import { DR } from "./DR.js";
+import { max } from "../util/index";
+
+export class UMAP extends DR {
+    /**
+     * 
+     * @param {*} X 
+     * @param {*} n_neighbors 
+     * @param {*} local_connectivity 
+     * @param {*} min_dist 
+     * @param {*} d 
+     * @param {*} metric 
+     * @param {*} seed 
+     */
+    constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
+        super(X, d, metric, seed)
+        super.parameter_list = ["n_neighbors", "local_connectivity", "min_dist"];
+        [ this._N, this._D ] = this.X.shape;
+        n_neighbors = Math.min(n_neighbors, this._N - 1);
+        this.parameter("n_neighbors", n_neighbors);
+        this.parameter("local_connectivity", Math.min(local_connectivity, n_neighbors - 1));
+        this.parameter("min_dist", min_dist);
+        this._iter = 0;
+        this._spread = 1;
+        this._set_op_mix_ratio = 1;
+        this._repulsion_strength = 1;
+        this._negative_sample_rate = 5;
+        this._n_epochs = 350;
+        this._initial_alpha = 1;
+        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        return this;
+    }
+
+    _find_ab_params(spread, min_dist) {
+        function curve(x, a, b) {
+            return 1 / (1 + a * Math.pow(x, 2 * b));
+        }
+      
+        var xv = linspace(0, spread * 3, 300);
+        var yv = linspace(0, spread * 3, 300);
+        
+        for ( var i = 0, n = xv.length; i &lt; n; ++i ) {
+            if (xv[i] &lt; min_dist) {
+                yv[i] = 1
+            } else {
+                yv[i] = Math.exp(-(xv[i] - min_dist) / spread)
+            }
+        }
+      
+        function err(p) {
+            var error = linspace(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));
+            return Math.sqrt(neumair_sum(error.map(e => e * e)));
+        }
+      
+        var [ a, b ] = powell(err, [1, 1])
+        return [ a, b ]
+    }
+
+    _compute_membership_strengths(distances, sigmas, rhos) {
+        for (let i = 0, n = distances.length; i &lt; n; ++i) {
+            for (let j = 0, m = distances[i].length; j &lt; m; ++j) {
+                let v = distances[i][j].value - rhos[i];
+                let value = 1;
+                if (v > 0) {
+                    value = Math.exp(-v / sigmas[i]);
+                }
+                distances[i][j].value = value;
+            }
+        }
+        return distances;
+    }
+
+    _smooth_knn_dist(knn, k) {
+        const SMOOTH_K_TOLERANCE = 1e-5;
+        const MIN_K_DIST_SCALE = 1e-3;
+        const n_iter = 64;
+        const local_connectivity = this._local_connectivity;
+        const target = Math.log2(k);
+        const rhos = [];
+        const sigmas = [];
+        const X = this.X;
+
+        const n = Math.max(local_connectivity, k);
+        const distances = X.to2dArray.map(x_i => knn.search(x_i, n).raw_data().reverse());
+
+        for (let i = 0, n = X.shape[0]; i &lt; n; ++i) {
+            let lo = 0;
+            let hi = Infinity;
+            let mid = 1;
+
+            const ith_distances = distances[i];
+            const search_result = ith_distances.filter(d => d.element.value !== 0);
+            const knn_n = search_result.length;
+
+            if (knn_n >= local_connectivity) {
+                const index = Math.floor(local_connectivity);
+                const interpolation = local_connectivity - index;
+                if (index > 0) {
+                    rhos.push(search_result[index - 1]);
+                    if (interpolation > SMOOTH_K_TOLERANCE) {
+                        rhos[i].value += interpolation * (search_result[index].value - search_result[index - 1]);
+                    }
+                } else {
+                    rhos[i].value = interpolation * search_result[0].value;
+                }
+            } else if (knn_n > 0) {
+                rhos[i] = search_result[knn_n - 1].value;
+            }
+
+            for (let x = 0; x &lt; n_iter; ++x) {
+                let psum = 0;
+                for (let j = 0; j &lt; knn_n; ++j) {
+                    let d = search_result[j].value - rhos[i];
+                    psum += (d > 0 ? Math.exp(-(d / mid)) : 1);
+                }
+                if (Math.abs(psum - target) &lt; SMOOTH_K_TOLERANCE) {
+                    break;
+                }
+                if (psum > target) {
+                    //[hi, mid] = [mid, (lo + hi) / 2];
+                    hi = mid;
+                    mid = (lo + hi) / 2; // PROBLEM mit hi?????
+                } else {
+                    lo = mid;
+                    if (hi === Infinity) {
+                        mid *= 2;
+                    } else {
+                        mid = (lo + hi) / 2;
+                    }
+                }
+            }
+            sigmas[i] = mid;
+
+            const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / knn_n;
+            //let mean_d = null;
+            if (rhos[i] > 0) {
+                if (sigmas[i] &lt; MIN_K_DIST_SCALE * mean_ithd) {
+                    sigmas[i] = MIN_K_DIST_SCALE * mean_ithd;
+                }
+            } else {
+                const mean_d = distances.reduce((acc, res) => acc + res.reduce((a, b) => a + b.value, 0) / res.length);
+                if (sigmas[i] > MIN_K_DIST_SCALE * mean_d) {
+                    sigmas[i] = MIN_K_DIST_SCALE * mean_d;
+                }
+            }
+        }
+        return {
+            "distances": distances, 
+            "sigmas": sigmas, 
+            "rhos": rhos
+        }
+    }
+
+    _fuzzy_simplicial_set(X, n_neighbors) {
+        const knn = new BallTree(X.to2dArray, euclidean);
+        let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
+        distances = this._compute_membership_strengths(distances, sigmas, rhos);
+        const result = new Matrix(X.shape[0], X.shape[0], "zeros");
+        for (let i = 0, n = X.shape[0]; i &lt; n; ++i) {
+            for (let j = 0; j &lt; n_neighbors; ++j) {
+                result.set_entry(i, distances[i][j].element.index, distances[i][j].value);
+            }
+        }
+        const transposed_result = result.T;
+        const prod_matrix = result.mult(transposed_result);
+        return result
+            .add(transposed_result)
+            .sub(prod_matrix)
+            .mult(this._set_op_mix_ratio)
+            .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
+    }
+
+    _make_epochs_per_sample(graph, n_epochs) {
+        const weights = this._weights;
+        const result = new Float32Array(weights.length).fill(-1);
+        const weights_max = max(weights);
+        const n_samples = weights.map(w => n_epochs * (w / weights_max));
+        for (let i = 0; i &lt; result.length; ++i) 
+          if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
+        return result;
+    }
+
+    _tocoo(graph) {
+        const rows = [];
+        const cols = [];
+        const data = [];
+        const [ rows_n, cols_n ] = graph.shape;
+        for (let row = 0; row &lt; rows_n; ++row) {
+            for (let col = 0; col &lt; cols_n; ++col) {
+                const entry = graph.entry(row, col);
+                if (entry !== 0) {
+                    rows.push(row);
+                    cols.push(col);
+                    data.push(entry);
+                }
+            }
+        }
+        return {
+            "rows": rows, 
+            "cols": cols, 
+            "data": data
+        };
+    }
+
+    init() {
+        const [ a, b ] = this._find_ab_params(this._spread, this._min_dist);
+        this._a = a;
+        this._b = b;
+        this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
+        const { rows, cols, data: weights } = this._tocoo(this._graph);
+        this._head = rows;
+        this._tail = cols;
+        this._weights = weights;
+        this._epochs_per_sample = this._make_epochs_per_sample(this._graph, this._n_epochs);
+        this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
+        this._epoch_of_next_sample = this._epochs_per_sample.slice();
+        this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();
+        return this;
+    }
+
+    set local_connectivity(value) {
+        this._local_connectivity = value;
+    }
+
+    get local_connectivity() {
+        return this._local_connectivity;
+    }
+
+    set min_dist(value) {
+        this._min_dist = value;
+    }
+
+    get min_dist() {
+        return this._min_dist;
+    }
+
+    graph() {
+        this.check_init();
+        return { cols: this._head, rows: this._tail, weights: this._weights };
+    }
+
+    transform(iterations) {
+        this.check_init();
+        iterations = iterations || this._n_epochs;
+        for (let i = 0; i &lt; iterations; ++i) {
+            this.next();
+        }
+        return this.projection;
+    }
+
+    * generator() {
+        this.check_init();
+        this._iter = 0
+        while (this._iter &lt; this._n_epochs) {
+            this.next();
+            yield this.projection;
+        }
+        return this.projection;
+    }
+
+    _clip(x) {
+        if (x > 4) return 4;
+        if (x &lt; -4) return -4;
+        return x;
+    }
+
+    _optimize_layout(head_embedding, tail_embedding, head, tail) {
+        const { 
+            _d: dim, 
+            _alpha: alpha, 
+            _repulsion_strength: repulsion_strength, 
+            _a: a, 
+            _b: b,
+            _epochs_per_sample: epochs_per_sample,
+            _epochs_per_negative_sample: epochs_per_negative_sample,
+            _epoch_of_next_negative_sample: epoch_of_next_negative_sample,
+            _epoch_of_next_sample: epoch_of_next_sample,
+            _clip: clip
+        } = this;
+        const tail_length = tail.length;
+
+        for (let i = 0, n = epochs_per_sample.length; i &lt; n; ++i) {
+            if (epoch_of_next_sample[i] &lt;= this._iter) {
+                const j = head[i];
+                const k = tail[i];
+                const current = head_embedding.row(j);
+                const other = tail_embedding.row(k);
+                const dist = euclidean_squared(current, other)//this._metric(current, other);
+                let grad_coeff = 0;
+                if (dist > 0) {
+                    grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
+                }
+                for (let d = 0; d &lt; dim; ++d) {
+                    const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                    const c = current[d] + grad_d;
+                    const o = other[d] - grad_d;
+                    current[d] = c;
+                    other[d] = o;
+                    head_embedding.set_entry(j, d, c);
+                    tail_embedding.set_entry(k, d, o);
+                }
+                epoch_of_next_sample[i] += epochs_per_sample[i];
+                const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
+                for (let p = 0; p &lt; n_neg_samples; ++p) {
+                    const k = Math.floor(this._randomizer.random * tail_length);
+                    const other = tail_embedding.row(tail[k]);
+                    const dist = euclidean_squared(current, other)//this._metric(current, other);
+                    let grad_coeff = 0;
+                    if (dist > 0) {
+                        grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));
+                    } else if (j == k) {
+                        continue;
+                    }
+                    for (let d = 0; d &lt; dim; ++d) {
+                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                        const c = current[d] + grad_d;
+                        const o = other[d] - grad_d;
+                        current[d] = c;
+                        other[d] = o;
+                        head_embedding.set_entry(j, d, c);
+                        tail_embedding.set_entry(tail[k], d, o);
+                    }
+                }
+                epoch_of_next_negative_sample[i] += (n_neg_samples * epochs_per_negative_sample[i]);
+            }
+        }
+        return head_embedding;
+    }
+
+    next() {
+        let iter = ++this._iter;
+        let Y = this.Y;
+
+        this._alpha = (this._initial_alpha * (1 - iter / this._n_epochs));
+        this.Y = this._optimize_layout(Y, Y, this._head, this._tail);
+
+        return this.Y;
+    }
+} </code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

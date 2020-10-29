@@ -462,6 +462,28 @@ export class Matrix{
     }
 
     /**
+     * Returns a new array gathering entries defined by the indices given by argument.
+     * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix 
+     * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix 
+     * @returns {Matrix}
+     */
+    gather(row_indices, col_indices) {
+        const N = row_indices.length;
+        const D = col_indices.length;
+        
+        const R = new Matrix(N, D);
+        for (let i = 0; i < N; ++i) {
+            const row_index = row_indices[i];
+            for (let j = 0; j < N; ++j) {
+                const col_index = col_indices[j];
+                R.set_entry(i, j, this.entry(row_index, col_index))
+            }
+        }
+
+        return R;
+    }
+
+    /**
      * Applies a function to each entry of the matrix.
      * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
      * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
@@ -470,29 +492,27 @@ export class Matrix{
         const data = this._data;
         const [ rows, cols ] = this.shape;
         for (let row = 0; row < rows; ++row) {
-            const o = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
-                const i = o + col;
-                const d = data[i];
-                data[i] = f(d, v(row, col));
+                const i = offset + col;
+                data[i] = f(data[i], v(row, col));
             }
         }
         return this; 
     }
 
     _apply_rowwise_array(values, f) {
-        return this._apply_array(f, (i, j) => values[j]);
+        return this._apply_array(f, (_, j) => values[j]);
     }
 
     _apply_colwise_array(values, f) {
         const data = this._data;
         const [ rows, cols ] = this.shape;
         for (let row = 0; row < rows; ++row) {
-            const o = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
-                const i = o + col;
-                const d = data[i];
-                data[i] = f(d, values[row]);
+                const i = offset + col;
+                data[i] = f(data[i], values[row]);
             }
         }
         return this; 
@@ -614,7 +634,7 @@ export class Matrix{
      * @returns {Array}
      */
     get to2dArray() {
-        const rows = this._rows;
+        /* const rows = this._rows;
         const cols = this._cols;
         let result = new Array(rows)
         for (let row = 0; row < rows; ++row) {
@@ -624,7 +644,8 @@ export class Matrix{
             }
             result[row] = result_col;
         }
-        return result;
+        return result; */
+        return [...this.iterate_rows()]
     }
 
     /**

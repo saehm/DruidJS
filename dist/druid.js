@@ -704,6 +704,28 @@ class Matrix{
     }
 
     /**
+     * Returns a new array gathering entries defined by the indices given by argument.
+     * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix 
+     * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix 
+     * @returns {Matrix}
+     */
+    gather(row_indices, col_indices) {
+        const N = row_indices.length;
+        const D = col_indices.length;
+        
+        const R = new Matrix(N, D);
+        for (let i = 0; i < N; ++i) {
+            const row_index = row_indices[i];
+            for (let j = 0; j < N; ++j) {
+                const col_index = col_indices[j];
+                R.set_entry(i, j, this.entry(row_index, col_index));
+            }
+        }
+
+        return R;
+    }
+
+    /**
      * Applies a function to each entry of the matrix.
      * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
      * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
@@ -712,29 +734,27 @@ class Matrix{
         const data = this._data;
         const [ rows, cols ] = this.shape;
         for (let row = 0; row < rows; ++row) {
-            const o = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
-                const i = o + col;
-                const d = data[i];
-                data[i] = f(d, v(row, col));
+                const i = offset + col;
+                data[i] = f(data[i], v(row, col));
             }
         }
         return this; 
     }
 
     _apply_rowwise_array(values, f) {
-        return this._apply_array(f, (i, j) => values[j]);
+        return this._apply_array(f, (_, j) => values[j]);
     }
 
     _apply_colwise_array(values, f) {
         const data = this._data;
         const [ rows, cols ] = this.shape;
         for (let row = 0; row < rows; ++row) {
-            const o = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
-                const i = o + col;
-                const d = data[i];
-                data[i] = f(d, values[row]);
+                const i = offset + col;
+                data[i] = f(data[i], values[row]);
             }
         }
         return this; 
@@ -856,17 +876,18 @@ class Matrix{
      * @returns {Array}
      */
     get to2dArray() {
-        const rows = this._rows;
+        /* const rows = this._rows;
         const cols = this._cols;
-        let result = new Array(rows);
+        let result = new Array(rows)
         for (let row = 0; row < rows; ++row) {
-            let result_col = new Array(cols);
+            let result_col = new Array(cols)
             for (let col = 0; col < cols; ++col) {
                 result_col[col] = this.entry(row, col);
             }
             result[row] = result_col;
         }
-        return result;
+        return result; */
+        return [...this.iterate_rows()]
     }
 
     /**
@@ -1175,6 +1196,17 @@ class Randomizer {
         //return new Matrix(n, cols, (row, col) => A.entry(sample[row], col))
         return sample.map(d => A.row(d));
     }
+}
+
+function max(values) {
+  let max;
+  for (const value of values) {
+    if (value != null
+        && (max < value || (max === undefined && value >= value))) {
+      max = value;
+    }
+  }
+  return max;
 }
 
 /**
@@ -2511,14 +2543,15 @@ function powell(f, x0, max_iter=300) {
 }
 
 class UMAP extends DR {
-    constructor(X, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
+    constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
-        super.parameter_list = ["local_connectivity", "min_dist"];
+        super.parameter_list = ["n_neighbors", "local_connectivity", "min_dist"];
         [ this._N, this._D ] = this.X.shape;
-        this.parameter("local_connectivity", local_connectivity);
+        n_neighbors = Math.min(this._N - 1, n_neighbors);
+        this.parameter("n_neighbors", n_neighbors);
+        this.parameter("local_connectivity", Math.min(local_connectivity, n_neighbors - 1));
         this.parameter("min_dist", min_dist);
         this._iter = 0;
-        this._n_neighbors = Math.min(15, this._N -1);
         this._spread = 1;
         this._set_op_mix_ratio = 1;
         this._repulsion_strength = 1;
@@ -2530,39 +2563,28 @@ class UMAP extends DR {
     }
 
     _find_ab_params(spread, min_dist) {
-        function curve(x, a, b) {
-            return 1 / (1 + a * Math.pow(x, 2 * b));
-        }
-      
-        var xv = linspace(0, spread * 3, 300);
-        var yv = linspace(0, spread * 3, 300);
+        const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
+        const xv = linspace(0, spread * 3, 300);
+        const yv = linspace(0, spread * 3, 300);
         
-        for ( var i = 0, n = xv.length; i < n; ++i ) {
-            if (xv[i] < min_dist) {
-                yv[i] = 1;
-            } else {
-                yv[i] = Math.exp(-(xv[i] - min_dist) / spread);
-            }
+        for (let i = 0, n = xv.length; i < n; ++i) {
+            const xv_i = xv[i];
+            yv[i] = (xv_i < min_dist ? 1 : Math.exp(-(xv_i - min_dist) / spread));
         }
       
-        function err(p) {
-            var error = linspace(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));
+        const err = (p) => {
+            const error = linspace(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));
             return Math.sqrt(neumair_sum(error.map(e => e * e)));
-        }
+        };
       
-        var [ a, b ] = powell(err, [1, 1]);
-        return [ a, b ]
+        return powell(err, [1, 1]);
     }
 
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
             for (let j = 0, m = distances[i].length; j < m; ++j) {
-                let v = distances[i][j].value - rhos[i];
-                let value = 1;
-                if (v > 0) {
-                    value = Math.exp(-v / sigmas[i]);
-                }
-                distances[i][j].value = value;
+                const v = distances[i][j].value - rhos[i];
+                distances[i][j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1;
             }
         }
         return distances;
@@ -2573,45 +2595,51 @@ class UMAP extends DR {
         const MIN_K_DIST_SCALE = 1e-3;
         const n_iter = 64;
         const local_connectivity = this._local_connectivity;
-        const bandwidth = 1;
-        const target = Math.log2(k) * bandwidth;
+        const target = Math.log2(k);
         const rhos = [];
         const sigmas = [];
         const X = this.X;
 
-        let distances = [];
-        for (let i = 0, n = X.shape[0]; i < n; ++i) {
-            let x_i = X.row(i);
-            distances.push(knn.search(x_i, Math.max(local_connectivity, k)).raw_data().reverse());
-        }
+        const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
 
         for (let i = 0, n = X.shape[0]; i < n; ++i) {
-            let search_result = distances[i];
-            rhos.push(search_result[0].value);
-
             let lo = 0;
             let hi = Infinity;
             let mid = 1;
 
+            const search_result = distances[i];
+            const non_zero_dist = search_result.filter(d => d.value > 0);
+            const non_zero_dist_length = non_zero_dist.length;
+            if (non_zero_dist_length >= local_connectivity) {
+                const index = Math.floor(local_connectivity);
+                const interpolation = local_connectivity - index;
+                if (index > 0) {
+                    rhos.push(non_zero_dist[index - 1]);
+                    if (interpolation > SMOOTH_K_TOLERANCE) {
+                        rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1]);
+                    }
+                } else {
+                    rhos[i].value = interpolation * non_zero_dist[0].value;
+                }
+            } else if (non_zero_dist_length > 0) {
+                rhos[i] = non_zero_dist[non_zero_dist_length - 1].value;
+            }
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
                 for (let j = 0; j < k; ++j) {
-                    let d = search_result[j].value - rhos[i];
+                    const d = search_result[j].value - rhos[i];
                     psum += (d > 0 ? Math.exp(-(d / mid)) : 1);
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
                     break;
                 }
                 if (psum > target) {
-                    //[hi, mid] = [mid, (lo + hi) / 2];
-                    hi = mid;
-                    mid = (lo + hi) / 2; // PROBLEM mit hi?????
+                    [hi, mid] = [mid, (lo + hi) / 2];
                 } else {
-                    lo = mid;
                     if (hi === Infinity) {
-                        mid *= 2;
+                        [lo, mid] = [mid, mid * 2];
                     } else {
-                        mid = (lo + hi) / 2;
+                        [lo, mid] = [mid, (lo + hi) / 2];
                     }
                 }
             }
@@ -2639,31 +2667,33 @@ class UMAP extends DR {
     }
 
     _fuzzy_simplicial_set(X, n_neighbors) {
+        const N = X.shape[0];
         const knn = new BallTree(X.to2dArray, euclidean);
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
-        let result = new Matrix(X.shape[0], X.shape[0], "zeros");
-        for (let i = 0, n = X.shape[0]; i < n; ++i) {
-            for (let j = 0; j < n_neighbors; ++j) {
-                result.set_entry(i, distances[i][j].element.index, distances[i][j].value);
+        const result = new Matrix(N, N, "zeros");
+        for (let i = 0; i < N; ++i) {
+            const distances_i = distances[i];
+            for (let j = 0; j < distances_i.length; ++j) {
+                result.set_entry(i, distances_i[j].element.index, distances_i[j].value);
             }
         }
         const transposed_result = result.T;
         const prod_matrix = result.mult(transposed_result);
-        result = result
+        return result
             .add(transposed_result)
             .sub(prod_matrix)
             .mult(this._set_op_mix_ratio)
             .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
-        return result;
     }
 
-    _make_epochs_per_sample(graph, n_epochs) {
-        const { data: weights } = this._tocoo(graph);
-        let result = new Array(weights.length).fill(-1);
-        const weights_max = Math.max(...weights);
+    _make_epochs_per_sample(n_epochs) {
+        const weights = this._weights;
+        const result = new Float32Array(weights.length).fill(-1);
+        const weights_max = max(weights);
         const n_samples = weights.map(w => n_epochs * (w / weights_max));
-        result = result.map((d, i) => (n_samples[i] > 0) ? Math.round(n_epochs / n_samples[i]) : d);
+        for (let i = 0; i < result.length; ++i) 
+          if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
         return result;
     }
 
@@ -2694,13 +2724,14 @@ class UMAP extends DR {
         this._a = a;
         this._b = b;
         this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
-        this._epochs_per_sample = this._make_epochs_per_sample(this._graph, this._n_epochs);
+        const { rows, cols, data: weights } = this._tocoo(this._graph);
+        this._head = rows;
+        this._tail = cols;
+        this._weights = weights;
+        this._epochs_per_sample = this._make_epochs_per_sample(this._n_epochs);
         this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
         this._epoch_of_next_sample = this._epochs_per_sample.slice();
         this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();
-        const { rows, cols } = this._tocoo(this._graph);
-        this._head = rows;
-        this._tail = cols;
         return this;
     }
 
@@ -2718,6 +2749,11 @@ class UMAP extends DR {
 
     get min_dist() {
         return this._min_dist;
+    }
+
+    graph() {
+        this.check_init();
+        return { cols: this._head, rows: this._tail, weights: this._weights };
     }
 
     transform(iterations) {
@@ -2766,7 +2802,7 @@ class UMAP extends DR {
                 const k = tail[i];
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
-                const dist = euclidean(current, other);//this._metric(current, other);
+                const dist = euclidean_squared(current, other);//this._metric(current, other);
                 let grad_coeff = 0;
                 if (dist > 0) {
                     grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
@@ -2785,11 +2821,11 @@ class UMAP extends DR {
                 for (let p = 0; p < n_neg_samples; ++p) {
                     const k = Math.floor(this._randomizer.random * tail_length);
                     const other = tail_embedding.row(tail[k]);
-                    const dist = euclidean(current, other);//this._metric(current, other);
+                    const dist = euclidean_squared(current, other);//this._metric(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
                         grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));
-                    } else if (j == k) {
+                    } else if (j === k) {
                         continue;
                     }
                     for (let d = 0; d < dim; ++d) {
@@ -4705,6 +4741,7 @@ exports.k_nearest_neighbors = k_nearest_neighbors;
 exports.kahan_sum = kahan_sum;
 exports.linspace = linspace;
 exports.manhattan = manhattan;
+exports.max = max;
 exports.neumair_sum = neumair_sum;
 exports.norm = norm;
 exports.powell = powell;

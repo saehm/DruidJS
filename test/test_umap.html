@@ -33,10 +33,11 @@
 
     var labels
     var data
-    let local_conn = 1;
+    let k = 15;
+    let local_conn = 4.5;
     let min_dist = 1;
-    let type = `conn = ${local_conn} | min_dist = ${min_dist} | UMAP: `;
-    DR = (X, K) => new druid.UMAP(X, local_conn, min_dist, 2, druid.euclidean);
+    let type = `k=${k} | conn = ${local_conn} | min_dist = ${min_dist} | UMAP: `;
+    DR = (X, K) => new druid.UMAP(X, k, local_conn, min_dist, 2, druid.euclidean);
 
     let DEBUG = false;
 
@@ -47,7 +48,7 @@
     const _WAVES = true && !DEBUG;
     const _SWISSROLL = true && !DEBUG;
     const _MNIST = true && !DEBUG;
-    const _RANDOM = true && !DEBUG;
+    const _RANDOM = false && !DEBUG;
     function main() {
         if (_SPOTIFY) d3.csv("../data/spotify.csv").then( content => {
             let name = "SPOTIFY"
