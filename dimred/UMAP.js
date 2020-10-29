@@ -139,7 +139,7 @@ export class UMAP extends DR {
         const knn = new BallTree(X.to2dArray, euclidean);
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
-        let result = new Matrix(X.shape[0], X.shape[0], "zeros");
+        const result = new Matrix(X.shape[0], X.shape[0], "zeros");
         for (let i = 0, n = X.shape[0]; i < n; ++i) {
             for (let j = 0; j < n_neighbors; ++j) {
                 result.set_entry(i, distances[i][j].element.index, distances[i][j].value);
@@ -147,20 +147,20 @@ export class UMAP extends DR {
         }
         const transposed_result = result.T;
         const prod_matrix = result.mult(transposed_result);
-        result = result
+        return result
             .add(transposed_result)
             .sub(prod_matrix)
             .mult(this._set_op_mix_ratio)
             .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
-        return result;
     }
 
     _make_epochs_per_sample(graph, n_epochs) {
         const { data: weights } = this._tocoo(graph);
-        let result = new Array(weights.length).fill(-1);
+        const result = new Float32Array(weights.length).fill(-1);
         const weights_max = max(weights);
         const n_samples = weights.map(w => n_epochs * (w / weights_max));
-        result = result.map((d, i) => (n_samples[i] > 0) ? Math.round(n_epochs / n_samples[i]) : d);
+        for (let i = 0; i < result.length; ++i) 
+          if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
         return result;
     }
 
