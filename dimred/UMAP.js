@@ -218,6 +218,11 @@ export class UMAP extends DR {
         return this._min_dist;
     }
 
+    graph() {
+        this.check_init();
+        return { cols: this._head, rows: this._tail, weights: this._weights };
+    }
+
     transform(iterations) {
         this.check_init();
         iterations = iterations || this._n_epochs;
