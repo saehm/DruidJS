@@ -30,24 +30,16 @@ export class MDS extends DR{
      */
     transform() {
         const X = this.X;
-        //let sum_reduce = (a,b) => a + b
         const rows = X.shape[0];
         const metric = this._metric;
-        let ai_ = [];
-        let a_j = [];
-        for (let i = 0; i < rows; ++i) {
-            ai_.push(0)
-            a_j.push(0)
-        }
+        let ai_ = new Float64Array(rows);
+        let a_j = new Float64Array(rows);
         let a__ = 0;
+
         const A = new Matrix();
         A.shape = [rows, rows, (i,j) => {
-            let val = 0
-            if (i < j) {
-                val = metric(X.row(i), X.row(j))
-            } else if (i > j) {
-                val = A.entry(j,i);
-            }
+            if (i === j) return 0;
+            const val = (i < j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
             ai_[i] += val;
             a_j[j] += val;
             a__ += val;

@@ -90,6 +90,10 @@ export class DR{
         return this.Y;
     }
 
+    generator() {
+        return this.transform();
+    }
+
     check_init() {
         if (!this._is_initialized && typeof this.init === "function") {
             this.init();

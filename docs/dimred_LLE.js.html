@@ -121,37 +121,36 @@ export class LLE extends DR {
     transform() {
         const X = this.X;
         const d = this._d;
-        const [ rows, cols ] = X.shape;
-        const k = this._k;
-        const nN = k_nearest_neighbors(X.to2dArray, k, null, this._metric);
+        const rows = this._N;
+        const cols = this._D;
+        const k = this.parameter("k");
+        const nN = k_nearest_neighbors(X, k, null, this._metric);
         const O = new Matrix(k, 1, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row &lt; rows; ++row) {
-            const Z = new Matrix(k, cols, (i, j) => X.entry(nN[row][i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.transpose());
+            const nN_row = nN[row];
+            const Z = new Matrix(k, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
+            const C = Z.dot(Z.T);
             if ( k > cols ) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j &lt; k; ++j) {
                     C.set_entry(j, j, C.entry(j, j) + C_trace);
                 }
             }
-
             // reconstruct;
-            let w = Matrix.solve(C, O);
-            const w_sum = neumair_sum(w.col(0));
-            w = w.divide(w_sum);
+            let w = Matrix.solve_CG(C, O, this._randomizer);
+            w = w.divide(w.sum);
             for (let j = 0; j &lt; k; ++j) {
-                W.set_entry(row, nN[row][j].j, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].j, w.entry(j, 0));
             }
         }
         // comp embedding
         const I = new Matrix(rows, rows, "identity");
         const IW = I.sub(W);
-        const M = IW.transpose().dot(IW);
-        const { eigenvectors: V } = simultaneous_poweriteration(M.transpose().inverse(), d + 1);
-        
-        this.Y = Matrix.from(V.slice(1, 1 + d)).transpose();
+        const M = IW.T.dot(IW);
+        const { eigenvectors: V } = simultaneous_poweriteration(M.T.inverse(), d + 1);
+        this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 
         // return embedding
         return this.projection;

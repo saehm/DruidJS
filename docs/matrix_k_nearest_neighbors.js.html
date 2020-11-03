@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> dimred/MDS.js</title>
+  <title> matrix/k_nearest_neighbors.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>dimred/MDS.js</h1>
+                    <h1>matrix/k_nearest_neighbors.js</h1>
                 </header>
                 
 
@@ -85,88 +85,43 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { DR } from "./DR.js";
+            <pre class="prettyprint source linenums"><code>import { distance_matrix as dmatrix} from "../matrix/index";
+import { euclidean } from '../metrics/index';
 
 /**
- * @class
- * @alias MDS
+ * 
+ * @param {*} A 
+ * @param {*} k 
+ * @param {*} distance_matrix 
+ * @param {*} metric 
  */
-export class MDS extends DR{
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias MDS
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        return this;
+export default function(A, k, distance_matrix = null, metric = euclidean) {
+    const rows = A.shape[0];
+    let D = distance_matrix ?? dmatrix(A, metric)
+    /* for (let i = 0; i &lt; n; ++i) {
+        D[i] = Array.from(D[i]).map((_,j) => {
+                return {
+                    i: i, j: j, distance: D[i][j]
+                }
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(1, k + 1)
+    } */
+    let nN = new Array(rows);
+    for (let row = 0; row &lt; rows; ++row) {
+        nN[row] = Array.from(D.row(row)).map((distance, col) => {
+                return {
+                    "i": row,
+                    "j": col,
+                    "distance": distance,
+                }
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(1, k + 1);
     }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        const X = this.X;
-        const rows = X.shape[0];
-        const metric = this._metric;
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
-
-        const A = new Matrix();
-        A.shape = [rows, rows, (i,j) => {
-            if (i === j) return 0;
-            const val = (i &lt; j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        }];
-        this._d_X = A;
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
-        const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
-        //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
-                
-        const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
-        this.Y = Matrix.from(V).transpose()
-        
-        return this.projection;
-    }
-
-    get stress() {
-        const N = this.X.shape[0];
-        const Y = this.Y;
-        const d_X = this._d_X; /*new Matrix();
-        d_X.shape = [N, N, (i, j) => {
-            return i &lt; j ? metric(X.row(i), X.row(j)) : d_X.entry(j, i);
-        }]*/
-        const d_Y = new Matrix();
-        d_Y.shape = [N, N, (i, j) => {
-            return i &lt; j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
-        }]
-        let top_sum = 0;
-        let bottom_sum = 0;
-        for (let i = 0; i &lt; N; ++i) {
-            for (let j = i + 1; j &lt; N; ++j) {
-                top_sum += Math.pow(d_X.entry(i, j) - d_Y.entry(i, j), 2);
-                bottom_sum += Math.pow(d_X.entry(i, j), 2);
-            }
-        }
-        return Math.sqrt(top_sum / bottom_sum);
-    }
-}</code></pre>
+    return nN;
+} 
+</code></pre>
         </article>
     </section>
 

@@ -134,6 +134,7 @@
     })
             
     function draw(dr, labels, svg, label) {
+        console.log(dr)
         let result = dr.transform().to2dArray;
         let x = d3.scaleLinear()
             .domain(d3.extent(result, d => d[0]))

@@ -35,9 +35,9 @@ export class LTSA extends DR {
         const X = this.X;
         const d = this._d;
         const [ rows, D ] = X.shape;
-        const k = this._k;
+        const k = this.parameter("k");
         // 1.1 determine k nearest neighbors
-        const nN = k_nearest_neighbors(X.to2dArray, k, null, this._metric);
+        const nN = k_nearest_neighbors(X, k, null, this._metric);
         // center matrix
         const O = new Matrix(D, D, "center");
         const B = new Matrix(rows, rows, 0);

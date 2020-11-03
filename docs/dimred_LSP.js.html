@@ -112,8 +112,8 @@ export class LSP extends DR {
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ["k", "control_points"];
-        this.parameter("k", Math.min(k || Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));
-        this.parameter("control_points", Math.min(control_points || Math.ceil(Math.sqrt(this._N)), this._N - 1));
+        this.parameter("k", Math.min(k ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("control_points", Math.min(control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
         return this;
     }
@@ -125,7 +125,7 @@ export class LSP extends DR {
      * @returns {LSP} 
      */
     init(DR=MDS, DR_parameters=[], KNN=BallTree) {
-        if (this._is_initialized) return;
+        if (this._is_initialized) return this;
         const X = this.X;
         const N = this._N;
         const K = this.parameter("k");
@@ -166,7 +166,7 @@ export class LSP extends DR {
      * @returns {Matrix} Returns the projection.
      */
     transform() {
-        if (!this._is_initialized) this.init();
+        this.check_init();
         const A = this._A;
         const AT = A.T
         const b = this._b;

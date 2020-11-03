@@ -3,31 +3,35 @@ import { Matrix } from "../matrix/Matrix";
 import { Randomizer } from "../util/index";
 import { neumair_sum } from "../numerical/index";
 
+/**
+ * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * @param {Matrix} A - The Matrix
+ * @param {Number} k - The number of eigenvectors and eigenvalues to compute.
+ * @param {Number} [max_iterations=100] - The number of maxiumum iterations the algorithm should run.
+ * @param {Number|Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm.
+ * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
+ */
 export default function(A, k = 2, max_iterations=100, seed=1212) {
-    let randomizer
-    if (seed instanceof Randomizer) {
-        randomizer = seed;
-    } else {
-        randomizer = new Randomizer(seed);
-    }
+    const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
     if (!(A instanceof Matrix)) A = Matrix.from(A);
-    let n = A.shape[0]
+    const n = A.shape[0]
     let { Q: Q, R: R } = qr(new Matrix(n, k, () => randomizer.random));
-    while(max_iterations--) {
-        let oldR = R.clone();
-        let Z = A.dot(Q);
-        let QR = qr(Z);
-        [ Q, R ] = [ QR.Q, QR.R ]; 
+    while (max_iterations--) {
+        const oldR = R.clone();
+        const Z = A.dot(Q);
+        const QR = qr(Z); 
+        Q = QR.Q;
+        R = QR.R;
         if (neumair_sum(R.sub(oldR).diag) / n < 1e-12) {
             max_iterations = 0;
         }        
     }
 
-    let eigenvalues = R.diag;
-    let eigenvectors = Q.transpose().to2dArray;//.map((d,i) => d.map(dd => dd * eigenvalues[i]))
+    const eigenvalues = R.diag;
+    const eigenvectors = Q.transpose().to2dArray;
     return {
         "eigenvalues": eigenvalues,
-        "eigenvectors": eigenvectors
+        "eigenvectors": eigenvectors,
     };
 }
 

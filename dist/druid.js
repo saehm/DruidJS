@@ -163,83 +163,38 @@ function canberra(a, b) {
     return sum;
 }
 
+/**
+ * 
+ * @param {*} A 
+ * @param {*} k 
+ * @param {*} distance_matrix 
+ * @param {*} metric 
+ */
 function k_nearest_neighbors(A, k, distance_matrix = null, metric = euclidean) {
-    let n = A.length;
-    let D = distance_matrix || dmatrix(A, metric);
-    for (let i = 0; i < n; ++i) {
-        D[i] = D[i].map((d,j) => {
-            return {
-                i: i, j: j, distance: D[i][j]
-            }
-        }).sort((a, b) => a.distance - b.distance)
-        .slice(1, k + 1);
+    const rows = A.shape[0];
+    let D = distance_matrix ?? dmatrix(A, metric);
+    /* for (let i = 0; i < n; ++i) {
+        D[i] = Array.from(D[i]).map((_,j) => {
+                return {
+                    i: i, j: j, distance: D[i][j]
+                }
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(1, k + 1)
+    } */
+    let nN = new Array(rows);
+    for (let row = 0; row < rows; ++row) {
+        nN[row] = Array.from(D.row(row)).map((distance, col) => {
+                return {
+                    "i": row,
+                    "j": col,
+                    "distance": distance,
+                }
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(1, k + 1);
     }
-    return D
-}
-
-function dmatrix(A, metric = euclidean) {
-    if (metric === undefined) return undefined;
-    let n = A.length;
-    let D = new Array(n);
-    for (let i = 0; i < n; ++i) {
-        D[i] = new Array(n);
-    }
-    for (let i = 0; i < n; ++i) {
-        for (let j = i + 1; j < n; ++j) {
-            D[i][j] = D[j][i] = metric(A[i], A[j]);
-        }
-    }
-    return D;
-}
-
-function linspace(start, end, number = null) {
-    if (!number) {
-        number = Math.max(Math.round(end - start) + 1, 1);
-    }
-    if (number < 2) {
-        return number === 1 ? [start] : [];
-    }
-    let result = new Array(number);
-    number -= 1;
-    for (let i = number; i >= 0; --i) {
-        result[i] = (i * end + (number - i) * start) / number;
-    }
-    return result
-}
-
-//import { neumair_sum } from "../numerical/index";
-
-function norm(v, metric = euclidean) {
-//export default function(vector, p=2, metric = euclidean) {
-    let vector = null;
-    if (v instanceof Matrix) {
-        let [rows, cols] = v.shape;
-        if (rows === 1) vector = v.row(0);
-        else if (cols === 1) vector = v.col(0);
-        else throw "matrix must be 1d!"
-    } else {
-        vector = v;
-    }
-    let n = vector.length;
-    let z = new Array(n);
-    z.fill(0);
-    return metric(vector, z);
-    
-    
-    /*let v;
-    if (vector instanceof Matrix) {
-        let [ rows, cols ] = v.shape;
-        if (rows === 1) {
-            v = vector.row(0);
-        } else if (cols === 1) {
-            v = vector.col(0);
-        } else {
-            throw "matrix must be 1d"
-        }
-    } else {
-        v = vector;
-    }
-    return Math.pow(neumair_sum(v.map(e => Math.pow(e, p))), 1 / p)*/
+    return nN;
 }
 
 /**
@@ -352,7 +307,9 @@ class Matrix{
             } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {
                 let n = A[0].length;
                 for (let row = 0; row < m; ++row) {
-                    if (A[row].length !== n) throw "various array lengths";
+                    if (A[row].length !== n) {
+                        throw "various array lengths";
+                    }
                 }
                 return new Matrix(m, n, (i, j) => A[i][j])
             }
@@ -425,7 +382,7 @@ class Matrix{
      * @returns {Array}
      */
     col(col) {
-        let result_col = new Array(this._rows);
+        let result_col = new Float64Array(this._rows);
         for (let row = 0; row < this._rows; ++row) {
             result_col[row] = this._data[row * this._cols + col];
         }
@@ -558,12 +515,13 @@ class Matrix{
             }
             let I = A.shape[1];
             let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
-                let A_i = A.row(row);
-                let B_i = B.col(col);
+                const A_i = A.row(row);
+                const B_i = B.col(col);
+                let sum = 0;
                 for (let i = 0; i < I; ++i) {
-                    A_i[i] *= B_i[i];
+                    sum += A_i[i] * B_i[i];
                 }
-                return neumair_sum(A_i);
+                return sum;
             });
             return C;
         } else if (Array.isArray(B) || (B instanceof Float64Array)) {
@@ -685,8 +643,8 @@ class Matrix{
         }
             end_col = cols;
         }*/
-        end_row = end_row || rows;
-        end_col = end_col || cols;
+        end_row = end_row ?? rows;
+        end_col = end_col ?? cols;
         if (end_row <= start_row || end_col <= start_col) {
             throw `
                 end_row must be greater than start_row, and 
@@ -898,7 +856,7 @@ class Matrix{
         const rows = this._rows;
         const cols = this._cols;
         const min_row_col = Math.min(rows, cols);
-        let result = new Array(min_row_col);
+        let result = new Float64Array(min_row_col);
         for (let i = 0; i < min_row_col; ++i) {
             result[i] = this.entry(i,i);
         }
@@ -966,8 +924,8 @@ class Matrix{
         const cols = b.shape[1];
         let result = new Matrix(rows, 0);
         for (let i = 0; i < cols; ++i) {
+            const b_i = Matrix.from(b.col(i)).T;
             let x = new Matrix(rows, 1, () => randomizer.random);
-            let b_i = Matrix.from(b.col(i)).T;
             let r = b_i.sub(A.dot(x));
             let d = r.clone();
             do {
@@ -1049,11 +1007,11 @@ class Matrix{
 
     /**
      * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
-     * @param {Matrix} A 
+     * @param {Matrix} M 
      * @param {int} [k=2] 
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
-    static SVD(A, k=2) {
+    static SVD(M, k=2) {
         const MT = M.T;
         let MtM = MT.dot(M);
         let MMt = M.dot(MT);
@@ -1071,6 +1029,79 @@ class Matrix{
         console.log(U,V,B)
         return { U: U, "Sigma": B, V: V }; */
     }
+}
+
+function dmatrix(A, metric = euclidean) {
+    let n = A.shape[0];
+    /* let D = new Array(n);
+    for (let i = 0; i < n; ++i) {
+        D[i] = new Float64Array(n);
+    }
+    for (let i = 0; i < n; ++i) {
+        for (let j = i + 1; j < n; ++j) {
+            D[i][j] = D[j][i] = metric(A[i], A[j]);
+        }
+    } */
+    const D = new Matrix(n, n);
+    for (let i = 0; i < n; ++i) {
+        const A_i = A.row(i);
+        for (let j = i + 1; j < n; ++j) {
+            const dist = metric(A_i, A.row(j));
+            D.set_entry(i, j, dist);
+            D.set_entry(j, i, dist);
+        }
+    }
+    return D;
+}
+
+function linspace(start, end, number = null) {
+    if (!number) {
+        number = Math.max(Math.round(end - start) + 1, 1);
+    }
+    if (number < 2) {
+        return number === 1 ? [start] : [];
+    }
+    let result = new Array(number);
+    number -= 1;
+    for (let i = number; i >= 0; --i) {
+        result[i] = (i * end + (number - i) * start) / number;
+    }
+    return result
+}
+
+//import { neumair_sum } from "../numerical/index";
+
+function norm(v, metric = euclidean) {
+//export default function(vector, p=2, metric = euclidean) {
+    let vector = null;
+    if (v instanceof Matrix) {
+        let [rows, cols] = v.shape;
+        if (rows === 1) vector = v.row(0);
+        else if (cols === 1) vector = v.col(0);
+        else throw "matrix must be 1d!"
+    } else {
+        vector = v;
+    }
+    let n = vector.length;
+    let z = new Array(n);
+    z.fill(0);
+    return metric(vector, z);
+    
+    
+    /*let v;
+    if (vector instanceof Matrix) {
+        let [ rows, cols ] = v.shape;
+        if (rows === 1) {
+            v = vector.row(0);
+        } else if (cols === 1) {
+            v = vector.col(0);
+        } else {
+            throw "matrix must be 1d"
+        }
+    } else {
+        v = vector;
+    }
+    return Math.pow(neumair_sum(v.map(e => Math.pow(e, p))), 1 / p)*/
 }
 
 class Randomizer {
@@ -1589,31 +1620,35 @@ function qr(A) {
     return {"R": R, "Q": Q};
 }
 
+/**
+ * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * @param {Matrix} A - The Matrix
+ * @param {Number} k - The number of eigenvectors and eigenvalues to compute.
+ * @param {Number} [max_iterations=100] - The number of maxiumum iterations the algorithm should run.
+ * @param {Number|Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm.
+ * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
+ */
 function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) {
-    let randomizer;
-    if (seed instanceof Randomizer) {
-        randomizer = seed;
-    } else {
-        randomizer = new Randomizer(seed);
-    }
+    const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
     if (!(A instanceof Matrix)) A = Matrix.from(A);
-    let n = A.shape[0];
+    const n = A.shape[0];
     let { Q: Q, R: R } = qr(new Matrix(n, k, () => randomizer.random));
-    while(max_iterations--) {
-        let oldR = R.clone();
-        let Z = A.dot(Q);
-        let QR = qr(Z);
-        [ Q, R ] = [ QR.Q, QR.R ]; 
+    while (max_iterations--) {
+        const oldR = R.clone();
+        const Z = A.dot(Q);
+        const QR = qr(Z); 
+        Q = QR.Q;
+        R = QR.R;
         if (neumair_sum(R.sub(oldR).diag) / n < 1e-12) {
             max_iterations = 0;
         }        
     }
 
-    let eigenvalues = R.diag;
-    let eigenvectors = Q.transpose().to2dArray;//.map((d,i) => d.map(dd => dd * eigenvalues[i]))
+    const eigenvalues = R.diag;
+    const eigenvectors = Q.transpose().to2dArray;
     return {
         "eigenvalues": eigenvalues,
-        "eigenvectors": eigenvectors
+        "eigenvectors": eigenvectors,
     };
 }
 
@@ -1703,6 +1738,10 @@ class DR{
     transform() {
         this.check_init();
         return this.Y;
+    }
+
+    generator() {
+        return this.transform();
     }
 
     check_init() {
@@ -1804,24 +1843,16 @@ class MDS extends DR{
      */
     transform() {
         const X = this.X;
-        //let sum_reduce = (a,b) => a + b
         const rows = X.shape[0];
         const metric = this._metric;
-        let ai_ = [];
-        let a_j = [];
-        for (let i = 0; i < rows; ++i) {
-            ai_.push(0);
-            a_j.push(0);
-        }
+        let ai_ = new Float64Array(rows);
+        let a_j = new Float64Array(rows);
         let a__ = 0;
+
         const A = new Matrix();
         A.shape = [rows, rows, (i,j) => {
-            let val = 0;
-            if (i < j) {
-                val = metric(X.row(i), X.row(j));
-            } else if (i > j) {
-                val = A.entry(j,i);
-            }
+            if (i === j) return 0;
+            const val = (i < j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
             ai_[i] += val;
             a_j[j] += val;
             a__ += val;
@@ -1891,20 +1922,23 @@ class ISOMAP extends DR {
      * @returns {Matrix} Returns the projection.
      */
     transform() {
-        let X = this.X;
-        let rows = X.shape[0];
+        this.check_init();
+        const X = this.X;
+        const rows = this._N;
+        const metric = this._metric;
         // TODO: make knn extern and parameter for constructor or transform?
-        let D = new Matrix();
-        D.shape = [rows, rows, (i,j) => i <= j ? this._metric(X.row(i), X.row(j)) : D.entry(j,i)];
-        let kNearestNeighbors = [];
+        const D = new Matrix();
+        D.shape = [rows, rows, (i,j) => i <= j ? metric(X.row(i), X.row(j)) : D.entry(j,i)];
+        const kNearestNeighbors = [];
         for (let i = 0; i < rows; ++i) {
-            let row = D.row(i).map((d,i) => { 
-                return {
-                    "index": i,
-                    "distance": d
-                }
-            });
-            let H = new Heap(row, d => d.distance, "min");
+            const row = [];
+            for (let j = 0; j < rows; ++j) {
+                row.push({
+                    "index": j,
+                    "distance": D.entry(i, j),
+                });
+            }
+            const H = new Heap(row, d => d.distance, "min");
             kNearestNeighbors.push(H.toArray().slice(1, this._k + 1));
         }
         
@@ -1912,8 +1946,8 @@ class ISOMAP extends DR {
         // compute shortest paths
         // TODO: make extern
         /** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */
-        let G = new Matrix(rows, rows, (i,j) => {
-            let other = kNearestNeighbors[i].find(n => n.index === j);
+        const G = new Matrix(rows, rows, (i,j) => {
+            const other = kNearestNeighbors[i].find(n => n.index === j);
             return other ? other.distance : Infinity
         });
 
@@ -1925,12 +1959,8 @@ class ISOMAP extends DR {
             }
         }
         
-        let ai_ = [];
-        let a_j = [];
-        for (let i = 0; i < rows; ++i) {
-            ai_.push(0);
-            a_j.push(0);
-        }
+        let ai_ = new Float64Array(rows);
+        let a_j = new Float64Array(rows);
         let a__ = 0;
         let A = new Matrix(rows, rows, (i,j) => {
             let val = G.entry(i, j);
@@ -1944,42 +1974,16 @@ class ISOMAP extends DR {
         ai_ = ai_.map(v => v / rows);
         a_j = a_j.map(v => v / rows);
         a__ /= (rows ** 2);
-        let B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
+        const B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
              
         // compute d eigenvectors
-        let { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
+        const { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
         this.Y = Matrix.from(V).transpose();
         // return embedding
         return this.projection;
     }
 
 
-    /**
-     * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {Number} [value = null] - value of the parameter to set, if null then return actual parameter value.
-     */
-    parameter(name, value=null) {
-        return super.parameter(name, value);
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    para(name, value=null) {
-        return this.parameter(name, value);
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    p(name, value=null) {
-        return this.parameter(name, value);
-    }
 }
 
 /**
@@ -2194,37 +2198,36 @@ class LLE extends DR {
     transform() {
         const X = this.X;
         const d = this._d;
-        const [ rows, cols ] = X.shape;
-        const k = this._k;
-        const nN = k_nearest_neighbors(X.to2dArray, k, null, this._metric);
+        const rows = this._N;
+        const cols = this._D;
+        const k = this.parameter("k");
+        const nN = k_nearest_neighbors(X, k, null, this._metric);
         const O = new Matrix(k, 1, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row < rows; ++row) {
-            const Z = new Matrix(k, cols, (i, j) => X.entry(nN[row][i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.transpose());
+            const nN_row = nN[row];
+            const Z = new Matrix(k, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
+            const C = Z.dot(Z.T);
             if ( k > cols ) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j < k; ++j) {
                     C.set_entry(j, j, C.entry(j, j) + C_trace);
                 }
             }
-
             // reconstruct;
-            let w = Matrix.solve(C, O);
-            const w_sum = neumair_sum(w.col(0));
-            w = w.divide(w_sum);
+            let w = Matrix.solve_CG(C, O, this._randomizer);
+            w = w.divide(w.sum);
             for (let j = 0; j < k; ++j) {
-                W.set_entry(row, nN[row][j].j, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].j, w.entry(j, 0));
             }
         }
         // comp embedding
         const I = new Matrix(rows, rows, "identity");
         const IW = I.sub(W);
-        const M = IW.transpose().dot(IW);
-        const { eigenvectors: V } = simultaneous_poweriteration$1(M.transpose().inverse(), d + 1);
-        
-        this.Y = Matrix.from(V.slice(1, 1 + d)).transpose();
+        const M = IW.T.dot(IW);
+        const { eigenvectors: V } = simultaneous_poweriteration$1(M.T.inverse(), d + 1);
+        this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 
         // return embedding
         return this.projection;
@@ -2263,9 +2266,9 @@ class LTSA extends DR {
         const X = this.X;
         const d = this._d;
         const [ rows, D ] = X.shape;
-        const k = this._k;
+        const k = this.parameter("k");
         // 1.1 determine k nearest neighbors
-        const nN = k_nearest_neighbors(X.to2dArray, k, null, this._metric);
+        const nN = k_nearest_neighbors(X, k, null, this._metric);
         // center matrix
         const O = new Matrix(D, D, "center");
         const B = new Matrix(rows, rows, 0);
@@ -4134,8 +4137,8 @@ class LSP extends DR {
     constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ["k", "control_points"];
-        this.parameter("k", Math.min(k || Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));
-        this.parameter("control_points", Math.min(control_points || Math.ceil(Math.sqrt(this._N)), this._N - 1));
+        this.parameter("k", Math.min(k ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("control_points", Math.min(control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
         return this;
     }
@@ -4147,7 +4150,7 @@ class LSP extends DR {
      * @returns {LSP} 
      */
     init(DR=MDS, DR_parameters=[], KNN=BallTree) {
-        if (this._is_initialized) return;
+        if (this._is_initialized) return this;
         const X = this.X;
         const N = this._N;
         const K = this.parameter("k");
@@ -4188,7 +4191,7 @@ class LSP extends DR {
      * @returns {Matrix} Returns the projection.
      */
     transform() {
-        if (!this._is_initialized) this.init();
+        this.check_init();
         const A = this._A;
         const AT = A.T;
         const b = this._b;
@@ -4708,7 +4711,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.3.5";
+var version="0.3.6";
 
 exports.BallTree = BallTree;
 exports.FASTMAP = FASTMAP;

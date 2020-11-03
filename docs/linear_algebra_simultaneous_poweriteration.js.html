@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> dimred/MDS.js</title>
+  <title> linear_algebra/simultaneous_poweriteration.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>dimred/MDS.js</h1>
+                    <h1>linear_algebra/simultaneous_poweriteration.js</h1>
                 </header>
                 
 
@@ -85,88 +85,44 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { DR } from "./DR.js";
+            <pre class="prettyprint source linenums"><code>import { qr } from "./index";
+import { Matrix } from "../matrix/Matrix";
+import { Randomizer } from "../util/index";
+import { neumair_sum } from "../numerical/index";
 
 /**
- * @class
- * @alias MDS
+ * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * @param {Matrix} A - The Matrix
+ * @param {Number} k - The number of eigenvectors and eigenvalues to compute.
+ * @param {Number} [max_iterations=100] - The number of maxiumum iterations the algorithm should run.
+ * @param {Number|Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm.
+ * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
  */
-export class MDS extends DR{
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias MDS
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        return this;
+export default function(A, k = 2, max_iterations=100, seed=1212) {
+    const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
+    if (!(A instanceof Matrix)) A = Matrix.from(A);
+    const n = A.shape[0]
+    let { Q: Q, R: R } = qr(new Matrix(n, k, () => randomizer.random));
+    while (max_iterations--) {
+        const oldR = R.clone();
+        const Z = A.dot(Q);
+        const QR = qr(Z); 
+        Q = QR.Q;
+        R = QR.R;
+        if (neumair_sum(R.sub(oldR).diag) / n &lt; 1e-12) {
+            max_iterations = 0;
+        }        
     }
 
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        const X = this.X;
-        const rows = X.shape[0];
-        const metric = this._metric;
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
+    const eigenvalues = R.diag;
+    const eigenvectors = Q.transpose().to2dArray;
+    return {
+        "eigenvalues": eigenvalues,
+        "eigenvectors": eigenvectors,
+    };
+}
 
-        const A = new Matrix();
-        A.shape = [rows, rows, (i,j) => {
-            if (i === j) return 0;
-            const val = (i &lt; j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        }];
-        this._d_X = A;
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
-        const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
-        //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
-                
-        const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
-        this.Y = Matrix.from(V).transpose()
-        
-        return this.projection;
-    }
-
-    get stress() {
-        const N = this.X.shape[0];
-        const Y = this.Y;
-        const d_X = this._d_X; /*new Matrix();
-        d_X.shape = [N, N, (i, j) => {
-            return i &lt; j ? metric(X.row(i), X.row(j)) : d_X.entry(j, i);
-        }]*/
-        const d_Y = new Matrix();
-        d_Y.shape = [N, N, (i, j) => {
-            return i &lt; j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
-        }]
-        let top_sum = 0;
-        let bottom_sum = 0;
-        for (let i = 0; i &lt; N; ++i) {
-            for (let j = i + 1; j &lt; N; ++j) {
-                top_sum += Math.pow(d_X.entry(i, j) - d_Y.entry(i, j), 2);
-                bottom_sum += Math.pow(d_X.entry(i, j), 2);
-            }
-        }
-        return Math.sqrt(top_sum / bottom_sum);
-    }
-}</code></pre>
+</code></pre>
         </article>
     </section>
 

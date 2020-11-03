@@ -197,7 +197,9 @@ export class Matrix{
             } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {
                 let n = A[0].length;
                 for (let row = 0; row &lt; m; ++row) {
-                    if (A[row].length !== n) throw "various array lengths";
+                    if (A[row].length !== n) {
+                        throw "various array lengths";
+                    }
                 }
                 return new Matrix(m, n, (i, j) => A[i][j])
             }
@@ -270,7 +272,7 @@ export class Matrix{
      * @returns {Array}
      */
     col(col) {
-        let result_col = new Array(this._rows);
+        let result_col = new Float64Array(this._rows);
         for (let row = 0; row &lt; this._rows; ++row) {
             result_col[row] = this._data[row * this._cols + col];
         }
@@ -403,12 +405,13 @@ export class Matrix{
             }
             let I = A.shape[1];
             let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
-                let A_i = A.row(row);
-                let B_i = B.col(col);
+                const A_i = A.row(row);
+                const B_i = B.col(col);
+                let sum = 0;
                 for (let i = 0; i &lt; I; ++i) {
-                    A_i[i] *= B_i[i];
+                    sum += A_i[i] * B_i[i];
                 }
-                return neumair_sum(A_i);
+                return sum;
             });
             return C;
         } else if (Array.isArray(B) || (B instanceof Float64Array)) {
@@ -530,8 +533,8 @@ export class Matrix{
         }
             end_col = cols;
         }*/
-        end_row = end_row || rows;
-        end_col = end_col || cols;
+        end_row = end_row ?? rows;
+        end_col = end_col ?? cols;
         if (end_row &lt;= start_row || end_col &lt;= start_col) {
             throw `
                 end_row must be greater than start_row, and 
@@ -743,7 +746,7 @@ export class Matrix{
         const rows = this._rows;
         const cols = this._cols;
         const min_row_col = Math.min(rows, cols);
-        let result = new Array(min_row_col)
+        let result = new Float64Array(min_row_col)
         for (let i = 0; i &lt; min_row_col; ++i) {
             result[i] = this.entry(i,i);
         }
@@ -811,8 +814,8 @@ export class Matrix{
         const cols = b.shape[1];
         let result = new Matrix(rows, 0);
         for (let i = 0; i &lt; cols; ++i) {
+            const b_i = Matrix.from(b.col(i)).T;
             let x = new Matrix(rows, 1, () => randomizer.random);
-            let b_i = Matrix.from(b.col(i)).T;
             let r = b_i.sub(A.dot(x));
             let d = r.clone();
             do {
@@ -871,9 +874,9 @@ export class Matrix{
         
         for (let j = 0; j &lt; rows; ++j) {
             for (let i = j; i &lt; rows; ++i) {
-                let sum = 0
+                let sum = 0;
                 for (let k = 0; k &lt; j; ++k) {
-                    sum += L.entry(i, k) * U.entry(k, j)
+                    sum += L.entry(i, k) * U.entry(k, j);
                 }
                 L.set_entry(i, j, A.entry(i, j) - sum);
             }
@@ -881,9 +884,9 @@ export class Matrix{
                 if (L.entry(j, j) === 0) {
                     return undefined;
                 }
-                let sum = 0
+                let sum = 0;
                 for (let k = 0; k &lt; j; ++k) {
-                    sum += L.entry(j, k) * U.entry(k, i)
+                    sum += L.entry(j, k) * U.entry(k, i);
                 }
                 U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));
             }
@@ -894,11 +897,11 @@ export class Matrix{
 
     /**
      * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
-     * @param {Matrix} A 
+     * @param {Matrix} M 
      * @param {int} [k=2] 
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
-    static SVD(A, k=2) {
+    static SVD(M, k=2) {
         const MT = M.T;
         let MtM = MT.dot(M);
         let MMt = M.dot(MT);

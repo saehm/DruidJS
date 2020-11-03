@@ -32,20 +32,23 @@ export class ISOMAP extends DR {
      * @returns {Matrix} Returns the projection.
      */
     transform() {
-        let X = this.X;
-        let rows = X.shape[0];
+        this.check_init();
+        const X = this.X;
+        const rows = this._N;
+        const metric = this._metric;
         // TODO: make knn extern and parameter for constructor or transform?
-        let D = new Matrix()
-        D.shape = [rows, rows, (i,j) => i <= j ? this._metric(X.row(i), X.row(j)) : D.entry(j,i)]
-        let kNearestNeighbors = [];
+        const D = new Matrix();
+        D.shape = [rows, rows, (i,j) => i <= j ? metric(X.row(i), X.row(j)) : D.entry(j,i)]
+        const kNearestNeighbors = [];
         for (let i = 0; i < rows; ++i) {
-            let row = D.row(i).map((d,i) => { 
-                return {
-                    "index": i,
-                    "distance": d
-                }
-            });
-            let H = new Heap(row, d => d.distance, "min");
+            const row = [];
+            for (let j = 0; j < rows; ++j) {
+                row.push({
+                    "index": j,
+                    "distance": D.entry(i, j),
+                })
+            }
+            const H = new Heap(row, d => d.distance, "min");
             kNearestNeighbors.push(H.toArray().slice(1, this._k + 1))
         }
         
@@ -53,8 +56,8 @@ export class ISOMAP extends DR {
         // compute shortest paths
         // TODO: make extern
         /** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */
-        let G = new Matrix(rows, rows, (i,j) => {
-            let other = kNearestNeighbors[i].find(n => n.index === j);
+        const G = new Matrix(rows, rows, (i,j) => {
+            const other = kNearestNeighbors[i].find(n => n.index === j);
             return other ? other.distance : Infinity
         });
 
@@ -66,12 +69,8 @@ export class ISOMAP extends DR {
             }
         }
         
-        let ai_ = [];
-        let a_j = [];
-        for (let i = 0; i < rows; ++i) {
-            ai_.push(0)
-            a_j.push(0)
-        }
+        let ai_ = new Float64Array(rows);
+        let a_j = new Float64Array(rows);
         let a__ = 0;
         let A = new Matrix(rows, rows, (i,j) => {
             let val = G.entry(i, j);
@@ -85,40 +84,14 @@ export class ISOMAP extends DR {
         ai_ = ai_.map(v => v / rows);
         a_j = a_j.map(v => v / rows);
         a__ /= (rows ** 2);
-        let B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
+        const B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
              
         // compute d eigenvectors
-        let { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
+        const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
         this.Y = Matrix.from(V).transpose();
         // return embedding
         return this.projection;
     }
 
 
-    /**
-     * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {Number} [value = null] - value of the parameter to set, if null then return actual parameter value.
-     */
-    parameter(name, value=null) {
-        return super.parameter(name, value);
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    para(name, value=null) {
-        return this.parameter(name, value);
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    p(name, value=null) {
-        return this.parameter(name, value);
-    }
 }
