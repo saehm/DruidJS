@@ -1,4757 +1,593 @@
-(function (global, factory) {
-typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-typeof define === 'function' && define.amd ? define(['exports'], factory) :
-(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.druid = global.druid || {}));
-}(this, (function (exports) { 'use strict';
-
-/**
- * Computes the euclidean distance (l_2) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias euclidean
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the euclidean distance between {@link a} and {@link b}.  
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
  */
-function euclidean(a, b) {
-    return Math.sqrt(euclidean_squared(a, b));
-}
-
-/**
- * Numerical stable summation with the Kahan summation algorithm.
- * @memberof module:numerical
- * @alias kahan_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
- */
-function kahan_sum(summands) {
-    let n = summands.length;
-    let sum = 0;
-    let compensation = 0;
-    let y, t;
-
-    for (let i = 0; i < n; ++i) {
-        y = summands[i] - compensation;
-        t = sum + y;
-        compensation = (t - sum) - y;
-        sum = t;
-    }
-    return sum;
-}
-
-/**
- * Numerical stable summation with the Neumair summation algorithm.
- * @memberof module:numerical
- * @alias neumair_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
- */
-function neumair_sum(summands) {
-    let n = summands.length;
-    let sum = 0;
-    let compensation = 0;
-
-    for (let i = 0; i < n; ++i) {
-        let summand = summands[i];
-        let t = sum + summand;
-        if (Math.abs(sum) >= Math.abs(summand)) {
-            compensation += (sum - t) + summand;
-        } else {
-            compensation += (summand - t) + sum;
-        }
-        sum = t;
-    }
-    return sum + compensation;
-}
-
-/**
- * Computes the squared euclidean distance (l_2^2) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias euclidean_squared
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the squared euclidean distance between {@link a} and {@link b}.  
- */
-function euclidean_squared(a, b) {
-    if (a.length != b.length) return undefined
-    let n = a.length;
-    let s = new Array(n);
-    for (let i = 0; i < n; ++i) {
-        let x = a[i];
-        let y = b[i];
-        s[i] = ((x - y) * (x - y));
-    }
-    return neumair_sum(s);
-}
-
-/**
- * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias cosine
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @example
- * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4
- * @returns {Number} The cosine distance between {@link a} and {@link b}.
- */
-function cosine(a, b) {
-    if (a.length !== b.length) return undefined;
-    let n = a.length;
-    let sum = 0;
-    let sum_a = 0;
-    let sum_b = 0;
-    for (let i = 0; i < n; ++i) {
-        sum += (a[i] * b[i]);
-        sum_a += (a[i] * a[i]);
-        sum_b += (b[i] * b[i]);
-    }
-    return Math.acos(sum / ((Math.sqrt(sum_a) * Math.sqrt(sum_b))));
-}
-
-/**
- * Computes the manhattan distance (l_1) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias manhattan
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the manhattan distance between {@link a} and {@link b}.  
- */function manhattan(a, b) {
-    if (a.length != b.length) return undefined
-    let n = a.length;
-    let sum = 0;
-    for (let i = 0; i < n; ++i) {
-        sum += Math.abs(a[i] - b[i]);
-    }
-    return sum
-}
-
-/**
- * Computes the chebyshev distance (l_∞) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias chebyshev
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the chebyshev distance between {@link a} and {@link b}.  
- */
-function chebyshev(a, b) {
-    if (a.length != b.length) return undefined
-    let n = a.length;
-    let res = [];
-    for (let i = 0; i < n; ++i) {
-        res.push(Math.abs(a[i] - b[i]));
-    }
-    return Math.max(...res)
-}
-
-/**
- * Computes the canberra distance between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias canberra
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} The canberra distance between {@link a} and {@link b}.
- * @see {@link https://en.wikipedia.org/wiki/Canberra_distance}
- */
-function canberra(a, b) {
-    if (a.length !== b.length) return undefined;
-    let n = a.length;
-    let sum = 0;
-    for (let i = 0; i < n; ++i) {
-        sum += (Math.abs(a[i] - b[i]) / (Math.abs(a[i]) + Math.abs(b[i])));
-    }
-    return sum;
-}
-
-/**
- * 
- * @param {*} A 
- * @param {*} k 
- * @param {*} distance_matrix 
- * @param {*} metric 
- */
-function k_nearest_neighbors(A, k, distance_matrix = null, metric = euclidean) {
-    const rows = A.shape[0];
-    let D = distance_matrix ?? dmatrix(A, metric);
-    /* for (let i = 0; i < n; ++i) {
-        D[i] = Array.from(D[i]).map((_,j) => {
-                return {
-                    i: i, j: j, distance: D[i][j]
-                }
-            })
-            .sort((a, b) => a.distance - b.distance)
-            .slice(1, k + 1)
-    } */
-    let nN = new Array(rows);
-    for (let row = 0; row < rows; ++row) {
-        nN[row] = Array.from(D.row(row)).map((distance, col) => {
-                return {
-                    "i": row,
-                    "j": col,
-                    "distance": distance,
-                }
-            })
-            .sort((a, b) => a.distance - b.distance)
-            .slice(1, k + 1);
-    }
-    return nN;
-}
-
-/**
- * @class
- * @alias Matrix
- * @requires module:numerical/neumair_sum
- */
-class Matrix{
-    /**
-     * creates a new Matrix. Entries are stored in a Float64Array. 
-     * @constructor
-     * @memberof module:matrix
-     * @alias Matrix
-     * @param {number} rows - The amount of rows of the matrix.
-     * @param {number} cols - The amount of columns of the matrix.
-     * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
-     *  - **function**: for each entry the function gets called with the parameters for the actual row and column.
-     *  - **string**: allowed are
-     *      - "zero", creates a zero matrix.
-     *      - "identity" or "I", creates an identity matrix.
-     *      - "center", creates an center matrix.
-     *  - **number**: create a matrix filled with the given value.
-     * @example
-     * 
-     * let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random matrix.
-     * let B = new Matrix(3, 3, "I"); // creates a 3 times 3 identity matrix.
-     * @returns {Matrix} returns a {@link rows} times {@link cols} Matrix filled with {@link value}.
-     */
-    constructor(rows=null, cols=null, value=null) {
-        this._rows = rows;
-        this._cols = cols;
-        this._data = null;
-        if (rows && cols) {
-            if (!value) {
-                this._data = new Float64Array(rows * cols);
-                return this;
-            }
-            if (typeof(value) === "function") {
-                this._data = new Float64Array(rows * cols);
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        this._data[row * cols + col] = value(row, col);
-                    }
-                }
-                return this;
-            }
-            if (typeof(value) === "string") {
-                if (value === "zeros") {
-                    return new Matrix(rows, cols, 0); 
-                }
-                if (value === "identity" || value === "I") {
-                    this._data = new Float64Array(rows * cols);
-                    for (let row = 0; row < rows; ++row) {
-                        this._data[row * cols + row] = 1;
-                    }
-                    return this;
-                }
-                if (value === "center" && rows == cols) {
-                    this._data = new Float64Array(rows * cols);
-                    value = (i, j) => (i === j ? 1 : 0) - (1 / rows);
-                    for (let row = 0; row < rows; ++row) {
-                        for (let col = 0; col < cols; ++col) {
-                            this._data[row * cols + col] = value(row, col);
-                        }
-                    }
-                    return this;
-                }
-            }
-            if (typeof(value) === "number") {
-                this._data = new Float64Array(rows * cols);
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        this._data[row * cols + col] = value;
-                    }
-                }
-                return this;
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Creates a Matrix out of {@link A}.
-     * @param {(Matrix|Array|Float64Array|number)} A - The matrix, array, or number, which should converted to a Matrix.
-     * @param {"row"|"col"|"diag"} [type = "row"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector. 
-     * @returns {Matrix}
-     * 
-     * @example
-     * let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.
-     * let S = Matrix.from([1, 2, 3], "diag"); // creates a three by three matrix with 1, 2, 3 on its diagonal.
-     */
-    static from(A, type="row") {
-        if (A instanceof Matrix) {
-            return A.clone();
-        } else if (Array.isArray(A) || A instanceof Float64Array) {
-            let m = A.length;
-            if (m === 0) throw "Array is empty";
-            // 1d
-            if (!Array.isArray(A[0]) && !(A[0] instanceof Float64Array)) {
-                if (type === "row") {  
-                    return new Matrix(1, m, (_, j) => A[j]);
-                } else if (type === "col") {
-                    return new Matrix(m, 1, (i) => A[i]);
-                } else if (type === "diag") {
-                    return new Matrix(m, m, (i, j) => (i == j) ? A[i] : 0);
-                } else {
-                    throw "1d array has NaN entries"
-                }
-            // 2d
-            } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {
-                let n = A[0].length;
-                for (let row = 0; row < m; ++row) {
-                    if (A[row].length !== n) {
-                        throw "various array lengths";
-                    }
-                }
-                return new Matrix(m, n, (i, j) => A[i][j])
-            }
-        } else if (typeof(A) === "number") {
-            return new Matrix(1, 1, A);
-        } else {
-            throw "error"
-        }
-    }
-
-    /**
-     * Returns the {@link row}th row from the Matrix.
-     * @param {int} row 
-     * @returns {Array}
-     */
-    row(row) {
-        /* let result_row = new Array(this._cols);
-        for (let col = 0; col < this._cols; ++col) {
-            result_row[col] = this._data[row * this._cols + col];
-        }
-        return result_row; */
-        const data = this._data;
-        const cols = this._cols;
-        return data.subarray(row * cols, (row + 1) * cols)
-    }
-    
-    /**
-     * Returns an generator yielding each row of the Matrix.
-     */
-    *iterate_rows() {
-        const cols = this._cols;
-        const rows = this._rows;
-        const data = this._data;
-
-        for (let row = 0; row < rows; ++row) {
-            yield data.subarray(row * cols, (row + 1) * cols);
-        }
-    }
-
-    /**
-     * Makes a {@link Matrix} object an iterable object.
-     */
-    [Symbol.iterator] = this.iterate_rows;
-
-    /**
-     * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.
-     * @param {int} row 
-     * @param {Array} values 
-     * @returns {Matrix}
-     */
-    set_row(row, values) {
-        let cols = this._cols;
-        if (Array.isArray(values) && values.length === cols) {
-            let offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                this._data[offset + col] = values[col];
-            }
-        } else if (values instanceof Matrix && values.shape[1] === cols && values.shape[0] === 1) {
-            let offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                this._data[offset + col] = values._data[col];
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Returns the {@link col}th column from the Matrix.
-     * @param {int} col 
-     * @returns {Array}
-     */
-    col(col) {
-        let result_col = new Float64Array(this._rows);
-        for (let row = 0; row < this._rows; ++row) {
-            result_col[row] = this._data[row * this._cols + col];
-        }
-        return result_col;
-    }
-
-    /**
-     * Returns the {@link col}th entry from the {@link row}th row of the Matrix.
-     * @param {int} row 
-     * @param {int} col 
-     * @returns {float64}
-     */
-    entry(row, col) {
-        return this._data[row * this._cols + col];
-    }
-
-    /**
-     * Sets the {@link col}th entry from the {@link row}th row of the Matrix to the given {@link value}.
-     * @param {int} row 
-     * @param {int} col 
-     * @param {float64} value
-     * @returns {Matrix}
-     */
-    set_entry(row, col, value) {
-        this._data[row * this._cols + col] = value;
-        return this;
-    }
-
-    /**
-     * Returns a new transposed Matrix.
-     * @returns {Matrix}
-     */
-    transpose() {
-        let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
-        return B;
-    }
-
-    /**
-     * Returns a new transposed Matrix. Short-form of {@function transpose}.
-     * @returns {Matrix}
-     */
-    get T() {
-        return this.transpose();
-    }
-
-    /**
-     * Returns the inverse of the Matrix.
-     * @returns {Matrix}
-     */
-    inverse() {
-        const rows = this._rows;
-        const cols = this._cols;
-        let B = new Matrix(rows, 2 * cols, (i,j) => {
-            if (j >= cols) {
-                return (i === (j - cols)) ? 1 : 0;
-            } else {
-                return this.entry(i, j);
-            }
-        });
-        let h = 0; 
-        let k = 0;
-        while (h < rows && k < cols) {
-            var i_max = 0;
-            let max_val = -Infinity;
-            for (let i = h; i < rows; ++i) {
-                let val = Math.abs(B.entry(i,k));
-                if (max_val < val) {
-                    i_max = i;
-                    max_val = val;
-                }
-            }
-            if (B.entry(i_max, k) == 0) {
-                k++;
-            } else {
-                // swap rows
-                for (let j = 0; j < 2 * cols; ++j) {
-                    let h_val = B.entry(h, j);
-                    let i_val = B.entry(i_max, j);
-                    B.set_entry(h, j, h_val);
-                    B.set_entry(i_max, j, i_val);
-                }
-                for (let i = h + 1; i < rows; ++i) {
-                    let f = B.entry(i, k) / B.entry(h, k);
-                    B.set_entry(i, k, 0);
-                    for (let j = k + 1; j < 2 * cols; ++j) {
-                        B.set_entry(i, j, B.entry(i, j) - B.entry(h, j) * f);
-                    }
-                }
-                h++;
-                k++;
-            }
-        }
-
-        for (let row = 0; row < rows; ++row) {
-            let f = B.entry(row, row);
-            for (let col = row; col < 2 * cols; ++col) {
-                B.set_entry(row, col, B.entry(row, col) / f);
-            }
-        }
-        
-        for (let row = rows - 1; row >= 0; --row) {
-            let B_row_row = B.entry(row, row);
-            for (let i = 0; i < row; i++) {
-                let B_i_row = B.entry(i, row);
-                let f = B_i_row / B_row_row;
-                for (let j = i; j < 2 * cols; ++j) {
-                    let B_i_j = B.entry(i,j);
-                    let B_row_j = B.entry(row, j);
-                    B_i_j = B_i_j - B_row_j * f;
-                    B.set_entry(i, j, B_i_j);
-                }
-            }
-        }
-
-        return new Matrix(rows, cols, (i,j) => B.entry(i, j + cols));
-    }
-
-    /**
-     * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
-     * @param {(Matrix|Array|Float64Array)} B the right side
-     * @returns {(Matrix|Array)}
-     */
-    dot(B) {
-        if (B instanceof Matrix) {
-            let A = this;
-            if (A.shape[1] !== B.shape[0]) {
-                throw `A.dot(B): A is a ${A.shape.join(" x ")}-Matrix, B is a ${B.shape.join(" x ")}-Matrix: 
-                A has ${A.shape[1]} cols and B ${B.shape[0]} rows. 
-                Must be equal!`;
-            }
-            let I = A.shape[1];
-            let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
-                const A_i = A.row(row);
-                const B_i = B.col(col);
-                let sum = 0;
-                for (let i = 0; i < I; ++i) {
-                    sum += A_i[i] * B_i[i];
-                }
-                return sum;
-            });
-            return C;
-        } else if (Array.isArray(B) || (B instanceof Float64Array)) {
-            let rows = this._rows;
-            if (B.length !== rows)  {
-                throw `A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`
-            }
-            let C = new Array(rows);
-            for (let row = 0; row < rows; ++row) {
-                C[row] = neumair_sum(this.row(row).map(e => e * B[row]));
-            }
-            return C;
-        } else {
-            throw `B must be Matrix or Array`;
-        }
-    }
-
-    /**
-     * Computes the outer product from {@link this} and {@link B}.
-     * @param {Matrix} B 
-     * @returns {Matrix}
-     */
-    outer(B) {
-        let A = this;
-        let l = A._data.length;
-        let r = B._data.length;
-        if (l != r) return undefined;
-        let C = new Matrix();
-        C.shape = [l, l, (i, j) => {
-            if (i <= j) {
-                return A._data[i] * B._data[j];
-            } else {
-                return C.entry(j, i);
-            }
-        }];
-        return C;
-    }
-
-    /**
-     * Appends matrix {@link B} to the matrix.
-     * @param {Matrix} B - matrix to append.
-     * @param {"horizontal"|"vertical"|"diag"} [type = "horizontal"] - type of concatenation.
-     * @returns {Matrix}
-     * @example
-     * 
-     * let A = Matrix.from([[1, 1], [1, 1]]); // 2 by 2 matrix filled with ones.
-     * let B = Matrix.from([[2, 2], [2, 2]]); // 2 by 2 matrix filled with twos.
-     * 
-     * A.concat(B, "horizontal"); // 2 by 4 matrix. [[1, 1, 2, 2], [1, 1, 2, 2]]
-     * A.concat(B, "vertical"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]
-     * A.concat(B, "diag"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]
-     */
-    concat(B, type="horizontal") {
-        const A = this;
-        const [rows_A, cols_A] = A.shape;
-        const [rows_B, cols_B] = B.shape;
-        if (type == "horizontal") {
-            if (rows_A != rows_B) throw `A.concat(B, "horizontal"): A and B need same number of rows, A has ${rows_A} rows, B has ${rows_B} rows.`;
-            const X = new Matrix(rows_A, cols_A + cols_B, "zeros");
-            X.set_block(0, 0, A);
-            X.set_block(0, cols_A, B);
-            return X;
-        } else if (type == "vertical") {
-            if (cols_A != cols_B) throw `A.concat(B, "vertical"): A and B need same number of columns, A has ${cols_A} columns, B has ${cols_B} columns.`;
-            const X = new Matrix(rows_A + rows_B, cols_A, "zeros");
-            X.set_block(0, 0, A);
-            X.set_block(rows_A, 0, B);
-            return X;
-        } else if (type == "diag") {
-            const X = new Matrix(rows_A + rows_B, cols_A + cols_B, "zeros");
-            X.set_block(0, 0, A);
-            X.set_block(rows_A, cols_A, B);
-            return X;
-        } else {
-            throw `type must be "horizontal" or "vertical", but type is ${type}!`;
-        }
-    }
-
-    /**
-     * Writes the entries of B in A at an offset position given by {@link offset_row} and {@link offset_col}.
-     * @param {int} offset_row 
-     * @param {int} offset_col 
-     * @param {Matrix} B 
-     * @returns {Matrix}
-     */
-    set_block(offset_row, offset_col, B) {
-        let [ rows, cols ] = B.shape;
-        for (let row = 0; row < rows; ++row) {
-            if (row > this._rows) continue;
-            for (let col = 0; col < cols; ++col) {
-                if (col > this._cols) continue;
-                this.set_entry(row + offset_row, col + offset_col, B.entry(row, col));
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Extracts the entries from the {@link start_row}th row to the {@link end_row}th row, the {@link start_col}th column to the {@link end_col}th column of the matrix.
-     * If {@link end_row} or {@link end_col} is empty, the respective value is set to {@link this.rows} or {@link this.cols}.
-     * @param {Number} start_row 
-     * @param {Number} start_col
-     * @param {Number} [end_row = null]
-     * @param {Number} [end_col = null] 
-     * @returns {Matrix} Returns a end_row - start_row times end_col - start_col matrix, with respective entries from the matrix.
-     * @example
-     * 
-     * let A = Matrix.from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // a 3 by 3 matrix.
-     * 
-     * A.get_block(1, 1).to2dArray; // [[5, 6], [8, 9]]
-     * A.get_block(0, 0, 1, 1).to2dArray; // [[1]]
-     * A.get_block(1, 1, 2, 2).to2dArray; // [[5]]
-     * A.get_block(0, 0, 2, 2).to2dArray; // [[1, 2], [4, 5]]
-     */
-    get_block(start_row, start_col, end_row = null, end_col = null) {
-        const [ rows, cols ] = this.shape;
-        /*if (!end_row)) {
-            end_row = rows;
-        }
-            end_col = cols;
-        }*/
-        end_row = end_row ?? rows;
-        end_col = end_col ?? cols;
-        if (end_row <= start_row || end_col <= start_col) {
-            throw `
-                end_row must be greater than start_row, and 
-                end_col must be greater than start_col, but
-                end_row = ${end_row}, start_row = ${start_row}, end_col = ${end_col}, and start_col = ${start_col}!`;
-        }
-        const X = new Matrix(end_row - start_row, end_col - start_col, "zeros");
-        for (let row = start_row, new_row = 0; row < end_row; ++row, ++new_row) {
-            for (let col = start_col, new_col = 0; col < end_col; ++col, ++new_col) {
-                X.set_entry(new_row, new_col, this.entry(row, col));
-            }
-        }
-        return X;
-        //return new Matrix(end_row - start_row, end_col - start_col, (i, j) => this.entry(i + start_row, j + start_col));
-    }
-
-    /**
-     * Returns a new array gathering entries defined by the indices given by argument.
-     * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix 
-     * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix 
-     * @returns {Matrix}
-     */
-    gather(row_indices, col_indices) {
-        const N = row_indices.length;
-        const D = col_indices.length;
-        
-        const R = new Matrix(N, D);
-        for (let i = 0; i < N; ++i) {
-            const row_index = row_indices[i];
-            for (let j = 0; j < N; ++j) {
-                const col_index = col_indices[j];
-                R.set_entry(i, j, this.entry(row_index, col_index));
-            }
-        }
-
-        return R;
-    }
-
-    /**
-     * Applies a function to each entry of the matrix.
-     * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
-     */
-    _apply_array(f, v) {
-        const data = this._data;
-        const [ rows, cols ] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
-                data[i] = f(data[i], v(row, col));
-            }
-        }
-        return this; 
-    }
-
-    _apply_rowwise_array(values, f) {
-        return this._apply_array(f, (_, j) => values[j]);
-    }
-
-    _apply_colwise_array(values, f) {
-        const data = this._data;
-        const [ rows, cols ] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
-                data[i] = f(data[i], values[row]);
-            }
-        }
-        return this; 
-    }
-
-    _apply(value, f) {
-        let data = this._data;
-        if (value instanceof Matrix) {
-            let [ value_rows, value_cols ] = value.shape;
-            let [ rows, cols ] = this.shape;
-            if (value_rows === 1) {
-                if (cols !== value_cols) {
-                    throw `cols !== value_cols`;
-                }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(0, col));
-                    }
-                }
-            } else if (value_cols === 1) {
-                if (rows !== value_rows) {
-                    throw `rows !== value_rows`;
-                }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, 0));
-                    }
-                }
-            } else if (rows == value_rows && cols == value_cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, col));
-                    }
-                }
-            } else {
-                throw `error`;
-            }
-        } else if (Array.isArray(value)) {
-            let rows = this._rows;
-            let cols = this._cols;
-            if (value.length === rows) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[row]);
-                    }
-                }
-            } else if (value.length === cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[col]);
-                    }
-                }
-            } else {
-                throw `error`;
-            }
-        } else {
-            for (let i = 0, n = this._rows * this._cols; i < n; ++i) {
-                data[i] = f(data[i], value);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Clones the Matrix.
-     * @returns {Matrix}
-     */
-    clone() {
-        let B = new Matrix();
-        B._rows = this._rows;
-        B._cols = this._cols;
-        B._data = this._data.slice(0);
-        return B;
-    }
-
-    mult(value) {
-        return this.clone()._apply(value, (a,b) => a * b);
-    }
-
-    divide(value) {
-        return this.clone()._apply(value, (a,b) => a / b);
-    }
-
-    add(value) {
-        return this.clone()._apply(value, (a,b) => a + b);
-    }
-
-    sub(value) {
-        return this.clone()._apply(value, (a,b) => a - b);
-    }
-
-    /**
-     * Returns the number of rows and columns of the Matrix.
-     * @returns {Array} An Array in the form [rows, columns].
-     */
-    get shape() {
-        return [this._rows, this._cols];
-    }
-
-    /**
-     * Returns the matrix in the given shape with the given function which returns values for the entries of the matrix.
-     * @param {Array} parameter - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.
-     * @returns {Matrix}
-     */
-    set shape([rows, cols, value = () => 0]) {
-        this._rows = rows;
-        this._cols = cols;
-        this._data = new Float64Array(rows * cols);
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < cols; ++col) {
-                this._data[row * cols + col] = value(row, col);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Returns the Matrix as a two-dimensional Array.
-     * @returns {Array}
-     */
-    get to2dArray() {
-        /* const rows = this._rows;
-        const cols = this._cols;
-        let result = new Array(rows)
-        for (let row = 0; row < rows; ++row) {
-            let result_col = new Array(cols)
-            for (let col = 0; col < cols; ++col) {
-                result_col[col] = this.entry(row, col);
-            }
-            result[row] = result_col;
-        }
-        return result; */
-        return [...this.iterate_rows()]
-    }
-
-    /**
-     * Returns the diagonal of the Matrix.
-     * @returns {Array}
-     */
-    get diag() {
-        const rows = this._rows;
-        const cols = this._cols;
-        const min_row_col = Math.min(rows, cols);
-        let result = new Float64Array(min_row_col);
-        for (let i = 0; i < min_row_col; ++i) {
-            result[i] = this.entry(i,i);
-        }
-        return result;
-    }
-
-    /**
-     * Returns the mean of all entries of the Matrix.
-     * @returns {float64}
-     */
-    get mean() {
-        const sum = this.sum;
-        const n = this._rows * this._cols;
-        return sum / n;
-    }
-
-    /**
-     * Returns the sum oof all entries of the Matrix.
-     * @returns {number}
-     */
-    get sum() {
-        const data = this._data;
-        return neumair_sum(data);
-    }
-
-    /**
-     * Returns the mean of each row of the matrix.
-     * @returns {Array}
-     */
-    get meanRows() {
-        const data = this._data;
-        const rows = this._rows;
-        const cols = this._cols;
-        let result = [];
-        for (let row = 0; row < rows; ++row) {
-            result[row] = 0;
-            for (let col = 0; col < cols; ++col) {
-                result[row] += data[row * cols + col];
-            }
-            result[row] /= cols;
-        }
-        return result;
-    }
-
-    /** Returns the mean of each column of the matrix.
-     * @returns {Array}
-     */
-    get meanCols() {
-        const data = this._data;
-        const rows = this._rows;
-        const cols = this._cols;
-        let result = [];
-        for (let col = 0; col < cols; ++col) {
-            result[col] = 0;
-            for (let row = 0; row < rows; ++row) {
-                result[col] += data[row * cols + col];
-            }
-            result[col] /= rows;
-        }
-        return result;
-    }
-
-    static solve_CG(A, b, randomizer, tol=1e-3) {
-        const rows = A.shape[0];
-        const cols = b.shape[1];
-        let result = new Matrix(rows, 0);
-        for (let i = 0; i < cols; ++i) {
-            const b_i = Matrix.from(b.col(i)).T;
-            let x = new Matrix(rows, 1, () => randomizer.random);
-            let r = b_i.sub(A.dot(x));
-            let d = r.clone();
-            do {
-                const z = A.dot(d);
-                const alpha = r.T.dot(r).entry(0, 0) / d.T.dot(z).entry(0, 0);
-                x = x.add(d.mult(alpha));
-                const r_next = r.sub(z.mult(alpha));
-                const beta = r_next.T.dot(r_next).entry(0, 0) / r.T.dot(r).entry(0, 0);
-                d = r_next.add(d.mult(beta));
-                r = r_next;
-            } while (Math.abs(r.mean) > tol);
-            result = result.concat(x, "horizontal");
-        }
-        return result;
-    }
-
-    /**
-     * Solves the equation {@link A}x = {@link b}. Returns the result x.
-     * @param {Matrix} A - Matrix or LU Decomposition
-     * @param {Matrix} b - Matrix
-     * @returns {Matrix}
-     */
-    static solve(A, b) {
-        let { L: L, U: U } = ("L" in A && "U" in A) ? A : Matrix.LU(A);
-        let rows = L.shape[0];
-        let x = b.clone();
-        
-        // forward
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < row - 1; ++col) {
-                x.set_entry(0, row, x.entry(0, row) - L.entry(row, col) * x.entry(1, col));
-            }
-            x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
-        }
-        
-        // backward
-        for (let row = rows - 1; row >= 0; --row) {
-            for (let col = rows - 1; col > row; --col) {
-                x.set_entry(0, row, x.entry(0, row) - U.entry(row, col) * x.entry(0, col));
-            }
-            x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));
-        }
-
-        return x;
-    }
-
-    /**
-     * {@link L}{@link U} decomposition of the Matrix {@link A}. Creates two matrices, so that the dot product LU equals A.
-     * @param {Matrix} A 
-     * @returns {{L: Matrix, U: Matrix}} result - Returns the left triangle matrix {@link L} and the upper triangle matrix {@link U}.
-     */
-    static LU(A) {
-        const rows = A.shape[0];
-        const L = new Matrix(rows, rows, "zeros");
-        const U = new Matrix(rows, rows, "identity");
-        
-        for (let j = 0; j < rows; ++j) {
-            for (let i = j; i < rows; ++i) {
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(i, k) * U.entry(k, j);
-                }
-                L.set_entry(i, j, A.entry(i, j) - sum);
-            }
-            for (let i = j; i < rows; ++i) {
-                if (L.entry(j, j) === 0) {
-                    return undefined;
-                }
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(j, k) * U.entry(k, i);
-                }
-                U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));
-            }
-        }
-
-        return { L: L, U: U };
-    }
-
-    /**
-     * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
-     * @param {Matrix} M 
-     * @param {int} [k=2] 
-     * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
-     */
-    static SVD(M, k=2) {
-        const MT = M.T;
-        let MtM = MT.dot(M);
-        let MMt = M.dot(MT);
-        let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
-        let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
-        return { U: U, Sigma: Sigma.map(sigma => Math.sqrt(sigma)), V: V };
-        
-        //Algorithm 1a: Householder reduction to bidiagonal form:
-        /* const [m, n] = A.shape;
-        let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);
-        console.log(U.to2dArray)
-        let V = new Matrix(n, m, (i, j) => i == j ? 1 : 0);
-        console.log(V.to2dArray)
-        let B = Matrix.bidiagonal(A.clone(), U, V);
-        console.log(U,V,B)
-        return { U: U, "Sigma": B, V: V }; */
-    }
-}
-
-function dmatrix(A, metric = euclidean) {
-    let n = A.shape[0];
-    /* let D = new Array(n);
-    for (let i = 0; i < n; ++i) {
-        D[i] = new Float64Array(n);
-    }
-    for (let i = 0; i < n; ++i) {
-        for (let j = i + 1; j < n; ++j) {
-            D[i][j] = D[j][i] = metric(A[i], A[j]);
-        }
-    } */
-    const D = new Matrix(n, n);
-    for (let i = 0; i < n; ++i) {
-        const A_i = A.row(i);
-        for (let j = i + 1; j < n; ++j) {
-            const dist = metric(A_i, A.row(j));
-            D.set_entry(i, j, dist);
-            D.set_entry(j, i, dist);
-        }
-    }
-    return D;
-}
-
-function linspace(start, end, number = null) {
-    if (!number) {
-        number = Math.max(Math.round(end - start) + 1, 1);
-    }
-    if (number < 2) {
-        return number === 1 ? [start] : [];
-    }
-    let result = new Array(number);
-    number -= 1;
-    for (let i = number; i >= 0; --i) {
-        result[i] = (i * end + (number - i) * start) / number;
-    }
-    return result
-}
-
-//import { neumair_sum } from "../numerical/index";
-
-function norm(v, metric = euclidean) {
-//export default function(vector, p=2, metric = euclidean) {
-    let vector = null;
-    if (v instanceof Matrix) {
-        let [rows, cols] = v.shape;
-        if (rows === 1) vector = v.row(0);
-        else if (cols === 1) vector = v.col(0);
-        else throw "matrix must be 1d!"
-    } else {
-        vector = v;
-    }
-    let n = vector.length;
-    let z = new Array(n);
-    z.fill(0);
-    return metric(vector, z);
-    
-    
-    /*let v;
-    if (vector instanceof Matrix) {
-        let [ rows, cols ] = v.shape;
-        if (rows === 1) {
-            v = vector.row(0);
-        } else if (cols === 1) {
-            v = vector.col(0);
-        } else {
-            throw "matrix must be 1d"
-        }
-    } else {
-        v = vector;
-    }
-    return Math.pow(neumair_sum(v.map(e => Math.pow(e, p))), 1 / p)*/
-}
-
-class Randomizer {
-    // https://github.com/bmurray7/mersenne-twister-examples/blob/master/javascript-mersenne-twister.js
-    /**
-     * Mersenne Twister
-     * @param {*} _seed 
-     */
-    constructor(_seed) {
-        this._N = 624;
-        this._M = 397;
-        this._MATRIX_A = 0x9908b0df;
-        this._UPPER_MASK = 0x80000000;
-        this._LOWER_MASK = 0x7fffffff;
-        this._mt = new Array(this._N);
-        this._mti = this.N + 1;
-
-        this.seed = _seed || new Date().getTime();
-        return this;
-    }
-
-    set seed(_seed) {
-        this._seed = _seed;
-        let mt = this._mt;
-
-        mt[0] = _seed >>> 0;
-        for (this._mti = 1; this._mti < this._N; this._mti += 1) {
-            let mti = this._mti;
-            let s = mt[mti - 1] ^ (mt[mti - 1] >>> 30);
-            mt[mti] = (((((s & 0xffff0000) >>> 16) * 1812433253) << 16) + (s & 0x0000ffff) * 1812433253) + mti;
-            mt[mti] >>>= 0;
-        }
-    }
-
-    get seed() {
-        return this._seed;
-    }
-
-    get random() {
-        return this.random_int * (1.0 / 4294967296.0)
-    }
-
-    get random_int() {
-        let y, mag01 = new Array(0x0, this._MATRIX_A);
-        if (this._mti >= this._N) {
-            let kk;
-
-            if (this._mti == this._N + 1) {
-                this.seed = 5489;
-            }
-
-            let N_M = this._N - this._M;
-            let M_N = this._M - this._N;
-
-            for (kk = 0; kk < N_M; ++kk) {
-                y = (this._mt[kk] & this._UPPER_MASK) | (this._mt[kk + 1] & this._LOWER_MASK);
-                this._mt[kk] = this._mt[kk + this._M] ^ (y >>> 1) ^ mag01[y & 0x1];
-            }
-            for (; kk < this._N - 1; ++kk) {
-                y = (this._mt[kk] & this._UPPER_MASK) | (this._mt[kk + 1] & this._LOWER_MASK);
-                this._mt[kk] = this._mt[kk + M_N] ^ (y >>> 1) ^ mag01[y & 0x1];
-            }
-
-            y = (this._mt[this._N - 1] & this._UPPER_MASK) | (this._mt[0] & this._LOWER_MASK);
-            this._mt[this._N - 1] = this._mt[this._M - 1] ^ (y >>> 1) ^ mag01[y & 0x1];
-
-            this._mti = 0;
-        }
-
-        y = this._mt[this._mti += 1];
-        y ^= (y >>> 11);
-        y ^= (y << 7) & 0x9d2c5680;
-        y ^= (y << 15) & 0xefc60000;
-        y ^= (y >>> 18);
-
-        return y >>> 0;
-    }
-
-    choice(A, n) {
-        if (A instanceof Matrix) {
-            let [rows, cols] = A.shape;
-            if (n > rows) throw "n bigger than A!";
-            let sample = new Array(n);
-            let index_list = linspace(0, rows - 1);
-            for (let i = 0, l = index_list.length; i < n; ++i, --l) {
-                let random_index = this.random_int % l;
-                sample[i] = index_list.splice(random_index, 1)[0];
-            }
-            return sample.map(d => A.row(d));
-        } else if (Array.isArray(A) || A instanceof Float64Array) {
-            let rows = A.length;
-            if (n > rows) {
-                throw "n bigger than A!";
-            }
-            let sample = new Array(n);
-            let index_list = linspace(0, rows - 1);
-            for (let i = 0, l = index_list.length; i < n; ++i, --l) {
-                let random_index = this.random_int % l;
-                sample[i] = index_list.splice(random_index, 1)[0];
-            }
-            return sample.map(d => A[d]);
-        }
-    }
-
-    static choice(A, n, seed=19870307) {
-        let [rows, cols] = A.shape;
-        if (n > rows) throw "n bigger than A!"
-        let rand = new Randomizer(seed);
-        let sample = new Array(n);
-        let index_list = linspace(0, rows - 1);
-        /*let index_list = new Array(rows);
-        for (let i = 0; i < rows; ++i) {
-            index_list[i] = i;
-        }*/
-        //let result = new Matrix(n, cols);
-        for (let i = 0, l = index_list.length; i < n; ++i, --l) {
-            let random_index = rand.random_int % l;
-            sample[i] = index_list.splice(random_index, 1)[0];
-            //random_index = index_list.splice(random_index, 1)[0];
-            //result.set_row(i, A.row(random_index))
-        }
-        //return result;
-        //return new Matrix(n, cols, (row, col) => A.entry(sample[row], col))
-        return sample.map(d => A.row(d));
-    }
-}
-
-function max(values) {
-  let max;
-  for (const value of values) {
-    if (value != null
-        && (max < value || (max === undefined && value >= value))) {
-      max = value;
-    }
-  }
-  return max;
-}
-
-/**
- * @class
- * @alias Heap
- */
-class Heap {
-    /**
-     * A heap is a datastructure holding its elements in a specific way, so that the top element would be the first entry of an ordered list.
-     * @constructor
-     * @memberof module:datastructure
-     * @alias Heap
-     * @param {Array=} elements - Contains the elements for the Heap. {@link elements} can be null.
-     * @param {Function} [accessor = (d) => d] - Function returns the value of the element.
-     * @param {("min"|"max"|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
-     * @returns {Heap}
-     * @see {@link https://en.wikipedia.org/wiki/Binary_heap}
-     */
-    constructor(elements = null, accessor = d => d, comparator = "min") {
-        if (elements) {
-            return Heap.heapify(elements, accessor, comparator);
-        } else {
-            this._accessor = accessor;
-            this._container = [];
-            if (comparator == "min") {
-                this._comparator = (a, b) => a < b;
-            } else if (comparator == "max") {
-                this._comparator = (a, b) => a > b;
-            } else {
-                this._comparator = comparator;
-            }
-            return this
-        }
-    }
-
-    /**
-     * Creates a Heap from an Array
-     * @param {Array|Set} elements - Contains the elements for the Heap.
-     * @param {Function=} [accessor = (d) => d] - Function returns the value of the element.
-     * @param {(String=|Function)} [comparator = "min"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a Max_heap)
-     * @returns {Heap}
-     */
-    static heapify(elements, accessor = d => d, comparator = "min") {
-        const heap = new Heap(null, accessor, comparator);
-        const container = heap._container;
-        for (const e of elements) {
-            container.push({
-                "element": e,
-                "value": accessor(e),
-            });
-        }
-        for (let i = Math.floor((elements.length / 2) - 1); i >= 0; --i) {
-            heap._heapify_down(i);
-        }
-        return heap;
-    }
-
-    /**
-     * Swaps elements of container array.
-     * @private
-     * @param {Number} index_a 
-     * @param {Number} index_b 
-     */
-    _swap(index_a, index_b) {
-        const container = this._container;
-        [container[index_b], container[index_a]] = [container[index_a], container[index_b]];
-        return;
-    }
-
-    /**
-     * @private
-     */
-    _heapify_up() {
-        const container = this._container;
-        let index = container.length - 1;
-        while (index > 0) {
-            let parentIndex = Math.floor((index - 1) / 2);
-            if (!this._comparator(container[index].value, container[parentIndex].value)) {
-                break;
-            } else {
-            this._swap(parentIndex, index);
-            index = parentIndex;
-            }
-        }
-    }
-
-    /**
-     * Pushes the element to the heap.
-     * @param {} element
-     * @returns {Heap}
-     */
-    push(element) {
-        const value = this._accessor(element);
-        //const node = new Node(element, value);
-        const node = {"element": element, "value": value};
-        this._container.push(node);
-        this._heapify_up();
-        return this;
-    }
-
-    /**
-     * @private
-     * @param {Number} [start_index = 0] 
-     */
-    _heapify_down(start_index=0) {
-        const container = this._container;
-        const comparator = this._comparator;
-        const length = container.length;
-        let left = 2 * start_index + 1;
-        let right = 2 * start_index + 2;
-        let index = start_index;
-        if (index > length) throw "index higher than length"
-        if (left < length && comparator(container[left].value, container[index].value)) {
-            index = left;
-        }
-        if (right < length && comparator(container[right].value, container[index].value)) {
-            index = right;
-        }
-        if (index !== start_index) {
-            this._swap(start_index, index);
-            this._heapify_down(index);
-        }
-    }
-
-    /**
-     * Removes and returns the top entry of the heap.
-     * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).
-     */
-    pop() {
-        const container = this._container;
-        if (container.length === 0) {
-            return null;
-        } else if (container.length === 1) {
-            return container.pop();
-        }
-        this._swap(0, container.length - 1);
-        const item = container.pop();
-        this._heapify_down();
-        return item;
-    }
-
-    /**
-     * Returns the top entry of the heap without removing it.
-     * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).
-     */
-    get first() {
-        return this._container.length > 0 ? this._container[0] : null;
-    }
-
-
-    /**
-     * Yields the raw data
-     * @yields {Object} Object consists of the element and its value (computed by {@link accessor}).
-     */
-    * iterate() {
-        for (let i = 0, n = this._container.length; i < n; ++i) {
-            yield this._container[i].element;
-        }
-    }
-
-    /**
-     * Returns the heap as ordered array.
-     * @returns {Array} Array consisting the elements ordered by {@link comparator}.
-     */
-    toArray() {
-        return this.data()
-            .sort((a,b) => this._comparator(a, b) ? -1 : 0)
-    }
-
-    /**
-     * Returns elements of container array.
-     * @returns {Array} Array consisting the elements.
-     */
-    data() {
-        return this._container
-            .map(d => d.element)
-    }
-
-    /**
-     * Returns the container array.
-     * @returns {Array} The container array.
-     */
-    raw_data() {
-        return this._container;
-    }
-
-    /**
-     * The size of the heap.
-     * @returns {Number}
-     */
-    get length() {
-        return this._container.length;
-    }
-
-    /**
-     * Returns false if the the heap has entries, true if the heap has no entries.
-     * @returns {Boolean}
-     */
-    get empty() {
-        return this.length === 0;
-    }
-}
-
-/**
- * @class
- * @alias BallTree
- */
-class BallTree {
-    /**
-     * Generates a BallTree with given {@link elements}.
-     * @constructor
-     * @memberof module:knn
-     * @alias BallTree
-     * @param {Array=} elements - Elements which should be added to the BallTree
-     * @param {Function} [metric = euclidean] metric to use: (a, b) => distance
-     * @see {@link https://en.wikipedia.org/wiki/Ball_tree}
-     * @see {@link https://github.com/invisal/noobjs/blob/master/src/tree/BallTree.js}
-     * @returns {BallTree}
-     */
-    constructor(elements = null, metric = euclidean) {
-        this._Node = class {
-            constructor(pivot, child1=null, child2=null, radius=null) {
-                this.pivot = pivot;
-                this.child1 = child1;
-                this.child2 = child2;
-                this.radius = radius;
-            }
-        };
-        this._Leaf = class {
-            constructor(points) {
-                this.points = points;
-            }
-        };
-        this._metric = metric;
-        if (elements) {
-            this.add(elements);
-        }
-        return this;
-    }
-
-    /**
-     * 
-     * @param {Array<*>} elements - new elements.
-     * @returns {BallTree}
-     */
-    add(elements) {
-        elements = elements.map((element, index) => {
-            return {index: index, element: element}
-        });
-        this._root = this._construct(elements);
-        return this;
-    }
-
-    /**
-     * @private
-     * @param {Array<*>} elements 
-     * @returns {Node} root of balltree.
-     */
-    _construct(elements) {
-        if (elements.length === 1) {
-            return new this._Leaf(elements);
-        } else {
-            let c = this._greatest_spread(elements);
-            let sorted_elements = elements.sort((a, b) => a.element[c] - b.element[c]);
-            let n = sorted_elements.length;
-            let p_index = Math.floor(n / 2);
-            let p = elements[p_index];
-            let L = sorted_elements.slice(0, p_index);
-            let R = sorted_elements.slice(p_index, n);
-            let radius = Math.max(...elements.map(d => this._metric(p.element, d.element)));
-            let B;
-            if (L.length > 0 && R.length > 0) {         
-                B = new this._Node(p, this._construct(L), this._construct(R), radius);
-            } else {
-                B = new this._Leaf(elements);
-            }
-            return B;
-        }
-    }
-
-    /**
-     * @private
-     * @param {Node} B 
-     * @returns {Number}
-     */
-    _greatest_spread(B) {
-        let d = B[0].element.length;
-        let start = new Array(d);
-
-        for (let i = 0; i < d; ++i) {
-            start[i] = [Infinity, -Infinity];
-        }
-
-        let spread = B.reduce((acc, current) => {
-            for (let i = 0; i < d; ++i) {
-                acc[i][0] = Math.min(acc[i][0], current.element[i]);
-                acc[i][1] = Math.max(acc[i][1], current.element[i]);
-            }
-            return acc;
-        }, start);
-        spread = spread.map(d => d[1] - d[0]);
-        
-        let c = 0;
-        for (let i = 0; i < d; ++i) {
-            c = spread[i] > spread[c] ? i : c;
-        }
-        return c
-    }
-
-    /**
-     * 
-     * @param {*} t - query element.
-     * @param {Number} [k = 5] - number of nearest neighbors to return.
-     * @returns {Heap} - Heap consists of the {@link k} nearest neighbors.
-     */
-    search(t, k = 5) {
-        return this._search(t, k, new Heap(null, d => this._metric(d.element, t), "max"), this._root);
-    }
-
-    /**
-     * @private
-     * @param {*} t - query element.
-     * @param {Number} [k = 5] - number of nearest neighbors to return.
-     * @param {Heap} Q - Heap consists of the currently found {@link k} nearest neighbors.
-     * @param {Node|Leaf} B 
-     */
-    _search(t, k, Q, B) {
-        // B is Node
-        if (Q.length >= k && B.pivot && B.radius && this._metric(t, B.pivot.element) - B.radius >= Q.first.value) {
-            return Q;
-        } 
-        if (B.child1) this._search(t, k, Q, B.child1);
-        if (B.child2) this._search(t, k, Q, B.child2);
-        
-        // B is leaf
-        if (B.points) {
-            for (let i = 0, n = B.points.length; i < n; ++i) {
-                let p = B.points[i];
-                if (k > Q.length) {
-                    Q.push(p);
-                } else {
-                    Q.push(p);
-                    Q.pop();
-                }
-            }
-        }
-        return Q;
-    }
-
-
-}
-
-/**
- * Computes the QR Decomposition of the Matrix {@link A} using Gram-Schmidt process.
- * @memberof module:linear_algebra
- * @alias qr
- * @param {Matrix} A
- * @returns {{R: Matrix, Q: Matrix}}
- * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process}
- */
-function qr(A) {
-    const [rows, cols] = A.shape;
-    const Q = new Matrix(rows, cols, "identity");
-    const R = new Matrix(cols, cols, 0);
-
-    for (let j = 0; j < cols; ++j) {
-        let v = A.col(j);
-        for (let i = 0; i < j; ++i) {
-            const q = Q.col(i);
-            const q_dot_v = neumair_sum(q.map((q_, k) => q_ * v[k]));
-            R.set_entry(i,j, q_dot_v);
-            v = v.map((v_, k) => v_ - q_dot_v * q[k]);
-        }
-        const v_norm = norm(v, euclidean);
-        for (let k = 0; k < rows; ++k) {
-            Q.set_entry(k, j, v[k] / v_norm);
-        }
-        R.set_entry(j,j, v_norm);
-    }
-    return {"R": R, "Q": Q};
-}
-
-/**
- * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
- * @param {Matrix} A - The Matrix
- * @param {Number} k - The number of eigenvectors and eigenvalues to compute.
- * @param {Number} [max_iterations=100] - The number of maxiumum iterations the algorithm should run.
- * @param {Number|Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm.
- * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
- */
-function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) {
-    const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
-    if (!(A instanceof Matrix)) A = Matrix.from(A);
-    const n = A.shape[0];
-    let { Q: Q, R: R } = qr(new Matrix(n, k, () => randomizer.random));
-    while (max_iterations--) {
-        const oldR = R.clone();
-        const Z = A.dot(Q);
-        const QR = qr(Z); 
-        Q = QR.Q;
-        R = QR.R;
-        if (neumair_sum(R.sub(oldR).diag) / n < 1e-12) {
-            max_iterations = 0;
-        }        
-    }
-
-    const eigenvalues = R.diag;
-    const eigenvectors = Q.transpose().to2dArray;
-    return {
-        "eigenvalues": eigenvalues,
-        "eigenvectors": eigenvectors,
-    };
-}
-
-/**
- * @class
- * @alias DR
- */
-class DR{
-    //static parameter_list = [];
-    get parameter_list() {
-        return this._parameter_list;
-    }
-
-    set parameter_list(list) {
-        this._parameter_list = list;
-        return this;
-    }
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data. 
-     * @param {number} [d = 2] - the dimensionality of the projection.
-     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {seed} [seed=1987] - the seed value for the random number generator.
-     * @returns {DR}
-     */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        if (Array.isArray(X)) {
-            this._type = "array";
-            this.X = Matrix.from(X);
-        } else if (X instanceof Matrix) {
-            this._type = "matrix";
-            this.X = X;
-        } else {
-            throw "no valid type for X";
-        }
-        [this._N, this._D] = this.X.shape;
-        this._d = d;
-        this._metric = metric;
-        this._seed = seed;
-        this._randomizer = new Randomizer(seed);
-        this._is_initialized = false;
-        return this;
-    }
-        
-    /**
-     * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {Number} [value = null] - value of the parameter to set, if null then return actual parameter value.
-     */
-    parameter(name, value=null) {
-        if (this.parameter_list.findIndex(parameter => parameter === name) === -1) {
-            throw `${name} is not a valid parameter!`;
-        } 
-        if (value) {
-            this[`_${name}`] = value;
-            return this; 
-        } else {
-            return this[`_${name}`];
-        }
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    para(name, value=null) {
-        return this.parameter(name, value);
-    }
-
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    p(name, value=null) {
-        return this.parameter(name, value);
-    }
-
-    /**
-     * Computes the projection.
-     * @returns {Matrix} Returns the projection.
-     */
-    transform() {
-        this.check_init();
-        return this.Y;
-    }
-
-    generator() {
-        return this.transform();
-    }
-
-    check_init() {
-        if (!this._is_initialized && typeof this.init === "function") {
-            this.init();
-            this._is_initialized = true;
-        }
-    }
-
-    /**
-     * @returns {Matrix} Returns the projection.
-     */
-    get projection() {
-        return this._type === "matrix" ? this.Y : this.Y.to2dArray;
-    }
-
-    async transform_async() {
-        return this.transform();
-    }
-
-    static transform(...args) {
-        let dr = new this(...args);
-        return dr.transform();
-    }
-
-    static async transform_async(...args) {
-        return this.transform(...args);
-    }
-
-    static *generator(...args) {
-        const dr = new this(...args);
-        const gen = dr.generator();
-        for (const res of gen) {
-            yield res;
-        }
-    }
-}
-
-/**
- * @class
- * @alias PCA
- * @augments DR
- */
-class PCA extends DR{
-    /**
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias PCA 
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @returns {PCA}
-     */
-    constructor(X, d=2) {
-        super(X, d);
-        return this;
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        let X = this.X;
-        let D = X.shape[1];
-        let O = new Matrix(D, D, "center");
-        let X_cent = X.dot(O);
-
-        let C = X_cent.transpose().dot(X_cent);
-        let { eigenvectors: V } = simultaneous_poweriteration$1(C, this._d);
-        V = Matrix.from(V).transpose();
-        this.Y = X.dot(V);
-        return this.projection;
-    }
-}
-
-/**
- * @class
- * @alias MDS
- */
-class MDS extends DR{
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias MDS
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        return this;
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        const X = this.X;
-        const rows = X.shape[0];
-        const metric = this._metric;
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
-
-        const A = new Matrix();
-        A.shape = [rows, rows, (i,j) => {
-            if (i === j) return 0;
-            const val = (i < j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        }];
-        this._d_X = A;
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
-        const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
-        //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
-                
-        const { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
-        this.Y = Matrix.from(V).transpose();
-        
-        return this.projection;
-    }
-
-    get stress() {
-        const N = this.X.shape[0];
-        const Y = this.Y;
-        const d_X = this._d_X; /*new Matrix();
-        d_X.shape = [N, N, (i, j) => {
-            return i < j ? metric(X.row(i), X.row(j)) : d_X.entry(j, i);
-        }]*/
-        const d_Y = new Matrix();
-        d_Y.shape = [N, N, (i, j) => {
-            return i < j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
-        }];
-        let top_sum = 0;
-        let bottom_sum = 0;
-        for (let i = 0; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                top_sum += Math.pow(d_X.entry(i, j) - d_Y.entry(i, j), 2);
-                bottom_sum += Math.pow(d_X.entry(i, j), 2);
-            }
-        }
-        return Math.sqrt(top_sum / bottom_sum);
-    }
-}
-
-/**
- * @class
- * @alias ISOMAP
- */
-class ISOMAP extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias ISOMAP
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
-     * @param {Number} [d = 2] - the dimensionality of the projection. 
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points. 
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    constructor(X, neighbors, d = 2, metric = euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["k"];
-        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N -1));
-        return this;
-    }
-
-    /**
-     * Computes the projection.
-     * @returns {Matrix} Returns the projection.
-     */
-    transform() {
-        this.check_init();
-        const X = this.X;
-        const rows = this._N;
-        const metric = this._metric;
-        // TODO: make knn extern and parameter for constructor or transform?
-        const D = new Matrix();
-        D.shape = [rows, rows, (i,j) => i <= j ? metric(X.row(i), X.row(j)) : D.entry(j,i)];
-        const kNearestNeighbors = [];
-        for (let i = 0; i < rows; ++i) {
-            const row = [];
-            for (let j = 0; j < rows; ++j) {
-                row.push({
-                    "index": j,
-                    "distance": D.entry(i, j),
-                });
-            }
-            const H = new Heap(row, d => d.distance, "min");
-            kNearestNeighbors.push(H.toArray().slice(1, this._k + 1));
-        }
-        
-        /*D = dijkstra(kNearestNeighbors);*/
-        // compute shortest paths
-        // TODO: make extern
-        /** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */
-        const G = new Matrix(rows, rows, (i,j) => {
-            const other = kNearestNeighbors[i].find(n => n.index === j);
-            return other ? other.distance : Infinity
-        });
-
-        for (let i = 0; i < rows; ++i) {
-            for (let j = 0; j < rows; ++j) {
-                for (let k = 0; k < rows; ++k) {
-                    G.set_entry(i, j, Math.min(G.entry(i, j), G.entry(i, k) + G.entry(k, j)));
-                }
-            }
-        }
-        
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
-        let A = new Matrix(rows, rows, (i,j) => {
-            let val = G.entry(i, j);
-            val = val === Infinity ? 0 : val;
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        });
-        
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
-        const B = new Matrix(rows, rows, (i,j) => (A.entry(i,j) - ai_[i] - a_j[j] + a__));
-             
-        // compute d eigenvectors
-        const { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
-        this.Y = Matrix.from(V).transpose();
-        // return embedding
-        return this.projection;
-    }
-
-
-}
-
-/**
- * @class
- * @alias FASTMAP
- */
-class FASTMAP extends DR{
-    /**
-     * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias FASTMAP
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @returns {FASTMAP}
-     * @see {@link https://doi.org/10.1145/223784.223812}
-     */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        return this;
-    }
-
-    /**
-     * Chooses two points which are the most distant in the actual projection.
-     * @private
-     * @param {function} dist 
-     * @returns {Array} An array consisting of first index, second index, and distance between the two points.
-     */
-    _choose_distant_objects(dist) {
-        const X = this.X;
-        const N = X.shape[0];
-        let a_index = this._randomizer.random_int % N - 1;
-        let b_index = null;
-        let max_dist = -Infinity;
-        for (let i = 0; i < N; ++i) {
-            const d_ai = dist(a_index, i);
-            if (d_ai > max_dist) {
-                max_dist = d_ai;
-                b_index = i;
-            }
-        }
-        max_dist = -Infinity;
-        for (let i = 0; i < N; ++i) {
-            const d_bi = dist(b_index, i);
-            if (d_bi > max_dist) {
-                max_dist = d_bi;
-                a_index = i;
-            }
-        }
-        return [a_index, b_index, max_dist];
-    }
-
-    /**
-     * Computes the projection.
-     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
-     */
-    transform() {
-        const X = this.X;
-        const N = X.shape[0];
-        const d = this._d;
-        const metric = this._metric;
-        const Y = new Matrix(N, d, 0);
-        let dist = (a, b) => metric(X.row(a), X.row(b));
-
-        for (let _col = 0; _col < d; ++_col) {
-            let old_dist = dist;
-            // choose pivot objects
-            const [a_index, b_index, d_ab] = this._choose_distant_objects(dist);
-            // record id of pivot objects
-            //PA[0].push(a_index);
-            //PA[1].push(b_index);
-            /* if (d_ab === 0) {
-                // because all inter-object distances are zeros
-                for (let i = 0; i < N; ++i) {
-                    Y.set_entry(i, _col, 0);
-                }
-            } else { */
-            if (d_ab !== 0) {
-                // project the objects on the line (O_a, O_b)
-                for (let i = 0; i < N; ++i) {
-                    const d_ai = dist(a_index, i);
-                    const d_bi = dist(b_index, i);
-                    const y_i = (d_ai ** 2 + d_ab ** 2 - d_bi ** 2) / (2 * d_ab);
-                    Y.set_entry(i, _col, y_i);
-                }
-                // consider the projections of the objects on a
-                // hyperplane perpendicluar to the line (a, b);
-                // the distance function D'() between two 
-                // projections is given by Eq.4
-                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);
-            }
-        }
-        // return embedding
-        this.Y = Y;
-        return this.projection;
-    }
-}
-
-/**
- * @class
- * @alias LDA
- */
-class LDA extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias LDA
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Array} labels - the label / class of each data point.
-     * @param {number} [d = 2] - the dimensionality of the projection.
-     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    constructor(X, labels, d = 2, metric = euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["labels"];
-        this.parameter("labels", labels);
-        return this;
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        let X = this.X;
-        let [ rows, cols ] = X.shape;
-        let labels = this._labels;
-        let unique_labels = {};
-        let label_id = 0;
-        labels.forEach((l, i) => {
-            if (l in unique_labels) {
-                unique_labels[l].count++;
-                unique_labels[l].rows.push(X.row(i));
-            } else {
-                unique_labels[l] = {
-                    "id": label_id++,
-                    "count": 1,
-                    "rows": [X.row(i)]
-                };
-            }
-        });
-        
-        // create X_mean and vector means;
-        let X_mean = X.mean;
-        let V_mean = new Matrix(label_id, cols);
-        for (let label in unique_labels) {
-            let V = Matrix.from(unique_labels[label].rows);
-            let v_mean = V.meanCols;
-            for (let j = 0; j < cols; ++j) {
-                V_mean.set_entry(unique_labels[label].id, j, v_mean[j]);
-            }           
-        }
-        // scatter_between
-        let S_b = new Matrix(cols, cols);
-        for (let label in unique_labels) {
-            let v = V_mean.row(unique_labels[label].id);
-            let m = new Matrix(cols, 1, (j) => v[j] - X_mean);
-            let N = unique_labels[label].count;
-            S_b = S_b.add(m.dot(m.transpose()).mult(N));
-        }
-
-        // scatter_within
-        let S_w = new Matrix(cols, cols);
-        for (let label in unique_labels) {
-            let v = V_mean.row(unique_labels[label].id);
-            let m = new Matrix(cols, 1, (j) => v[j]);
-            let R = unique_labels[label].rows;
-            for (let i = 0, n = unique_labels[label].count; i < n; ++i) {
-                let row_v = new Matrix(cols, 1, (j,_) => R[i][j] - m.entry(j, 0));
-                S_w = S_w.add(row_v.dot(row_v.transpose()));
-            }
-        }
-
-        let { eigenvectors: V } = simultaneous_poweriteration$1(S_w.inverse().dot(S_b), this._d);
-        V = Matrix.from(V).transpose();
-        this.Y = X.dot(V);
-
-        // return embedding
-        return this.projection;
-    }
-}
-
-/**
- * @class
- * @alias LLE
- */
-class LLE extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias LLE
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     */
-    constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["k"];
-        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        return this;
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        const X = this.X;
-        const d = this._d;
-        const rows = this._N;
-        const cols = this._D;
-        const k = this.parameter("k");
-        const nN = k_nearest_neighbors(X, k, null, this._metric);
-        const O = new Matrix(k, 1, 1);
-        const W = new Matrix(rows, rows);
-
-        for (let row = 0; row < rows; ++row) {
-            const nN_row = nN[row];
-            const Z = new Matrix(k, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.T);
-            if ( k > cols ) {
-                const C_trace = neumair_sum(C.diag) / 1000;
-                for (let j = 0; j < k; ++j) {
-                    C.set_entry(j, j, C.entry(j, j) + C_trace);
-                }
-            }
-            // reconstruct;
-            let w = Matrix.solve_CG(C, O, this._randomizer);
-            w = w.divide(w.sum);
-            for (let j = 0; j < k; ++j) {
-                W.set_entry(row, nN_row[j].j, w.entry(j, 0));
-            }
-        }
-        // comp embedding
-        const I = new Matrix(rows, rows, "identity");
-        const IW = I.sub(W);
-        const M = IW.T.dot(IW);
-        const { eigenvectors: V } = simultaneous_poweriteration$1(M.T.inverse(), d + 1);
-        this.Y = Matrix.from(V.slice(1, 1 + d)).T;
-
-        // return embedding
-        return this.projection;
-    }
-}
-
-/**
- * @class
- * @alias LTSA
- */
-class LTSA extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias LTSA
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @see {@link https://epubs.siam.org/doi/abs/10.1137/S1064827502419154}
-     */
-    constructor(X, neighbors, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["k"];
-        this.parameter("k", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        if (this._D <= d) throw `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`;
-        return this;
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */
-    transform() {
-        const X = this.X;
-        const d = this._d;
-        const [ rows, D ] = X.shape;
-        const k = this.parameter("k");
-        // 1.1 determine k nearest neighbors
-        const nN = k_nearest_neighbors(X, k, null, this._metric);
-        // center matrix
-        const O = new Matrix(D, D, "center");
-        const B = new Matrix(rows, rows, 0);
-        
-        for (let row = 0; row < rows; ++row) {
-            // 1.2 compute the d largest eigenvectors of the correlation matrix
-            const I_i = [row, ...nN[row].map(n => n.j)];
-            let X_i = Matrix.from(I_i.map(n => X.row(n)));
-            // center X_i
-            X_i = X_i.dot(O);
-            // correlation matrix
-            const C = X_i.dot(X_i.transpose());
-            const { eigenvectors: g } = simultaneous_poweriteration$1(C, d);
-            //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
-            const G_i_t = Matrix.from(g);
-            // 2. Constructing alignment matrix
-            const W_i = G_i_t.transpose().dot(G_i_t).add(1 / Math.sqrt(k + 1));
-            for (let i = 0; i < k + 1; ++i) {
-                for (let j = 0; j < k + 1; ++j) {
-                    B.set_entry(I_i[i], I_i[j], B.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0 ) + W_i.entry(i, j));
-                }
-            }
-        }
-
-        // 3. Aligning global coordinates
-        const { eigenvectors: Y } = simultaneous_poweriteration$1(B, d + 1);
-        this.Y = Matrix.from(Y.slice(1)).transpose();
-
-        // return embedding
-        return this.projection;
-    }
-}
-
-/**
- * @class
- * @alias TSNE
- */
-class TSNE extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias TSNE
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [perplexity = 50] - perplexity.
-     * @param {Number} [epsilon = 10] - learning parameter.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @returns {TSNE}
-     */
-    
-    constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["perplexity", "epsilon"];
-        [ this._N, this._D ] = this.X.shape;
-        this.parameter("perplexity", Math.min(perplexity, this._N - 1));
-        this.parameter("epsilon", epsilon);
-        this._iter = 0;
-        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
-        return this;
-    }
-
-    init(distance_matrix=null) {
-        // init
-        const Htarget = Math.log(this._perplexity);
-        const N = this._N;
-        const D = this._D;
-        const metric = this._metric;
-        const X = this.X;
-        let Delta;
-        if (distance_matrix) {
-            Delta = distance_matrix;
-        } else {
-            Delta = new Matrix(N, N);
-            for (let i = 0; i < N; ++i) {
-                const X_i = X.row(i);
-                for (let j = i + 1; j < N; ++j) {
-                    const distance = metric(X_i, X.row(j));
-                    Delta.set_entry(i, j, distance);
-                    Delta.set_entry(j, i, distance);
-                }
-            }
-
-        } 
-            
-        const P = new Matrix(N, N, "zeros");
-
-        this._ystep = new Matrix(N, D, "zeros");
-        this._gains = new Matrix(N, D, 1);
-
-        // search for fitting sigma
-        let prow = new Array(N).fill(0);
-        const tol = 1e-4;
-        const maxtries = 50;
-        for (let i = 0; i < N; ++i) {
-            let betamin = -Infinity;
-            let betamax = Infinity;
-            let beta = 1;
-            let done = false;
-
-            let num = 0;
-            while(!done) {
-                let psum = 0;
-                for (let j = 0; j < N; ++j) {
-                    let pj = Math.exp(-Delta.entry(i, j) * beta);
-                    if (i === j) pj = 0;
-                    prow[j] = pj;
-                    psum += pj;
-                }
-                let Hhere = 0;
-                for (let j = 0; j < N; ++j) {
-                    let pj = (psum === 0) ? 0 : prow[j] / psum;
-                    prow[j] = pj;
-                    if (pj > 1e-7) {
-                        Hhere -= pj * Math.log(pj);
-                    }
-                }
-                if (Hhere > Htarget) {
-                    betamin = beta;
-                    beta = (betamax === Infinity) ? (beta * 2) : ((beta + betamax) / 2);
-                } else {
-                    betamax = beta;
-                    beta = (betamin === -Infinity) ? (beta / 2) : ((beta + betamin) / 2);
-                }
-                ++num;
-                if (Math.abs(Hhere - Htarget) < tol) done = true;
-                if (num >= maxtries) done = true;
-            }
-
-            for (let j = 0; j < N; ++j) {
-                P.set_entry(i, j, prow[j]);
-            }
-        }
-
-        //compute probabilities
-        const Pout = new Matrix(N, N, "zeros");
-        const N2 = N * 2;
-        for (let i = 0; i < N; ++i) {
-            for (let j = i; j < N; ++j) {
-                const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);
-                Pout.set_entry(i, j, p);
-                Pout.set_entry(j, i, p);
-            }
-        }
-        this._P = Pout;
-        return this;
-    }
-
-    transform(iterations=500) {
-        this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-        }
-        return this.projection;
-    }
-
-    * generator() {
-        this.check_init();
-        while (true) {
-            this.next();
-            yield this.projection;
-        }
-    }
-
-    // perform optimization
-    next() {
-        const iter = ++this._iter;
-        const P = this._P;
-        const ystep = this._ystep;
-        const gains = this._gains;
-        const N = this._N;
-        const epsilon = this._epsilon;
-        const dim = this._d;
-        let Y = this.Y;
-
-        //calc cost gradient;
-        const pmul = iter < 100 ? 4 : 1;
-        
-        // compute Q dist (unnormalized)
-        const Qu = new Matrix(N, N, "zeros");
-        let qsum = 0;
-        for (let i = 0; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                let dsum = 0;
-                for (let d = 0; d < dim; ++d) {
-                    const dhere = Y.entry(i, d) - Y.entry(j, d);
-                    dsum += dhere * dhere;
-                }
-                const qu = 1 / (1 + dsum);
-                Qu.set_entry(i, j, qu);
-                Qu.set_entry(j, i, qu);
-                qsum += 2 * qu;
-            }
-        }
-
-        // normalize Q dist
-        const Q = new Matrix(N, N, 0);
-        for (let i = 0; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                const val = Math.max(Qu.entry(i, j) / qsum, 1e-100);
-                Q.set_entry(i, j, val);
-                Q.set_entry(j, i, val);
-            }
-        }
-
-        const grad = new Matrix(N, dim, "zeros");
-        for (let i = 0; i < N; ++i) {
-            for (let j = 0; j < N; ++j) {
-                const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
-                for (let d = 0; d < dim; ++d) {
-                    grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
-                }
-            }
-        }
-
-        // perform gradient step
-        let ymean = new Float64Array(dim);
-        for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < dim; ++d) {
-                const gid = grad.entry(i, d);
-                const sid = ystep.entry(i, d);
-                const gainid = gains.entry(i, d);
-                
-                let newgain = Math.sign(gid) === Math.sign(sid) ? gainid * .8 : gainid + .2;
-                if (newgain < .01) newgain = .01;
-                gains.set_entry(i, d, newgain);
-
-                const momval = iter < 250 ? .5 : .8;
-                const newsid = momval * sid - epsilon * newgain * gid;
-                ystep.set_entry(i, d, newsid);
-
-                Y.set_entry(i, d, Y.entry(i, d) + newsid);
-                ymean[d] += Y.entry(i, d);
-            }
-        }
-
-        for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < 2; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);
-            }
-        }
-
-        return this.Y;
-    }
-}
-
-// http://optimization-js.github.io/optimization-js/optimization.js.html#line438
-function powell(f, x0, max_iter=300) {
-    const epsilon = 1e-2;
-    const n = x0.length;
-    let alpha = 1e-3;
-    let pfx = 10000;
-    let x = x0.slice();
-    let fx = f(x);
-    let convergence = false;
-    
-    while (max_iter-- >= 0 && !convergence) {
-        convergence = true;
-        for (let i = 0; i < n; ++i) {
-            x[i] += 1e-6;
-            let fxi = f(x);
-            x[i] -= 1e-6;
-            let dx = (fxi - fx) / 1e-6;
-            if (Math.abs(dx) > epsilon) {
-                convergence = false;
-            }
-            x[i] -= alpha * dx;
-            fx = f(x);
-        }
-        alpha *= (pfx >= fx ? 1.05 : 0.4);
-        pfx = fx;
-    }
-    return x;
-}
-
-class UMAP extends DR {
-    constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["n_neighbors", "local_connectivity", "min_dist"];
-        [ this._N, this._D ] = this.X.shape;
-        n_neighbors = Math.min(this._N - 1, n_neighbors);
-        this.parameter("n_neighbors", n_neighbors);
-        this.parameter("local_connectivity", Math.min(local_connectivity, n_neighbors - 1));
-        this.parameter("min_dist", min_dist);
-        this._iter = 0;
-        this._spread = 1;
-        this._set_op_mix_ratio = 1;
-        this._repulsion_strength = 1;
-        this._negative_sample_rate = 5;
-        this._n_epochs = 350;
-        this._initial_alpha = 1;
-        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
-        return this;
-    }
-
-    _find_ab_params(spread, min_dist) {
-        const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
-        const xv = linspace(0, spread * 3, 300);
-        const yv = linspace(0, spread * 3, 300);
-        
-        for (let i = 0, n = xv.length; i < n; ++i) {
-            const xv_i = xv[i];
-            yv[i] = (xv_i < min_dist ? 1 : Math.exp(-(xv_i - min_dist) / spread));
-        }
-      
-        const err = (p) => {
-            const error = linspace(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));
-            return Math.sqrt(neumair_sum(error.map(e => e * e)));
-        };
-      
-        return powell(err, [1, 1]);
-    }
-
-    _compute_membership_strengths(distances, sigmas, rhos) {
-        for (let i = 0, n = distances.length; i < n; ++i) {
-            for (let j = 0, m = distances[i].length; j < m; ++j) {
-                const v = distances[i][j].value - rhos[i];
-                distances[i][j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1;
-            }
-        }
-        return distances;
-    }
-
-    _smooth_knn_dist(knn, k) {
-        const SMOOTH_K_TOLERANCE = 1e-5;
-        const MIN_K_DIST_SCALE = 1e-3;
-        const n_iter = 64;
-        const local_connectivity = this._local_connectivity;
-        const target = Math.log2(k);
-        const rhos = [];
-        const sigmas = [];
-        const X = this.X;
-
-        const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
-
-        for (let i = 0, n = X.shape[0]; i < n; ++i) {
-            let lo = 0;
-            let hi = Infinity;
-            let mid = 1;
-
-            const search_result = distances[i];
-            const non_zero_dist = search_result.filter(d => d.value > 0);
-            const non_zero_dist_length = non_zero_dist.length;
-            if (non_zero_dist_length >= local_connectivity) {
-                const index = Math.floor(local_connectivity);
-                const interpolation = local_connectivity - index;
-                if (index > 0) {
-                    rhos.push(non_zero_dist[index - 1]);
-                    if (interpolation > SMOOTH_K_TOLERANCE) {
-                        rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1]);
-                    }
-                } else {
-                    rhos[i].value = interpolation * non_zero_dist[0].value;
-                }
-            } else if (non_zero_dist_length > 0) {
-                rhos[i] = non_zero_dist[non_zero_dist_length - 1].value;
-            }
-            for (let x = 0; x < n_iter; ++x) {
-                let psum = 0;
-                for (let j = 0; j < k; ++j) {
-                    const d = search_result[j].value - rhos[i];
-                    psum += (d > 0 ? Math.exp(-(d / mid)) : 1);
-                }
-                if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
-                    break;
-                }
-                if (psum > target) {
-                    [hi, mid] = [mid, (lo + hi) / 2];
-                } else {
-                    if (hi === Infinity) {
-                        [lo, mid] = [mid, mid * 2];
-                    } else {
-                        [lo, mid] = [mid, (lo + hi) / 2];
-                    }
-                }
-            }
-            sigmas[i] = mid;
-
-            const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length;
-            //let mean_d = null;
-            if (rhos[i] > 0) {
-                if (sigmas[i] < MIN_K_DIST_SCALE * mean_ithd) {
-                    sigmas[i] = MIN_K_DIST_SCALE * mean_ithd;
-                }
-            } else {
-                const mean_d = distances.reduce((acc, res) => acc + res.reduce((a, b) => a + b.value, 0) / res.length);
-                if (sigmas[i] > MIN_K_DIST_SCALE * mean_d) {
-                    sigmas[i] = MIN_K_DIST_SCALE * mean_d;
-                }
-                
-            }
-        }
-        return {
-            "distances": distances, 
-            "sigmas": sigmas, 
-            "rhos": rhos
-        }
-    }
-
-    _fuzzy_simplicial_set(X, n_neighbors) {
-        const N = X.shape[0];
-        const knn = new BallTree(X.to2dArray, euclidean);
-        let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
-        distances = this._compute_membership_strengths(distances, sigmas, rhos);
-        const result = new Matrix(N, N, "zeros");
-        for (let i = 0; i < N; ++i) {
-            const distances_i = distances[i];
-            for (let j = 0; j < distances_i.length; ++j) {
-                result.set_entry(i, distances_i[j].element.index, distances_i[j].value);
-            }
-        }
-        const transposed_result = result.T;
-        const prod_matrix = result.mult(transposed_result);
-        return result
-            .add(transposed_result)
-            .sub(prod_matrix)
-            .mult(this._set_op_mix_ratio)
-            .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
-    }
-
-    _make_epochs_per_sample(n_epochs) {
-        const weights = this._weights;
-        const result = new Float32Array(weights.length).fill(-1);
-        const weights_max = max(weights);
-        const n_samples = weights.map(w => n_epochs * (w / weights_max));
-        for (let i = 0; i < result.length; ++i) 
-          if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
-        return result;
-    }
-
-    _tocoo(graph) {
-        const rows = [];
-        const cols = [];
-        const data = [];
-        const [ rows_n, cols_n ] = graph.shape;
-        for (let row = 0; row < rows_n; ++row) {
-            for (let col = 0; col < cols_n; ++col) {
-                const entry = graph.entry(row, col);
-                if (entry !== 0) {
-                    rows.push(row);
-                    cols.push(col);
-                    data.push(entry);
-                }
-            }
-        }
-        return {
-            "rows": rows, 
-            "cols": cols, 
-            "data": data
-        };
-    }
-
-    init() {
-        const [ a, b ] = this._find_ab_params(this._spread, this._min_dist);
-        this._a = a;
-        this._b = b;
-        this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);
-        const { rows, cols, data: weights } = this._tocoo(this._graph);
-        this._head = rows;
-        this._tail = cols;
-        this._weights = weights;
-        this._epochs_per_sample = this._make_epochs_per_sample(this._n_epochs);
-        this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);
-        this._epoch_of_next_sample = this._epochs_per_sample.slice();
-        this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();
-        return this;
-    }
-
-    set local_connectivity(value) {
-        this._local_connectivity = value;
-    }
-
-    get local_connectivity() {
-        return this._local_connectivity;
-    }
-
-    set min_dist(value) {
-        this._min_dist = value;
-    }
-
-    get min_dist() {
-        return this._min_dist;
-    }
-
-    graph() {
-        this.check_init();
-        return { cols: this._head, rows: this._tail, weights: this._weights };
-    }
-
-    transform(iterations) {
-        this.check_init();
-        iterations = iterations || this._n_epochs;
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-        }
-        return this.projection;
-    }
-
-    * generator() {
-        this.check_init();
-        this._iter = 0;
-        while (this._iter < this._n_epochs) {
-            this.next();
-            yield this.projection;
-        }
-        return this.projection;
-    }
-
-    _clip(x) {
-        if (x > 4) return 4;
-        if (x < -4) return -4;
-        return x;
-    }
-
-    _optimize_layout(head_embedding, tail_embedding, head, tail) {
-        const { 
-            _d: dim, 
-            _alpha: alpha, 
-            _repulsion_strength: repulsion_strength, 
-            _a: a, 
-            _b: b,
-            _epochs_per_sample: epochs_per_sample,
-            _epochs_per_negative_sample: epochs_per_negative_sample,
-            _epoch_of_next_negative_sample: epoch_of_next_negative_sample,
-            _epoch_of_next_sample: epoch_of_next_sample,
-            _clip: clip
-        } = this;
-        const tail_length = tail.length;
-
-        for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {
-            if (epoch_of_next_sample[i] <= this._iter) {
-                const j = head[i];
-                const k = tail[i];
-                const current = head_embedding.row(j);
-                const other = tail_embedding.row(k);
-                const dist = euclidean_squared(current, other);//this._metric(current, other);
-                let grad_coeff = 0;
-                if (dist > 0) {
-                    grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
-                }
-                for (let d = 0; d < dim; ++d) {
-                    const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                    const c = current[d] + grad_d;
-                    const o = other[d] - grad_d;
-                    current[d] = c;
-                    other[d] = o;
-                    head_embedding.set_entry(j, d, c);
-                    tail_embedding.set_entry(k, d, o);
-                }
-                epoch_of_next_sample[i] += epochs_per_sample[i];
-                const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
-                for (let p = 0; p < n_neg_samples; ++p) {
-                    const k = Math.floor(this._randomizer.random * tail_length);
-                    const other = tail_embedding.row(tail[k]);
-                    const dist = euclidean_squared(current, other);//this._metric(current, other);
-                    let grad_coeff = 0;
-                    if (dist > 0) {
-                        grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));
-                    } else if (j === k) {
-                        continue;
-                    }
-                    for (let d = 0; d < dim; ++d) {
-                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                        const c = current[d] + grad_d;
-                        const o = other[d] - grad_d;
-                        current[d] = c;
-                        other[d] = o;
-                        head_embedding.set_entry(j, d, c);
-                        tail_embedding.set_entry(tail[k], d, o);
-                    }
-                }
-                epoch_of_next_negative_sample[i] += (n_neg_samples * epochs_per_negative_sample[i]);
-            }
-        }
-        return head_embedding;
-    }
-
-    next() {
-        let iter = ++this._iter;
-        let Y = this.Y;
-
-        this._alpha = (this._initial_alpha * (1 - iter / this._n_epochs));
-        this.Y = this._optimize_layout(Y, Y, this._head, this._tail);
-
-        return this.Y;
-    }
-}
-
-/**
- * @class
- * @alias TriMap
- */
-class TriMap extends DR{
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias TriMap
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [weight_adj = 500] - scaling factor.
-     * @param {Number} [c = 5] - number of triplets multiplier.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @returns {TriMap}
-     * @see {@link https://arxiv.org/pdf/1910.00204v1.pdf}
-     * @see {@link https://github.com/eamid/trimap}
-     */
-    constructor(X, weight_adj = 500, c = 5, d = 2, metric = euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["weight_adj", "c"];
-        this.parameter("weight_adj", weight_adj);
-        this.parameter("c", c);
-        return this;
-    }
-
-    /**
-     * 
-     * @param {Matrix} [pca = null] - Initial Embedding (if null then PCA gets used). 
-     * @param {KNN} [knn = null] - KNN Object (if null then BallTree gets used). 
-     */
-    init(pca = null, knn = null) {
-        const X = this.X;
-        const N = X.shape[0];
-        const d = this._d;
-        const metric = this._metric;
-        const c = this._c;
-        this.n_inliers = 2 * c;
-        this.n_outliers = 1 * c;
-        this.n_random = 1 * c;
-        this.Y = pca || new PCA(X, d).transform();//.mult(.01);
-        this.knn = knn || new BallTree(X.to2dArray, metric);
-        const {triplets, weights} = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
-        this.triplets = triplets;
-        this.weights = weights;
-        this.lr = 1000 * N / triplets.shape[0];
-        this.C = Infinity;
-        this.tol = 1e-7;
-        this.vel = new Matrix(N, d, 0);
-        this.gain = new Matrix(N, d, 1);
-        return this;
-    }
-
-    /**
-     * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.
-     * @param {Number} n_inliers 
-     * @param {Number} n_outliers 
-     * @param {Number} n_random 
-     */
-    _generate_triplets(n_inliers, n_outliers, n_random) {
-        const metric = this._metric;
-        const weight_adj = this._weight_adj;
-        const X = this.X;
-        const N = X.shape[0];
-        const knn = this.knn;
-        const n_extra = Math.min(n_inliers + 20, N);
-        const nbrs = new Matrix(N, n_extra);
-        const knn_distances = new Matrix(N, n_extra);
-        for (let i = 0; i < N; ++i) {
-            knn.search(X.row(i), n_extra + 1)
-                .raw_data()
-                .filter(d => d.value != 0)
-                .sort((a, b) => a.value - b.value)
-                .forEach((d, j) => {
-                    nbrs.set_entry(i, j, d.element.index);
-                    knn_distances.set_entry(i, j, d.value);
-                });
-        }
-        // scale parameter
-        const sig = new Float64Array(N);
-        for (let i = 0; i < N; ++i) {
-            sig[i] = Math.max(
-                   (knn_distances.entry(i, 3) +
-                    knn_distances.entry(i, 4) +
-                    knn_distances.entry(i, 5) +
-                    knn_distances.entry(i, 6)) / 4,
-                    1e-10);
-        }
-        
-        const P = this._find_p(knn_distances, sig, nbrs);
-        
-        let triplets = this._sample_knn_triplets(P, nbrs, n_inliers, n_outliers);
-        let n_triplets = triplets.shape[0];
-        const outlier_distances = new Float64Array(n_triplets);
-        for (let i = 0; i < n_triplets; ++i) {
-            const j = triplets.entry(i, 0);
-            const k = triplets.entry(i, 2);
-            outlier_distances[i] = metric(X.row(j), X.row(k));
-        }
-        let weights = this._find_weights(triplets, P, nbrs, outlier_distances, sig);
-        
-        if (n_random > 0) {
-            const {random_triplets, random_weights} = this._sample_random_triplets(X, n_random, sig);
-            triplets = triplets.concat(random_triplets, "vertical");
-            weights = Float64Array.from([...weights, ...random_weights]);
-        }
-        n_triplets = triplets.shape[0];
-        let max_weight = -Infinity;
-        for (let i = 0; i < n_triplets; ++i) {
-            if (isNaN(weights[i])) {weights[i] = 0;}
-            if (max_weight < weights[i]) max_weight = weights[i];
-        }
-        let max_weight_2 = -Infinity;
-        for (let i = 0; i < n_triplets; ++i) {
-            weights[i] /= max_weight;
-            weights[i] += .0001;
-            weights[i] = Math.log(1 + weight_adj * weights[i]);
-            if (max_weight_2 < weights[i]) max_weight_2 = weights[i];
-        }
-        for (let i = 0; i < n_triplets; ++i) {
-            weights[i] /= max_weight_2;
-        }
-        return {
-            "triplets": triplets,
-            "weights": weights,
-        }
-    }
-
-    /**
-     * Calculates the similarity matrix P
-     * @private
-     * @param {Matrix} knn_distances - matrix of pairwise knn distances
-     * @param {Float64Array} sig - scaling factor for the distances
-     * @param {Matrix} nbrs - nearest neighbors
-     * @returns {Matrix} pairwise similarity matrix
-     */
-    _find_p(knn_distances, sig, nbrs) {
-        const [N, n_neighbors] = knn_distances.shape;
-        return new Matrix(N, n_neighbors, (i, j) => {
-            return Math.exp(-((knn_distances.entry(i, j) ** 2) / sig[i] / sig[nbrs.entry(i, j)]));
-        });
-    }
-
-    /**
-     * Sample nearest neighbors triplets based on the similarity values given in P.
-     * @private
-     * @param {Matrix} P - Matrix of pairwise similarities between each point and its neighbors given in matrix nbrs.
-     * @param {Matrix} nbrs - Nearest neighbors indices for each point. The similarity values are given in matrix {@link P}. Row i corresponds to the i-th point.
-     * @param {Number} n_inliers - Number of inlier points.
-     * @param {Number} n_outliers - Number of outlier points.
-     * 
-     */
-    _sample_knn_triplets(P, nbrs, n_inliers, n_outliers) {
-        const N = nbrs.shape[0];
-        const triplets = new Matrix(N * n_inliers * n_outliers, 3);
-        for (let i = 0; i < N; ++i) {
-            let n_i = i * n_inliers * n_outliers;
-            const sort_indices = this.__argsort(P.row(i).map(d => -d));
-            for (let j = 0; j < n_inliers; ++j) {
-                let n_j = j * n_outliers;
-                const sim = nbrs.entry(i, sort_indices[j]);
-                const samples = this._rejection_sample(n_outliers, N, sort_indices.slice(0, j + 1));
-                for (let k = 0; k < n_outliers; ++k) {
-                    const index = n_i + n_j + k;
-                    const out = samples[k];
-                    triplets.set_entry(index, 0, i);
-                    triplets.set_entry(index, 1, sim);
-                    triplets.set_entry(index, 2, out);
-                }
-            }
-        }
-        return triplets;
-    }
-
-    /**
-     * Should do the same as np.argsort()
-     * @private
-     * @param {Array} A 
-     */
-    __argsort(A) {
-        return A
-            .map((d, i) => {return {d: d, i: i};})
-            .sort((a, b) => a.d - b.d)
-            .map((d) => d.i);
-    }
-
-    /**
-     * Samples {@link n_samples} integers from a given interval [0, {@link max_int}] while rejection the values that are in the {@link rejects}.
-     * @private
-     * @param {*} n_samples 
-     * @param {*} max_int 
-     * @param {*} rejects 
-     */
-    _rejection_sample(n_samples, max_int, rejects) {
-        const randomizer = this._randomizer;
-        const interval = linspace(0, max_int - 1).filter(d => rejects.indexOf(d) < 0);
-        return randomizer.choice(interval, Math.min(n_samples, interval.length - 2));
-    }
-
-    /**
-     * Calculates the weights for the sampled nearest neighbors triplets
-     * @private
-     * @param {Matrix} triplets - Sampled Triplets.
-     * @param {Matrix} P - Pairwise similarity matrix.
-     * @param {Matrix} nbrs - nearest Neighbors
-     * @param {Float64Array} outlier_distances - Matrix of pairwise outlier distances
-     * @param {Float64Array} sig - scaling factor for the distances.
-     */
-    _find_weights(triplets, P, nbrs, outlier_distances, sig) {
-        const n_triplets = triplets.shape[0];
-        const weights = new Float64Array(n_triplets);
-        for (let t = 0; t < n_triplets; ++t) {
-            const i = triplets.entry(t, 0);
-            const sim = nbrs.row(i).indexOf(triplets.entry(t, 1));
-            const p_sim = P.entry(i, sim);
-            let p_out = Math.exp(-(outlier_distances[t] ** 2 / (sig[i] * sig[triplets.entry(t, 2)])));
-            if (p_out < 1e-20) p_out = 1e-20;
-            weights[t] = p_sim / p_out;
-        }
-        return weights;
-    }
-
-    /**
-     * Sample uniformly ranom triplets
-     * @private
-     * @param {Matrix} X - Data matrix.
-     * @param {Number} n_random - Number of random triplets per point
-     * @param {Float64Array} sig - Scaling factor for the distances
-     */
-    _sample_random_triplets(X, n_random, sig) {
-        const metric = this._metric;
-        const randomizer = this._randomizer;
-        const N = X.shape[0];
-        const random_triplets = new Matrix(N * n_random, 3);
-        const random_weights = new Float64Array(N * n_random);
-        for (let i = 0; i < N; ++i) {
-            const n_i = i * n_random;
-            const indices = [...linspace(0, i - 1), ...linspace(i + 1, N - 1)];
-            for (let j = 0; j < n_random; ++j) {
-                let [sim, out] = randomizer.choice(indices, 2);
-                let p_sim = Math.exp(-((metric(X.row(i), X.row(sim)) ** 2) / (sig[i] * sig[sim])));
-                if (p_sim < 1e-20) p_sim = 1e-20;
-                let p_out = Math.exp(-((metric(X.row(i), X.row(out)) ** 2) / (sig[i] * sig[out]))); 
-                if (p_out < 1e-20) p_out = 1e-20;
-
-                if (p_sim < p_out) {
-                    [sim, out] = [out, sim];
-                    [p_sim, p_out] = [p_out, p_sim];
-                }
-                const index = n_i + j;
-                random_triplets.set_entry(index, 0, i);
-                random_triplets.set_entry(index, 1, sim);
-                random_triplets.set_entry(index, 2, out);
-                random_weights[index] = p_sim / p_out;
-            }
-        }
-        return {
-            "random_triplets": random_triplets,
-            "random_weights": random_weights,
-        }
-    }
-
-    /**
-     * Computes the gradient for updating the embedding.
-     * @param {Matrix} Y - The embedding
-     */
-    _grad(Y) {
-        const n_inliers = this.n_inliers;
-        const n_outliers = this.n_outliers;
-        const triplets = this.triplets;
-        const weights = this.weights;
-        const [N, dim] = Y.shape;
-        const n_triplets = triplets.shape[0];
-        const grad = new Matrix(N, dim, 0);
-        let y_ij = new Array(dim).fill(0);
-        let y_ik = new Array(dim).fill(0);
-        let d_ij = 1;
-        let d_ik = 1;
-        let n_viol = 0;
-        let loss = 0;
-        const n_knn_triplets = N * n_inliers * n_outliers;
-
-        for (let t = 0; t < n_triplets; ++t) {
-            const [i, j, k] = triplets.row(t);
-            // update y_ij, y_ik, d_ij, d_ik
-            if (t % n_outliers == 0 || t >= n_knn_triplets) {
-                d_ij = 1;
-                d_ik = 1;
-                for (let d = 0; d < dim; ++d) {
-                    const Y_id = Y.entry(i, d);
-                    const Y_jd = Y.entry(j, d);
-                    const Y_kd = Y.entry(k, d);
-                    y_ij[d] = Y_id - Y_jd;
-                    y_ik[d] = Y_id - Y_kd;
-                    d_ij += (y_ij[d] ** 2);
-                    d_ik += (y_ik[d] ** 2);
-                }
-            // update y_ik and d_ik only
-            } else {
-                d_ik = 1;
-                for (let d = 0; d < dim; ++d) {
-                    const Y_id = Y.entry(i, d);
-                    const Y_kd = Y.entry(k, d);
-                    y_ik[d] = Y_id - Y_kd;
-                    d_ik += (y_ik[d] ** 2);
-                }
-            }
-
-            if (d_ij > d_ik) ++n_viol;
-            loss += weights[t] / (1 + d_ik / d_ij);
-            const w = (weights[t] / (d_ij + d_ik)) ** 2;
-            for (let d = 0; d < dim; ++d) {
-                const gs = y_ij[d] * d_ik * w;
-                const go = y_ik[d] * d_ij * w;
-                grad.set_entry(i, d, grad.entry(i, d) + gs - go);
-                grad.set_entry(j, d, grad.entry(j, d) - gs);
-                grad.set_entry(k, d, grad.entry(k, d) + go);
-            }
-        }
-        return {
-            "grad": grad,
-            "loss": loss,
-            "n_viol": n_viol,
-        };
-    }
-
-    /**
-     * 
-     * @param {Number} max_iteration 
-     */
-    transform(max_iteration = 400) {
-        this.check_init();
-        for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter);
-        }
-        return this.projection;
-    }
-
-    /**
-     * @yields {Matrix}
-     * @returns {Matrix}
-     */
-    * generator() {
-        this.check_init();
-        for (let iter = 0; iter < 800; ++iter) {
-            this._next(iter);
-            yield this.projection;
-        }
-        return this.projection;
-    }
-
-    /**
-     * Does the iteration step.
-     * @private
-     * @param {Number} iter 
-     */
-    _next(iter) {
-        const gamma = iter > 150 ? .5 : .3;
-        const old_C = this.C;
-        const vel = this.vel;
-        const Y = this.Y.add(vel.mult(gamma));
-        const {grad, loss, n_viol} = this._grad(Y);
-        this.C = loss;
-        this.Y = this._update_embedding(Y, iter, grad);
-        this.lr *= (old_C > loss + this.tol)  ? 1.01 : .9;
-        return this.Y;
-    }
-
-    /**
-     * Updates the embedding.
-     * @private
-     * @param {Matrix} Y 
-     * @param {Number} iter 
-     * @param {Matrix} grad 
-     */
-    _update_embedding(Y, iter, grad) {
-        const [N, dim] = Y.shape;
-        const gamma = iter > 150 ? .9 : .5; // moment parameter
-        const min_gain = .01;
-        const gain = this.gain;
-        const vel = this.vel;
-        const lr = this.lr;
-        for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < dim; ++d) {
-                const new_gain = (Math.sign(vel.entry(i, d)) != Math.sign(grad.entry(i, d))) ? gain.entry(i, d) + .2 : Math.max(gain.entry(i, d) * .8, min_gain);
-                gain.set_entry(i, d, new_gain);
-                vel.set_entry(i, d, gamma * vel.entry(i, d) - lr * gain.entry(i, d) * grad.entry(i, d));
-                Y.set_entry(i, d, Y.entry(i, d) + vel.entry(i, d));
-            }
-        }
-        return Y;
-    }
-}
-
-/**
- * @class
- * @alias Hierarchical_Clustering
- */
-class Hierarchical_Clustering {
-    /**
-     * @constructor
-     * @memberof module:clustering
-     * @alias Hierarchical_Clustering
-     * @todo needs restructuring. 
-     * @param {Matrix} matrix 
-     * @param {("single"|"complete"|"average")} [linkage = "single"] 
-     * @param {Function} [metric = euclidean] 
-     * @returns {Hierarchical_Clustering}
-     */
-    constructor(matrix, linkage="single", metric=euclidean) {
-        this._id = 0;
-        this._matrix = matrix;
-        this._metric = metric;
-        this._linkage = linkage;
-        this.init();
-        this.root = this.do();
-        return this;
-    }
-
-    /**
-     * 
-     * @param {Number} value - value where to cut the tree.
-     * @param {("distance"|"depth")} [type = "distance"] - type of value.
-     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
-     */
-    get_clusters(value, type="distance") {
-        let clusters = [];
-        let accessor;
-        switch (type) {
-            case "distance":
-                accessor = d => d.dist;
-                break;
-            case "depth":
-                accessor = d => d.depth;
-                break;
-            default:
-                throw "invalid type";
-        }
-        this._traverse(this.root, accessor, value, clusters);
-        return clusters
-    }
-
-    /**
-     * @private
-     * @param {} node 
-     * @param {*} f 
-     * @param {*} value 
-     * @param {*} result 
-     */
-    _traverse(node, f, value, result) {
-        if (f(node) <= value) {
-            result.push(node.leaves());
-        } else {
-            this._traverse(node.left, f, value, result);
-            this._traverse(node.right, f, value, result);
-        }
-    }
-
-    /**
-     * computes the tree.
-     */
-    init() {
-        const metric = this._metric;
-        const A = this._matrix;
-        const n = this._n = A.shape[0];
-        const d_min = this._d_min = new Float64Array(n);
-        const distance_matrix = this._distance_matrix = new Array(n);
-        for (let i = 0; i < n; ++i) {
-            d_min[i] = 0;
-            distance_matrix[i] = new Float64Array(n);
-            for (let j = 0; j < n; ++j) {
-                distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));
-                if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
-                    d_min[i] = j;
-                }
-            }
-        }
-        const clusters = this._clusters = new Array(n);
-        const c_size = this._c_size = new Uint16Array(n);
-        for (let i = 0; i < n; ++i) {
-            clusters[i] = [];
-            clusters[i][0] = new Cluster(this._id++, null, null, 0, A.row(i), i, 1, 0);
-            c_size[i] = 1;
-        }
-        return this;
-    }
-
-    /**
-     * computes the tree.
-     */
-    do() {
-        const n = this._n;
-        const d_min = this._d_min;
-        const D = this._distance_matrix;
-        const clusters = this._clusters;
-        const c_size = this._c_size;
-        const linkage = this._linkage;
-        let root = null;
-        for (let p = 0, p_max = n - 1; p < p_max; ++p) {
-            let c1 = 0;
-            for (let i = 0; i < n; ++i) {
-                if (D[i][d_min[i]] < D[c1][d_min[c1]]) {
-                    c1 = i;
-                }
-            }
-            let c2 = d_min[c1];
-            let c1_cluster = clusters[c1][0];
-            let c2_cluster = clusters[c2][0];
-            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2]);
-            clusters[c1].unshift(new_cluster);
-            c_size[c1] += c_size[c2];
-            for (let j = 0; j < n; ++j) {
-                switch(linkage) {
-                    case "single":
-                        if (D[c1][j] > D[c2][j]) {
-                            D[j][c1] = D[c1][j] = D[c2][j];
-                        }
-                        break;
-                    case "complete":
-                        if (D[c1][j] < D[c2][j]) {
-                            D[j][c1] = D[c1][j] = D[c2][j];
-                        }
-                        break;
-                    case "average":
-                        D[j][c1] = D[c1][j] = (c_size[c1] * D[c1][j] + c_size[c2] * D[c2][j]) / (c_size[c1] + c_size[j]);
-                        break;
-                }
-            }
-            D[c1][c1] = Infinity;
-            for (let i = 0; i < n; ++i) {
-                D[i][c2] = D[c2][i] = Infinity;
-            }
-            for (let j = 0; j < n; ++j) {
-                if (d_min[j] === c2) {
-                    d_min[j] = c1;
-                }
-                if (D[c1][j] < D[c1][d_min[c1]]) {
-                    d_min[c1] = j;
-                }
-            }
-            root = new_cluster;
-        }
-        return root;
-    }
-    
-}
-
-class Cluster {
-    constructor(id, left, right, dist, centroid, index, size, depth) {
-        this.id = id;
-        this.left = left;
-        this.right = right;
-        this.dist = dist;
-        this.index = index;
-        this.size = size != null ? size : left.size + right.size;
-        this.depth = depth != null ? depth : 1 + Math.max(left.depth, right.depth);
-        this.centroid = centroid != null ? centroid : this._calculate_centroid(left, right);
-        return this;
-    }
-
-    _calculate_centroid(left, right) {
-        const l_size = left.size;
-        const r_size = right.size;
-        const l_centroid = left.centroid;
-        const r_centroid = right.centroid;
-        const size = this.size;
-        const n = left.centroid.length;
-        const new_centroid = new Float64Array(n);
-        for (let i = 0; i < n; ++i) {
-            new_centroid[i] = (l_size * l_centroid[i] + r_size * r_centroid[i]) / size;
-        }
-        return new_centroid;
-    }
-
-    get isLeaf() {
-        return this.depth === 0;
-    }
-
-    leaves() {
-        if (this.isLeaf) return [this.index];
-        const left = this.left;
-        const right = this.right;
-        return (left.isLeaf ? [left.index] : left.leaves())
-            .concat(right.isLeaf ? [right.index] : right.leaves())
-    }
-}
-
-/**
- * @class
- * @alias KMeans
- */
-class KMeans {
-    /**
-     * @constructor
-     * @memberof module:clustering
-     * @alias KMeans
-     * @todo needs restructuring. 
-     * @param {Matrix} matrix 
-     * @param {Numbers} K 
-     * @param {Function} [metric = euclidean] 
-     * @param {Number} [seed = 1987]
-     * @param {Boolean} [init = true]
-     * @returns {KMeans}
-     */
-    constructor(matrix, K, metric = euclidean, seed=1987, init = true) {
-        this._metric = metric;
-        this._matrix = matrix;
-        this._K = K;
-        const [N, D] = matrix.shape;
-        this._N = N;
-        this._D = D;
-        if (K > N) K = N;
-        this._randomizer = new Randomizer(seed);
-        this._clusters = new Array(N).fill(undefined);
-        this._cluster_centroids = this._get_random_centroids(K);
-        if (init) this.init(K, this._cluster_centroids);
-        return this;
-    }
-
-    /**
-     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
-     */
-    get_clusters() {
-        const K = this._K;
-        const clusters = this._clusters;
-        const result = new Array(K).fill().map(() => new Array());
-        clusters.forEach((c, i) => result[c].push(i));
-        return result;
-    }
-
-    /**
-     * @private
-     * @param {Array} points 
-     * @param {Array} candidates 
-     */
-    _furthest_point(points, candidates) {
-        const A = this._matrix;
-        const metric = this._metric;
-        let i = points.length;
-        let H = Heap.heapify(
-            candidates, 
-            (d) => {
-                const Ad = A.row(d);
-                let sum = 0;
-                for (let j = 0; j < i; ++j) {
-                    sum += metric(Ad, points[j]);
-                }
-                return sum;
-            }, 
-            "max"
-        );
-        return H.pop().element;
-    }
-
-    _get_random_centroids(K) {
-        const N = this._N;
-        const randomizer = this._randomizer;
-        const A = this._matrix;
-        const cluster_centroids = new Array(K).fill();
-        const indices = linspace(0, N - 1);
-        const random_point = randomizer.random_int % (N - 1);
-        cluster_centroids[0] = A.row(random_point);
-        const init_points = [random_point];
-        const sample_size = Math.floor((N - K) / K);// / K
-        for (let i = 1; i < K; ++i) {
-            // sampling + kmeans++ improvement?
-            const sample = randomizer.choice(indices.filter(d => init_points.indexOf(d) == -1), sample_size);
-            const furthest_point = this._furthest_point(cluster_centroids.slice(0, i), sample);
-            init_points.push(furthest_point);
-            cluster_centroids[i] = A.row(furthest_point);
-        }
-        return cluster_centroids;
-    }
-
-    _iteration(cluster_centroids) {
-        const K = cluster_centroids.length;
-        const N = this._N;
-        const D = this._D;
-        const A = this._matrix;
-        const metric = this._metric;
-        const clusters = this._clusters;
-        let clusters_changed = false;
-        // find nearest cluster centroid.
-        for (let i = 0; i < N; ++i) {
-            const Ai = A.row(i);
-            let min_dist = Infinity;
-            let min_cluster = null;
-            for (let j = 0; j < K; ++j) {
-                let d = metric(cluster_centroids[j], Ai);
-                if (d < min_dist) {
-                    min_dist = d;
-                    min_cluster = j; 
-                }
-            }
-            if (clusters[i] !== min_cluster) {
-                clusters_changed = true;
-            }
-            clusters[i] = min_cluster;
-        }
-        // update cluster centroid
-        // reset cluster centroids to 0
-        for (let i = 0; i < K; ++i) {
-            const centroid = cluster_centroids[i];
-            for (let j = 0; j < D; ++j) {
-                centroid[j] = 0;
-            }
-        }
-        // compute centroid
-        this._compute_centroid(cluster_centroids);
-
-        return {   
-            "clusters_changed": clusters_changed,
-            "cluster_centroids": cluster_centroids
-        };
-    }
-
-    _compute_centroid(cluster_centroids) {
-        const K = cluster_centroids.length;
-        const N = this._N;
-        const D = this._D;
-        const A = this._matrix;
-        const clusters = this._clusters;
-        const cluster_counter = new Array(K).fill(0);
-
-        for (let i = 0; i < N; ++i) {
-            const Ai = A.row(i);
-            const ci = clusters[i];
-            cluster_counter[ci]++;
-            const centroid = cluster_centroids[ci];
-            for (let j = 0; j < D; ++j) {
-                centroid[j] += Ai[j];
-            }
-        }
-        for (let i = 0; i < K; ++i) {
-            const n = cluster_counter[i];
-            cluster_centroids[i] = cluster_centroids[i].map(c => c / n);
-        }
-        
-    }
-
-    /**
-     * Computes {@link K} clusters out of the {@link matrix}.
-     * @param {Number} K - number of clusters.
-     */
-    init(K, cluster_centroids) {
-        if (!K) K = this._K;
-        if (!cluster_centroids) cluster_centroids = this._get_random_centroids(K);
-        let clusters_changed = false;
-        do {
-            const iteration_result = this._iteration(cluster_centroids);
-            cluster_centroids = iteration_result.cluster_centroids;
-            clusters_changed = iteration_result.clusters_changed;
-        } while (clusters_changed)
-    }
-    
-}
-
-/**
- * @class
- * @alias KMedoids
- */
-class KMedoids {
-    /**
-     * @constructor
-     * @memberof module:clustering
-     * @alias KMedoids
-     * @todo needs restructuring. 
-     * @param {Matrix} matrix - data matrix
-     * @param {Numbers} K - number of clusters
-     * @param {number} [max_iter=null] - maximum number of iterations. Default is 10 * Math.log10(N)
-     * @param {Function} [metric = euclidean] - metric defining the dissimilarity 
-     * @param {Number} [seed = 1212] - seed value for random number generator
-     * @returns {KMedoids}
-     * @see {@link https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16} Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms
-     */
-    constructor(matrix, K, max_iter=null, metric = euclidean, seed=1212) {
-        this._metric = metric;
-        this._matrix = matrix;
-        this._A = this._matrix.to2dArray;
-        this._K = K;
-        const [N, D] = matrix.shape;
-        this._N = N;
-        this._D = D;
-        this._max_iter = max_iter || 10 * Math.log10(N); 
-        this._distance_matrix = new Matrix(N, N, "zeros");
-        /* for (let i = 1; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                let dist = metric(this._A[i], this._A[j]);
-                this._distance_matrix.set_entry(i, j, dist);
-                this._distance_matrix.set_entry(j, i, dist)
-            }
-        } */
-        if (K > N) K = N;
-        this._randomizer = new Randomizer(seed);
-        this._clusters = new Array(N).fill(undefined);
-        this._cluster_medoids = this._get_random_medoids(K);
-        //if (init) this.init(K, this._cluster_medoids);
-        this._is_initialized = false;
-        return this;
-    }
-
-    /**
-     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
-     */
-    get_clusters() {
-        const K = this._K;
-        const A = this._A;
-        if (!this._is_initialized) {
-            this.init(K, this._cluster_medoids);
-        }
-        const result = new Array(K).fill().map(() => new Array());
-        A.forEach((x_j, j) => {
-            result[this._nearest_medoid(x_j, j).index_nearest].push(j);
-        });
-        result.medoids = this._cluster_medoids;
-        return result;
-    }
-
-    async* generator() {
-        const max_iter = this._max_iter;
-        yield this.get_clusters();
-        let finish = false;
-        let i = 0;
-        do {
-            finish = this._iteration();
-            yield this.get_clusters();
-        } while (!finish && ++i < max_iter)
-    }
-
-    /**
-     * Algorithm 1. FastPAM1: Improved SWAP algorithm
-     */
-    /* _iteration_1() {
-        const A = this._A;
-        const N = this._N;
-        const K = this._K;
-        const medoids = this._cluster_medoids;
-        let DeltaTD = 0;
-        let m0 = null;
-        let x0 = null;
-        A.forEach((x_j, j) => {
-            if (medoids.findIndex(m => m === j) < 0) {
-                const nearest_medoid = this._nearest_medoid(x_j, j);
-                const d_j = nearest_medoid.distance_nearest; // distance to current medoid
-                const deltaTD = new Array(K).fill(-d_j); // change if making j a medoid
-                A.forEach((x_o, o) => {
-                    // disance to new medoid
-                    const d_oj = this._get_distance(o, j, x_o, x_j);
-                    const {
-                        "index_nearest": n,
-                        "distance_nearest": d_n,
-                        "distance_second": d_s,
-                    } = this._nearest_medoid(x_o, o); 
-                    this._clusters[o] = n; // cached values
-                    deltaTD[n] += Math.min(d_oj, d_s) - d_n; // loss change
-                    if (d_oj < d_n) { // reassignment check
-                        deltaTD.forEach((d_i, i) => {
-                            if (n !== i) {
-                                deltaTD[i] = d_i + d_oj - d_n; // update loss change
-                            }
-                        });
-                    }
-                });
-                // choose best medoid i;
-                const i = deltaTD
-                    .map((d, i) => [d, i])
-                    .sort((d1, d2) => d1[0] - d2[0])[0][1];
-                const deltaTD_i = deltaTD[i];
-                // store
-                if (deltaTD_i < DeltaTD) {
-                    DeltaTD = deltaTD_i;
-                    m0 = i;
-                    x0 = j;
-                }
-            }
-        });
-
-        if (DeltaTD >= 0) {
-            return true // break loop if DeltaTD >= 0
-        }
-        // swap roles of medoid m and non-medoid x;
-        medoids[m0] = x0;
-        this._cluster_medoids = medoids;
-        return false
-    } */
-
-    /** Algorithm 2. FastPAM2: SWAP with multiple candidates
-     * 
-     */
-    _iteration() {
-        const A = this._A;
-        const K = this._K;
-        const medoids = this._cluster_medoids;
-        const cache = A.map((x_o, o) => this._nearest_medoid(x_o, o));
-        // empty best candidates array
-        const DeltaTD = new Array(K).fill(0);
-        const xs = new Array(K).fill(null);
-        A.forEach((x_j, j) => {
-            if (medoids.findIndex(m => m === j) < 0) {
-                const d_j = cache[j].distance_nearest; // distance to current medoid
-                const deltaTD = new Array(K).fill(-d_j); // change if making j a medoid
-                A.forEach((x_o, o) => {
-                    if (j === o) return;
-                    const d_oj = this._get_distance(o, j, x_o, x_j); // distance to new medoid
-                    const {"index_nearest": n, "distance_nearest": d_n, "distance_second": d_s} = cache[o]; // cached
-                    deltaTD[n] += Math.min(d_oj, d_s) - d_n; // loss change for x_o
-                    // Reassignment check
-                    if (d_oj < d_n) { 
-                        // update loss change
-                        for (let i = 0; i < K; ++i) {
-                            if (i !== n) deltaTD[i] += d_oj - d_n;
-                        }
-                    }
-                });
-                // remember best swap for i;
-                deltaTD
-                    .map((d, i) => [d, i])
-                    .filter(([d, i]) => d < DeltaTD[i])
-                    .forEach(([d, i]) => {
-                        if (d < DeltaTD[i]) {
-                            DeltaTD[i] = d;
-                            xs[i] = j;
-                        }
-                    });
-            }
-        });
-        // stop if no improvements were found
-        if (Math.min(...DeltaTD) >= 0) return true; 
-
-        // execute all improvements
-        while (Math.min(...DeltaTD) < 0) {
-            // swap roles of medoid m_i and non_medoid xs_i
-            const i = DeltaTD
-                .map((d, i) => [d, i])
-                .sort(([a], [b]) => a - b)[0][1];
-            if (medoids.filter(m => m == xs[i]).length == 0) {
-                medoids[i] = xs[i];
-            }
-            // disable the swap just performed
-            DeltaTD[i] = 0; 
-            // recompute TD for remaining swap candidates
-            DeltaTD
-                .map((d_j, j) => [d_j, j])
-                .filter(([d_j]) => d_j < 0)
-                .forEach(([_, j]) => {
-                    const x_j = A[j];
-                    let sum = 0;
-                    A.forEach((x_o, o) => {
-                        if (medoids.findIndex(m => m != j && m == o) >= 0) return;
-                        if (i == j) return;
-                        if (cache[o].index_nearest === medoids[j])
-                            sum += (Math.min(this._get_distance(o, j, x_o, x_j), cache[o].distance_second) - cache[o].distance_nearest); 
-                        else {
-                            sum += (Math.min(this._get_distance(o, j, x_o, x_j) - cache[o].distance_nearest, 0));
-                        }
-                    });
-                    DeltaTD[j] = sum;
-                });
-        }
-        this._cluster_medoids = medoids;
-        return false;
-    }
-
-    _get_distance(i, j, x_i=null, x_j=null) {
-        if (i === j) return 0;
-        const D = this._distance_matrix;
-        const A = this._A;
-        const metric = this._metric;
-        let d_ij = D.entry(i, j);
-        if (d_ij === 0) {
-            d_ij = metric(x_i || A[i], x_j || A[j]);
-            D.set_entry(i, j, d_ij);
-            D.set_entry(j, i, d_ij);
-        }
-        return d_ij;
-    }
-
-    _nearest_medoid(x_j, j) {
-        const medoids = this._cluster_medoids;
-        const A = this._A;
-        const [nearest, second] = medoids
-            .map((m, i) => {
-                const x_m = A[m]; 
-                return [this._get_distance(j, m, x_j, x_m), i];
-            })
-            .sort((m1, m2) => m1[0] - m2[0]);
-        
-        return { 
-            "distance_nearest": nearest[0], 
-            "index_nearest": nearest[1],
-            "distance_second": second[0],
-            "index_second": second[1],
-        };
-    }
-
-    /**
-     * Computes {@link K} clusters out of the {@link matrix}.
-     * @param {Number} K - number of clusters.
-     */
-    init(K, cluster_medoids) {
-        if (!K) K = this._K;
-        if (!cluster_medoids) cluster_medoids = this._get_random_medoids(K);
-        const max_iter = this._max_iter;
-        let finish = false;
-        let i = 0;
-        do {
-            finish = this._iteration();
-        } while (!finish && ++i < max_iter)
-        return this;
-    }
-
-    /**
-     * Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
-     * @param {number} K - number of clusters
-     * 
-     */
-    _get_random_medoids(K) {
-        const N = this._N;
-        const A = this._A;
-        const indices = linspace(0, N - 1);
-        const randomizer = this._randomizer;
-        const n = Math.min(N, 10 + Math.ceil(Math.sqrt(N)));
-        const TD = new Array(n).fill(Infinity);
-        const medoids = [];
-        // first medoid
-        let TD0 = Infinity;
-        let S = randomizer.choice(indices, n);
-        for (let j = 0; j < n; ++j) {
-            const S_j = S[j];
-            const x_j = A[S_j];
-            for (let o = 0; o < n; ++o) {
-                if (o === j) continue;
-                const x_o = A[S[o]];
-                TD[j] += this._get_distance(j, o, x_j, x_o);
-            }
-            if (TD[j] < TD0) {
-                TD0 = TD[j]; // smallest distance sum
-                medoids.push(S_j);
-            }
-        }
-        // other medoids
-        for (let i = 1; i < K; ++i) {
-            let DeltaTD = Infinity;
-            S = randomizer.choice(indices.filter(index => medoids.findIndex(d => d === index) < 0), n);
-            for (let j = 0; j < n; ++j) {
-                let deltaTD = 0;
-                const S_j = S[j];
-                const x_j = A[S_j];
-                for (let o = 0; o < n; ++o) {
-                    if (o === j) continue;
-                    const S_o = S[o];
-                    const x_o = A[S_o];
-                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - Math.min(...medoids.map(m => this._get_distance(S_o, m, x_o)));
-                    if (delta < 0) {
-                        deltaTD = deltaTD + delta;
-                    }
-                }
-                // best reduction
-                if (deltaTD < DeltaTD) {
-                    DeltaTD = deltaTD;
-                    medoids.push(S_j);
-                }
-            }
-            TD0 += DeltaTD;
-        }
-        return medoids.slice(0, K);
-    }
-    
-}
-
-/**
- * @class
- * @alias OPTICS
- */
-class OPTICS {
-    /**
-     * **O**rdering **P**oints **T**o **I**dentify the **C**lustering **S**tructure.
-     * @constructor
-     * @memberof module:clustering
-     * @alias OPTICS
-     * @todo needs restructuring. 
-     * @param {Matrix} matrix - the data.
-     * @param {Number} epsilon - the minimum distance which defines whether a point is a neighbor or not.
-     * @param {Number} min_points - the minimum number of points which a point needs to create a cluster. (Should be higher than 1, else each point creates a cluster.)
-     * @param {Function} [metric = euclidean] - the distance metric which defines the distance between two points of the {@link matrix}.
-     * @returns {OPTICS}
-     * @see {@link https://www.dbs.ifi.lmu.de/Publikationen/Papers/OPTICS.pdf}
-     * @see {@link https://en.wikipedia.org/wiki/OPTICS_algorithm}
-     */
-    constructor(matrix, epsilon, min_points, metric = euclidean) {
-        this._matrix = matrix;
-        this._epsilon = epsilon;
-        this._min_points = min_points;
-        this._metric = metric;
-
-        this._ordered_list = [];
-        this._clusters = [];
-        this._DB = new Array(matrix.shape[0]).fill();
-        this.init();
-        return this;
-    }
-
-    /**
-     * Computes the clustering.
-     */
-    init() {
-        const ordered_list = this._ordered_list;
-        const matrix = this._matrix;
-        const N = matrix.shape[0];
-        const DB = this._DB;
-        const clusters = this._clusters;
-        let cluster_index = this._cluster_index = 0;
-
-        for (let i = 0; i < N; ++i) {
-            DB[i] = {
-                "element": matrix.row(i),
-                "index": i,
-                "reachability_distance": undefined,
-                "processed": false,
-            };
-        }
-        for (const p of DB) {
-            if (p.processed) continue;
-            p.neighbors = this._get_neighbors(p);
-            p.processed = true;
-            clusters.push([p.index]);
-            cluster_index = clusters.length - 1;
-            ordered_list.push(p);
-            if (this._core_distance(p) != undefined) {
-                const seeds = new Heap(null, d => d.reachability_distance, "min");
-                this._update(p, seeds);
-                this._expand_cluster(seeds, clusters[cluster_index]);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * 
-     * @private
-     * @param {Object} p - a point of {@link matrix}.
-     * @returns {Array} An array consisting of the {@link epsilon}-neighborhood of {@link p}.
-     */
-    _get_neighbors(p) {
-        if ("neighbors" in p) return p.neighbors;
-        const DB = this._DB;
-        const metric = this._metric;
-        const epsilon = this._epsilon;
-        const neighbors = [];
-        for (const q of DB) {
-            if (q.index == p.index) continue;
-            if (metric(p.element, q.element) < epsilon) {
-                neighbors.push(q);
-            }
-        }
-        return neighbors;
-    }
-
-    /**
-     * 
-     * @private
-     * @param {Object} p - a point of {@link matrix}.
-     * @returns {Number} The distance to the {@link min_points}-th nearest point of {@link p}, or undefined if the {@link epsilon}-neighborhood has fewer elements than {@link min_points}.
-     */
-    _core_distance(p) {
-        const min_points = this._min_points;
-        const metric = this._metric;
-        if (p.neighbors && p.neighbors.length <= min_points) {
-            return undefined;
-        }
-        return metric(p.element, p.neighbors[min_points].element);
-    }
-
-    /**
-     * Updates the reachability distance of the points.
-     * @private
-     * @param {Object} p 
-     * @param {Heap} seeds 
-     */
-    _update(p, seeds) {
-        const metric = this._metric;
-        const core_distance = this._core_distance(p);
-        const neighbors = this._get_neighbors(p);//p.neighbors;
-        for (const q of neighbors) {
-            if (q.processed) continue;
-            const new_reachability_distance = Math.max(core_distance, metric(p.element, q.element));
-            //if (q.reachability_distance == undefined) { // q is not in seeds
-            if (seeds.raw_data().findIndex(d => d.element == q) < 0) {
-                q.reachability_distance = new_reachability_distance;
-                seeds.push(q);
-            } else { // q is in seeds
-                if (new_reachability_distance < q.reachability_distance) {
-                    q.reachability_distance = new_reachability_distance;
-                    seeds = Heap.heapify(seeds.data(), d => d.reachability_distance, "min"); // seeds change key =/
-                }
-            }
-        }
-    }
-
-    /**
-     * Expands the {@link cluster} with points in {@link seeds}.
-     * @private
-     * @param {Heap} seeds 
-     * @param {Array} cluster 
-     */
-    _expand_cluster(seeds, cluster) {
-        const ordered_list = this._ordered_list;
-        while (!seeds.empty) {
-            const q = seeds.pop().element;
-            q.neighbors = this._get_neighbors(q);
-            q.processed = true;
-            cluster.push(q.index);
-            ordered_list.push(q);
-            if (this._core_distance(q) != undefined) {
-                this._update(q, seeds);
-                this._expand_cluster(seeds, cluster);
-            }
-        }
-    }
-
-    /**
-     * Returns an array of clusters.
-     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
-     */
-    get_clusters() {
-        const clusters = [];
-        const outliers = [];
-        const min_points = this._min_points;
-        for (const cluster of this._clusters) {
-            if (cluster.length < min_points) {
-                outliers.push(...cluster);
-            } else {
-                clusters.push(cluster);
-            }
-        }
-        clusters.push(outliers);
-        return clusters;
-    }
-
-    /**
-     * @returns {Array} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)
-     */
-    get_cluster_affirmation() {
-        const N = this._matrix.shape[0];
-        const result = new Array(N).fill();
-        const clusters = this.get_clusters();
-        for (let i = 0, n = clusters.length; i < n; ++i) {
-            const cluster = clusters[i];
-            for (const index of cluster) {
-                result[index] = (i < n - 1) ? i : -1;
-            }
-        }
-        return result;
-    }
-}
-
-/**
- * @class
- * @alias LSP
- */
-class LSP extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias LSP
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {number} [k = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.
-     * @param {number} [control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints
-     * @param {number} [d = 2] - the dimensionality of the projection.
-     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @returns {LSP}
-     * @see {@link https://ieeexplore.ieee.org/document/4378370}
-     */
-    constructor(X, k, control_points, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["k", "control_points"];
-        this.parameter("k", Math.min(k ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        this.parameter("control_points", Math.min(control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
-        this._is_initialized = false;
-        return this;
-    }
-
-    /**
-     * 
-     * @param {DR} DR - method used for position control points.
-     * @param {DR_parameters} DR_parameters - array containing parameters for the DR method which projects the control points
-     * @returns {LSP} 
-     */
-    init(DR=MDS, DR_parameters=[], KNN=BallTree) {
-        if (this._is_initialized) return this;
-        const X = this.X;
-        const N = this._N;
-        const K = this.parameter("k");
-        const d = this._d;
-        const metric = this._metric;
-        const nc = this.parameter("control_points");
-        const control_points = new KMedoids(X, nc, null, metric).get_clusters().medoids;
-        const C = new Matrix(nc, N, "zeros");
-        control_points.forEach((c_i, i) => {
-            C.set_entry(i, c_i, 1);
-        });
-        const Y_C = new DR(Matrix.from(control_points.map(c_i => X.row(c_i))), ...DR_parameters, d).transform();
-        
-        const XA = X.to2dArray;
-        const knn = new KNN(XA, metric);
-        const L = new Matrix(N, N, "I");
-        const alpha = -1/K;
-        XA.forEach((x_i, i) => {
-            for (const {"index": j} of knn.search(x_i, K).iterate()) {
-                if (i === j) continue;
-                L.set_entry(i, j, alpha);
-            }
-        });
-        const A = L.concat(C, "vertical");
-
-        const z = new Matrix(N, d, "zeros");
-        const b = z.concat(Y_C, "vertical");
-        
-        this._A = A;
-        this._b = b;
-        this._is_initialized = true;
-        return this;
-    }
-
-
-    /**
-     * Computes the projection.
-     * @returns {Matrix} Returns the projection.
-     */
-    transform() {
-        this.check_init();
-        const A = this._A;
-        const AT = A.T;
-        const b = this._b;
-        const ATA = AT.dot(A);
-        const ATb = AT.dot(b);
-        this.Y = Matrix.solve_CG(ATA, ATb, this._randomizer);
-        return this.projection;
-    }
-}
-
-class TopoMap extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias Topomap
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @returns {TopoMap}
-     * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
-     */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = [];
-        [ this._N, this._D ] = this.X.shape;
-        this._distance_matrix = new Matrix(this._N, this._N, 0);
-        return this;
-    }
-
-    /**
-     * @private
-     */
-    __lazy_distance_matrix(i, j, metric) {
-        const D = this._distance_matrix;
-        const X = this.X;
-        const D_ij = D.entry(i, j);
-        if (D_ij === 0) {
-            let dist = metric(X.row(i), X.row(j));
-            D.set_entry(i, j, dist);
-            D.set_entry(j, i, dist);
-            return dist;
-        }
-        return D_ij;
-    }
-
-    /**
-     * Computes the minimum spanning tree, using a given metric
-     * @private
-     * @param {Function} metric 
-     * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
-     */
-    _make_minimum_spanning_tree(metric = euclidean) {
-        const N = this._N;
-        const X = [...this.X];
-
-        let disjoint_set = new DisjointSet(X);
-        const F = [];
-        let E = [];
-        for (let i = 0; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                E.push([i, j, this.__lazy_distance_matrix(i, j, metric)]);
-            }
-        }
-        E = E.sort((a, b) => a[2] - b[2]);
-
-        for (const [u, v, w] of E) {
-            const set_u = disjoint_set.find(X[u]);
-            const set_v = disjoint_set.find(X[v]);
-            if (set_u !== set_v) {
-                F.push([u, v, w]);
-                disjoint_set.union(set_u, set_v);
-            }
-        }
-
-        return F.sort((a, b) => a[2] - b[2])
-    }
-
-    /**
-     * initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.
-     */
-    init() {
-        this.Y = new Matrix(this._N, this._d, 0);
-        this._Emst = this._make_minimum_spanning_tree(this._metric);
-        this._is_initialized = true;
-        return this;
-    }
-
-    /**
-     * Returns true if Point C is left of line AB.
-     * @private
-     * @param {Array} PointA - Point A of line AB
-     * @param {Array} PointB - Point B of line AB
-     * @param {Array} PointC - Point C
-     * @returns {Boolean}
-     */
-    __hull_cross([ax, ay], [bx, by], [sx, sy]) {
-        return ((bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0)
-    }
-
-    /**
-     * Computes the convex hull of the set of Points S
-     * @private
-     * @param {Array} S - Set of Points.
-     * @see {@link https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#JavaScript}
-     * @returns {Array} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.
-     */
-    __hull(S) {
-        const points = S.sort(([x1, y1], [x2, y2]) => y1 - y2 || x1 - x2);
-        const N = points.length;
-        if (N <= 2) return points;
-
-        const lower = [];
-        for (let i = 0; i < N; ++i) {
-            while (lower.length >= 2 && this.__hull_cross(lower[lower.length - 2], lower[lower.length -1], points[i])) {
-                lower.pop();
-            }
-            lower.push(points[i]);
-        }
-        const upper = [];
-        for (let i = N - 1; i >= 0; --i) {
-            while (upper.length >= 2 && this.__hull_cross(upper[upper.length - 2], upper[upper.length -1], points[i])) {
-                upper.pop();
-            }
-            upper.push(points[i]);
-        }
-        upper.pop();
-        lower.pop();
-        return lower.concat(upper);
-    }
-
-    /**
-     * Finds the angle to rotate Point A and B to lie on a line parallel to the x-axis.
-     * @private
-     * @param {Array} PointA 
-     * @param {Array} PointB
-     * @return {Object} Object containing the sinus- and cosinus-values for a rotation.  
-     */
-    __findAngle([p1x, p1y], [p2x, p2y]) {
-        const n = euclidean([p1x, p1y], [p2x, p2y]);
-        if (n === 0) return {
-            "sin": 0, 
-            "cos": 1
-        }
-        const vec = [(p2x - p1x) / n, (p2y - p1y) / n];
-        const cos = vec[0];
-        let sin = Math.sqrt(1 - (cos * cos));
-        sin = vec[1] >= 0 ? -sin : sin;
-        return {
-            "sin": sin, 
-            "cos": cos
-        }
-    }
-
-    /**
-     * @private
-     * @param {Array} hull 
-     * @param {Array} p 
-     * @param {Bool} topEdge
-     */
-    __align_hull(hull, p, topEdge) {
-        let v = -1;
-        let d2;
-        for (let i = 0; i < hull.length; ++i) {
-            const d = euclidean(hull[i], p);
-            if (v === -1) {
-                d2 = d; 
-                v = i;
-            } else {
-                if (d2 > d) {
-                    d2 = d; 
-                    v = i;
-                }
-            }
-        }
-
-        let v1;
-        let v2;
-        if (topEdge) {
-            v1 = hull[v];
-            v2 = hull[(v + 1) % hull.length];
-        } else {
-            if (v == 0) v = hull.length - 1;
-            v1 = hull[v];
-            v2 = hull[(v - 1) % hull.length];
-        }
-        
-        const transformation = {
-            "tx": -hull[v][0],
-            "ty": -hull[v][1],
-        };
-
-        if (hull.length >= 2) {
-            const {sin, cos} = this.__findAngle(v1, v2);
-            transformation.sin = sin;
-            transformation.cos = cos;
-        } else {
-            transformation.sin = 0;
-            transformation.cos = 1;
-        }
-
-        return transformation;
-    }
-
-    /**
-     * @private
-     * @param {Array} Point - The point which should get transformed.
-     * @param {Object} Transformation - contains the values for translation and rotation.
-     */
-    __transform([px, py], {tx, ty, sin, cos}) {
-        let x = px + tx;
-        let y = py + ty;
-        let xx = x * cos - y * sin;
-        let yy = x * sin + y * cos;
-        return [xx, yy];
-    }
-
-    /**
-     * Calls {@link __transform} for each point in Set C
-     * @private
-     * @param {Array} C - Set of points.
-     * @param {Object} t - Transform object. 
-     * @param {Number} yOffset - value to offset set C.
-     */
-    __transform_component(C, t, yOffset) {
-        const N = C.length;
-        for (let i = 0; i < N; ++i) {
-            const c = C[i];
-            const [cx, cy] = this.__transform(c, t);
-            c[0] = cx; 
-            c[1] = cy + yOffset;
-        }
-    }
-
-    /**
-     * @private
-     * @param {Array} u - point u
-     * @param {Array} v - point v
-     * @param {Number} w - edge weight w
-     */
-    __align_components = (u, v, w)  => {
-        const points_u = [...u.__disjoint_set.children];
-        const points_v = [...v.__disjoint_set.children];
-        
-        const hull_u = this.__hull(points_u);
-        const hull_v = this.__hull(points_v);        
-
-        const t_u = this.__align_hull(hull_u, u, false);
-        const t_v = this.__align_hull(hull_v, v, true);
-
-        this.__transform_component(points_u, t_u, 0);
-        this.__transform_component(points_v, t_v, w);
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality 2.
-     */
-    transform() {
-        if (!this._is_initialized) this.init();
-        const Emst = this._Emst;
-        const Y = [...this.Y];
-        const components = new DisjointSet(Y.map((y, i) => {
-            y.i = i;
-            return y;
-        }));
-        
-        for (const [u, v, w] of Emst) {
-            const component_u = components.find(Y[u]);
-            const component_v = components.find(Y[v]);
-            if (component_u === component_v) continue;
-            this.__align_components(component_u, component_v, w);
-            components.union(component_u, component_v);
-        }
-        return this.projection;
-    }
-
-    * generator() {
-        if (!this._is_initialized) this.init();
-        const Emst = this._Emst;
-        const Y = [...this.Y];
-        const components = new DisjointSet(Y.map((y, i) => {
-            y.i = i;
-            return y;
-        }));
-        
-        for (const [u, v, w] of Emst) {
-            const component_u = components.find(Y[u]);
-            const component_v = components.find(Y[v]);
-            if (component_u === component_v) continue;
-            this.__align_components(component_u, component_v, w);
-            components.union(component_u, component_v);
-            /* let ok = true
-            Y.forEach(([x, y]) => ok = ok && !isNaN(x) && !isNaN(y))
-            if (!ok) {
-                console.log(...Y) 
-                throw "error" 
-            } */
-            yield this.projection;
-        }
-        return this.projection;
-    }
-} 
-
-/**
- * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}
- */
-class DisjointSet {
-    constructor(elements = null) {
-        this._list = new Set();
-        if (elements) {
-            for (const e of elements) {
-                this.make_set(e);
-            }
-        }
-        return this;
-    }
-
-    make_set(x) {
-        const list = this._list;
-        if (!list.has(x)) {
-            list.add(x);
-            x.__disjoint_set = {};
-            x.__disjoint_set.parent = x;
-            x.__disjoint_set.children = new Set([x]);
-            x.__disjoint_set.size = 1;
-        }
-        return this;
-    }
-
-    find(x) {
-        const list = this._list;
-        if (list.has(x)) {
-            if (x.__disjoint_set.parent !== x) {
-                x.__disjoint_set.children.add(...x);
-                x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);
-                return x.__disjoint_set.parent;
-            } else {
-                return x;
-            }
-        } else {
-            return null;
-        }
-    }
-
-    union(x, y) {
-        let node_x = this.find(x);
-        let node_y = this.find(y);
-
-        if (node_x === node_y) return this;
-        if (node_x.__disjoint_set.size < node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];
-
-        node_y.__disjoint_set.parent = node_x;
-        // keep track of children?
-        node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);
-        node_x.__disjoint_set.size += node_y.__disjoint_set.size;
-
-        return this;
-    }
-}
-
-class SAMMON extends DR {
-    /**
-     * 
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias SAMMON
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @returns {SAMMON}
-     * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
-     */
-    constructor(X, max_halves=5, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["max_halves"];
-        this.parameter("max_halves", max_halves);
-        [ this._N, this._D ] = this.X.shape;
-        return this;
-    }
-
-    /**
-     * initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.
-     */
-    init(DR="random", Distance_matrix=null) {
-        const N = this._N;
-        const d = this._d;
-
-        if (DR === "random") {
-            const randomizer = this._randomizer;
-            console.log(randomizer);
-            this.Y = new Matrix(N, d, () => randomizer.random);
-        } else {
-            this.Y = DR.transform(this.X);
-        }
-        const Y = this.Y;
-
-        if (!Distance_matrix) {
-            Distance_matrix = new Matrix(N, N);
-        }
-
-        const metric = this._metric;
-        let distance_matrix = new Matrix(N, N);
-        let distance_inverse_matrix = new Matrix(N, N);
-        for (let i = 0; i < N; ++i) {
-            const Y_i = Y.row(i);
-            for (let j = i; j < N; ++j) {
-                let distance = i === j ? 1 : metric(Y_i, Y.row(j));
-                let distance_inverse = 1 / distance;
-                distance_matrix.set_entry(i, j, distance);
-                distance_matrix.set_entry(j, i, distance);
-                distance_inverse_matrix.set_entry(i, j, distance_inverse);
-                distance_inverse_matrix.set_entry(j, i, distance_inverse);
-                if (!Distance_matrix) {
-                    let Distance = i === j ? 1 : metric(X.row(i), X.row(j));
-                    Distance_matrix.set_entry(i, j, Distance);
-                    Distance_matrix.set_entry(j, i, Distance);
-                }
-            }
-        }
-        let Distance_inverse_matrix = Distance_matrix._apply(1, (d, v) => v / d);
-        let delta = Distance_matrix.sub(distance_matrix);
-        let E = delta._apply(2, (d, v) => Math.pow(d, v)).mult(Distance_inverse_matrix);
-        console.log(E);
-        this._distance_matrix = distance_matrix;
-        this._distance_inverse_matrix = distance_inverse_matrix;
-        this._Distance_matrix = Distance_matrix;
-        this._Distance_inverse_matrix = distance_inverse_matrix;
-        this._delta = delta;
-        this._ones = new Matrix(N, d, 1);
-        this._E = E.sum;
-
-        return this;
-    }
-
-    /**
-     * @private
-     * @param {Matrix} A
-     * @returns {Matrix} 
-     */
-    __distance_matrix(A) {
-        const metric = this._metric;
-        const N = A.shape[0];
-        const D = new Matrix(N, N);
-        for (let i = 0; i < N; ++i) {
-            const A_i = A.row(i);
-            for (let j = i; j < N; ++j) {
-                let distance = (i === j ? 1 : metric(A_i, A.row(j)));
-                D.set_entry(i, j, distance);
-                D.set_entry(j, i, distance);
-            }
-        }
-        return D;                
-    }
-
-    /**
-     * Transforms the inputdata {@link X} to dimenionality 2.
-     */
-    transform(max_iter=20) {
-        if (!this._is_initialized) this.init();
-
-        for (let j = 0; j < max_iter; ++j) {
-            console.log([...this.Y]);
-            this._step();
-        }
-
-        return this.projection;
-    }
-
-    * generator() {
-        if (!this._is_initialized) this.init();
-
-        for (let j = 0; j < max_iter; ++j) {
-            this._step();
-            yield this.projection;
-        }
-
-        return this.projection;
-    }
-
-    _step() {
-        const max_halves = this.parameter("max_halves");
-
-        let distance_matrix = this._distance_matrix;
-        let distance_inverse_matrix = this._distance_inverse_matrix;
-        let Distance_matrix = this._Distance_matrix;
-        let Distance_inverse_matrix = this._Distance_inverse_matrix;
-        let ones = this._ones;
-        let E = this._E;
-        let Y = this.Y;
-
-        let delta = distance_inverse_matrix.sub(Distance_inverse_matrix);
-        let delta_one = delta.dot(ones);
-        let g = delta.dot(Y).sub(Y.mult(delta_one));
-        let dinv3 = distance_inverse_matrix._apply(3, (d, v) => Math.pow(d, v));
-        let Y2 = Y._apply(2, (d, v) => Math.pow(d, v));
-        let H = dinv3.dot(Y2).sub(delta_one).sub(Y.mult(2).mult(dinv3.dot(Y))).add(Y2.mult(dinv3.dot(ones)));
-        H = H._apply(null, (d) => Math.abs(d));
-        let s = g.divide(H);
-        let Y_old = Y.clone();
-
-        for (let j = 0; j < max_halves; ++j) {
-            Y = Y_old.add(s);
-            distance_matrix = this.__distance_matrix(Y);
-            distance_inverse_matrix = distance_matrix._apply(1, (d, v) => v / d);
-            delta = Distance_matrix.sub(distance_matrix);
-            let E_new = delta._apply(2, (d, v) => Math.pow(d, v)).mult(Distance_inverse_matrix).sum;
-            if (E_new < E) {
-                break;
-            } else {
-                s = s.mult(.5);
-            }
-        }
-
-        this.Y = Y;
-    }
-}
-
-var version="0.3.6";
-
-exports.BallTree = BallTree;
-exports.FASTMAP = FASTMAP;
-exports.Heap = Heap;
-exports.Hierarchical_Clustering = Hierarchical_Clustering;
-exports.ISOMAP = ISOMAP;
-exports.KMeans = KMeans;
-exports.KMedoids = KMedoids;
-exports.LDA = LDA;
-exports.LLE = LLE;
-exports.LSP = LSP;
-exports.LTSA = LTSA;
-exports.MDS = MDS;
-exports.Matrix = Matrix;
-exports.OPTICS = OPTICS;
-exports.PCA = PCA;
-exports.Randomizer = Randomizer;
-exports.SAMMON = SAMMON;
-exports.TSNE = TSNE;
-exports.TopoMap = TopoMap;
-exports.TriMap = TriMap;
-exports.UMAP = UMAP;
-exports.canberra = canberra;
-exports.chebyshev = chebyshev;
-exports.cosine = cosine;
-exports.distance_matrix = dmatrix;
-exports.euclidean = euclidean;
-exports.euclidean_squared = euclidean_squared;
-exports.k_nearest_neighbors = k_nearest_neighbors;
-exports.kahan_sum = kahan_sum;
-exports.linspace = linspace;
-exports.manhattan = manhattan;
-exports.max = max;
-exports.neumair_sum = neumair_sum;
-exports.norm = norm;
-exports.powell = powell;
-exports.qr = qr;
-exports.simultaneous_poweriteration = simultaneous_poweriteration$1;
-exports.version = version;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["druid"] = factory();
+	else
+		root["druid"] = factory();
+})(this, function() {
+return /******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./clustering/Hierarchical_Clustering.js":
+/*!***********************************************!*\
+  !*** ./clustering/Hierarchical_Clustering.js ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Hierarchical_Clustering\": () => (/* binding */ Hierarchical_Clustering)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n\n/**\r\n * @class\r\n * @alias Hierarchical_Clustering\r\n */\n\nclass Hierarchical_Clustering {\n  /**\r\n   * @constructor\r\n   * @memberof module:clustering\r\n   * @alias Hierarchical_Clustering\r\n   * @todo needs restructuring. \r\n   * @param {Matrix} matrix \r\n   * @param {(\"single\"|\"complete\"|\"average\")} [linkage = \"single\"] \r\n   * @param {Function} [metric = euclidean] \r\n   * @returns {Hierarchical_Clustering}\r\n   */\n  constructor(matrix, linkage = \"single\", metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean) {\n    this._id = 0;\n    this._matrix = matrix;\n    this._metric = metric;\n    this._linkage = linkage;\n    this.init();\n    this.root = this.do();\n    return this;\n  }\n  /**\r\n   * \r\n   * @param {Number} value - value where to cut the tree.\r\n   * @param {(\"distance\"|\"depth\")} [type = \"distance\"] - type of value.\r\n   * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.\r\n   */\n\n\n  get_clusters(value, type = \"distance\") {\n    let clusters = [];\n    let accessor;\n\n    switch (type) {\n      case \"distance\":\n        accessor = d => d.dist;\n\n        break;\n\n      case \"depth\":\n        accessor = d => d.depth;\n\n        break;\n\n      default:\n        throw \"invalid type\";\n    }\n\n    this._traverse(this.root, accessor, value, clusters);\n\n    return clusters;\n  }\n  /**\r\n   * @private\r\n   * @param {} node \r\n   * @param {*} f \r\n   * @param {*} value \r\n   * @param {*} result \r\n   */\n\n\n  _traverse(node, f, value, result) {\n    if (f(node) <= value) {\n      result.push(node.leaves());\n    } else {\n      this._traverse(node.left, f, value, result);\n\n      this._traverse(node.right, f, value, result);\n    }\n  }\n  /**\r\n   * computes the tree.\r\n   */\n\n\n  init() {\n    const metric = this._metric;\n    const A = this._matrix;\n    const n = this._n = A.shape[0];\n    const d_min = this._d_min = new Float64Array(n);\n    const distance_matrix = this._distance_matrix = new Array(n);\n\n    for (let i = 0; i < n; ++i) {\n      d_min[i] = 0;\n      distance_matrix[i] = new Float64Array(n);\n\n      for (let j = 0; j < n; ++j) {\n        distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));\n\n        if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {\n          d_min[i] = j;\n        }\n      }\n    }\n\n    const clusters = this._clusters = new Array(n);\n    const c_size = this._c_size = new Uint16Array(n);\n\n    for (let i = 0; i < n; ++i) {\n      clusters[i] = [];\n      clusters[i][0] = new Cluster(this._id++, null, null, 0, A.row(i), i, 1, 0);\n      c_size[i] = 1;\n    }\n\n    return this;\n  }\n  /**\r\n   * computes the tree.\r\n   */\n\n\n  do() {\n    const n = this._n;\n    const d_min = this._d_min;\n    const D = this._distance_matrix;\n    const clusters = this._clusters;\n    const c_size = this._c_size;\n    const linkage = this._linkage;\n    let root = null;\n\n    for (let p = 0, p_max = n - 1; p < p_max; ++p) {\n      let c1 = 0;\n\n      for (let i = 0; i < n; ++i) {\n        if (D[i][d_min[i]] < D[c1][d_min[c1]]) {\n          c1 = i;\n        }\n      }\n\n      let c2 = d_min[c1];\n      let c1_cluster = clusters[c1][0];\n      let c2_cluster = clusters[c2][0];\n      let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2]);\n      clusters[c1].unshift(new_cluster);\n      c_size[c1] += c_size[c2];\n\n      for (let j = 0; j < n; ++j) {\n        switch (linkage) {\n          case \"single\":\n            if (D[c1][j] > D[c2][j]) {\n              D[j][c1] = D[c1][j] = D[c2][j];\n            }\n\n            break;\n\n          case \"complete\":\n            if (D[c1][j] < D[c2][j]) {\n              D[j][c1] = D[c1][j] = D[c2][j];\n            }\n\n            break;\n\n          case \"average\":\n            D[j][c1] = D[c1][j] = (c_size[c1] * D[c1][j] + c_size[c2] * D[c2][j]) / (c_size[c1] + c_size[j]);\n            break;\n        }\n      }\n\n      D[c1][c1] = Infinity;\n\n      for (let i = 0; i < n; ++i) {\n        D[i][c2] = D[c2][i] = Infinity;\n      }\n\n      for (let j = 0; j < n; ++j) {\n        if (d_min[j] === c2) {\n          d_min[j] = c1;\n        }\n\n        if (D[c1][j] < D[c1][d_min[c1]]) {\n          d_min[c1] = j;\n        }\n      }\n\n      root = new_cluster;\n    }\n\n    return root;\n  }\n\n}\n\nclass Cluster {\n  constructor(id, left, right, dist, centroid, index, size, depth) {\n    this.id = id;\n    this.left = left;\n    this.right = right;\n    this.dist = dist;\n    this.index = index;\n    this.size = size != null ? size : left.size + right.size;\n    this.depth = depth != null ? depth : 1 + Math.max(left.depth, right.depth);\n    this.centroid = centroid != null ? centroid : this._calculate_centroid(left, right);\n    return this;\n  }\n\n  _calculate_centroid(left, right) {\n    const l_size = left.size;\n    const r_size = right.size;\n    const l_centroid = left.centroid;\n    const r_centroid = right.centroid;\n    const size = this.size;\n    const n = left.centroid.length;\n    const new_centroid = new Float64Array(n);\n\n    for (let i = 0; i < n; ++i) {\n      new_centroid[i] = (l_size * l_centroid[i] + r_size * r_centroid[i]) / size;\n    }\n\n    return new_centroid;\n  }\n\n  get isLeaf() {\n    return this.depth === 0;\n  }\n\n  leaves() {\n    if (this.isLeaf) return [this.index];\n    const left = this.left;\n    const right = this.right;\n    return (left.isLeaf ? [left.index] : left.leaves()).concat(right.isLeaf ? [right.index] : right.leaves());\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2NsdXN0ZXJpbmcvSGllcmFyY2hpY2FsX0NsdXN0ZXJpbmcuanM/ZDgyMyJdLCJuYW1lcyI6WyJIaWVyYXJjaGljYWxfQ2x1c3RlcmluZyIsImNvbnN0cnVjdG9yIiwibWF0cml4IiwibGlua2FnZSIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsIl9pZCIsIl9tYXRyaXgiLCJfbWV0cmljIiwiX2xpbmthZ2UiLCJpbml0Iiwicm9vdCIsImRvIiwiZ2V0X2NsdXN0ZXJzIiwidmFsdWUiLCJ0eXBlIiwiY2x1c3RlcnMiLCJhY2Nlc3NvciIsImQiLCJkaXN0IiwiZGVwdGgiLCJfdHJhdmVyc2UiLCJub2RlIiwiZiIsInJlc3VsdCIsInB1c2giLCJsZWF2ZXMiLCJsZWZ0IiwicmlnaHQiLCJBIiwibiIsIl9uIiwic2hhcGUiLCJkX21pbiIsIl9kX21pbiIsIkZsb2F0NjRBcnJheSIsImRpc3RhbmNlX21hdHJpeCIsIl9kaXN0YW5jZV9tYXRyaXgiLCJBcnJheSIsImkiLCJqIiwiSW5maW5pdHkiLCJyb3ciLCJfY2x1c3RlcnMiLCJjX3NpemUiLCJfY19zaXplIiwiVWludDE2QXJyYXkiLCJDbHVzdGVyIiwiRCIsInAiLCJwX21heCIsImMxIiwiYzIiLCJjMV9jbHVzdGVyIiwiYzJfY2x1c3RlciIsIm5ld19jbHVzdGVyIiwidW5zaGlmdCIsImlkIiwiY2VudHJvaWQiLCJpbmRleCIsInNpemUiLCJNYXRoIiwibWF4IiwiX2NhbGN1bGF0ZV9jZW50cm9pZCIsImxfc2l6ZSIsInJfc2l6ZSIsImxfY2VudHJvaWQiLCJyX2NlbnRyb2lkIiwibGVuZ3RoIiwibmV3X2NlbnRyb2lkIiwiaXNMZWFmIiwiY29uY2F0Il0sIm1hcHBpbmdzIjoiOzs7OztBQUFBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7O0FBQ08sTUFBTUEsdUJBQU4sQ0FBOEI7QUFDakM7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDSUMsYUFB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ZSxDQUF0QjtBQUNIOztBQUVETSxRQUFNLEdBQUc7QUFDTCxRQUFJLEtBQUs0QyxNQUFULEVBQWlCLE9BQU8sQ0FBQyxLQUFLWCxLQUFOLENBQVA7QUFDakIsVUFBTWhDLElBQUksR0FBRyxLQUFLQSxJQUFsQjtBQUNBLFVBQU1DLEtBQUssR0FBRyxLQUFLQSxLQUFuQjtBQUNBLFdBQU8sQ0FBQ0QsSUFBSSxDQUFDMkMsTUFBTCxHQUFjLENBQUMzQyxJQUFJLENBQUNnQyxLQUFOLENBQWQsR0FBNkJoQyxJQUFJLENBQUNELE1BQUwsRUFBOUIsRUFDRjZDLE1BREUsQ0FDSzNDLEtBQUssQ0FBQzBDLE1BQU4sR0FBZSxDQUFDMUMsS0FBSyxDQUFDK0IsS0FBUCxDQUFmLEdBQStCL0IsS0FBSyxDQUFDRixNQUFOLEVBRHBDLENBQVA7QUFFSDs7QUFyQ1MiLCJmaWxlIjoiLi9jbHVzdGVyaW5nL0hpZXJhcmNoaWNhbF9DbHVzdGVyaW5nLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuXHJcbi8qKlxyXG4gKiBAY2xhc3NcclxuICogQGFsaWFzIEhpZXJhcmNoaWNhbF9DbHVzdGVyaW5nXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgSGllcmFyY2hpY2FsX0NsdXN0ZXJpbmcge1xyXG4gICAgLyoqXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6Y2x1c3RlcmluZ1xyXG4gICAgICogQGFsaWFzIEhpZXJhcmNoaWNhbF9DbHVzdGVyaW5nXHJcbiAgICAgKiBAdG9kbyBuZWVkcyByZXN0cnVjdHVyaW5nLiBcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBtYXRyaXggXHJcbiAgICAgKiBAcGFyYW0geyhcInNpbmdsZVwifFwiY29tcGxldGVcInxcImF2ZXJhZ2VcIil9IFtsaW5rYWdlID0gXCJzaW5nbGVcIl0gXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSBcclxuICAgICAqIEByZXR1cm5zIHtIaWVyYXJjaGljYWxfQ2x1c3RlcmluZ31cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IobWF0cml4LCBsaW5rYWdlPVwic2luZ2xlXCIsIG1ldHJpYz1ldWNsaWRlYW4pIHtcclxuICAgICAgICB0aGlzLl9pZCA9IDA7XHJcbiAgICAgICAgdGhpcy5fbWF0cml4ID0gbWF0cml4O1xyXG4gICAgICAgIHRoaXMuX21ldHJpYyA9IG1ldHJpYztcclxuICAgICAgICB0aGlzLl9saW5rYWdlID0gbGlua2FnZTtcclxuICAgICAgICB0aGlzLmluaXQoKTtcclxuICAgICAgICB0aGlzLnJvb3QgPSB0aGlzLmRvKCk7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSB2YWx1ZSAtIHZhbHVlIHdoZXJlIHRvIGN1dCB0aGUgdHJlZS5cclxuICAgICAqIEBwYXJhbSB7KFwiZGlzdGFuY2VcInxcImRlcHRoXCIpfSBbdHlwZSA9IFwiZGlzdGFuY2VcIl0gLSB0eXBlIG9mIHZhbHVlLlxyXG4gICAgICogQHJldHVybnMge0FycmF5PEFycmF5Pn0gQXJyYXkgb2YgY2x1c3RlcnMgd2l0aCB0aGUgaW5kaWNlcyBvZiB0aGUgcm93cyBpbiBnaXZlbiB7QGxpbmsgbWF0cml4fS5cclxuICAgICAqL1xyXG4gICAgZ2V0X2NsdXN0ZXJzKHZhbHVlLCB0eXBlPVwiZGlzdGFuY2VcIikge1xyXG4gICAgICAgIGxldCBjbHVzdGVycyA9IFtdO1xyXG4gICAgICAgIGxldCBhY2Nlc3NvcjtcclxuICAgICAgICBzd2l0Y2ggKHR5cGUpIHtcclxuICAgICAgICAgICAgY2FzZSBcImRpc3RhbmNlXCI6XHJcbiAgICAgICAgICAgICAgICBhY2Nlc3NvciA9IGQgPT4gZC5kaXN0O1xyXG4gICAgICAgICAgICAgICAgYnJlYWs7XHJcbiAgICAgICAgICAgIGNhc2UgXCJkZXB0aFwiOlxyXG4gICAgICAgICAgICAgICAgYWNjZXNzb3IgPSBkID0+IGQuZGVwdGg7XHJcbiAgICAgICAgICAgICAgICBicmVhaztcclxuICAgICAgICAgICAgZGVmYXVsdDpcclxuICAgICAgICAgICAgICAgIHRocm93IFwiaW52YWxpZCB0eXBlXCI7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHRoaXMuX3RyYXZlcnNlKHRoaXMucm9vdCwgYWNjZXNzb3IsIHZhbHVlLCBjbHVzdGVycylcclxuICAgICAgICByZXR1cm4gY2x1c3RlcnNcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge30gbm9kZSBcclxuICAgICAqIEBwYXJhbSB7Kn0gZiBcclxuICAgICAqIEBwYXJhbSB7Kn0gdmFsdWUgXHJcbiAgICAgKiBAcGFyYW0geyp9IHJlc3VsdCBcclxuICAgICAqL1xyXG4gICAgX3RyYXZlcnNlKG5vZGUsIGYsIHZhbHVlLCByZXN1bHQpIHtcclxuICAgICAgICBpZiAoZihub2RlKSA8PSB2YWx1ZSkge1xyXG4gICAgICAgICAgICByZXN1bHQucHVzaChub2RlLmxlYXZlcygpKVxyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIHRoaXMuX3RyYXZlcnNlKG5vZGUubGVmdCwgZiwgdmFsdWUsIHJlc3VsdCk7XHJcbiAgICAgICAgICAgIHRoaXMuX3RyYXZlcnNlKG5vZGUucmlnaHQsIGYsIHZhbHVlLCByZXN1bHQpO1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIGNvbXB1dGVzIHRoZSB0cmVlLlxyXG4gICAgICovXHJcbiAgICBpbml0KCkge1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fbWF0cml4O1xyXG4gICAgICAgIGNvbnN0IG4gPSB0aGlzLl9uID0gQS5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBkX21pbiA9IHRoaXMuX2RfbWluID0gbmV3IEZsb2F0NjRBcnJheShuKTtcclxuICAgICAgICBjb25zdCBkaXN0YW5jZV9tYXRyaXggPSB0aGlzLl9kaXN0YW5jZV9tYXRyaXggPSBuZXcgQXJyYXkobik7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICAgICAgZF9taW5baV0gPSAwO1xyXG4gICAgICAgICAgICBkaXN0YW5jZV9tYXRyaXhbaV0gPSBuZXcgRmxvYXQ2NEFycmF5KG4pO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IG47ICsraikge1xyXG4gICAgICAgICAgICAgICAgZGlzdGFuY2VfbWF0cml4W2ldW2pdID0gaSA9PT0gaiA/IEluZmluaXR5IDogbWV0cmljKEEucm93KGkpLCBBLnJvdyhqKSlcclxuICAgICAgICAgICAgICAgIGlmIChkaXN0YW5jZV9tYXRyaXhbaV1bZF9taW5baV1dID4gZGlzdGFuY2VfbWF0cml4W2ldW2pdKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgZF9taW5baV0gPSBqO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGNvbnN0IGNsdXN0ZXJzID0gdGhpcy5fY2x1c3RlcnMgPSBuZXcgQXJyYXkobik7XHJcbiAgICAgICAgY29uc3QgY19zaXplID0gdGhpcy5fY19zaXplID0gbmV3IFVpbnQxNkFycmF5KG4pO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgIGNsdXN0ZXJzW2ldID0gW107XHJcbiAgICAgICAgICAgIGNsdXN0ZXJzW2ldWzBdID0gbmV3IENsdXN0ZXIodGhpcy5faWQrKywgbnVsbCwgbnVsbCwgMCwgQS5yb3coaSksIGksIDEsIDApO1xyXG4gICAgICAgICAgICBjX3NpemVbaV0gPSAxO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIGNvbXB1dGVzIHRoZSB0cmVlLlxyXG4gICAgICovXHJcbiAgICBkbygpIHtcclxuICAgICAgICBjb25zdCBuID0gdGhpcy5fbjtcclxuICAgICAgICBjb25zdCBkX21pbiA9IHRoaXMuX2RfbWluO1xyXG4gICAgICAgIGNvbnN0IEQgPSB0aGlzLl9kaXN0YW5jZV9tYXRyaXg7XHJcbiAgICAgICAgY29uc3QgY2x1c3RlcnMgPSB0aGlzLl9jbHVzdGVycztcclxuICAgICAgICBjb25zdCBjX3NpemUgPSB0aGlzLl9jX3NpemU7XHJcbiAgICAgICAgY29uc3QgbGlua2FnZSA9IHRoaXMuX2xpbmthZ2U7XHJcbiAgICAgICAgbGV0IHJvb3QgPSBudWxsO1xyXG4gICAgICAgIGZvciAobGV0IHAgPSAwLCBwX21heCA9IG4gLSAxOyBwIDwgcF9tYXg7ICsrcCkge1xyXG4gICAgICAgICAgICBsZXQgYzEgPSAwO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICAgICAgaWYgKERbaV1bZF9taW5baV1dIDwgRFtjMV1bZF9taW5bYzFdXSkge1xyXG4gICAgICAgICAgICAgICAgICAgIGMxID0gaTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBsZXQgYzIgPSBkX21pbltjMV07XHJcbiAgICAgICAgICAgIGxldCBjMV9jbHVzdGVyID0gY2x1c3RlcnNbYzFdWzBdO1xyXG4gICAgICAgICAgICBsZXQgYzJfY2x1c3RlciA9IGNsdXN0ZXJzW2MyXVswXTtcclxuICAgICAgICAgICAgbGV0IG5ld19jbHVzdGVyID0gbmV3IENsdXN0ZXIodGhpcy5faWQrKywgYzFfY2x1c3RlciwgYzJfY2x1c3RlciwgRFtjMV1bYzJdKTtcclxuICAgICAgICAgICAgY2x1c3RlcnNbYzFdLnVuc2hpZnQobmV3X2NsdXN0ZXIpO1xyXG4gICAgICAgICAgICBjX3NpemVbYzFdICs9IGNfc2l6ZVtjMl07XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgbjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBzd2l0Y2gobGlua2FnZSkge1xyXG4gICAgICAgICAgICAgICAgICAgIGNhc2UgXCJzaW5nbGVcIjpcclxuICAgICAgICAgICAgICAgICAgICAgICAgaWYgKERbYzFdW2pdID4gRFtjMl1bal0pIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIERbal1bYzFdID0gRFtjMV1bal0gPSBEW2MyXVtqXTtcclxuICAgICAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgICAgICAgICBicmVhaztcclxuICAgICAgICAgICAgICAgICAgICBjYXNlIFwiY29tcGxldGVcIjpcclxuICAgICAgICAgICAgICAgICAgICAgICAgaWYgKERbYzFdW2pdIDwgRFtjMl1bal0pIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIERbal1bYzFdID0gRFtjMV1bal0gPSBEW2MyXVtqXTtcclxuICAgICAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgICAgICAgICBicmVhaztcclxuICAgICAgICAgICAgICAgICAgICBjYXNlIFwiYXZlcmFnZVwiOlxyXG4gICAgICAgICAgICAgICAgICAgICAgICBEW2pdW2MxXSA9IERbYzFdW2pdID0gKGNfc2l6ZVtjMV0gKiBEW2MxXVtqXSArIGNfc2l6ZVtjMl0gKiBEW2MyXVtqXSkgLyAoY19zaXplW2MxXSArIGNfc2l6ZVtqXSk7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGJyZWFrO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIERbYzFdW2MxXSA9IEluZmluaXR5O1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICAgICAgRFtpXVtjMl0gPSBEW2MyXVtpXSA9IEluZmluaXR5O1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgbjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBpZiAoZF9taW5bal0gPT09IGMyKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgZF9taW5bal0gPSBjMTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGlmIChEW2MxXVtqXSA8IERbYzFdW2RfbWluW2MxXV0pIHtcclxuICAgICAgICAgICAgICAgICAgICBkX21pbltjMV0gPSBqO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHJvb3QgPSBuZXdfY2x1c3RlclxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gcm9vdDtcclxuICAgIH1cclxuICAgIFxyXG59XHJcblxyXG5jbGFzcyBDbHVzdGVyIHtcclxuICAgIGNvbnN0cnVjdG9yKGlkLCBsZWZ0LCByaWdodCwgZGlzdCwgY2VudHJvaWQsIGluZGV4LCBzaXplLCBkZXB0aCkge1xyXG4gICAgICAgIHRoaXMuaWQgPSBpZDtcclxuICAgICAgICB0aGlzLmxlZnQgPSBsZWZ0O1xyXG4gICAgICAgIHRoaXMucmlnaHQgPSByaWdodDtcclxuICAgICAgICB0aGlzLmRpc3QgPSBkaXN0O1xyXG4gICAgICAgIHRoaXMuaW5kZXggPSBpbmRleDtcclxuICAgICAgICB0aGlzLnNpemUgPSBzaXplICE9IG51bGwgPyBzaXplIDogbGVmdC5zaXplICsgcmlnaHQuc2l6ZTtcclxuICAgICAgICB0aGlzLmRlcHRoID0gZGVwdGggIT0gbnVsbCA/IGRlcHRoIDogMSArIE1hdGgubWF4KGxlZnQuZGVwdGgsIHJpZ2h0LmRlcHRoKTtcclxuICAgICAgICB0aGlzLmNlbnRyb2lkID0gY2VudHJvaWQgIT0gbnVsbCA/IGNlbnRyb2lkIDogdGhpcy5fY2FsY3VsYXRlX2NlbnRyb2lkKGxlZnQsIHJpZ2h0KTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICBfY2FsY3VsYXRlX2NlbnRyb2lkKGxlZnQsIHJpZ2h0KSB7XHJcbiAgICAgICAgY29uc3QgbF9zaXplID0gbGVmdC5zaXplO1xyXG4gICAgICAgIGNvbnN0IHJfc2l6ZSA9IHJpZ2h0LnNpemU7XHJcbiAgICAgICAgY29uc3QgbF9jZW50cm9pZCA9IGxlZnQuY2VudHJvaWQ7XHJcbiAgICAgICAgY29uc3Qgcl9jZW50cm9pZCA9IHJpZ2h0LmNlbnRyb2lkO1xyXG4gICAgICAgIGNvbnN0IHNpemUgPSB0aGlzLnNpemU7XHJcbiAgICAgICAgY29uc3QgbiA9IGxlZnQuY2VudHJvaWQubGVuZ3RoO1xyXG4gICAgICAgIGNvbnN0IG5ld19jZW50cm9pZCA9IG5ldyBGbG9hdDY0QXJyYXkobik7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICAgICAgbmV3X2NlbnRyb2lkW2ldID0gKGxfc2l6ZSAqIGxfY2VudHJvaWRbaV0gKyByX3NpemUgKiByX2NlbnRyb2lkW2ldKSAvIHNpemU7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiBuZXdfY2VudHJvaWQ7XHJcbiAgICB9XHJcblxyXG4gICAgZ2V0IGlzTGVhZigpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5kZXB0aCA9PT0gMDtcclxuICAgIH1cclxuXHJcbiAgICBsZWF2ZXMoKSB7XHJcbiAgICAgICAgaWYgKHRoaXMuaXNMZWFmKSByZXR1cm4gW3RoaXMuaW5kZXhdO1xyXG4gICAgICAgIGNvbnN0IGxlZnQgPSB0aGlzLmxlZnQ7XHJcbiAgICAgICAgY29uc3QgcmlnaHQgPSB0aGlzLnJpZ2h0O1xyXG4gICAgICAgIHJldHVybiAobGVmdC5pc0xlYWYgPyBbbGVmdC5pbmRleF0gOiBsZWZ0LmxlYXZlcygpKVxyXG4gICAgICAgICAgICAuY29uY2F0KHJpZ2h0LmlzTGVhZiA/IFtyaWdodC5pbmRleF0gOiByaWdodC5sZWF2ZXMoKSlcclxuICAgIH1cclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./clustering/Hierarchical_Clustering.js\n");
+
+/***/ }),
+
+/***/ "./clustering/KMeans.js":
+/*!******************************!*\
+  !*** ./clustering/KMeans.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"KMeans\": () => (/* binding */ KMeans)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _util_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/index */ \"./util/index.js\");\n/* harmony import */ var _datastructure_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../datastructure/index */ \"./datastructure/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n\n\n\n\n/**\r\n * @class\r\n * @alias KMeans\r\n */\n\nclass KMeans {\n  /**\r\n   * @constructor\r\n   * @memberof module:clustering\r\n   * @alias KMeans\r\n   * @todo needs restructuring. \r\n   * @param {Matrix} matrix \r\n   * @param {Numbers} K \r\n   * @param {Function} [metric = euclidean] \r\n   * @param {Number} [seed = 1987]\r\n   * @param {Boolean} [init = true]\r\n   * @returns {KMeans}\r\n   */\n  constructor(matrix, K, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean, seed = 1987, init = true) {\n    this._metric = metric;\n    this._matrix = matrix;\n    this._K = K;\n    const [N, D] = matrix.shape;\n    this._N = N;\n    this._D = D;\n    if (K > N) K = N;\n    this._randomizer = new _util_index__WEBPACK_IMPORTED_MODULE_1__.Randomizer(seed);\n    this._clusters = new Array(N).fill(undefined);\n    this._cluster_centroids = this._get_random_centroids(K);\n    if (init) this.init(K, this._cluster_centroids);\n    return this;\n  }\n  /**\r\n   * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. \r\n   */\n\n\n  get_clusters() {\n    const K = this._K;\n    const clusters = this._clusters;\n    const result = new Array(K).fill().map(() => new Array());\n    clusters.forEach((c, i) => result[c].push(i));\n    return result;\n  }\n  /**\r\n   * @private\r\n   * @param {Array} points \r\n   * @param {Array} candidates \r\n   */\n\n\n  _furthest_point(points, candidates) {\n    const A = this._matrix;\n    const metric = this._metric;\n    let i = points.length;\n    let H = _datastructure_index__WEBPACK_IMPORTED_MODULE_2__.Heap.heapify(candidates, d => {\n      const Ad = A.row(d);\n      let sum = 0;\n\n      for (let j = 0; j < i; ++j) {\n        sum += metric(Ad, points[j]);\n      }\n\n      return sum;\n    }, \"max\");\n    return H.pop().element;\n  }\n\n  _get_random_centroids(K) {\n    const N = this._N;\n    const randomizer = this._randomizer;\n    const A = this._matrix;\n    const cluster_centroids = new Array(K).fill();\n    const indices = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_3__.linspace)(0, N - 1);\n    const random_point = randomizer.random_int % (N - 1);\n    cluster_centroids[0] = A.row(random_point);\n    const init_points = [random_point];\n    const sample_size = Math.floor((N - K) / K); // / K\n\n    for (let i = 1; i < K; ++i) {\n      // sampling + kmeans++ improvement?\n      const sample = randomizer.choice(indices.filter(d => init_points.indexOf(d) == -1), sample_size);\n\n      const furthest_point = this._furthest_point(cluster_centroids.slice(0, i), sample);\n\n      init_points.push(furthest_point);\n      cluster_centroids[i] = A.row(furthest_point);\n    }\n\n    return cluster_centroids;\n  }\n\n  _iteration(cluster_centroids) {\n    const K = cluster_centroids.length;\n    const N = this._N;\n    const D = this._D;\n    const A = this._matrix;\n    const metric = this._metric;\n    const clusters = this._clusters;\n    let clusters_changed = false; // find nearest cluster centroid.\n\n    for (let i = 0; i < N; ++i) {\n      const Ai = A.row(i);\n      let min_dist = Infinity;\n      let min_cluster = null;\n\n      for (let j = 0; j < K; ++j) {\n        let d = metric(cluster_centroids[j], Ai);\n\n        if (d < min_dist) {\n          min_dist = d;\n          min_cluster = j;\n        }\n      }\n\n      if (clusters[i] !== min_cluster) {\n        clusters_changed = true;\n      }\n\n      clusters[i] = min_cluster;\n    } // update cluster centroid\n    // reset cluster centroids to 0\n\n\n    for (let i = 0; i < K; ++i) {\n      const centroid = cluster_centroids[i];\n\n      for (let j = 0; j < D; ++j) {\n        centroid[j] = 0;\n      }\n    } // compute centroid\n\n\n    this._compute_centroid(cluster_centroids);\n\n    return {\n      \"clusters_changed\": clusters_changed,\n      \"cluster_centroids\": cluster_centroids\n    };\n  }\n\n  _compute_centroid(cluster_centroids) {\n    const K = cluster_centroids.length;\n    const N = this._N;\n    const D = this._D;\n    const A = this._matrix;\n    const clusters = this._clusters;\n    const cluster_counter = new Array(K).fill(0);\n\n    for (let i = 0; i < N; ++i) {\n      const Ai = A.row(i);\n      const ci = clusters[i];\n      cluster_counter[ci]++;\n      const centroid = cluster_centroids[ci];\n\n      for (let j = 0; j < D; ++j) {\n        centroid[j] += Ai[j];\n      }\n    }\n\n    for (let i = 0; i < K; ++i) {\n      const n = cluster_counter[i];\n      cluster_centroids[i] = cluster_centroids[i].map(c => c / n);\n    }\n  }\n  /**\r\n   * Computes {@link K} clusters out of the {@link matrix}.\r\n   * @param {Number} K - number of clusters.\r\n   */\n\n\n  init(K, cluster_centroids) {\n    if (!K) K = this._K;\n    if (!cluster_centroids) cluster_centroids = this._get_random_centroids(K);\n    let clusters_changed = false;\n\n    do {\n      const iteration_result = this._iteration(cluster_centroids);\n\n      cluster_centroids = iteration_result.cluster_centroids;\n      clusters_changed = iteration_result.clusters_changed;\n    } while (clusters_changed);\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2NsdXN0ZXJpbmcvS01lYW5zLmpzPzU4OTYiXSwibmFtZXMiOlsiS01lYW5zIiwiY29uc3RydWN0b3IiLCJtYXRyaXgiLCJLIiwibWV0cmljIiwiZXVjbGlkZWFuIiwic2VlZCIsImluaXQiLCJfbWV0cmljIiwiX21hdHJpeCIsIl9LIiwiTiIsIkQiLCJzaGFwZSIsIl9OIiwiX0QiLCJfcmFuZG9taXplciIsIlJhbmRvbWl6ZXIiLCJfY2x1c3RlcnMiLCJBcnJheSIsImZpbGwiLCJ1bmRlZmluZWQiLCJfY2x1c3Rlcl9jZW50cm9pZHMiLCJfZ2V0X3JhbmRvbV9jZW50cm9pZHMiLCJnZXRfY2x1c3RlcnMiLCJjbHVzdGVycyIsInJlc3VsdCIsIm1hcCIsImZvckVhY2giLCJjIiwiaSIsInB1c2giLCJfZnVydGhlc3RfcG9pbnQiLCJwb2ludHMiLCJjYW5kaWRhdGVzIiwiQSIsImxlbmd0aCIsIkgiLCJIZWFwIiwiZCIsIkFkIiwicm93Iiwic3VtIiwiaiIsInBvcCIsImVsZW1lbnQiLCJyYW5kb21pemVyIiwiY2x1c3Rlcl9jZW50cm9pZHMiLCJpbmRpY2VzIiwibGluc3BhY2UiLCJyYW5kb21fcG9pbnQiLCJyYW5kb21faW50IiwiaW5pdF9wb2ludHMiLCJzYW1wbGVfc2l6ZSIsIk1hdGgiLCJmbG9vciIsInNhbXBsZSIsImNob2ljZSIsImZpbHRlciIsImluZGV4T2YiLCJmdXJ0aGVzdF9wb2ludCIsInNsaWNlIiwiX2l0ZXJhdGlvbiIsImNsdXN0ZXJzX2NoYW5nZWQiLCJBaSIsIm1pbl9kaXN0IiwiSW5maW5pdHkiLCJtaW5fY2x1c3RlciIsImNlbnRyb2lkIiwiX2NvbXB1dGVfY2VudHJvaWQiLCJjbHVzdGVyX2NvdW50ZXIiLCJjaSIsIm4iLCJpdGVyYXRpb25fcmVzdWx0Il0sIm1hcHBpbmdzIjoiOzs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7O0FBQ08sTUFBTUEsTUFBTixD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Q0FBUixJQUFlcUIsRUFBRSxDQUFDckIsQ0FBRCxDQUFqQjtBQUNIO0FBQ0o7O0FBQ0QsU0FBSyxJQUFJYixDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHM0IsQ0FBcEIsRUFBdUIsRUFBRTJCLENBQXpCLEVBQTRCO0FBQ3hCLFlBQU0wQyxDQUFDLEdBQUdGLGVBQWUsQ0FBQ3hDLENBQUQsQ0FBekI7QUFDQWlCLHVCQUFpQixDQUFDakIsQ0FBRCxDQUFqQixHQUF1QmlCLGlCQUFpQixDQUFDakIsQ0FBRCxDQUFqQixDQUFxQkgsR0FBckIsQ0FBeUJFLENBQUMsSUFBSUEsQ0FBQyxHQUFHMkMsQ0FBbEMsQ0FBdkI7QUFDSDtBQUVKO0FBRUQ7QUFDSjtBQUNBO0FBQ0E7OztBQUNJakUsTUFBSSxDQUFDSixDQUFELEVBQUk0QyxpQkFBSixFQUF1QjtBQUN2QixRQUFJLENBQUM1QyxDQUFMLEVBQVFBLENBQUMsR0FBRyxLQUFLTyxFQUFUO0FBQ1IsUUFBSSxDQUFDcUMsaUJBQUwsRUFBd0JBLGlCQUFpQixHQUFHLEtBQUt4QixxQkFBTCxDQUEyQnBCLENBQTNCLENBQXBCO0FBQ3hCLFFBQUk0RCxnQkFBZ0IsR0FBRyxLQUF2Qjs7QUFDQSxPQUFHO0FBQ0MsWUFBTVUsZ0JBQWdCLEdBQUcsS0FBS1gsVUFBTCxDQUFnQmYsaUJBQWhCLENBQXpCOztBQUNBQSx1QkFBaUIsR0FBRzBCLGdCQUFnQixDQUFDMUIsaUJBQXJDO0FBQ0FnQixzQkFBZ0IsR0FBR1UsZ0JBQWdCLENBQUNWLGdCQUFwQztBQUNILEtBSkQsUUFJU0EsZ0JBSlQ7QUFLSDs7QUFsS2UiLCJmaWxlIjoiLi9jbHVzdGVyaW5nL0tNZWFucy5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGV1Y2xpZGVhbiB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4XCI7XHJcbmltcG9ydCB7IFJhbmRvbWl6ZXIgfSBmcm9tIFwiLi4vdXRpbC9pbmRleFwiO1xyXG5pbXBvcnQgeyBIZWFwIH0gZnJvbSBcIi4uL2RhdGFzdHJ1Y3R1cmUvaW5kZXhcIjtcclxuaW1wb3J0IHsgbGluc3BhY2UgfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBLTWVhbnNcclxuICovXHJcbmV4cG9ydCBjbGFzcyBLTWVhbnMge1xyXG4gICAgLyoqXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6Y2x1c3RlcmluZ1xyXG4gICAgICogQGFsaWFzIEtNZWFuc1xyXG4gICAgICogQHRvZG8gbmVlZHMgcmVzdHJ1Y3R1cmluZy4gXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gbWF0cml4IFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJzfSBLIFxyXG4gICAgICogQHBhcmFtIHtGdW5jdGlvbn0gW21ldHJpYyA9IGV1Y2xpZGVhbl0gXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxOTg3XVxyXG4gICAgICogQHBhcmFtIHtCb29sZWFufSBbaW5pdCA9IHRydWVdXHJcbiAgICAgKiBAcmV0dXJucyB7S01lYW5zfVxyXG4gICAgICovXHJcbiAgICBjb25zdHJ1Y3RvcihtYXRyaXgsIEssIG1ldHJpYyA9IGV1Y2xpZGVhbiwgc2VlZD0xOTg3LCBpbml0ID0gdHJ1ZSkge1xyXG4gICAgICAgIHRoaXMuX21ldHJpYyA9IG1ldHJpYztcclxuICAgICAgICB0aGlzLl9tYXRyaXggPSBtYXRyaXg7XHJcbiAgICAgICAgdGhpcy5fSyA9IEs7XHJcbiAgICAgICAgY29uc3QgW04sIERdID0gbWF0cml4LnNoYXBlO1xyXG4gICAgICAgIHRoaXMuX04gPSBOO1xyXG4gICAgICAgIHRoaXMuX0QgPSBEO1xyXG4gICAgICAgIGlmIChLID4gTikgSyA9IE47XHJcbiAgICAgICAgdGhpcy5fcmFuZG9taXplciA9IG5ldyBSYW5kb21pemVyKHNlZWQpO1xyXG4gICAgICAgIHRoaXMuX2NsdXN0ZXJzID0gbmV3IEFycmF5KE4pLmZpbGwodW5kZWZpbmVkKTtcclxuICAgICAgICB0aGlzLl9jbHVzdGVyX2NlbnRyb2lkcyA9IHRoaXMuX2dldF9yYW5kb21fY2VudHJvaWRzKEspO1xyXG4gICAgICAgIGlmIChpbml0KSB0aGlzLmluaXQoSywgdGhpcy5fY2x1c3Rlcl9jZW50cm9pZHMpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHJldHVybnMge0FycmF5PEFycmF5Pn0gLSBBcnJheSBvZiBjbHVzdGVycyB3aXRoIHRoZSBpbmRpY2VzIG9mIHRoZSByb3dzIGluIGdpdmVuIHtAbGluayBtYXRyaXh9LiBcclxuICAgICAqL1xyXG4gICAgZ2V0X2NsdXN0ZXJzKCkge1xyXG4gICAgICAgIGNvbnN0IEsgPSB0aGlzLl9LO1xyXG4gICAgICAgIGNvbnN0IGNsdXN0ZXJzID0gdGhpcy5fY2x1c3RlcnM7XHJcbiAgICAgICAgY29uc3QgcmVzdWx0ID0gbmV3IEFycmF5KEspLmZpbGwoKS5tYXAoKCkgPT4gbmV3IEFycmF5KCkpO1xyXG4gICAgICAgIGNsdXN0ZXJzLmZvckVhY2goKGMsIGkpID0+IHJlc3VsdFtjXS5wdXNoKGkpKTtcclxuICAgICAgICByZXR1cm4gcmVzdWx0O1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7QXJyYXl9IHBvaW50cyBcclxuICAgICAqIEBwYXJhbSB7QXJyYXl9IGNhbmRpZGF0ZXMgXHJcbiAgICAgKi9cclxuICAgIF9mdXJ0aGVzdF9wb2ludChwb2ludHMsIGNhbmRpZGF0ZXMpIHtcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fbWF0cml4O1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBsZXQgaSA9IHBvaW50cy5sZW5ndGg7XHJcbiAgICAgICAgbGV0IEggPSBIZWFwLmhlYXBpZnkoXHJcbiAgICAgICAgICAgIGNhbmRpZGF0ZXMsIFxyXG4gICAgICAgICAgICAoZCkgPT4ge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgQWQgPSBBLnJvdyhkKVxyXG4gICAgICAgICAgICAgICAgbGV0IHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IGk7ICsraikge1xyXG4gICAgICAgICAgICAgICAgICAgIHN1bSArPSBtZXRyaWMoQWQsIHBvaW50c1tqXSlcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIHJldHVybiBzdW07XHJcbiAgICAgICAgICAgIH0sIFxyXG4gICAgICAgICAgICBcIm1heFwiXHJcbiAgICAgICAgKVxyXG4gICAgICAgIHJldHVybiBILnBvcCgpLmVsZW1lbnQ7XHJcbiAgICB9XHJcblxyXG4gICAgX2dldF9yYW5kb21fY2VudHJvaWRzKEspIHtcclxuICAgICAgICBjb25zdCBOID0gdGhpcy5fTjtcclxuICAgICAgICBjb25zdCByYW5kb21pemVyID0gdGhpcy5fcmFuZG9taXplcjtcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fbWF0cml4O1xyXG4gICAgICAgIGNvbnN0IGNsdXN0ZXJfY2VudHJvaWRzID0gbmV3IEFycmF5KEspLmZpbGwoKVxyXG4gICAgICAgIGNvbnN0IGluZGljZXMgPSBsaW5zcGFjZSgwLCBOIC0gMSk7XHJcbiAgICAgICAgY29uc3QgcmFuZG9tX3BvaW50ID0gcmFuZG9taXplci5yYW5kb21faW50ICUgKE4gLSAxKTtcclxuICAgICAgICBjbHVzdGVyX2NlbnRyb2lkc1swXSA9IEEucm93KHJhbmRvbV9wb2ludCk7XHJcbiAgICAgICAgY29uc3QgaW5pdF9wb2ludHMgPSBbcmFuZG9tX3BvaW50XTtcclxuICAgICAgICBjb25zdCBzYW1wbGVfc2l6ZSA9IE1hdGguZmxvb3IoKE4gLSBLKSAvIEspOy8vIC8gS1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAxOyBpIDwgSzsgKytpKSB7XHJcbiAgICAgICAgICAgIC8vIHNhbXBsaW5nICsga21lYW5zKysgaW1wcm92ZW1lbnQ/XHJcbiAgICAgICAgICAgIGNvbnN0IHNhbXBsZSA9IHJhbmRvbWl6ZXIuY2hvaWNlKGluZGljZXMuZmlsdGVyKGQgPT4gaW5pdF9wb2ludHMuaW5kZXhPZihkKSA9PSAtMSksIHNhbXBsZV9zaXplKTtcclxuICAgICAgICAgICAgY29uc3QgZnVydGhlc3RfcG9pbnQgPSB0aGlzLl9mdXJ0aGVzdF9wb2ludChjbHVzdGVyX2NlbnRyb2lkcy5zbGljZSgwLCBpKSwgc2FtcGxlKTtcclxuICAgICAgICAgICAgaW5pdF9wb2ludHMucHVzaChmdXJ0aGVzdF9wb2ludCk7XHJcbiAgICAgICAgICAgIGNsdXN0ZXJfY2VudHJvaWRzW2ldID0gQS5yb3coZnVydGhlc3RfcG9pbnQpO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gY2x1c3Rlcl9jZW50cm9pZHM7XHJcbiAgICB9XHJcblxyXG4gICAgX2l0ZXJhdGlvbihjbHVzdGVyX2NlbnRyb2lkcykge1xyXG4gICAgICAgIGNvbnN0IEsgPSBjbHVzdGVyX2NlbnRyb2lkcy5sZW5ndGg7XHJcbiAgICAgICAgY29uc3QgTiA9IHRoaXMuX047XHJcbiAgICAgICAgY29uc3QgRCA9IHRoaXMuX0Q7XHJcbiAgICAgICAgY29uc3QgQSA9IHRoaXMuX21hdHJpeDtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgY29uc3QgY2x1c3RlcnMgPSB0aGlzLl9jbHVzdGVycztcclxuICAgICAgICBsZXQgY2x1c3RlcnNfY2hhbmdlZCA9IGZhbHNlO1xyXG4gICAgICAgIC8vIGZpbmQgbmVhcmVzdCBjbHVzdGVyIGNlbnRyb2lkLlxyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IEFpID0gQS5yb3coaSlcclxuICAgICAgICAgICAgbGV0IG1pbl9kaXN0ID0gSW5maW5pdHk7XHJcbiAgICAgICAgICAgIGxldCBtaW5fY2x1c3RlciA9IG51bGw7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgSzsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgZCA9IG1ldHJpYyhjbHVzdGVyX2NlbnRyb2lkc1tqXSwgQWkpO1xyXG4gICAgICAgICAgICAgICAgaWYgKGQgPCBtaW5fZGlzdCkge1xyXG4gICAgICAgICAgICAgICAgICAgIG1pbl9kaXN0ID0gZDtcclxuICAgICAgICAgICAgICAgICAgICBtaW5fY2x1c3RlciA9IGo7IFxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGlmIChjbHVzdGVyc1tpXSAhPT0gbWluX2NsdXN0ZXIpIHtcclxuICAgICAgICAgICAgICAgIGNsdXN0ZXJzX2NoYW5nZWQgPSB0cnVlO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGNsdXN0ZXJzW2ldID0gbWluX2NsdXN0ZXI7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIC8vIHVwZGF0ZSBjbHVzdGVyIGNlbnRyb2lkXHJcbiAgICAgICAgLy8gcmVzZXQgY2x1c3RlciBjZW50cm9pZHMgdG8gMFxyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgSzsgKytpKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGNlbnRyb2lkID0gY2x1c3Rlcl9jZW50cm9pZHNbaV07XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgRDsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBjZW50cm9pZFtqXSA9IDA7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgLy8gY29tcHV0ZSBjZW50cm9pZFxyXG4gICAgICAgIHRoaXMuX2NvbXB1dGVfY2VudHJvaWQoY2x1c3Rlcl9jZW50cm9pZHMpO1xyXG5cclxuICAgICAgICByZXR1cm4geyAgIFxyXG4gICAgICAgICAgICBcImNsdXN0ZXJzX2NoYW5nZWRcIjogY2x1c3RlcnNfY2hhbmdlZCxcclxuICAgICAgICAgICAgXCJjbHVzdGVyX2NlbnRyb2lkc1wiOiBjbHVzdGVyX2NlbnRyb2lkc1xyXG4gICAgICAgIH07XHJcbiAgICB9XHJcblxyXG4gICAgX2NvbXB1dGVfY2VudHJvaWQoY2x1c3Rlcl9jZW50cm9pZHMpIHtcclxuICAgICAgICBjb25zdCBLID0gY2x1c3Rlcl9jZW50cm9pZHMubGVuZ3RoO1xyXG4gICAgICAgIGNvbnN0IE4gPSB0aGlzLl9OO1xyXG4gICAgICAgIGNvbnN0IEQgPSB0aGlzLl9EO1xyXG4gICAgICAgIGNvbnN0IEEgPSB0aGlzLl9tYXRyaXg7XHJcbiAgICAgICAgY29uc3QgY2x1c3RlcnMgPSB0aGlzLl9jbHVzdGVycztcclxuICAgICAgICBjb25zdCBjbHVzdGVyX2NvdW50ZXIgPSBuZXcgQXJyYXkoSykuZmlsbCgwKTtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgQWkgPSBBLnJvdyhpKTtcclxuICAgICAgICAgICAgY29uc3QgY2kgPSBjbHVzdGVyc1tpXTtcclxuICAgICAgICAgICAgY2x1c3Rlcl9jb3VudGVyW2NpXSsrO1xyXG4gICAgICAgICAgICBjb25zdCBjZW50cm9pZCA9IGNsdXN0ZXJfY2VudHJvaWRzW2NpXTtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBEOyArK2opIHtcclxuICAgICAgICAgICAgICAgIGNlbnRyb2lkW2pdICs9IEFpW2pdO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgSzsgKytpKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IG4gPSBjbHVzdGVyX2NvdW50ZXJbaV07XHJcbiAgICAgICAgICAgIGNsdXN0ZXJfY2VudHJvaWRzW2ldID0gY2x1c3Rlcl9jZW50cm9pZHNbaV0ubWFwKGMgPT4gYyAvIG4pO1xyXG4gICAgICAgIH1cclxuICAgICAgICBcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENvbXB1dGVzIHtAbGluayBLfSBjbHVzdGVycyBvdXQgb2YgdGhlIHtAbGluayBtYXRyaXh9LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IEsgLSBudW1iZXIgb2YgY2x1c3RlcnMuXHJcbiAgICAgKi9cclxuICAgIGluaXQoSywgY2x1c3Rlcl9jZW50cm9pZHMpIHtcclxuICAgICAgICBpZiAoIUspIEsgPSB0aGlzLl9LO1xyXG4gICAgICAgIGlmICghY2x1c3Rlcl9jZW50cm9pZHMpIGNsdXN0ZXJfY2VudHJvaWRzID0gdGhpcy5fZ2V0X3JhbmRvbV9jZW50cm9pZHMoSyk7XHJcbiAgICAgICAgbGV0IGNsdXN0ZXJzX2NoYW5nZWQgPSBmYWxzZTtcclxuICAgICAgICBkbyB7XHJcbiAgICAgICAgICAgIGNvbnN0IGl0ZXJhdGlvbl9yZXN1bHQgPSB0aGlzLl9pdGVyYXRpb24oY2x1c3Rlcl9jZW50cm9pZHMpXHJcbiAgICAgICAgICAgIGNsdXN0ZXJfY2VudHJvaWRzID0gaXRlcmF0aW9uX3Jlc3VsdC5jbHVzdGVyX2NlbnRyb2lkcztcclxuICAgICAgICAgICAgY2x1c3RlcnNfY2hhbmdlZCA9IGl0ZXJhdGlvbl9yZXN1bHQuY2x1c3RlcnNfY2hhbmdlZDtcclxuICAgICAgICB9IHdoaWxlIChjbHVzdGVyc19jaGFuZ2VkKVxyXG4gICAgfVxyXG4gICAgXHJcbn1cclxuIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./clustering/KMeans.js\n");
+
+/***/ }),
+
+/***/ "./clustering/KMedoids.js":
+/*!********************************!*\
+  !*** ./clustering/KMedoids.js ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"KMedoids\": () => (/* binding */ KMedoids)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _util_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/index */ \"./util/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n\n\n\n/**\r\n * @class\r\n * @alias KMedoids\r\n */\n\nclass KMedoids {\n  /**\r\n   * @constructor\r\n   * @memberof module:clustering\r\n   * @alias KMedoids\r\n   * @todo needs restructuring. \r\n   * @param {Matrix} matrix - data matrix\r\n   * @param {Numbers} K - number of clusters\r\n   * @param {number} [max_iter=null] - maximum number of iterations. Default is 10 * Math.log10(N)\r\n   * @param {Function} [metric = euclidean] - metric defining the dissimilarity \r\n   * @param {Number} [seed = 1212] - seed value for random number generator\r\n   * @returns {KMedoids}\r\n   * @see {@link https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16} Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms\r\n   */\n  constructor(matrix, K, max_iter = null, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean, seed = 1212) {\n    this._metric = metric;\n    this._matrix = matrix;\n    this._A = this._matrix.to2dArray;\n    this._K = K;\n    const [N, D] = matrix.shape;\n    this._N = N;\n    this._D = D;\n    this._max_iter = max_iter || 10 * Math.log10(N);\n    this._distance_matrix = new _matrix_index__WEBPACK_IMPORTED_MODULE_2__.Matrix(N, N, \"zeros\");\n    /* for (let i = 1; i < N; ++i) {\r\n        for (let j = i + 1; j < N; ++j) {\r\n            let dist = metric(this._A[i], this._A[j]);\r\n            this._distance_matrix.set_entry(i, j, dist);\r\n            this._distance_matrix.set_entry(j, i, dist)\r\n        }\r\n    } */\n\n    if (K > N) K = N;\n    this._randomizer = new _util_index__WEBPACK_IMPORTED_MODULE_1__.Randomizer(seed);\n    this._clusters = new Array(N).fill(undefined);\n    this._cluster_medoids = this._get_random_medoids(K); //if (init) this.init(K, this._cluster_medoids);\n\n    this._is_initialized = false;\n    return this;\n  }\n  /**\r\n   * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. \r\n   */\n\n\n  get_clusters() {\n    const K = this._K;\n    const A = this._A;\n\n    if (!this._is_initialized) {\n      this.init(K, this._cluster_medoids);\n    }\n\n    const result = new Array(K).fill().map(() => new Array());\n    A.forEach((x_j, j) => {\n      result[this._nearest_medoid(x_j, j).index_nearest].push(j);\n    });\n    result.medoids = this._cluster_medoids;\n    return result;\n  }\n\n  async *generator() {\n    const max_iter = this._max_iter;\n    yield this.get_clusters();\n    let finish = false;\n    let i = 0;\n\n    do {\n      finish = this._iteration();\n      yield this.get_clusters();\n    } while (!finish && ++i < max_iter);\n  }\n  /**\r\n   * Algorithm 1. FastPAM1: Improved SWAP algorithm\r\n   */\n\n  /* _iteration_1() {\r\n      const A = this._A;\r\n      const N = this._N;\r\n      const K = this._K;\r\n      const medoids = this._cluster_medoids;\r\n      let DeltaTD = 0;\r\n      let m0 = null;\r\n      let x0 = null;\r\n      A.forEach((x_j, j) => {\r\n          if (medoids.findIndex(m => m === j) < 0) {\r\n              const nearest_medoid = this._nearest_medoid(x_j, j);\r\n              const d_j = nearest_medoid.distance_nearest; // distance to current medoid\r\n              const deltaTD = new Array(K).fill(-d_j); // change if making j a medoid\r\n              A.forEach((x_o, o) => {\r\n                  // disance to new medoid\r\n                  const d_oj = this._get_distance(o, j, x_o, x_j);\r\n                  const {\r\n                      \"index_nearest\": n,\r\n                      \"distance_nearest\": d_n,\r\n                      \"distance_second\": d_s,\r\n                  } = this._nearest_medoid(x_o, o); \r\n                  this._clusters[o] = n; // cached values\r\n                  deltaTD[n] += Math.min(d_oj, d_s) - d_n; // loss change\r\n                  if (d_oj < d_n) { // reassignment check\r\n                      deltaTD.forEach((d_i, i) => {\r\n                          if (n !== i) {\r\n                              deltaTD[i] = d_i + d_oj - d_n; // update loss change\r\n                          }\r\n                      });\r\n                  }\r\n              });\r\n              // choose best medoid i;\r\n              const i = deltaTD\r\n                  .map((d, i) => [d, i])\r\n                  .sort((d1, d2) => d1[0] - d2[0])[0][1];\r\n              const deltaTD_i = deltaTD[i];\r\n              // store\r\n              if (deltaTD_i < DeltaTD) {\r\n                  DeltaTD = deltaTD_i;\r\n                  m0 = i;\r\n                  x0 = j;\r\n              }\r\n          }\r\n      });\r\n        if (DeltaTD >= 0) {\r\n          return true // break loop if DeltaTD >= 0\r\n      }\r\n      // swap roles of medoid m and non-medoid x;\r\n      medoids[m0] = x0;\r\n      this._cluster_medoids = medoids;\r\n      return false\r\n  } */\n\n  /** Algorithm 2. FastPAM2: SWAP with multiple candidates\r\n   * \r\n   */\n\n\n  _iteration() {\n    const A = this._A;\n    const K = this._K;\n    const medoids = this._cluster_medoids;\n    const cache = A.map((x_o, o) => this._nearest_medoid(x_o, o)); // empty best candidates array\n\n    const DeltaTD = new Array(K).fill(0);\n    const xs = new Array(K).fill(null);\n    A.forEach((x_j, j) => {\n      if (medoids.findIndex(m => m === j) < 0) {\n        const d_j = cache[j].distance_nearest; // distance to current medoid\n\n        const deltaTD = new Array(K).fill(-d_j); // change if making j a medoid\n\n        A.forEach((x_o, o) => {\n          if (j === o) return;\n\n          const d_oj = this._get_distance(o, j, x_o, x_j); // distance to new medoid\n\n\n          const {\n            \"index_nearest\": n,\n            \"distance_nearest\": d_n,\n            \"distance_second\": d_s\n          } = cache[o]; // cached\n\n          deltaTD[n] += Math.min(d_oj, d_s) - d_n; // loss change for x_o\n          // Reassignment check\n\n          if (d_oj < d_n) {\n            // update loss change\n            for (let i = 0; i < K; ++i) {\n              if (i !== n) deltaTD[i] += d_oj - d_n;\n            }\n          }\n        }); // remember best swap for i;\n\n        deltaTD.map((d, i) => [d, i]).filter(([d, i]) => d < DeltaTD[i]).forEach(([d, i]) => {\n          if (d < DeltaTD[i]) {\n            DeltaTD[i] = d;\n            xs[i] = j;\n          }\n        });\n      }\n    }); // stop if no improvements were found\n\n    if (Math.min(...DeltaTD) >= 0) return true; // execute all improvements\n\n    while (Math.min(...DeltaTD) < 0) {\n      // swap roles of medoid m_i and non_medoid xs_i\n      const i = DeltaTD.map((d, i) => [d, i]).sort(([a], [b]) => a - b)[0][1];\n\n      if (medoids.filter(m => m == xs[i]).length == 0) {\n        medoids[i] = xs[i];\n      } // disable the swap just performed\n\n\n      DeltaTD[i] = 0; // recompute TD for remaining swap candidates\n\n      DeltaTD.map((d_j, j) => [d_j, j]).filter(([d_j]) => d_j < 0).forEach(([_, j]) => {\n        const x_j = A[j];\n        let sum = 0;\n        A.forEach((x_o, o) => {\n          if (medoids.findIndex(m => m != j && m == o) >= 0) return;\n          if (i == j) return;\n          if (cache[o].index_nearest === medoids[j]) sum += Math.min(this._get_distance(o, j, x_o, x_j), cache[o].distance_second) - cache[o].distance_nearest;else {\n            sum += Math.min(this._get_distance(o, j, x_o, x_j) - cache[o].distance_nearest, 0);\n          }\n        });\n        DeltaTD[j] = sum;\n      });\n    }\n\n    this._cluster_medoids = medoids;\n    return false;\n  }\n\n  _get_distance(i, j, x_i = null, x_j = null) {\n    if (i === j) return 0;\n    const D = this._distance_matrix;\n    const A = this._A;\n    const metric = this._metric;\n    let d_ij = D.entry(i, j);\n\n    if (d_ij === 0) {\n      d_ij = metric(x_i || A[i], x_j || A[j]);\n      D.set_entry(i, j, d_ij);\n      D.set_entry(j, i, d_ij);\n    }\n\n    return d_ij;\n  }\n\n  _nearest_medoid(x_j, j) {\n    const medoids = this._cluster_medoids;\n    const A = this._A;\n    const [nearest, second] = medoids.map((m, i) => {\n      const x_m = A[m];\n      return [this._get_distance(j, m, x_j, x_m), i];\n    }).sort((m1, m2) => m1[0] - m2[0]);\n    return {\n      \"distance_nearest\": nearest[0],\n      \"index_nearest\": nearest[1],\n      \"distance_second\": second[0],\n      \"index_second\": second[1]\n    };\n  }\n  /**\r\n   * Computes {@link K} clusters out of the {@link matrix}.\r\n   * @param {Number} K - number of clusters.\r\n   */\n\n\n  init(K, cluster_medoids) {\n    if (!K) K = this._K;\n    if (!cluster_medoids) cluster_medoids = this._get_random_medoids(K);\n    const max_iter = this._max_iter;\n    let finish = false;\n    let i = 0;\n\n    do {\n      finish = this._iteration();\n    } while (!finish && ++i < max_iter);\n\n    return this;\n  }\n  /**\r\n   * Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.\r\n   * @param {number} K - number of clusters\r\n   * \r\n   */\n\n\n  _get_random_medoids(K) {\n    const N = this._N;\n    const A = this._A;\n    const indices = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_2__.linspace)(0, N - 1);\n    const randomizer = this._randomizer;\n    const n = Math.min(N, 10 + Math.ceil(Math.sqrt(N)));\n    const TD = new Array(n).fill(Infinity);\n    const medoids = []; // first medoid\n\n    let TD0 = Infinity;\n    let S = randomizer.choice(indices, n);\n\n    for (let j = 0; j < n; ++j) {\n      const S_j = S[j];\n      const x_j = A[S_j];\n\n      for (let o = 0; o < n; ++o) {\n        if (o === j) continue;\n        const x_o = A[S[o]];\n        TD[j] += this._get_distance(j, o, x_j, x_o);\n      }\n\n      if (TD[j] < TD0) {\n        TD0 = TD[j]; // smallest distance sum\n\n        medoids.push(S_j);\n      }\n    } // other medoids\n\n\n    for (let i = 1; i < K; ++i) {\n      let DeltaTD = Infinity;\n      S = randomizer.choice(indices.filter(index => medoids.findIndex(d => d === index) < 0), n);\n\n      for (let j = 0; j < n; ++j) {\n        let deltaTD = 0;\n        const S_j = S[j];\n        const x_j = A[S_j];\n\n        for (let o = 0; o < n; ++o) {\n          if (o === j) continue;\n          const S_o = S[o];\n          const x_o = A[S_o];\n          let delta = this._get_distance(S_j, S_o, x_j, x_o) - Math.min(...medoids.map(m => this._get_distance(S_o, m, x_o)));\n\n          if (delta < 0) {\n            deltaTD = deltaTD + delta;\n          }\n        } // best reduction\n\n\n        if (deltaTD < DeltaTD) {\n          DeltaTD = deltaTD;\n          medoids.push(S_j);\n        }\n      }\n\n      TD0 += DeltaTD;\n    }\n\n    return medoids.slice(0, K);\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2NsdXN0ZXJpbmcvS01lZG9pZHMuanM/NjZmNCJdLCJuYW1lcyI6WyJLTWVkb2lkcyIsImNvbnN0cnVjdG9yIiwibWF0cml4IiwiSyIsIm1heF9pdGVyIiwibWV0cmljIiwiZXVjbGlkZWFuIiwic2VlZCIsIl9tZXRyaWMiLCJfbWF0cml4IiwiX0EiLCJ0bzJkQXJyYXkiLCJfSyIsIk4iLCJEIiwic2hhcGUiLCJfTiIsIl9EIiwiX21heF9pdGVyIiwiTWF0aCIsImxvZzEwIiwiX2Rpc3RhbmNlX21hdHJpeCIsIk1hdHJpeCIsIl9yYW5kb21pemVyIiwiUmFuZG9taXplciIsIl9jbHVzdGVycyIsIkFycmF5IiwiZmlsbCIsInVuZGVmaW5lZCIsIl9jbHVzdGVyX21lZG9pZHMiLCJfZ2V0X3JhbmRvbV9tZWRvaWRzIiwiX2lzX2luaXRpYWxpemVkIiwiZ2V0X2NsdXN0ZXJzIiwiQSIsImluaXQiLCJyZXN1bHQiLCJtYXAiLCJmb3JFYWNoIiwieF9qIiwiaiIsIl9uZWFyZXN0X21lZG9pZCIsImluZGV4X25lYXJlc3QiLCJwdXNoIiwibWVkb2lkcyIsImdlbmVyYXRvciIsImZpbmlzaCIsImkiLCJfaXRlcmF0aW9uIiwiY2FjaGUiLCJ4X28iLCJvIiwiRGVsdGFURCIsInhzIiwiZmluZEluZGV4IiwibSIsImRfaiIsImRpc3RhbmNlX25lYXJlc3QiLCJkZWx0YVREIiwiZF9vaiIsIl9nZXRfZGlzdGFuY2UiLCJuIiwiZF9uIiwiZF9zIiwibWluIiwiZCIsImZpbHRlciIsInNvcnQiLCJhIiwiYiIsImxlbmd0aCIsIl8iLCJzdW0iLCJkaXN0YW5jZV9zZWNvbmQiLCJ4X2kiLCJkX2lqIiwiZW50cnkiLCJzZXRfZW50cnkiLCJuZWFyZXN0Iiwic2Vjb25kIiwieF9tIiwibTEiLCJtMiIsImNsdXN0ZXJfbWVkb2lkcyIsImluZGljZXMiLCJsaW5zcGFjZSIsInJhbmRvbWl6ZXIiLCJjZWlsIiwic3FydCIsIlREIiwiSW5maW5pdHki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QXdCRSxHQUF4QixFQUE2QnpELEdBQTdCLEVBQWtDVyxHQUFsQyxJQUF5QzlCLElBQUksQ0FBQzRDLEdBQUwsQ0FBUyxHQUFHcEIsT0FBTyxDQUFDUCxHQUFSLENBQVlrQixDQUFDLElBQUksS0FBS0ssYUFBTCxDQUFtQm9DLEdBQW5CLEVBQXdCekMsQ0FBeEIsRUFBMkJMLEdBQTNCLENBQWpCLENBQVosQ0FBckQ7O0FBQ0EsY0FBSStDLEtBQUssR0FBRyxDQUFaLEVBQWU7QUFDWHZDLG1CQUFPLEdBQUdBLE9BQU8sR0FBR3VDLEtBQXBCO0FBQ0g7QUFDSixTQVp1QixDQWF4Qjs7O0FBQ0EsWUFBSXZDLE9BQU8sR0FBR04sT0FBZCxFQUF1QjtBQUNuQkEsaUJBQU8sR0FBR00sT0FBVjtBQUNBZCxpQkFBTyxDQUFDRCxJQUFSLENBQWFtRCxHQUFiO0FBQ0g7QUFDSjs7QUFDREgsU0FBRyxJQUFJdkMsT0FBUDtBQUNIOztBQUNELFdBQU9SLE9BQU8sQ0FBQ3NELEtBQVIsQ0FBYyxDQUFkLEVBQWlCOUYsQ0FBakIsQ0FBUDtBQUNIOztBQWpUaUIiLCJmaWxlIjoiLi9jbHVzdGVyaW5nL0tNZWRvaWRzLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgUmFuZG9taXplciB9IGZyb20gXCIuLi91dGlsL2luZGV4XCI7XHJcbmltcG9ydCB7IGxpbnNwYWNlLCBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBLTWVkb2lkc1xyXG4gKi9cclxuZXhwb3J0IGNsYXNzIEtNZWRvaWRzIHtcclxuICAgIC8qKlxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmNsdXN0ZXJpbmdcclxuICAgICAqIEBhbGlhcyBLTWVkb2lkc1xyXG4gICAgICogQHRvZG8gbmVlZHMgcmVzdHJ1Y3R1cmluZy4gXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gbWF0cml4IC0gZGF0YSBtYXRyaXhcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyc30gSyAtIG51bWJlciBvZiBjbHVzdGVyc1xyXG4gICAgICogQHBhcmFtIHtudW1iZXJ9IFttYXhfaXRlcj1udWxsXSAtIG1heGltdW0gbnVtYmVyIG9mIGl0ZXJhdGlvbnMuIERlZmF1bHQgaXMgMTAgKiBNYXRoLmxvZzEwKE4pXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIG1ldHJpYyBkZWZpbmluZyB0aGUgZGlzc2ltaWxhcml0eSBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gc2VlZCB2YWx1ZSBmb3IgcmFuZG9tIG51bWJlciBnZW5lcmF0b3JcclxuICAgICAqIEByZXR1cm5zIHtLTWVkb2lkc31cclxuICAgICAqIEBzZWUge0BsaW5rIGh0dHBzOi8vbGluay5zcHJpbmdlci5jb20vY2hhcHRlci8xMC4xMDA3Lzk3OC0zLTAzMC0zMjA0Ny04XzE2fSBGYXN0ZXIgay1NZWRvaWRzIENsdXN0ZXJpbmc6IEltcHJvdmluZyB0aGUgUEFNLCBDTEFSQSwgYW5kIENMQVJBTlMgQWxnb3JpdGhtc1xyXG4gICAgICovXHJcbiAgICBjb25zdHJ1Y3RvcihtYXRyaXgsIEssIG1heF9pdGVyPW51bGwsIG1ldHJpYyA9IGV1Y2xpZGVhbiwgc2VlZD0xMjEyKSB7XHJcbiAgICAgICAgdGhpcy5fbWV0cmljID0gbWV0cmljO1xyXG4gICAgICAgIHRoaXMuX21hdHJpeCA9IG1hdHJpeDtcclxuICAgICAgICB0aGlzLl9BID0gdGhpcy5fbWF0cml4LnRvMmRBcnJheTtcclxuICAgICAgICB0aGlzLl9LID0gSztcclxuICAgICAgICBjb25zdCBbTiwgRF0gPSBtYXRyaXguc2hhcGU7XHJcbiAgICAgICAgdGhpcy5fTiA9IE47XHJcbiAgICAgICAgdGhpcy5fRCA9IEQ7XHJcbiAgICAgICAgdGhpcy5fbWF4X2l0ZXIgPSBtYXhfaXRlciB8fCAxMCAqIE1hdGgubG9nMTAoTikgXHJcbiAgICAgICAgdGhpcy5fZGlzdGFuY2VfbWF0cml4ID0gbmV3IE1hdHJpeChOLCBOLCBcInplcm9zXCIpO1xyXG4gICAgICAgIC8qIGZvciAobGV0IGkgPSAxOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSBpICsgMTsgaiA8IE47ICsraikge1xyXG4gICAgICAgICAgICAgICAgbGV0IGRpc3QgPSBtZXRyaWModGhpcy5fQVtpXSwgdGhpcy5fQVtqXSk7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9kaXN0YW5jZV9tYXRyaXguc2V0X2VudHJ5KGksIGosIGRpc3QpO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5fZGlzdGFuY2VfbWF0cml4LnNldF9lbnRyeShqLCBpLCBkaXN0KVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfSAqL1xyXG4gICAgICAgIGlmIChLID4gTikgSyA9IE47XHJcbiAgICAgICAgdGhpcy5fcmFuZG9taXplciA9IG5ldyBSYW5kb21pemVyKHNlZWQpO1xyXG4gICAgICAgIHRoaXMuX2NsdXN0ZXJzID0gbmV3IEFycmF5KE4pLmZpbGwodW5kZWZpbmVkKTtcclxuICAgICAgICB0aGlzLl9jbHVzdGVyX21lZG9pZHMgPSB0aGlzLl9nZXRfcmFuZG9tX21lZG9pZHMoSyk7XHJcbiAgICAgICAgLy9pZiAoaW5pdCkgdGhpcy5pbml0KEssIHRoaXMuX2NsdXN0ZXJfbWVkb2lkcyk7XHJcbiAgICAgICAgdGhpcy5faXNfaW5pdGlhbGl6ZWQgPSBmYWxzZTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEByZXR1cm5zIHtBcnJheTxBcnJheT59IC0gQXJyYXkgb2YgY2x1c3RlcnMgd2l0aCB0aGUgaW5kaWNlcyBvZiB0aGUgcm93cyBpbiBnaXZlbiB7QGxpbmsgbWF0cml4fS4gXHJcbiAgICAgKi9cclxuICAgIGdldF9jbHVzdGVycygpIHtcclxuICAgICAgICBjb25zdCBLID0gdGhpcy5fSztcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fQTtcclxuICAgICAgICBpZiAoIXRoaXMuX2lzX2luaXRpYWxpemVkKSB7XHJcbiAgICAgICAgICAgIHRoaXMuaW5pdChLLCB0aGlzLl9jbHVzdGVyX21lZG9pZHMpO1xyXG4gICAgICAgIH1cclxuICAgICAgICBjb25zdCByZXN1bHQgPSBuZXcgQXJyYXkoSykuZmlsbCgpLm1hcCgoKSA9PiBuZXcgQXJyYXkoKSk7XHJcbiAgICAgICAgQS5mb3JFYWNoKCh4X2osIGopID0+IHtcclxuICAgICAgICAgICAgcmVzdWx0W3RoaXMuX25lYXJlc3RfbWVkb2lkKHhfaiwgaikuaW5kZXhfbmVhcmVzdF0ucHVzaChqKTtcclxuICAgICAgICB9KVxyXG4gICAgICAgIHJlc3VsdC5tZWRvaWRzID0gdGhpcy5fY2x1c3Rlcl9tZWRvaWRzO1xyXG4gICAgICAgIHJldHVybiByZXN1bHQ7XHJcbiAgICB9XHJcblxyXG4gICAgYXN5bmMqIGdlbmVyYXRvcigpIHtcclxuICAgICAgICBjb25zdCBtYXhfaXRlciA9IHRoaXMuX21heF9pdGVyO1xyXG4gICAgICAgIHlpZWxkIHRoaXMuZ2V0X2NsdXN0ZXJzKClcclxuICAgICAgICBsZXQgZmluaXNoID0gZmFsc2U7XHJcbiAgICAgICAgbGV0IGkgPSAwXHJcbiAgICAgICAgZG8ge1xyXG4gICAgICAgICAgICBmaW5pc2ggPSB0aGlzLl9pdGVyYXRpb24oKTtcclxuICAgICAgICAgICAgeWllbGQgdGhpcy5nZXRfY2x1c3RlcnMoKTtcclxuICAgICAgICB9IHdoaWxlICghZmluaXNoICYmICsraSA8IG1heF9pdGVyKVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQWxnb3JpdGhtIDEuIEZhc3RQQU0xOiBJbXByb3ZlZCBTV0FQIGFsZ29yaXRobVxyXG4gICAgICovXHJcbiAgICAvKiBfaXRlcmF0aW9uXzEoKSB7XHJcbiAgICAgICAgY29uc3QgQSA9IHRoaXMuX0E7XHJcbiAgICAgICAgY29uc3QgTiA9IHRoaXMuX047XHJcbiAgICAgICAgY29uc3QgSyA9IHRoaXMuX0s7XHJcbiAgICAgICAgY29uc3QgbWVkb2lkcyA9IHRoaXMuX2NsdXN0ZXJfbWVkb2lkcztcclxuICAgICAgICBsZXQgRGVsdGFURCA9IDA7XHJcbiAgICAgICAgbGV0IG0wID0gbnVsbDtcclxuICAgICAgICBsZXQgeDAgPSBudWxsO1xyXG4gICAgICAgIEEuZm9yRWFjaCgoeF9qLCBqKSA9PiB7XHJcbiAgICAgICAgICAgIGlmIChtZWRvaWRzLmZpbmRJbmRleChtID0+IG0gPT09IGopIDwgMCkge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgbmVhcmVzdF9tZWRvaWQgPSB0aGlzLl9uZWFyZXN0X21lZG9pZCh4X2osIGopO1xyXG4gICAgICAgICAgICAgICAgY29uc3QgZF9qID0gbmVhcmVzdF9tZWRvaWQuZGlzdGFuY2VfbmVhcmVzdDsgLy8gZGlzdGFuY2UgdG8gY3VycmVudCBtZWRvaWRcclxuICAgICAgICAgICAgICAgIGNvbnN0IGRlbHRhVEQgPSBuZXcgQXJyYXkoSykuZmlsbCgtZF9qKTsgLy8gY2hhbmdlIGlmIG1ha2luZyBqIGEgbWVkb2lkXHJcbiAgICAgICAgICAgICAgICBBLmZvckVhY2goKHhfbywgbykgPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgIC8vIGRpc2FuY2UgdG8gbmV3IG1lZG9pZFxyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGRfb2ogPSB0aGlzLl9nZXRfZGlzdGFuY2UobywgaiwgeF9vLCB4X2opO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgXCJpbmRleF9uZWFyZXN0XCI6IG4sXHJcbiAgICAgICAgICAgICAgICAgICAgICAgIFwiZGlzdGFuY2VfbmVhcmVzdFwiOiBkX24sXHJcbiAgICAgICAgICAgICAgICAgICAgICAgIFwiZGlzdGFuY2Vfc2Vjb25kXCI6IGRfcyxcclxuICAgICAgICAgICAgICAgICAgICB9ID0gdGhpcy5fbmVhcmVzdF9tZWRvaWQoeF9vLCBvKTsgXHJcbiAgICAgICAgICAgICAgICAgICAgdGhpcy5fY2x1c3RlcnNbb10gPSBuOyAvLyBjYWNoZWQgdmFsdWVzXHJcbiAgICAgICAgICAgICAgICAgICAgZGVsdGFURFtuXSArPSBNYXRoLm1pbihkX29qLCBkX3MpIC0gZF9uOyAvLyBsb3NzIGNoYW5nZVxyXG4gICAgICAgICAgICAgICAgICAgIGlmIChkX29qIDwgZF9uKSB7IC8vIHJlYXNzaWdubWVudCBjaGVja1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBkZWx0YVRELmZvckVhY2goKGRfaSwgaSkgPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgaWYgKG4gIT09IGkpIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkZWx0YVREW2ldID0gZF9pICsgZF9vaiAtIGRfbjsgLy8gdXBkYXRlIGxvc3MgY2hhbmdlXHJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIH0pO1xyXG4gICAgICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIH0pO1xyXG4gICAgICAgICAgICAgICAgLy8gY2hvb3NlIGJlc3QgbWVkb2lkIGk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBpID0gZGVsdGFURFxyXG4gICAgICAgICAgICAgICAgICAgIC5tYXAoKGQsIGkpID0+IFtkLCBpXSlcclxuICAgICAgICAgICAgICAgICAgICAuc29ydCgoZDEsIGQyKSA9PiBkMVswXSAtIGQyWzBdKVswXVsxXTtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGRlbHRhVERfaSA9IGRlbHRhVERbaV07XHJcbiAgICAgICAgICAgICAgICAvLyBzdG9yZVxyXG4gICAgICAgICAgICAgICAgaWYgKGRlbHRhVERfaSA8IERlbHRhVEQpIHtcclxuICAgICAgICAgICAgICAgICAgICBEZWx0YVREID0gZGVsdGFURF9pO1xyXG4gICAgICAgICAgICAgICAgICAgIG0wID0gaTtcclxuICAgICAgICAgICAgICAgICAgICB4MCA9IGo7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9KTtcclxuXHJcbiAgICAgICAgaWYgKERlbHRhVEQgPj0gMCkge1xyXG4gICAgICAgICAgICByZXR1cm4gdHJ1ZSAvLyBicmVhayBsb29wIGlmIERlbHRhVEQgPj0gMFxyXG4gICAgICAgIH1cclxuICAgICAgICAvLyBzd2FwIHJvbGVzIG9mIG1lZG9pZCBtIGFuZCBub24tbWVkb2lkIHg7XHJcbiAgICAgICAgbWVkb2lkc1ttMF0gPSB4MDtcclxuICAgICAgICB0aGlzLl9jbHVzdGVyX21lZG9pZHMgPSBtZWRvaWRzO1xyXG4gICAgICAgIHJldHVybiBmYWxzZVxyXG4gICAgfSAqL1xyXG5cclxuICAgIC8qKiBBbGdvcml0aG0gMi4gRmFzdFBBTTI6IFNXQVAgd2l0aCBtdWx0aXBsZSBjYW5kaWRhdGVzXHJcbiAgICAgKiBcclxuICAgICAqL1xyXG4gICAgX2l0ZXJhdGlvbigpIHtcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fQTtcclxuICAgICAgICBjb25zdCBLID0gdGhpcy5fSztcclxuICAgICAgICBjb25zdCBtZWRvaWRzID0gdGhpcy5fY2x1c3Rlcl9tZWRvaWRzO1xyXG4gICAgICAgIGNvbnN0IGNhY2hlID0gQS5tYXAoKHhfbywgbykgPT4gdGhpcy5fbmVhcmVzdF9tZWRvaWQoeF9vLCBvKSk7XHJcbiAgICAgICAgLy8gZW1wdHkgYmVzdCBjYW5kaWRhdGVzIGFycmF5XHJcbiAgICAgICAgY29uc3QgRGVsdGFURCA9IG5ldyBBcnJheShLKS5maWxsKDApO1xyXG4gICAgICAgIGNvbnN0IHhzID0gbmV3IEFycmF5KEspLmZpbGwobnVsbCk7XHJcbiAgICAgICAgQS5mb3JFYWNoKCh4X2osIGopID0+IHtcclxuICAgICAgICAgICAgaWYgKG1lZG9pZHMuZmluZEluZGV4KG0gPT4gbSA9PT0gaikgPCAwKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBkX2ogPSBjYWNoZVtqXS5kaXN0YW5jZV9uZWFyZXN0OyAvLyBkaXN0YW5jZSB0byBjdXJyZW50IG1lZG9pZFxyXG4gICAgICAgICAgICAgICAgY29uc3QgZGVsdGFURCA9IG5ldyBBcnJheShLKS5maWxsKC1kX2opOyAvLyBjaGFuZ2UgaWYgbWFraW5nIGogYSBtZWRvaWRcclxuICAgICAgICAgICAgICAgIEEuZm9yRWFjaCgoeF9vLCBvKSA9PiB7XHJcbiAgICAgICAgICAgICAgICAgICAgaWYgKGogPT09IG8pIHJldHVybjtcclxuICAgICAgICAgICAgICAgICAgICBjb25zdCBkX29qID0gdGhpcy5fZ2V0X2Rpc3RhbmNlKG8sIGosIHhfbywgeF9qKTsgLy8gZGlzdGFuY2UgdG8gbmV3IG1lZG9pZFxyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IHtcImluZGV4X25lYXJlc3RcIjogbiwgXCJkaXN0YW5jZV9uZWFyZXN0XCI6IGRfbiwgXCJkaXN0YW5jZV9zZWNvbmRcIjogZF9zfSA9IGNhY2hlW29dOyAvLyBjYWNoZWRcclxuICAgICAgICAgICAgICAgICAgICBkZWx0YVREW25dICs9IE1hdGgubWluKGRfb2osIGRfcykgLSBkX247IC8vIGxvc3MgY2hhbmdlIGZvciB4X29cclxuICAgICAgICAgICAgICAgICAgICAvLyBSZWFzc2lnbm1lbnQgY2hlY2tcclxuICAgICAgICAgICAgICAgICAgICBpZiAoZF9vaiA8IGRfbikgeyBcclxuICAgICAgICAgICAgICAgICAgICAgICAgLy8gdXBkYXRlIGxvc3MgY2hhbmdlXHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgSzsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAoaSAhPT0gbikgZGVsdGFURFtpXSArPSBkX29qIC0gZF9uO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfSk7XHJcbiAgICAgICAgICAgICAgICAvLyByZW1lbWJlciBiZXN0IHN3YXAgZm9yIGk7XHJcbiAgICAgICAgICAgICAgICBkZWx0YVREXHJcbiAgICAgICAgICAgICAgICAgICAgLm1hcCgoZCwgaSkgPT4gW2QsIGldKVxyXG4gICAgICAgICAgICAgICAgICAgIC5maWx0ZXIoKFtkLCBpXSkgPT4gZCA8IERlbHRhVERbaV0pXHJcbiAgICAgICAgICAgICAgICAgICAgLmZvckVhY2goKFtkLCBpXSkgPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBpZiAoZCA8IERlbHRhVERbaV0pIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIERlbHRhVERbaV0gPSBkO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgeHNbaV0gPSBqO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAgICAgfSlcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH0pXHJcbiAgICAgICAgLy8gc3RvcCBpZiBubyBpbXByb3ZlbWVudHMgd2VyZSBmb3VuZFxyXG4gICAgICAgIGlmIChNYXRoLm1pbiguLi5EZWx0YVREKSA+PSAwKSByZXR1cm4gdHJ1ZTsgXHJcblxyXG4gICAgICAgIC8vIGV4ZWN1dGUgYWxsIGltcHJvdmVtZW50c1xyXG4gICAgICAgIHdoaWxlIChNYXRoLm1pbiguLi5EZWx0YVREKSA8IDApIHtcclxuICAgICAgICAgICAgLy8gc3dhcCByb2xlcyBvZiBtZWRvaWQgbV9pIGFuZCBub25fbWVkb2lkIHhzX2lcclxuICAgICAgICAgICAgY29uc3QgaSA9IERlbHRhVERcclxuICAgICAgICAgICAgICAgIC5tYXAoKGQsIGkpID0+IFtkLCBpXSlcclxuICAgICAgICAgICAgICAgIC5zb3J0KChbYV0sIFtiXSkgPT4gYSAtIGIpWzBdWzFdO1xyXG4gICAgICAgICAgICBpZiAobWVkb2lkcy5maWx0ZXIobSA9PiBtID09IHhzW2ldKS5sZW5ndGggPT0gMCkge1xyXG4gICAgICAgICAgICAgICAgbWVkb2lkc1tpXSA9IHhzW2ldO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIC8vIGRpc2FibGUgdGhlIHN3YXAganVzdCBwZXJmb3JtZWRcclxuICAgICAgICAgICAgRGVsdGFURFtpXSA9IDA7IFxyXG4gICAgICAgICAgICAvLyByZWNvbXB1dGUgVEQgZm9yIHJlbWFpbmluZyBzd2FwIGNhbmRpZGF0ZXNcclxuICAgICAgICAgICAgRGVsdGFURFxyXG4gICAgICAgICAgICAgICAgLm1hcCgoZF9qLCBqKSA9PiBbZF9qLCBqXSlcclxuICAgICAgICAgICAgICAgIC5maWx0ZXIoKFtkX2pdKSA9PiBkX2ogPCAwKVxyXG4gICAgICAgICAgICAgICAgLmZvckVhY2goKFtfLCBqXSkgPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IHhfaiA9IEFbal07XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICAgICAgQS5mb3JFYWNoKCh4X28sIG8pID0+IHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgaWYgKG1lZG9pZHMuZmluZEluZGV4KG0gPT4gbSAhPSBqICYmIG0gPT0gbykgPj0gMCkgcmV0dXJuO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBpZiAoaSA9PSBqKSByZXR1cm47XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGlmIChjYWNoZVtvXS5pbmRleF9uZWFyZXN0ID09PSBtZWRvaWRzW2pdKVxyXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgc3VtICs9IChNYXRoLm1pbih0aGlzLl9nZXRfZGlzdGFuY2UobywgaiwgeF9vLCB4X2opLCBjYWNoZVtvXS5kaXN0YW5jZV9zZWNvbmQpIC0gY2FjaGVbb10uZGlzdGFuY2VfbmVhcmVzdCk7IFxyXG4gICAgICAgICAgICAgICAgICAgICAgICBlbHNlIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIHN1bSArPSAoTWF0aC5taW4odGhpcy5fZ2V0X2Rpc3RhbmNlKG8sIGosIHhfbywgeF9qKSAtIGNhY2hlW29dLmRpc3RhbmNlX25lYXJlc3QsIDApKTtcclxuICAgICAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgICAgIH0pO1xyXG4gICAgICAgICAgICAgICAgICAgIERlbHRhVERbal0gPSBzdW07XHJcbiAgICAgICAgICAgICAgICB9KVxyXG4gICAgICAgIH1cclxuICAgICAgICB0aGlzLl9jbHVzdGVyX21lZG9pZHMgPSBtZWRvaWRzO1xyXG4gICAgICAgIHJldHVybiBmYWxzZTtcclxuICAgIH1cclxuXHJcbiAgICBfZ2V0X2Rpc3RhbmNlKGksIGosIHhfaT1udWxsLCB4X2o9bnVsbCkge1xyXG4gICAgICAgIGlmIChpID09PSBqKSByZXR1cm4gMDtcclxuICAgICAgICBjb25zdCBEID0gdGhpcy5fZGlzdGFuY2VfbWF0cml4O1xyXG4gICAgICAgIGNvbnN0IEEgPSB0aGlzLl9BO1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBsZXQgZF9paiA9IEQuZW50cnkoaSwgaik7XHJcbiAgICAgICAgaWYgKGRfaWogPT09IDApIHtcclxuICAgICAgICAgICAgZF9paiA9IG1ldHJpYyh4X2kgfHwgQVtpXSwgeF9qIHx8IEFbal0pO1xyXG4gICAgICAgICAgICBELnNldF9lbnRyeShpLCBqLCBkX2lqKTtcclxuICAgICAgICAgICAgRC5zZXRfZW50cnkoaiwgaSwgZF9paik7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiBkX2lqO1xyXG4gICAgfVxyXG5cclxuICAgIF9uZWFyZXN0X21lZG9pZCh4X2osIGopIHtcclxuICAgICAgICBjb25zdCBtZWRvaWRzID0gdGhpcy5fY2x1c3Rlcl9tZWRvaWRzO1xyXG4gICAgICAgIGNvbnN0IEEgPSB0aGlzLl9BO1xyXG4gICAgICAgIGNvbnN0IFtuZWFyZXN0LCBzZWNvbmRdID0gbWVkb2lkc1xyXG4gICAgICAgICAgICAubWFwKChtLCBpKSA9PiB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCB4X20gPSBBW21dOyBcclxuICAgICAgICAgICAgICAgIHJldHVybiBbdGhpcy5fZ2V0X2Rpc3RhbmNlKGosIG0sIHhfaiwgeF9tKSwgaV07XHJcbiAgICAgICAgICAgIH0pXHJcbiAgICAgICAgICAgIC5zb3J0KChtMSwgbTIpID0+IG0xWzBdIC0gbTJbMF0pO1xyXG4gICAgICAgIFxyXG4gICAgICAgIHJldHVybiB7IFxyXG4gICAgICAgICAgICBcImRpc3RhbmNlX25lYXJlc3RcIjogbmVhcmVzdFswXSwgXHJcbiAgICAgICAgICAgIFwiaW5kZXhfbmVhcmVzdFwiOiBuZWFyZXN0WzFdLFxyXG4gICAgICAgICAgICBcImRpc3RhbmNlX3NlY29uZFwiOiBzZWNvbmRbMF0sXHJcbiAgICAgICAgICAgIFwiaW5kZXhfc2Vjb25kXCI6IHNlY29uZFsxXSxcclxuICAgICAgICB9O1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ29tcHV0ZXMge0BsaW5rIEt9IGNsdXN0ZXJzIG91dCBvZiB0aGUge0BsaW5rIG1hdHJpeH0uXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gSyAtIG51bWJlciBvZiBjbHVzdGVycy5cclxuICAgICAqL1xyXG4gICAgaW5pdChLLCBjbHVzdGVyX21lZG9pZHMpIHtcclxuICAgICAgICBpZiAoIUspIEsgPSB0aGlzLl9LO1xyXG4gICAgICAgIGlmICghY2x1c3Rlcl9tZWRvaWRzKSBjbHVzdGVyX21lZG9pZHMgPSB0aGlzLl9nZXRfcmFuZG9tX21lZG9pZHMoSyk7XHJcbiAgICAgICAgY29uc3QgbWF4X2l0ZXIgPSB0aGlzLl9tYXhfaXRlcjtcclxuICAgICAgICBsZXQgZmluaXNoID0gZmFsc2U7XHJcbiAgICAgICAgbGV0IGkgPSAwXHJcbiAgICAgICAgZG8ge1xyXG4gICAgICAgICAgICBmaW5pc2ggPSB0aGlzLl9pdGVyYXRpb24oKTtcclxuICAgICAgICB9IHdoaWxlICghZmluaXNoICYmICsraSA8IG1heF9pdGVyKVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQWxnb3JpdGhtIDMuIEZhc3RQQU0gTEFCOiBMaW5lYXIgQXBwcm94aW1hdGUgQlVJTEQgaW5pdGlhbGl6YXRpb24uXHJcbiAgICAgKiBAcGFyYW0ge251bWJlcn0gSyAtIG51bWJlciBvZiBjbHVzdGVyc1xyXG4gICAgICogXHJcbiAgICAgKi9cclxuICAgIF9nZXRfcmFuZG9tX21lZG9pZHMoSykge1xyXG4gICAgICAgIGNvbnN0IE4gPSB0aGlzLl9OO1xyXG4gICAgICAgIGNvbnN0IEEgPSB0aGlzLl9BO1xyXG4gICAgICAgIGNvbnN0IGluZGljZXMgPSBsaW5zcGFjZSgwLCBOIC0gMSk7XHJcbiAgICAgICAgY29uc3QgcmFuZG9taXplciA9IHRoaXMuX3JhbmRvbWl6ZXI7XHJcbiAgICAgICAgY29uc3QgbiA9IE1hdGgubWluKE4sIDEwICsgTWF0aC5jZWlsKE1hdGguc3FydChOKSkpO1xyXG4gICAgICAgIGNvbnN0IFREID0gbmV3IEFycmF5KG4pLmZpbGwoSW5maW5pdHkpO1xyXG4gICAgICAgIGNvbnN0IG1lZG9pZHMgPSBbXTtcclxuICAgICAgICAvLyBmaXJzdCBtZWRvaWRcclxuICAgICAgICBsZXQgVEQwID0gSW5maW5pdHk7XHJcbiAgICAgICAgbGV0IFMgPSByYW5kb21pemVyLmNob2ljZShpbmRpY2VzLCBuKTtcclxuICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IG47ICsraikge1xyXG4gICAgICAgICAgICBjb25zdCBTX2ogPSBTW2pdO1xyXG4gICAgICAgICAgICBjb25zdCB4X2ogPSBBW1Nfal07XHJcbiAgICAgICAgICAgIGZvciAobGV0IG8gPSAwOyBvIDwgbjsgKytvKSB7XHJcbiAgICAgICAgICAgICAgICBpZiAobyA9PT0gaikgY29udGludWU7XHJcbiAgICAgICAgICAgICAgICBjb25zdCB4X28gPSBBW1Nbb11dO1xyXG4gICAgICAgICAgICAgICAgVERbal0gKz0gdGhpcy5fZ2V0X2Rpc3RhbmNlKGosIG8sIHhfaiwgeF9vKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBpZiAoVERbal0gPCBURDApIHtcclxuICAgICAgICAgICAgICAgIFREMCA9IFREW2pdOyAvLyBzbWFsbGVzdCBkaXN0YW5jZSBzdW1cclxuICAgICAgICAgICAgICAgIG1lZG9pZHMucHVzaChTX2opO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIC8vIG90aGVyIG1lZG9pZHNcclxuICAgICAgICBmb3IgKGxldCBpID0gMTsgaSA8IEs7ICsraSkge1xyXG4gICAgICAgICAgICBsZXQgRGVsdGFURCA9IEluZmluaXR5O1xyXG4gICAgICAgICAgICBTID0gcmFuZG9taXplci5jaG9pY2UoaW5kaWNlcy5maWx0ZXIoaW5kZXggPT4gbWVkb2lkcy5maW5kSW5kZXgoZCA9PiBkID09PSBpbmRleCkgPCAwKSwgbik7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgbjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgZGVsdGFURCA9IDA7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBTX2ogPSBTW2pdO1xyXG4gICAgICAgICAgICAgICAgY29uc3QgeF9qID0gQVtTX2pdO1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgbyA9IDA7IG8gPCBuOyArK28pIHtcclxuICAgICAgICAgICAgICAgICAgICBpZiAobyA9PT0gaikgY29udGludWU7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgU19vID0gU1tvXTtcclxuICAgICAgICAgICAgICAgICAgICBjb25zdCB4X28gPSBBW1Nfb107XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IGRlbHRhID0gdGhpcy5fZ2V0X2Rpc3RhbmNlKFNfaiwgU19vLCB4X2osIHhfbykgLSBNYXRoLm1pbiguLi5tZWRvaWRzLm1hcChtID0+IHRoaXMuX2dldF9kaXN0YW5jZShTX28sIG0sIHhfbykpKTtcclxuICAgICAgICAgICAgICAgICAgICBpZiAoZGVsdGEgPCAwKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGRlbHRhVEQgPSBkZWx0YVREICsgZGVsdGE7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgLy8gYmVzdCByZWR1Y3Rpb25cclxuICAgICAgICAgICAgICAgIGlmIChkZWx0YVREIDwgRGVsdGFURCkge1xyXG4gICAgICAgICAgICAgICAgICAgIERlbHRhVEQgPSBkZWx0YVREO1xyXG4gICAgICAgICAgICAgICAgICAgIG1lZG9pZHMucHVzaChTX2opO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIFREMCArPSBEZWx0YVREO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gbWVkb2lkcy5zbGljZSgwLCBLKTtcclxuICAgIH1cclxuICAgIFxyXG59XHJcbiJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./clustering/KMedoids.js\n");
+
+/***/ }),
+
+/***/ "./clustering/OPTICS.js":
+/*!******************************!*\
+  !*** ./clustering/OPTICS.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"OPTICS\": () => (/* binding */ OPTICS)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _datastructure_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../datastructure/index */ \"./datastructure/index.js\");\n\n\n/**\r\n * @class\r\n * @alias OPTICS\r\n */\n\nclass OPTICS {\n  /**\r\n   * **O**rdering **P**oints **T**o **I**dentify the **C**lustering **S**tructure.\r\n   * @constructor\r\n   * @memberof module:clustering\r\n   * @alias OPTICS\r\n   * @todo needs restructuring. \r\n   * @param {Matrix} matrix - the data.\r\n   * @param {Number} epsilon - the minimum distance which defines whether a point is a neighbor or not.\r\n   * @param {Number} min_points - the minimum number of points which a point needs to create a cluster. (Should be higher than 1, else each point creates a cluster.)\r\n   * @param {Function} [metric = euclidean] - the distance metric which defines the distance between two points of the {@link matrix}.\r\n   * @returns {OPTICS}\r\n   * @see {@link https://www.dbs.ifi.lmu.de/Publikationen/Papers/OPTICS.pdf}\r\n   * @see {@link https://en.wikipedia.org/wiki/OPTICS_algorithm}\r\n   */\n  constructor(matrix, epsilon, min_points, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean) {\n    this._matrix = matrix;\n    this._epsilon = epsilon;\n    this._min_points = min_points;\n    this._metric = metric;\n    this._ordered_list = [];\n    this._clusters = [];\n    this._DB = new Array(matrix.shape[0]).fill();\n    this.init();\n    return this;\n  }\n  /**\r\n   * Computes the clustering.\r\n   */\n\n\n  init() {\n    const ordered_list = this._ordered_list;\n    const matrix = this._matrix;\n    const N = matrix.shape[0];\n    const DB = this._DB;\n    const clusters = this._clusters;\n    let cluster_index = this._cluster_index = 0;\n\n    for (let i = 0; i < N; ++i) {\n      DB[i] = {\n        \"element\": matrix.row(i),\n        \"index\": i,\n        \"reachability_distance\": undefined,\n        \"processed\": false\n      };\n    }\n\n    for (const p of DB) {\n      if (p.processed) continue;\n      p.neighbors = this._get_neighbors(p);\n      p.processed = true;\n      clusters.push([p.index]);\n      cluster_index = clusters.length - 1;\n      ordered_list.push(p);\n\n      if (this._core_distance(p) != undefined) {\n        const seeds = new _datastructure_index__WEBPACK_IMPORTED_MODULE_1__.Heap(null, d => d.reachability_distance, \"min\");\n\n        this._update(p, seeds);\n\n        this._expand_cluster(seeds, clusters[cluster_index]);\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * \r\n   * @private\r\n   * @param {Object} p - a point of {@link matrix}.\r\n   * @returns {Array} An array consisting of the {@link epsilon}-neighborhood of {@link p}.\r\n   */\n\n\n  _get_neighbors(p) {\n    if (\"neighbors\" in p) return p.neighbors;\n    const DB = this._DB;\n    const metric = this._metric;\n    const epsilon = this._epsilon;\n    const neighbors = [];\n\n    for (const q of DB) {\n      if (q.index == p.index) continue;\n\n      if (metric(p.element, q.element) < epsilon) {\n        neighbors.push(q);\n      }\n    }\n\n    return neighbors;\n  }\n  /**\r\n   * \r\n   * @private\r\n   * @param {Object} p - a point of {@link matrix}.\r\n   * @returns {Number} The distance to the {@link min_points}-th nearest point of {@link p}, or undefined if the {@link epsilon}-neighborhood has fewer elements than {@link min_points}.\r\n   */\n\n\n  _core_distance(p) {\n    const min_points = this._min_points;\n    const metric = this._metric;\n\n    if (p.neighbors && p.neighbors.length <= min_points) {\n      return undefined;\n    }\n\n    return metric(p.element, p.neighbors[min_points].element);\n  }\n  /**\r\n   * Updates the reachability distance of the points.\r\n   * @private\r\n   * @param {Object} p \r\n   * @param {Heap} seeds \r\n   */\n\n\n  _update(p, seeds) {\n    const metric = this._metric;\n\n    const core_distance = this._core_distance(p);\n\n    const neighbors = this._get_neighbors(p); //p.neighbors;\n\n\n    for (const q of neighbors) {\n      if (q.processed) continue;\n      const new_reachability_distance = Math.max(core_distance, metric(p.element, q.element)); //if (q.reachability_distance == undefined) { // q is not in seeds\n\n      if (seeds.raw_data().findIndex(d => d.element == q) < 0) {\n        q.reachability_distance = new_reachability_distance;\n        seeds.push(q);\n      } else {\n        // q is in seeds\n        if (new_reachability_distance < q.reachability_distance) {\n          q.reachability_distance = new_reachability_distance;\n          seeds = _datastructure_index__WEBPACK_IMPORTED_MODULE_1__.Heap.heapify(seeds.data(), d => d.reachability_distance, \"min\"); // seeds change key =/\n        }\n      }\n    }\n  }\n  /**\r\n   * Expands the {@link cluster} with points in {@link seeds}.\r\n   * @private\r\n   * @param {Heap} seeds \r\n   * @param {Array} cluster \r\n   */\n\n\n  _expand_cluster(seeds, cluster) {\n    const ordered_list = this._ordered_list;\n\n    while (!seeds.empty) {\n      const q = seeds.pop().element;\n      q.neighbors = this._get_neighbors(q);\n      q.processed = true;\n      cluster.push(q.index);\n      ordered_list.push(q);\n\n      if (this._core_distance(q) != undefined) {\n        this._update(q, seeds);\n\n        this._expand_cluster(seeds, cluster);\n      }\n    }\n  }\n  /**\r\n   * Returns an array of clusters.\r\n   * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.\r\n   */\n\n\n  get_clusters() {\n    const clusters = [];\n    const outliers = [];\n    const min_points = this._min_points;\n\n    for (const cluster of this._clusters) {\n      if (cluster.length < min_points) {\n        outliers.push(...cluster);\n      } else {\n        clusters.push(cluster);\n      }\n    }\n\n    clusters.push(outliers);\n    return clusters;\n  }\n  /**\r\n   * @returns {Array} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)\r\n   */\n\n\n  get_cluster_affirmation() {\n    const N = this._matrix.shape[0];\n    const result = new Array(N).fill();\n    const clusters = this.get_clusters();\n\n    for (let i = 0, n = clusters.length; i < n; ++i) {\n      const cluster = clusters[i];\n\n      for (const index of cluster) {\n        result[index] = i < n - 1 ? i : -1;\n      }\n    }\n\n    return result;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2NsdXN0ZXJpbmcvT1BUSUNTLmpzP2JhNzAiXSwibmFtZXMiOlsiT1BUSUNTIiwiY29uc3RydWN0b3IiLCJtYXRyaXgiLCJlcHNpbG9uIiwibWluX3BvaW50cyIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsIl9tYXRyaXgiLCJfZXBzaWxvbiIsIl9taW5fcG9pbnRzIiwiX21ldHJpYyIsIl9vcmRlcmVkX2xpc3QiLCJfY2x1c3RlcnMiLCJfREIiLCJBcnJheSIsInNoYXBlIiwiZmlsbCIsImluaXQiLCJvcmRlcmVkX2xpc3QiLCJOIiwiREIiLCJjbHVzdGVycyIsImNsdXN0ZXJfaW5kZXgiLCJfY2x1c3Rlcl9pbmRleCIsImkiLCJyb3ciLCJ1bmRlZmluZWQiLCJwIiwicHJvY2Vzc2VkIiwibmVpZ2hib3JzIiwiX2dldF9uZWlnaGJvcnMiLCJwdXNoIiwiaW5kZXgiLCJsZW5ndGgiLCJfY29yZV9kaXN0YW5jZSIsInNlZWRzIiwiSGVhcCIsImQiLCJyZWFjaGFiaWxpdHlfZGlzdGFuY2UiLCJfdXBkYXRlIiwiX2V4cGFuZF9jbHVzdGVyIiwicSIsImVsZW1lbnQiLCJjb3JlX2Rpc3RhbmNlIiwibmV3X3JlYWNoYWJpbGl0eV9kaXN0YW5jZSIsIk1hdGgiLCJtYXgiLCJyYXdfZGF0YSIsImZpbmRJbmRleCIsImRhdGEiLCJjbHVzdGVyIiwiZW1wdHkiLCJwb3AiLCJnZXRfY2x1c3RlcnMiLCJvdXRsaWVycyIsImdldF9jbHVzdGVyX2FmZmlybWF0aW9uIiwicmVzdWx0IiwibiJdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUE7QUFDQTtBQUVBO0FBQ0E7QUFDQTtBQUNBOztBQUNPLE1BQU1BLE1BQU4sQ0FBYTtBQUNoQjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsTUFBRCxFQUFTQyxPQUFULEVBQWtCQyxVQUFsQixFQUE4QkMsTUFB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bkxlIiwiZmlsZSI6Ii4vY2x1c3RlcmluZy9PUFRJQ1MuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBIZWFwIH0gZnJvbSBcIi4uL2RhdGFzdHJ1Y3R1cmUvaW5kZXhcIjtcclxuXHJcbi8qKlxyXG4gKiBAY2xhc3NcclxuICogQGFsaWFzIE9QVElDU1xyXG4gKi9cclxuZXhwb3J0IGNsYXNzIE9QVElDUyB7XHJcbiAgICAvKipcclxuICAgICAqICoqTyoqcmRlcmluZyAqKlAqKm9pbnRzICoqVCoqbyAqKkkqKmRlbnRpZnkgdGhlICoqQyoqbHVzdGVyaW5nICoqUyoqdHJ1Y3R1cmUuXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6Y2x1c3RlcmluZ1xyXG4gICAgICogQGFsaWFzIE9QVElDU1xyXG4gICAgICogQHRvZG8gbmVlZHMgcmVzdHJ1Y3R1cmluZy4gXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gbWF0cml4IC0gdGhlIGRhdGEuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gZXBzaWxvbiAtIHRoZSBtaW5pbXVtIGRpc3RhbmNlIHdoaWNoIGRlZmluZXMgd2hldGhlciBhIHBvaW50IGlzIGEgbmVpZ2hib3Igb3Igbm90LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IG1pbl9wb2ludHMgLSB0aGUgbWluaW11bSBudW1iZXIgb2YgcG9pbnRzIHdoaWNoIGEgcG9pbnQgbmVlZHMgdG8gY3JlYXRlIGEgY2x1c3Rlci4gKFNob3VsZCBiZSBoaWdoZXIgdGhhbiAxLCBlbHNlIGVhY2ggcG9pbnQgY3JlYXRlcyBhIGNsdXN0ZXIuKVxyXG4gICAgICogQHBhcmFtIHtGdW5jdGlvbn0gW21ldHJpYyA9IGV1Y2xpZGVhbl0gLSB0aGUgZGlzdGFuY2UgbWV0cmljIHdoaWNoIGRlZmluZXMgdGhlIGRpc3RhbmNlIGJldHdlZW4gdHdvIHBvaW50cyBvZiB0aGUge0BsaW5rIG1hdHJpeH0uXHJcbiAgICAgKiBAcmV0dXJucyB7T1BUSUNTfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly93d3cuZGJzLmlmaS5sbXUuZGUvUHVibGlrYXRpb25lbi9QYXBlcnMvT1BUSUNTLnBkZn1cclxuICAgICAqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL09QVElDU19hbGdvcml0aG19XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKG1hdHJpeCwgZXBzaWxvbiwgbWluX3BvaW50cywgbWV0cmljID0gZXVjbGlkZWFuKSB7XHJcbiAgICAgICAgdGhpcy5fbWF0cml4ID0gbWF0cml4O1xyXG4gICAgICAgIHRoaXMuX2Vwc2lsb24gPSBlcHNpbG9uO1xyXG4gICAgICAgIHRoaXMuX21pbl9wb2ludHMgPSBtaW5fcG9pbnRzO1xyXG4gICAgICAgIHRoaXMuX21ldHJpYyA9IG1ldHJpYztcclxuXHJcbiAgICAgICAgdGhpcy5fb3JkZXJlZF9saXN0ID0gW107XHJcbiAgICAgICAgdGhpcy5fY2x1c3RlcnMgPSBbXTtcclxuICAgICAgICB0aGlzLl9EQiA9IG5ldyBBcnJheShtYXRyaXguc2hhcGVbMF0pLmZpbGwoKTtcclxuICAgICAgICB0aGlzLmluaXQoKTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENvbXB1dGVzIHRoZSBjbHVzdGVyaW5nLlxyXG4gICAgICovXHJcbiAgICBpbml0KCkge1xyXG4gICAgICAgIGNvbnN0IG9yZGVyZWRfbGlzdCA9IHRoaXMuX29yZGVyZWRfbGlzdDtcclxuICAgICAgICBjb25zdCBtYXRyaXggPSB0aGlzLl9tYXRyaXg7XHJcbiAgICAgICAgY29uc3QgTiA9IG1hdHJpeC5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBEQiA9IHRoaXMuX0RCO1xyXG4gICAgICAgIGNvbnN0IGNsdXN0ZXJzID0gdGhpcy5fY2x1c3RlcnM7XHJcbiAgICAgICAgbGV0IGNsdXN0ZXJfaW5kZXggPSB0aGlzLl9jbHVzdGVyX2luZGV4ID0gMDtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgREJbaV0gPSB7XHJcbiAgICAgICAgICAgICAgICBcImVsZW1lbnRcIjogbWF0cml4LnJvdyhpKSxcclxuICAgICAgICAgICAgICAgIFwiaW5kZXhcIjogaSxcclxuICAgICAgICAgICAgICAgIFwicmVhY2hhYmlsaXR5X2Rpc3RhbmNlXCI6IHVuZGVmaW5lZCxcclxuICAgICAgICAgICAgICAgIFwicHJvY2Vzc2VkXCI6IGZhbHNlLFxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGZvciAoY29uc3QgcCBvZiBEQikge1xyXG4gICAgICAgICAgICBpZiAocC5wcm9jZXNzZWQpIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICBwLm5laWdoYm9ycyA9IHRoaXMuX2dldF9uZWlnaGJvcnMocCk7XHJcbiAgICAgICAgICAgIHAucHJvY2Vzc2VkID0gdHJ1ZTtcclxuICAgICAgICAgICAgY2x1c3RlcnMucHVzaChbcC5pbmRleF0pXHJcbiAgICAgICAgICAgIGNsdXN0ZXJfaW5kZXggPSBjbHVzdGVycy5sZW5ndGggLSAxO1xyXG4gICAgICAgICAgICBvcmRlcmVkX2xpc3QucHVzaChwKTtcclxuICAgICAgICAgICAgaWYgKHRoaXMuX2NvcmVfZGlzdGFuY2UocCkgIT0gdW5kZWZpbmVkKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBzZWVkcyA9IG5ldyBIZWFwKG51bGwsIGQgPT4gZC5yZWFjaGFiaWxpdHlfZGlzdGFuY2UsIFwibWluXCIpXHJcbiAgICAgICAgICAgICAgICB0aGlzLl91cGRhdGUocCwgc2VlZHMpO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5fZXhwYW5kX2NsdXN0ZXIoc2VlZHMsIGNsdXN0ZXJzW2NsdXN0ZXJfaW5kZXhdKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7T2JqZWN0fSBwIC0gYSBwb2ludCBvZiB7QGxpbmsgbWF0cml4fS5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheX0gQW4gYXJyYXkgY29uc2lzdGluZyBvZiB0aGUge0BsaW5rIGVwc2lsb259LW5laWdoYm9yaG9vZCBvZiB7QGxpbmsgcH0uXHJcbiAgICAgKi9cclxuICAgIF9nZXRfbmVpZ2hib3JzKHApIHtcclxuICAgICAgICBpZiAoXCJuZWlnaGJvcnNcIiBpbiBwKSByZXR1cm4gcC5uZWlnaGJvcnM7XHJcbiAgICAgICAgY29uc3QgREIgPSB0aGlzLl9EQjtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgY29uc3QgZXBzaWxvbiA9IHRoaXMuX2Vwc2lsb247XHJcbiAgICAgICAgY29uc3QgbmVpZ2hib3JzID0gW107XHJcbiAgICAgICAgZm9yIChjb25zdCBxIG9mIERCKSB7XHJcbiAgICAgICAgICAgIGlmIChxLmluZGV4ID09IHAuaW5kZXgpIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICBpZiAobWV0cmljKHAuZWxlbWVudCwgcS5lbGVtZW50KSA8IGVwc2lsb24pIHtcclxuICAgICAgICAgICAgICAgIG5laWdoYm9ycy5wdXNoKHEpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiBuZWlnaGJvcnM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge09iamVjdH0gcCAtIGEgcG9pbnQgb2Yge0BsaW5rIG1hdHJpeH0uXHJcbiAgICAgKiBAcmV0dXJucyB7TnVtYmVyfSBUaGUgZGlzdGFuY2UgdG8gdGhlIHtAbGluayBtaW5fcG9pbnRzfS10aCBuZWFyZXN0IHBvaW50IG9mIHtAbGluayBwfSwgb3IgdW5kZWZpbmVkIGlmIHRoZSB7QGxpbmsgZXBzaWxvbn0tbmVpZ2hib3Job29kIGhhcyBmZXdlciBlbGVtZW50cyB0aGFuIHtAbGluayBtaW5fcG9pbnRzfS5cclxuICAgICAqL1xyXG4gICAgX2NvcmVfZGlzdGFuY2UocCkge1xyXG4gICAgICAgIGNvbnN0IG1pbl9wb2ludHMgPSB0aGlzLl9taW5fcG9pbnRzO1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBpZiAocC5uZWlnaGJvcnMgJiYgcC5uZWlnaGJvcnMubGVuZ3RoIDw9IG1pbl9wb2ludHMpIHtcclxuICAgICAgICAgICAgcmV0dXJuIHVuZGVmaW5lZDtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIG1ldHJpYyhwLmVsZW1lbnQsIHAubmVpZ2hib3JzW21pbl9wb2ludHNdLmVsZW1lbnQpO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogVXBkYXRlcyB0aGUgcmVhY2hhYmlsaXR5IGRpc3RhbmNlIG9mIHRoZSBwb2ludHMuXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtPYmplY3R9IHAgXHJcbiAgICAgKiBAcGFyYW0ge0hlYXB9IHNlZWRzIFxyXG4gICAgICovXHJcbiAgICBfdXBkYXRlKHAsIHNlZWRzKSB7XHJcbiAgICAgICAgY29uc3QgbWV0cmljID0gdGhpcy5fbWV0cmljO1xyXG4gICAgICAgIGNvbnN0IGNvcmVfZGlzdGFuY2UgPSB0aGlzLl9jb3JlX2Rpc3RhbmNlKHApO1xyXG4gICAgICAgIGNvbnN0IG5laWdoYm9ycyA9IHRoaXMuX2dldF9uZWlnaGJvcnMocCk7Ly9wLm5laWdoYm9ycztcclxuICAgICAgICBmb3IgKGNvbnN0IHEgb2YgbmVpZ2hib3JzKSB7XHJcbiAgICAgICAgICAgIGlmIChxLnByb2Nlc3NlZCkgY29udGludWU7XHJcbiAgICAgICAgICAgIGNvbnN0IG5ld19yZWFjaGFiaWxpdHlfZGlzdGFuY2UgPSBNYXRoLm1heChjb3JlX2Rpc3RhbmNlLCBtZXRyaWMocC5lbGVtZW50LCBxLmVsZW1lbnQpKTtcclxuICAgICAgICAgICAgLy9pZiAocS5yZWFjaGFiaWxpdHlfZGlzdGFuY2UgPT0gdW5kZWZpbmVkKSB7IC8vIHEgaXMgbm90IGluIHNlZWRzXHJcbiAgICAgICAgICAgIGlmIChzZWVkcy5yYXdfZGF0YSgpLmZpbmRJbmRleChkID0+IGQuZWxlbWVudCA9PSBxKSA8IDApIHtcclxuICAgICAgICAgICAgICAgIHEucmVhY2hhYmlsaXR5X2Rpc3RhbmNlID0gbmV3X3JlYWNoYWJpbGl0eV9kaXN0YW5jZTtcclxuICAgICAgICAgICAgICAgIHNlZWRzLnB1c2gocSk7XHJcbiAgICAgICAgICAgIH0gZWxzZSB7IC8vIHEgaXMgaW4gc2VlZHNcclxuICAgICAgICAgICAgICAgIGlmIChuZXdfcmVhY2hhYmlsaXR5X2Rpc3RhbmNlIDwgcS5yZWFjaGFiaWxpdHlfZGlzdGFuY2UpIHtcclxuICAgICAgICAgICAgICAgICAgICBxLnJlYWNoYWJpbGl0eV9kaXN0YW5jZSA9IG5ld19yZWFjaGFiaWxpdHlfZGlzdGFuY2U7XHJcbiAgICAgICAgICAgICAgICAgICAgc2VlZHMgPSBIZWFwLmhlYXBpZnkoc2VlZHMuZGF0YSgpLCBkID0+IGQucmVhY2hhYmlsaXR5X2Rpc3RhbmNlLCBcIm1pblwiKTsgLy8gc2VlZHMgY2hhbmdlIGtleSA9L1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogRXhwYW5kcyB0aGUge0BsaW5rIGNsdXN0ZXJ9IHdpdGggcG9pbnRzIGluIHtAbGluayBzZWVkc30uXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtIZWFwfSBzZWVkcyBcclxuICAgICAqIEBwYXJhbSB7QXJyYXl9IGNsdXN0ZXIgXHJcbiAgICAgKi9cclxuICAgIF9leHBhbmRfY2x1c3RlcihzZWVkcywgY2x1c3Rlcikge1xyXG4gICAgICAgIGNvbnN0IG9yZGVyZWRfbGlzdCA9IHRoaXMuX29yZGVyZWRfbGlzdDtcclxuICAgICAgICB3aGlsZSAoIXNlZWRzLmVtcHR5KSB7XHJcbiAgICAgICAgICAgIGNvbnN0IHEgPSBzZWVkcy5wb3AoKS5lbGVtZW50O1xyXG4gICAgICAgICAgICBxLm5laWdoYm9ycyA9IHRoaXMuX2dldF9uZWlnaGJvcnMocSk7XHJcbiAgICAgICAgICAgIHEucHJvY2Vzc2VkID0gdHJ1ZTtcclxuICAgICAgICAgICAgY2x1c3Rlci5wdXNoKHEuaW5kZXgpO1xyXG4gICAgICAgICAgICBvcmRlcmVkX2xpc3QucHVzaChxKTtcclxuICAgICAgICAgICAgaWYgKHRoaXMuX2NvcmVfZGlzdGFuY2UocSkgIT0gdW5kZWZpbmVkKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl91cGRhdGUocSwgc2VlZHMpO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5fZXhwYW5kX2NsdXN0ZXIoc2VlZHMsIGNsdXN0ZXIpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyBhbiBhcnJheSBvZiBjbHVzdGVycy5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheTxBcnJheT59IEFycmF5IG9mIGNsdXN0ZXJzIHdpdGggdGhlIGluZGljZXMgb2YgdGhlIHJvd3MgaW4gZ2l2ZW4ge0BsaW5rIG1hdHJpeH0uXHJcbiAgICAgKi9cclxuICAgIGdldF9jbHVzdGVycygpIHtcclxuICAgICAgICBjb25zdCBjbHVzdGVycyA9IFtdO1xyXG4gICAgICAgIGNvbnN0IG91dGxpZXJzID0gW107XHJcbiAgICAgICAgY29uc3QgbWluX3BvaW50cyA9IHRoaXMuX21pbl9wb2ludHM7XHJcbiAgICAgICAgZm9yIChjb25zdCBjbHVzdGVyIG9mIHRoaXMuX2NsdXN0ZXJzKSB7XHJcbiAgICAgICAgICAgIGlmIChjbHVzdGVyLmxlbmd0aCA8IG1pbl9wb2ludHMpIHtcclxuICAgICAgICAgICAgICAgIG91dGxpZXJzLnB1c2goLi4uY2x1c3Rlcik7XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICBjbHVzdGVycy5wdXNoKGNsdXN0ZXIpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGNsdXN0ZXJzLnB1c2gob3V0bGllcnMpO1xyXG4gICAgICAgIHJldHVybiBjbHVzdGVycztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEByZXR1cm5zIHtBcnJheX0gUmV0dXJucyBhbiBhcnJheSwgd2hlcmUgdGhlIGl0aCBlbnRyeSBkZWZpbmVzIHRoZSBjbHVzdGVyIGFmZmlybWF0aW9uIG9mIHRoZSBpdGggcG9pbnQgb2Yge0BsaW5rIG1hdHJpeH0uICgtMSBzdGFuZHMgZm9yIG91dGxpZXIpXHJcbiAgICAgKi9cclxuICAgIGdldF9jbHVzdGVyX2FmZmlybWF0aW9uKCkge1xyXG4gICAgICAgIGNvbnN0IE4gPSB0aGlzLl9tYXRyaXguc2hhcGVbMF07XHJcbiAgICAgICAgY29uc3QgcmVzdWx0ID0gbmV3IEFycmF5KE4pLmZpbGwoKTtcclxuICAgICAgICBjb25zdCBjbHVzdGVycyA9IHRoaXMuZ2V0X2NsdXN0ZXJzKCk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDAsIG4gPSBjbHVzdGVycy5sZW5ndGg7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgY2x1c3RlciA9IGNsdXN0ZXJzW2ldXHJcbiAgICAgICAgICAgIGZvciAoY29uc3QgaW5kZXggb2YgY2x1c3Rlcikge1xyXG4gICAgICAgICAgICAgICAgcmVzdWx0W2luZGV4XSA9IChpIDwgbiAtIDEpID8gaSA6IC0xO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiByZXN1bHQ7XHJcbiAgICB9XHJcbn1cclxuIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./clustering/OPTICS.js\n");
+
+/***/ }),
+
+/***/ "./clustering/index.js":
+/*!*****************************!*\
+  !*** ./clustering/index.js ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Hierarchical_Clustering\": () => (/* reexport safe */ _Hierarchical_Clustering__WEBPACK_IMPORTED_MODULE_0__.Hierarchical_Clustering),\n/* harmony export */   \"KMeans\": () => (/* reexport safe */ _KMeans__WEBPACK_IMPORTED_MODULE_1__.KMeans),\n/* harmony export */   \"KMedoids\": () => (/* reexport safe */ _KMedoids__WEBPACK_IMPORTED_MODULE_2__.KMedoids),\n/* harmony export */   \"OPTICS\": () => (/* reexport safe */ _OPTICS__WEBPACK_IMPORTED_MODULE_3__.OPTICS)\n/* harmony export */ });\n/* harmony import */ var _Hierarchical_Clustering__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Hierarchical_Clustering */ \"./clustering/Hierarchical_Clustering.js\");\n/* harmony import */ var _KMeans__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./KMeans */ \"./clustering/KMeans.js\");\n/* harmony import */ var _KMedoids__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./KMedoids */ \"./clustering/KMedoids.js\");\n/* harmony import */ var _OPTICS__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./OPTICS */ \"./clustering/OPTICS.js\");\n/**\r\n * @module clustering\r\n */\n\n\n //export { XMeans } from \"./XMeans\";\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2NsdXN0ZXJpbmcvaW5kZXguanM/ODNmZiJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7Q0FFQSIsImZpbGUiOiIuL2NsdXN0ZXJpbmcvaW5kZXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogQG1vZHVsZSBjbHVzdGVyaW5nXHJcbiAqL1xyXG5leHBvcnQgeyBIaWVyYXJjaGljYWxfQ2x1c3RlcmluZyB9IGZyb20gXCIuL0hpZXJhcmNoaWNhbF9DbHVzdGVyaW5nXCI7XHJcbmV4cG9ydCB7IEtNZWFucyB9IGZyb20gXCIuL0tNZWFuc1wiO1xyXG5leHBvcnQgeyBLTWVkb2lkcyB9IGZyb20gXCIuL0tNZWRvaWRzXCI7XHJcbi8vZXhwb3J0IHsgWE1lYW5zIH0gZnJvbSBcIi4vWE1lYW5zXCI7XHJcbmV4cG9ydCB7IE9QVElDUyB9IGZyb20gXCIuL09QVElDU1wiOyJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./clustering/index.js\n");
+
+/***/ }),
+
+/***/ "./datastructure/Heap.js":
+/*!*******************************!*\
+  !*** ./datastructure/Heap.js ***!
+  \*******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Heap\": () => (/* binding */ Heap)\n/* harmony export */ });\n/**\r\n * @class\r\n * @alias Heap\r\n */\nclass Heap {\n  /**\r\n   * A heap is a datastructure holding its elements in a specific way, so that the top element would be the first entry of an ordered list.\r\n   * @constructor\r\n   * @memberof module:datastructure\r\n   * @alias Heap\r\n   * @param {Array=} elements - Contains the elements for the Heap. {@link elements} can be null.\r\n   * @param {Function} [accessor = (d) => d] - Function returns the value of the element.\r\n   * @param {(\"min\"|\"max\"|Function)} [comparator = \"min\"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. (\"min\" for a Min-Heap, \"max\" for a Max_heap)\r\n   * @returns {Heap}\r\n   * @see {@link https://en.wikipedia.org/wiki/Binary_heap}\r\n   */\n  constructor(elements = null, accessor = d => d, comparator = \"min\") {\n    if (elements) {\n      return Heap.heapify(elements, accessor, comparator);\n    } else {\n      this._accessor = accessor;\n      this._container = [];\n\n      if (comparator == \"min\") {\n        this._comparator = (a, b) => a < b;\n      } else if (comparator == \"max\") {\n        this._comparator = (a, b) => a > b;\n      } else {\n        this._comparator = comparator;\n      }\n\n      return this;\n    }\n  }\n  /**\r\n   * Creates a Heap from an Array\r\n   * @param {Array|Set} elements - Contains the elements for the Heap.\r\n   * @param {Function=} [accessor = (d) => d] - Function returns the value of the element.\r\n   * @param {(String=|Function)} [comparator = \"min\"] - Function returning true or false defining the wished order of the Heap, or String for predefined function. (\"min\" for a Min-Heap, \"max\" for a Max_heap)\r\n   * @returns {Heap}\r\n   */\n\n\n  static heapify(elements, accessor = d => d, comparator = \"min\") {\n    const heap = new Heap(null, accessor, comparator);\n    const container = heap._container;\n\n    for (const e of elements) {\n      container.push({\n        \"element\": e,\n        \"value\": accessor(e)\n      });\n    }\n\n    for (let i = Math.floor(elements.length / 2 - 1); i >= 0; --i) {\n      heap._heapify_down(i);\n    }\n\n    return heap;\n  }\n  /**\r\n   * Swaps elements of container array.\r\n   * @private\r\n   * @param {Number} index_a \r\n   * @param {Number} index_b \r\n   */\n\n\n  _swap(index_a, index_b) {\n    const container = this._container;\n    [container[index_b], container[index_a]] = [container[index_a], container[index_b]];\n    return;\n  }\n  /**\r\n   * @private\r\n   */\n\n\n  _heapify_up() {\n    const container = this._container;\n    let index = container.length - 1;\n\n    while (index > 0) {\n      let parentIndex = Math.floor((index - 1) / 2);\n\n      if (!this._comparator(container[index].value, container[parentIndex].value)) {\n        break;\n      } else {\n        this._swap(parentIndex, index);\n\n        index = parentIndex;\n      }\n    }\n  }\n  /**\r\n   * Pushes the element to the heap.\r\n   * @param {} element\r\n   * @returns {Heap}\r\n   */\n\n\n  push(element) {\n    const value = this._accessor(element); //const node = new Node(element, value);\n\n\n    const node = {\n      \"element\": element,\n      \"value\": value\n    };\n\n    this._container.push(node);\n\n    this._heapify_up();\n\n    return this;\n  }\n  /**\r\n   * @private\r\n   * @param {Number} [start_index = 0] \r\n   */\n\n\n  _heapify_down(start_index = 0) {\n    const container = this._container;\n    const comparator = this._comparator;\n    const length = container.length;\n    let left = 2 * start_index + 1;\n    let right = 2 * start_index + 2;\n    let index = start_index;\n    if (index > length) throw \"index higher than length\";\n\n    if (left < length && comparator(container[left].value, container[index].value)) {\n      index = left;\n    }\n\n    if (right < length && comparator(container[right].value, container[index].value)) {\n      index = right;\n    }\n\n    if (index !== start_index) {\n      this._swap(start_index, index);\n\n      this._heapify_down(index);\n    }\n  }\n  /**\r\n   * Removes and returns the top entry of the heap.\r\n   * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).\r\n   */\n\n\n  pop() {\n    const container = this._container;\n\n    if (container.length === 0) {\n      return null;\n    } else if (container.length === 1) {\n      return container.pop();\n    }\n\n    this._swap(0, container.length - 1);\n\n    const item = container.pop();\n\n    this._heapify_down();\n\n    return item;\n  }\n  /**\r\n   * Returns the top entry of the heap without removing it.\r\n   * @returns {Object} Object consists of the element and its value (computed by {@link accessor}).\r\n   */\n\n\n  get first() {\n    return this._container.length > 0 ? this._container[0] : null;\n  }\n  /**\r\n   * Yields the raw data\r\n   * @yields {Object} Object consists of the element and its value (computed by {@link accessor}).\r\n   */\n\n\n  *iterate() {\n    for (let i = 0, n = this._container.length; i < n; ++i) {\n      yield this._container[i].element;\n    }\n  }\n  /**\r\n   * Returns the heap as ordered array.\r\n   * @returns {Array} Array consisting the elements ordered by {@link comparator}.\r\n   */\n\n\n  toArray() {\n    return this.data().sort((a, b) => this._comparator(a, b) ? -1 : 0);\n  }\n  /**\r\n   * Returns elements of container array.\r\n   * @returns {Array} Array consisting the elements.\r\n   */\n\n\n  data() {\n    return this._container.map(d => d.element);\n  }\n  /**\r\n   * Returns the container array.\r\n   * @returns {Array} The container array.\r\n   */\n\n\n  raw_data() {\n    return this._container;\n  }\n  /**\r\n   * The size of the heap.\r\n   * @returns {Number}\r\n   */\n\n\n  get length() {\n    return this._container.length;\n  }\n  /**\r\n   * Returns false if the the heap has entries, true if the heap has no entries.\r\n   * @returns {Boolean}\r\n   */\n\n\n  get empty() {\n    return this.length === 0;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RhdGFzdHJ1Y3R1cmUvSGVhcC5qcz9hYmJhIl0sIm5hbWVzIjpbIkhlYXAiLCJjb25zdHJ1Y3RvciIsImVsZW1lbnRzIiwiYWNjZXNzb3IiLCJkIiwiY29tcGFyYXRvciIsImhlYXBpZnkiLCJfYWNjZXNzb3IiLCJfY29udGFpbmVyIiwiX2NvbXBhcmF0b3IiLCJhIiwiYiIsImhlYXAiLCJjb250YWluZXIiLCJlIiwicHVzaCIsImkiLCJNYXRoIiwiZmxvb3IiLCJsZW5ndGgiLCJfaGVhcGlmeV9kb3duIiwiX3N3YXAiLCJpbmRleF9hIiwiaW5kZXhfYiIsIl9oZWFwaWZ5X3VwIiwiaW5kZXgiLCJwYXJlbnRJbmRleCIsInZhbHVlIiwiZWxlbWVudCIsIm5vZGUiLCJzdGFydF9pbmRleCIsImxlZnQiLCJyaWdodCIsInBvcCIsIml0ZW0iLCJmaXJzdCIsIml0ZXJhdGUiLCJuIiwidG9BcnJheSIsImRhdGEiLCJzb3J0IiwibWFwIiwicmF3X2RhdGEiLCJlbXB0eSJdLCJtYXBwaW5ncyI6Ijs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ08sTUFBTUEsSUFBTixDQUFXO0FBQ2Q7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLFFBQVEsR0FBRyxJQUFaLEVBQWtCQyxRQUFRLEdBQUdDLENBQUMsSUFBSUEsQ0FBbEMsRUFBcUNDLFVBQVUsR0FBRyxLQUFsRCxFQUF5RDtBQUNoRSxRQUFJSCxRQUFKLEVBQWM7QUFDVixhQUFPRixJQUFJLENBQUNNLE9BQUwsQ0FBYUosUUFBYixFQUF1QkMsUUFBdkIsRUFBaUNFLFVBQWpDLENBQVA7QUFDSCxLQUZELE1BRU87QUFDSCxXQUFLRSxTQUFMLEdBQWlCSixRQUFqQjtBQUNBLFdBQUtLLFVBQUwsR0FBa0IsRUFBbEI7O0FBQ0EsVUFBSUgsVUFBVSxJQUFJLEtBQWxCLEVBQXlCO0FBQ3JCLGFBQUtJLFdBQUwsR0FB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LEdBQUc7QUFDUCxXQUFPLEtBQUtsQyxVQUFaO0FBQ0g7QUFFRDtBQUNKO0FBQ0E7QUFDQTs7O0FBQ2MsTUFBTlcsTUFBTSxHQUFHO0FBQ1QsV0FBTyxLQUFLWCxVQUFMLENBQWdCVyxNQUF2QjtBQUNIO0FBRUQ7QUFDSjtBQUNBO0FBQ0E7OztBQUNhLE1BQUx3QixLQUFLLEdBQUc7QUFDUixXQUFPLEtBQUt4QixNQUFMLEtBQWdCLENBQXZCO0FBQ0g7O0FBbE1hIiwiZmlsZSI6Ii4vZGF0YXN0cnVjdHVyZS9IZWFwLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiLyoqXHJcbiAqIEBjbGFzc1xyXG4gKiBAYWxpYXMgSGVhcFxyXG4gKi9cclxuZXhwb3J0IGNsYXNzIEhlYXAge1xyXG4gICAgLyoqXHJcbiAgICAgKiBBIGhlYXAgaXMgYSBkYXRhc3RydWN0dXJlIGhvbGRpbmcgaXRzIGVsZW1lbnRzIGluIGEgc3BlY2lmaWMgd2F5LCBzbyB0aGF0IHRoZSB0b3AgZWxlbWVudCB3b3VsZCBiZSB0aGUgZmlyc3QgZW50cnkgb2YgYW4gb3JkZXJlZCBsaXN0LlxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRhdGFzdHJ1Y3R1cmVcclxuICAgICAqIEBhbGlhcyBIZWFwXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5PX0gZWxlbWVudHMgLSBDb250YWlucyB0aGUgZWxlbWVudHMgZm9yIHRoZSBIZWFwLiB7QGxpbmsgZWxlbWVudHN9IGNhbiBiZSBudWxsLlxyXG4gICAgICogQHBhcmFtIHtGdW5jdGlvbn0gW2FjY2Vzc29yID0gKGQpID0+IGRdIC0gRnVuY3Rpb24gcmV0dXJucyB0aGUgdmFsdWUgb2YgdGhlIGVsZW1lbnQuXHJcbiAgICAgKiBAcGFyYW0geyhcIm1pblwifFwibWF4XCJ8RnVuY3Rpb24pfSBbY29tcGFyYXRvciA9IFwibWluXCJdIC0gRnVuY3Rpb24gcmV0dXJuaW5nIHRydWUgb3IgZmFsc2UgZGVmaW5pbmcgdGhlIHdpc2hlZCBvcmRlciBvZiB0aGUgSGVhcCwgb3IgU3RyaW5nIGZvciBwcmVkZWZpbmVkIGZ1bmN0aW9uLiAoXCJtaW5cIiBmb3IgYSBNaW4tSGVhcCwgXCJtYXhcIiBmb3IgYSBNYXhfaGVhcClcclxuICAgICAqIEByZXR1cm5zIHtIZWFwfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvQmluYXJ5X2hlYXB9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKGVsZW1lbnRzID0gbnVsbCwgYWNjZXNzb3IgPSBkID0+IGQsIGNvbXBhcmF0b3IgPSBcIm1pblwiKSB7XHJcbiAgICAgICAgaWYgKGVsZW1lbnRzKSB7XHJcbiAgICAgICAgICAgIHJldHVybiBIZWFwLmhlYXBpZnkoZWxlbWVudHMsIGFjY2Vzc29yLCBjb21wYXJhdG9yKTtcclxuICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICB0aGlzLl9hY2Nlc3NvciA9IGFjY2Vzc29yO1xyXG4gICAgICAgICAgICB0aGlzLl9jb250YWluZXIgPSBbXTtcclxuICAgICAgICAgICAgaWYgKGNvbXBhcmF0b3IgPT0gXCJtaW5cIikge1xyXG4gICAgICAgICAgICAgICAgdGhpcy5fY29tcGFyYXRvciA9IChhLCBiKSA9PiBhIDwgYjtcclxuICAgICAgICAgICAgfSBlbHNlIGlmIChjb21wYXJhdG9yID09IFwibWF4XCIpIHtcclxuICAgICAgICAgICAgICAgIHRoaXMuX2NvbXBhcmF0b3IgPSAoYSwgYikgPT4gYSA+IGI7XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9jb21wYXJhdG9yID0gY29tcGFyYXRvcjtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICByZXR1cm4gdGhpc1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENyZWF0ZXMgYSBIZWFwIGZyb20gYW4gQXJyYXlcclxuICAgICAqIEBwYXJhbSB7QXJyYXl8U2V0fSBlbGVtZW50cyAtIENvbnRhaW5zIHRoZSBlbGVtZW50cyBmb3IgdGhlIEhlYXAuXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9uPX0gW2FjY2Vzc29yID0gKGQpID0+IGRdIC0gRnVuY3Rpb24gcmV0dXJucyB0aGUgdmFsdWUgb2YgdGhlIGVsZW1lbnQuXHJcbiAgICAgKiBAcGFyYW0geyhTdHJpbmc9fEZ1bmN0aW9uKX0gW2NvbXBhcmF0b3IgPSBcIm1pblwiXSAtIEZ1bmN0aW9uIHJldHVybmluZyB0cnVlIG9yIGZhbHNlIGRlZmluaW5nIHRoZSB3aXNoZWQgb3JkZXIgb2YgdGhlIEhlYXAsIG9yIFN0cmluZyBmb3IgcHJlZGVmaW5lZCBmdW5jdGlvbi4gKFwibWluXCIgZm9yIGEgTWluLUhlYXAsIFwibWF4XCIgZm9yIGEgTWF4X2hlYXApXHJcbiAgICAgKiBAcmV0dXJucyB7SGVhcH1cclxuICAgICAqL1xyXG4gICAgc3RhdGljIGhlYXBpZnkoZWxlbWVudHMsIGFjY2Vzc29yID0gZCA9PiBkLCBjb21wYXJhdG9yID0gXCJtaW5cIikge1xyXG4gICAgICAgIGNvbnN0IGhlYXAgPSBuZXcgSGVhcChudWxsLCBhY2Nlc3NvciwgY29tcGFyYXRvcik7XHJcbiAgICAgICAgY29uc3QgY29udGFpbmVyID0gaGVhcC5fY29udGFpbmVyO1xyXG4gICAgICAgIGZvciAoY29uc3QgZSBvZiBlbGVtZW50cykge1xyXG4gICAgICAgICAgICBjb250YWluZXIucHVzaCh7XHJcbiAgICAgICAgICAgICAgICBcImVsZW1lbnRcIjogZSxcclxuICAgICAgICAgICAgICAgIFwidmFsdWVcIjogYWNjZXNzb3IoZSksXHJcbiAgICAgICAgICAgIH0pO1xyXG4gICAgICAgIH1cclxuICAgICAgICBmb3IgKGxldCBpID0gTWF0aC5mbG9vcigoZWxlbWVudHMubGVuZ3RoIC8gMikgLSAxKTsgaSA+PSAwOyAtLWkpIHtcclxuICAgICAgICAgICAgaGVhcC5faGVhcGlmeV9kb3duKGkpO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gaGVhcDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFN3YXBzIGVsZW1lbnRzIG9mIGNvbnRhaW5lciBhcnJheS5cclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gaW5kZXhfYSBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBpbmRleF9iIFxyXG4gICAgICovXHJcbiAgICBfc3dhcChpbmRleF9hLCBpbmRleF9iKSB7XHJcbiAgICAgICAgY29uc3QgY29udGFpbmVyID0gdGhpcy5fY29udGFpbmVyO1xyXG4gICAgICAgIFtjb250YWluZXJbaW5kZXhfYl0sIGNvbnRhaW5lcltpbmRleF9hXV0gPSBbY29udGFpbmVyW2luZGV4X2FdLCBjb250YWluZXJbaW5kZXhfYl1dO1xyXG4gICAgICAgIHJldHVybjtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKi9cclxuICAgIF9oZWFwaWZ5X3VwKCkge1xyXG4gICAgICAgIGNvbnN0IGNvbnRhaW5lciA9IHRoaXMuX2NvbnRhaW5lcjtcclxuICAgICAgICBsZXQgaW5kZXggPSBjb250YWluZXIubGVuZ3RoIC0gMTtcclxuICAgICAgICB3aGlsZSAoaW5kZXggPiAwKSB7XHJcbiAgICAgICAgICAgIGxldCBwYXJlbnRJbmRleCA9IE1hdGguZmxvb3IoKGluZGV4IC0gMSkgLyAyKTtcclxuICAgICAgICAgICAgaWYgKCF0aGlzLl9jb21wYXJhdG9yKGNvbnRhaW5lcltpbmRleF0udmFsdWUsIGNvbnRhaW5lcltwYXJlbnRJbmRleF0udmFsdWUpKSB7XHJcbiAgICAgICAgICAgICAgICBicmVhaztcclxuICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgdGhpcy5fc3dhcChwYXJlbnRJbmRleCwgaW5kZXgpXHJcbiAgICAgICAgICAgIGluZGV4ID0gcGFyZW50SW5kZXg7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBQdXNoZXMgdGhlIGVsZW1lbnQgdG8gdGhlIGhlYXAuXHJcbiAgICAgKiBAcGFyYW0ge30gZWxlbWVudFxyXG4gICAgICogQHJldHVybnMge0hlYXB9XHJcbiAgICAgKi9cclxuICAgIHB1c2goZWxlbWVudCkge1xyXG4gICAgICAgIGNvbnN0IHZhbHVlID0gdGhpcy5fYWNjZXNzb3IoZWxlbWVudCk7XHJcbiAgICAgICAgLy9jb25zdCBub2RlID0gbmV3IE5vZGUoZWxlbWVudCwgdmFsdWUpO1xyXG4gICAgICAgIGNvbnN0IG5vZGUgPSB7XCJlbGVtZW50XCI6IGVsZW1lbnQsIFwidmFsdWVcIjogdmFsdWV9O1xyXG4gICAgICAgIHRoaXMuX2NvbnRhaW5lci5wdXNoKG5vZGUpO1xyXG4gICAgICAgIHRoaXMuX2hlYXBpZnlfdXAoKTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3N0YXJ0X2luZGV4ID0gMF0gXHJcbiAgICAgKi9cclxuICAgIF9oZWFwaWZ5X2Rvd24oc3RhcnRfaW5kZXg9MCkge1xyXG4gICAgICAgIGNvbnN0IGNvbnRhaW5lciA9IHRoaXMuX2NvbnRhaW5lcjtcclxuICAgICAgICBjb25zdCBjb21wYXJhdG9yID0gdGhpcy5fY29tcGFyYXRvcjtcclxuICAgICAgICBjb25zdCBsZW5ndGggPSBjb250YWluZXIubGVuZ3RoO1xyXG4gICAgICAgIGxldCBsZWZ0ID0gMiAqIHN0YXJ0X2luZGV4ICsgMTtcclxuICAgICAgICBsZXQgcmlnaHQgPSAyICogc3RhcnRfaW5kZXggKyAyO1xyXG4gICAgICAgIGxldCBpbmRleCA9IHN0YXJ0X2luZGV4O1xyXG4gICAgICAgIGlmIChpbmRleCA+IGxlbmd0aCkgdGhyb3cgXCJpbmRleCBoaWdoZXIgdGhhbiBsZW5ndGhcIlxyXG4gICAgICAgIGlmIChsZWZ0IDwgbGVuZ3RoICYmIGNvbXBhcmF0b3IoY29udGFpbmVyW2xlZnRdLnZhbHVlLCBjb250YWluZXJbaW5kZXhdLnZhbHVlKSkge1xyXG4gICAgICAgICAgICBpbmRleCA9IGxlZnQ7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGlmIChyaWdodCA8IGxlbmd0aCAmJiBjb21wYXJhdG9yKGNvbnRhaW5lcltyaWdodF0udmFsdWUsIGNvbnRhaW5lcltpbmRleF0udmFsdWUpKSB7XHJcbiAgICAgICAgICAgIGluZGV4ID0gcmlnaHQ7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGlmIChpbmRleCAhPT0gc3RhcnRfaW5kZXgpIHtcclxuICAgICAgICAgICAgdGhpcy5fc3dhcChzdGFydF9pbmRleCwgaW5kZXgpO1xyXG4gICAgICAgICAgICB0aGlzLl9oZWFwaWZ5X2Rvd24oaW5kZXgpO1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJlbW92ZXMgYW5kIHJldHVybnMgdGhlIHRvcCBlbnRyeSBvZiB0aGUgaGVhcC5cclxuICAgICAqIEByZXR1cm5zIHtPYmplY3R9IE9iamVjdCBjb25zaXN0cyBvZiB0aGUgZWxlbWVudCBhbmQgaXRzIHZhbHVlIChjb21wdXRlZCBieSB7QGxpbmsgYWNjZXNzb3J9KS5cclxuICAgICAqL1xyXG4gICAgcG9wKCkge1xyXG4gICAgICAgIGNvbnN0IGNvbnRhaW5lciA9IHRoaXMuX2NvbnRhaW5lcjtcclxuICAgICAgICBpZiAoY29udGFpbmVyLmxlbmd0aCA9PT0gMCkge1xyXG4gICAgICAgICAgICByZXR1cm4gbnVsbDtcclxuICAgICAgICB9IGVsc2UgaWYgKGNvbnRhaW5lci5sZW5ndGggPT09IDEpIHtcclxuICAgICAgICAgICAgcmV0dXJuIGNvbnRhaW5lci5wb3AoKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgdGhpcy5fc3dhcCgwLCBjb250YWluZXIubGVuZ3RoIC0gMSk7XHJcbiAgICAgICAgY29uc3QgaXRlbSA9IGNvbnRhaW5lci5wb3AoKTtcclxuICAgICAgICB0aGlzLl9oZWFwaWZ5X2Rvd24oKTtcclxuICAgICAgICByZXR1cm4gaXRlbTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIHRvcCBlbnRyeSBvZiB0aGUgaGVhcCB3aXRob3V0IHJlbW92aW5nIGl0LlxyXG4gICAgICogQHJldHVybnMge09iamVjdH0gT2JqZWN0IGNvbnNpc3RzIG9mIHRoZSBlbGVtZW50IGFuZCBpdHMgdmFsdWUgKGNvbXB1dGVkIGJ5IHtAbGluayBhY2Nlc3Nvcn0pLlxyXG4gICAgICovXHJcbiAgICBnZXQgZmlyc3QoKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX2NvbnRhaW5lci5sZW5ndGggPiAwID8gdGhpcy5fY29udGFpbmVyWzBdIDogbnVsbDtcclxuICAgIH1cclxuXHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBZaWVsZHMgdGhlIHJhdyBkYXRhXHJcbiAgICAgKiBAeWllbGRzIHtPYmplY3R9IE9iamVjdCBjb25zaXN0cyBvZiB0aGUgZWxlbWVudCBhbmQgaXRzIHZhbHVlIChjb21wdXRlZCBieSB7QGxpbmsgYWNjZXNzb3J9KS5cclxuICAgICAqL1xyXG4gICAgKiBpdGVyYXRlKCkge1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwLCBuID0gdGhpcy5fY29udGFpbmVyLmxlbmd0aDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICB5aWVsZCB0aGlzLl9jb250YWluZXJbaV0uZWxlbWVudDtcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIHRoZSBoZWFwIGFzIG9yZGVyZWQgYXJyYXkuXHJcbiAgICAgKiBAcmV0dXJucyB7QXJyYXl9IEFycmF5IGNvbnNpc3RpbmcgdGhlIGVsZW1lbnRzIG9yZGVyZWQgYnkge0BsaW5rIGNvbXBhcmF0b3J9LlxyXG4gICAgICovXHJcbiAgICB0b0FycmF5KCkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLmRhdGEoKVxyXG4gICAgICAgICAgICAuc29ydCgoYSxiKSA9PiB0aGlzLl9jb21wYXJhdG9yKGEsIGIpID8gLTEgOiAwKVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyBlbGVtZW50cyBvZiBjb250YWluZXIgYXJyYXkuXHJcbiAgICAgKiBAcmV0dXJucyB7QXJyYXl9IEFycmF5IGNvbnNpc3RpbmcgdGhlIGVsZW1lbnRzLlxyXG4gICAgICovXHJcbiAgICBkYXRhKCkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLl9jb250YWluZXJcclxuICAgICAgICAgICAgLm1hcChkID0+IGQuZWxlbWVudClcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIGNvbnRhaW5lciBhcnJheS5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheX0gVGhlIGNvbnRhaW5lciBhcnJheS5cclxuICAgICAqL1xyXG4gICAgcmF3X2RhdGEoKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX2NvbnRhaW5lcjtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFRoZSBzaXplIG9mIHRoZSBoZWFwLlxyXG4gICAgICogQHJldHVybnMge051bWJlcn1cclxuICAgICAqL1xyXG4gICAgZ2V0IGxlbmd0aCgpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5fY29udGFpbmVyLmxlbmd0aDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgZmFsc2UgaWYgdGhlIHRoZSBoZWFwIGhhcyBlbnRyaWVzLCB0cnVlIGlmIHRoZSBoZWFwIGhhcyBubyBlbnRyaWVzLlxyXG4gICAgICogQHJldHVybnMge0Jvb2xlYW59XHJcbiAgICAgKi9cclxuICAgIGdldCBlbXB0eSgpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5sZW5ndGggPT09IDA7XHJcbiAgICB9XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./datastructure/Heap.js\n");
+
+/***/ }),
+
+/***/ "./datastructure/index.js":
+/*!********************************!*\
+  !*** ./datastructure/index.js ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Heap\": () => (/* reexport safe */ _Heap__WEBPACK_IMPORTED_MODULE_0__.Heap)\n/* harmony export */ });\n/* harmony import */ var _Heap__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Heap */ \"./datastructure/Heap.js\");\n/**\r\n * @module datastructure\r\n */\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RhdGFzdHJ1Y3R1cmUvaW5kZXguanM/NmM4OSJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7OztBQUFBO0FBQ0E7QUFDQSIsImZpbGUiOiIuL2RhdGFzdHJ1Y3R1cmUvaW5kZXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogQG1vZHVsZSBkYXRhc3RydWN0dXJlXHJcbiAqL1xyXG5leHBvcnQgeyBIZWFwIH0gZnJvbSAnLi9IZWFwJyJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./datastructure/index.js\n");
+
+/***/ }),
+
+/***/ "./dimred/DR.js":
+/*!**********************!*\
+  !*** ./dimred/DR.js ***!
+  \**********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"DR\": () => (/* binding */ DR)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _util_randomizer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/randomizer */ \"./util/randomizer.js\");\n\n\n\n/**\r\n * @class\r\n * @alias DR\r\n */\n\nclass DR {\n  //static parameter_list = [];\n  get parameter_list() {\n    return this._parameter_list;\n  }\n\n  set parameter_list(list) {\n    this._parameter_list = list;\n    return this;\n  }\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias DR\r\n   * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data. \r\n   * @param {number} [d = 2] - the dimensionality of the projection.\r\n   * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {seed} [seed=1987] - the seed value for the random number generator.\r\n   * @returns {DR}\r\n   */\n\n\n  constructor(X, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean, seed = 1212) {\n    if (Array.isArray(X)) {\n      this._type = \"array\";\n      this.X = _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix.from(X);\n    } else if (X instanceof _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix) {\n      this._type = \"matrix\";\n      this.X = X;\n    } else {\n      throw \"no valid type for X\";\n    }\n\n    [this._N, this._D] = this.X.shape;\n    this._d = d;\n    this._metric = metric;\n    this._seed = seed;\n    this._randomizer = new _util_randomizer__WEBPACK_IMPORTED_MODULE_2__.Randomizer(seed);\n    this._is_initialized = false;\n    return this;\n  }\n  /**\r\n   * Set and get parameters\r\n   * @param {String} name - name of the parameter.\r\n   * @param {Number} [value = null] - value of the parameter to set, if null then return actual parameter value.\r\n   */\n\n\n  parameter(name, value = null) {\n    if (this.parameter_list.findIndex(parameter => parameter === name) === -1) {\n      throw `${name} is not a valid parameter!`;\n    }\n\n    if (value) {\n      this[`_${name}`] = value;\n      return this;\n    } else {\n      return this[`_${name}`];\n    }\n  }\n  /**\r\n   * Alias for 'parameter'.\r\n   * @param {String} name \r\n   * @param {Number} value \r\n   */\n\n\n  para(name, value = null) {\n    return this.parameter(name, value);\n  }\n  /**\r\n   * Alias for 'parameter'.\r\n   * @param {String} name \r\n   * @param {Number} value \r\n   */\n\n\n  p(name, value = null) {\n    return this.parameter(name, value);\n  }\n  /**\r\n   * Computes the projection.\r\n   * @returns {Matrix} Returns the projection.\r\n   */\n\n\n  transform() {\n    this.check_init();\n    return this.Y;\n  }\n\n  generator() {\n    return this.transform();\n  }\n\n  check_init() {\n    if (!this._is_initialized && typeof this.init === \"function\") {\n      this.init();\n      this._is_initialized = true;\n    }\n  }\n  /**\r\n   * @returns {Matrix} Returns the projection.\r\n   */\n\n\n  get projection() {\n    return this._type === \"matrix\" ? this.Y : this.Y.to2dArray;\n  }\n\n  async transform_async() {\n    return this.transform();\n  }\n\n  static transform(...args) {\n    let dr = new this(...args);\n    return dr.transform();\n  }\n\n  static async transform_async(...args) {\n    return this.transform(...args);\n  }\n\n  static *generator(...args) {\n    const dr = new this(...args);\n    const gen = dr.generator();\n\n    for (const res of gen) {\n      yield res;\n    }\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9EUi5qcz9kMTJiIl0sIm5hbWVzIjpbIkRSIiwicGFyYW1ldGVyX2xpc3QiLCJfcGFyYW1ldGVyX2xpc3QiLCJsaXN0IiwiY29uc3RydWN0b3IiLCJYIiwiZCIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInNlZWQiLCJBcnJheSIsImlzQXJyYXkiLCJfdHlwZSIsIk1hdHJpeCIsIl9OIiwiX0QiLCJzaGFwZSIsIl9kIiwiX21ldHJpYyIsIl9zZWVkIiwiX3JhbmRvbWl6ZXIiLCJSYW5kb21pemVyIiwiX2lzX2luaXRpYWxpemVkIiwicGFyYW1ldGVyIiwibmFtZSIsInZhbHVlIiwiZmluZEluZGV4IiwicGFyYSIsInAiLCJ0cmFuc2Zvcm0iLCJjaGVja19pbml0IiwiWSIsImdlbmVyYXRvciIsImluaXQiLCJwcm9qZWN0aW9uIiwidG8yZEFycmF5IiwidHJhbnNmb3JtX2FzeW5jIiwiYXJncyIsImRyIiwiZ2VuIiwicmVzIl0sIm1hcHBpbmdzIjoiOzs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7O0FBQ08sTUFBTUEsRUFBTixDQUFRO0FBQ1g7QUFDa0IsTUFBZEMsY0FBYyxHQUFHO0FBQ2pCLFdBQU8sS0FBS0MsZUFBWjtBQUNIOztBQUVpQixNQUFkRCxjQUFjLENBQUNFLElBQUQsRUFBTztBQUNyQixTQUFLRCxlQUFMLEdBQXVCQyxJQUF2QjtBQUNBLFdBQU8sSUFBUDtBQUNIO0FBQ0Q7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7O0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxDQUFDLEdBQUMsQ0FBTixFQUFTQyxNQUFNLEdBQUNDLHFEQUFoQixFQUEyQkMsSUFBSSxHQUFDLElBQWhDLEVBQXNDO0FBQzdDLFFBQUlDLEtBQUssQ0FBQ0MsT0FBTixDQUFjTixDQUFkLENBQUosRUFBc0I7QUFDbEIsV0FBS08sS0FBTCxHQUFhLE9BQWI7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R0FBR0QsRUFBRSxDQUFDTixTQUFILEVBQVo7O0FBQ0EsU0FBSyxNQUFNUSxHQUFYLElBQWtCRCxHQUFsQixFQUF1QjtBQUNuQixZQUFNQyxHQUFOO0FBQ0g7QUFDSjs7QUF6SFUiLCJmaWxlIjoiLi9kaW1yZWQvRFIuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcbmltcG9ydCB7IFJhbmRvbWl6ZXIgfSBmcm9tIFwiLi4vdXRpbC9yYW5kb21pemVyXCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBEUlxyXG4gKi9cclxuZXhwb3J0IGNsYXNzIERSe1xyXG4gICAgLy9zdGF0aWMgcGFyYW1ldGVyX2xpc3QgPSBbXTtcclxuICAgIGdldCBwYXJhbWV0ZXJfbGlzdCgpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5fcGFyYW1ldGVyX2xpc3Q7XHJcbiAgICB9XHJcblxyXG4gICAgc2V0IHBhcmFtZXRlcl9saXN0KGxpc3QpIHtcclxuICAgICAgICB0aGlzLl9wYXJhbWV0ZXJfbGlzdCA9IGxpc3Q7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIERSXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeHxBcnJheTxBcnJheTxOdW1iZXI+Pn0gWCAtIHRoZSBoaWdoLWRpbWVuc2lvbmFsIGRhdGEuIFxyXG4gICAgICogQHBhcmFtIHtudW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcGFyYW0ge3NlZWR9IFtzZWVkPTE5ODddIC0gdGhlIHNlZWQgdmFsdWUgZm9yIHRoZSByYW5kb20gbnVtYmVyIGdlbmVyYXRvci5cclxuICAgICAqIEByZXR1cm5zIHtEUn1cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgZD0yLCBtZXRyaWM9ZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBpZiAoQXJyYXkuaXNBcnJheShYKSkge1xyXG4gICAgICAgICAgICB0aGlzLl90eXBlID0gXCJhcnJheVwiO1xyXG4gICAgICAgICAgICB0aGlzLlggPSBNYXRyaXguZnJvbShYKTtcclxuICAgICAgICB9IGVsc2UgaWYgKFggaW5zdGFuY2VvZiBNYXRyaXgpIHtcclxuICAgICAgICAgICAgdGhpcy5fdHlwZSA9IFwibWF0cml4XCI7XHJcbiAgICAgICAgICAgIHRoaXMuWCA9IFg7XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgdGhyb3cgXCJubyB2YWxpZCB0eXBlIGZvciBYXCI7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIFt0aGlzLl9OLCB0aGlzLl9EXSA9IHRoaXMuWC5zaGFwZTtcclxuICAgICAgICB0aGlzLl9kID0gZDtcclxuICAgICAgICB0aGlzLl9tZXRyaWMgPSBtZXRyaWM7XHJcbiAgICAgICAgdGhpcy5fc2VlZCA9IHNlZWQ7XHJcbiAgICAgICAgdGhpcy5fcmFuZG9taXplciA9IG5ldyBSYW5kb21pemVyKHNlZWQpO1xyXG4gICAgICAgIHRoaXMuX2lzX2luaXRpYWxpemVkID0gZmFsc2U7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcbiAgICAgICAgXHJcbiAgICAvKipcclxuICAgICAqIFNldCBhbmQgZ2V0IHBhcmFtZXRlcnNcclxuICAgICAqIEBwYXJhbSB7U3RyaW5nfSBuYW1lIC0gbmFtZSBvZiB0aGUgcGFyYW1ldGVyLlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFt2YWx1ZSA9IG51bGxdIC0gdmFsdWUgb2YgdGhlIHBhcmFtZXRlciB0byBzZXQsIGlmIG51bGwgdGhlbiByZXR1cm4gYWN0dWFsIHBhcmFtZXRlciB2YWx1ZS5cclxuICAgICAqL1xyXG4gICAgcGFyYW1ldGVyKG5hbWUsIHZhbHVlPW51bGwpIHtcclxuICAgICAgICBpZiAodGhpcy5wYXJhbWV0ZXJfbGlzdC5maW5kSW5kZXgocGFyYW1ldGVyID0+IHBhcmFtZXRlciA9PT0gbmFtZSkgPT09IC0xKSB7XHJcbiAgICAgICAgICAgIHRocm93IGAke25hbWV9IGlzIG5vdCBhIHZhbGlkIHBhcmFtZXRlciFgO1xyXG4gICAgICAgIH0gXHJcbiAgICAgICAgaWYgKHZhbHVlKSB7XHJcbiAgICAgICAgICAgIHRoaXNbYF8ke25hbWV9YF0gPSB2YWx1ZTtcclxuICAgICAgICAgICAgcmV0dXJuIHRoaXM7IFxyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIHJldHVybiB0aGlzW2BfJHtuYW1lfWBdO1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEFsaWFzIGZvciAncGFyYW1ldGVyJy5cclxuICAgICAqIEBwYXJhbSB7U3RyaW5nfSBuYW1lIFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IHZhbHVlIFxyXG4gICAgICovXHJcbiAgICBwYXJhKG5hbWUsIHZhbHVlPW51bGwpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5wYXJhbWV0ZXIobmFtZSwgdmFsdWUpO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQWxpYXMgZm9yICdwYXJhbWV0ZXInLlxyXG4gICAgICogQHBhcmFtIHtTdHJpbmd9IG5hbWUgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gdmFsdWUgXHJcbiAgICAgKi9cclxuICAgIHAobmFtZSwgdmFsdWU9bnVsbCkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLnBhcmFtZXRlcihuYW1lLCB2YWx1ZSk7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBDb21wdXRlcyB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9IFJldHVybnMgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKi9cclxuICAgIHRyYW5zZm9ybSgpIHtcclxuICAgICAgICB0aGlzLmNoZWNrX2luaXQoKTtcclxuICAgICAgICByZXR1cm4gdGhpcy5ZO1xyXG4gICAgfVxyXG5cclxuICAgIGdlbmVyYXRvcigpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy50cmFuc2Zvcm0oKTtcclxuICAgIH1cclxuXHJcbiAgICBjaGVja19pbml0KCkge1xyXG4gICAgICAgIGlmICghdGhpcy5faXNfaW5pdGlhbGl6ZWQgJiYgdHlwZW9mIHRoaXMuaW5pdCA9PT0gXCJmdW5jdGlvblwiKSB7XHJcbiAgICAgICAgICAgIHRoaXMuaW5pdCgpO1xyXG4gICAgICAgICAgICB0aGlzLl9pc19pbml0aWFsaXplZCA9IHRydWU7XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHJldHVybnMge01hdHJpeH0gUmV0dXJucyB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqL1xyXG4gICAgZ2V0IHByb2plY3Rpb24oKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX3R5cGUgPT09IFwibWF0cml4XCIgPyB0aGlzLlkgOiB0aGlzLlkudG8yZEFycmF5O1xyXG4gICAgfVxyXG5cclxuICAgIGFzeW5jIHRyYW5zZm9ybV9hc3luYygpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy50cmFuc2Zvcm0oKTtcclxuICAgIH1cclxuXHJcbiAgICBzdGF0aWMgdHJhbnNmb3JtKC4uLmFyZ3MpIHtcclxuICAgICAgICBsZXQgZHIgPSBuZXcgdGhpcyguLi5hcmdzKTtcclxuICAgICAgICByZXR1cm4gZHIudHJhbnNmb3JtKCk7XHJcbiAgICB9XHJcblxyXG4gICAgc3RhdGljIGFzeW5jIHRyYW5zZm9ybV9hc3luYyguLi5hcmdzKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMudHJhbnNmb3JtKC4uLmFyZ3MpO1xyXG4gICAgfVxyXG5cclxuICAgIHN0YXRpYyAqZ2VuZXJhdG9yKC4uLmFyZ3MpIHtcclxuICAgICAgICBjb25zdCBkciA9IG5ldyB0aGlzKC4uLmFyZ3MpO1xyXG4gICAgICAgIGNvbnN0IGdlbiA9IGRyLmdlbmVyYXRvcigpO1xyXG4gICAgICAgIGZvciAoY29uc3QgcmVzIG9mIGdlbikge1xyXG4gICAgICAgICAgICB5aWVsZCByZXM7XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG59ICJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/DR.js\n");
+
+/***/ }),
+
+/***/ "./dimred/FASTMAP.js":
+/*!***************************!*\
+  !*** ./dimred/FASTMAP.js ***!
+  \***************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"FASTMAP\": () => (/* binding */ FASTMAP)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n/**\r\n * @class\r\n * @alias FASTMAP\r\n */\n\nclass FASTMAP extends _DR_js__WEBPACK_IMPORTED_MODULE_2__.DR {\n  /**\r\n   * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets\r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias FASTMAP\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @returns {FASTMAP}\r\n   * @see {@link https://doi.org/10.1145/223784.223812}\r\n   */\n  constructor(X, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    return this;\n  }\n  /**\r\n   * Chooses two points which are the most distant in the actual projection.\r\n   * @private\r\n   * @param {function} dist \r\n   * @returns {Array} An array consisting of first index, second index, and distance between the two points.\r\n   */\n\n\n  _choose_distant_objects(dist) {\n    const X = this.X;\n    const N = X.shape[0];\n    let a_index = this._randomizer.random_int % N - 1;\n    let b_index = null;\n    let max_dist = -Infinity;\n\n    for (let i = 0; i < N; ++i) {\n      const d_ai = dist(a_index, i);\n\n      if (d_ai > max_dist) {\n        max_dist = d_ai;\n        b_index = i;\n      }\n    }\n\n    max_dist = -Infinity;\n\n    for (let i = 0; i < N; ++i) {\n      const d_bi = dist(b_index, i);\n\n      if (d_bi > max_dist) {\n        max_dist = d_bi;\n        a_index = i;\n      }\n    }\n\n    return [a_index, b_index, max_dist];\n  }\n  /**\r\n   * Computes the projection.\r\n   * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.\r\n   */\n\n\n  transform() {\n    const X = this.X;\n    const N = X.shape[0];\n    const d = this._d;\n    const metric = this._metric;\n    const Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, 0);\n\n    let dist = (a, b) => metric(X.row(a), X.row(b));\n\n    for (let _col = 0; _col < d; ++_col) {\n      let old_dist = dist; // choose pivot objects\n\n      const [a_index, b_index, d_ab] = this._choose_distant_objects(dist); // record id of pivot objects\n      //PA[0].push(a_index);\n      //PA[1].push(b_index);\n\n      /* if (d_ab === 0) {\r\n          // because all inter-object distances are zeros\r\n          for (let i = 0; i < N; ++i) {\r\n              Y.set_entry(i, _col, 0);\r\n          }\r\n      } else { */\n\n\n      if (d_ab !== 0) {\n        // project the objects on the line (O_a, O_b)\n        for (let i = 0; i < N; ++i) {\n          const d_ai = dist(a_index, i);\n          const d_bi = dist(b_index, i);\n          const y_i = (d_ai ** 2 + d_ab ** 2 - d_bi ** 2) / (2 * d_ab);\n          Y.set_entry(i, _col, y_i);\n        } // consider the projections of the objects on a\n        // hyperplane perpendicluar to the line (a, b);\n        // the distance function D'() between two \n        // projections is given by Eq.4\n\n\n        dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);\n      }\n    } // return embedding\n\n\n    this.Y = Y;\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9GQVNUTUFQLmpzP2YzMDciXSwibmFtZXMiOlsiRkFTVE1BUCIsIkRSIiwiY29uc3RydWN0b3IiLCJYIiwiZCIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInNlZWQiLCJfY2hvb3NlX2Rpc3RhbnRfb2JqZWN0cyIsImRpc3QiLCJOIiwic2hhcGUiLCJhX2luZGV4IiwiX3JhbmRvbWl6ZXIiLCJyYW5kb21faW50IiwiYl9pbmRleCIsIm1heF9kaXN0IiwiSW5maW5pdHkiLCJpIiwiZF9haSIsImRfYmkiLCJ0cmFuc2Zvcm0iLCJfZCIsIl9tZXRyaWMiLCJZIiwiTWF0cml4IiwiYSIsImIiLCJyb3ciLCJfY29sIiwib2xkX2Rpc3QiLCJkX2FiIiwieV9pIiwic2V0X2VudHJ5IiwiTWF0aCIsInNxcnQiLCJlbnRyeSIsInByb2plY3Rpb24iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxPQUFOLFNBQXNCQyxzQ0FBdEIsQ0FBd0I7QUFDM0I7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxDQUFDLEdBQUMsQ0FBTixFQUFTQyxNQUFNLEdBQUNDLHFEQUFoQixFQUEyQkMsSUFBSSxHQUFDLElBQWhDLEVBQXNDO0FBQzdDLFVBQU1KLENBQU4sRUFBU0MsQ0FBVCxFQUFZQyxNQUFaLEVBQW9CRSxJQUFwQjtBQUNBLFdBQU8sSUFBUDtBQUNIO0FBRUQ7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBOzs7QUFDSUMseUJBQXVCLENBQUNDLElBQUQsRUFBTztBQUMxQixVQUFNTixDQUFDLEdBQUcsS0FBS0EsQ0FBZjtBQUNBLFVBQU1PLENBQUMsR0FBR1AsQ0FBQyxDQUFDUSxLQUFGLENBQVEsQ0FBUixDQUFWO0FBQ0EsUUFBSUMsT0FBTyxHQUFHLEtBQUtD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LENBQVVMLFFBQVEsQ0FBQ0osQ0FBRCxFQUFJQyxDQUFKLENBQVIsSUFBa0IsQ0FBbEIsR0FBc0IsQ0FBQ0gsQ0FBQyxDQUFDWSxLQUFGLENBQVFWLENBQVIsRUFBV0csSUFBWCxJQUFtQkwsQ0FBQyxDQUFDWSxLQUFGLENBQVFULENBQVIsRUFBV0UsSUFBWCxDQUFwQixLQUF5QyxDQUF6RSxDQUFqQjtBQUNIO0FBQ0osS0FuQ08sQ0FvQ1I7OztBQUNBLFNBQUtMLENBQUwsR0FBU0EsQ0FBVDtBQUNBLFdBQU8sS0FBS2EsVUFBWjtBQUNIOztBQTNGMEIiLCJmaWxlIjoiLi9kaW1yZWQvRkFTVE1BUC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBGQVNUTUFQXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgRkFTVE1BUCBleHRlbmRzIERSe1xyXG4gICAgLyoqXHJcbiAgICAgKiBGYXN0TWFwOiBhIGZhc3QgYWxnb3JpdGhtIGZvciBpbmRleGluZywgZGF0YS1taW5pbmcgYW5kIHZpc3VhbGl6YXRpb24gb2YgdHJhZGl0aW9uYWwgYW5kIG11bHRpbWVkaWEgZGF0YXNldHNcclxuICAgICAqIEBjb25zdHJ1Y3RvclxyXG4gICAgICogQG1lbWJlcm9mIG1vZHVsZTpkaW1lbnNpb25hbGl0eV9yZWR1Y3Rpb25cclxuICAgICAqIEBhbGlhcyBGQVNUTUFQXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWCAtIHRoZSBoaWdoLWRpbWVuc2lvbmFsIGRhdGEuIFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxMjEyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtGQVNUTUFQfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9kb2kub3JnLzEwLjExNDUvMjIzNzg0LjIyMzgxMn1cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgZD0yLCBtZXRyaWM9ZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ2hvb3NlcyB0d28gcG9pbnRzIHdoaWNoIGFyZSB0aGUgbW9zdCBkaXN0YW50IGluIHRoZSBhY3R1YWwgcHJvamVjdGlvbi5cclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBkaXN0IFxyXG4gICAgICogQHJldHVybnMge0FycmF5fSBBbiBhcnJheSBjb25zaXN0aW5nIG9mIGZpcnN0IGluZGV4LCBzZWNvbmQgaW5kZXgsIGFuZCBkaXN0YW5jZSBiZXR3ZWVuIHRoZSB0d28gcG9pbnRzLlxyXG4gICAgICovXHJcbiAgICBfY2hvb3NlX2Rpc3RhbnRfb2JqZWN0cyhkaXN0KSB7XHJcbiAgICAgICAgY29uc3QgWCA9IHRoaXMuWDtcclxuICAgICAgICBjb25zdCBOID0gWC5zaGFwZVswXTtcclxuICAgICAgICBsZXQgYV9pbmRleCA9IHRoaXMuX3JhbmRvbWl6ZXIucmFuZG9tX2ludCAlIE4gLSAxO1xyXG4gICAgICAgIGxldCBiX2luZGV4ID0gbnVsbDtcclxuICAgICAgICBsZXQgbWF4X2Rpc3QgPSAtSW5maW5pdHk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgZF9haSA9IGRpc3QoYV9pbmRleCwgaSlcclxuICAgICAgICAgICAgaWYgKGRfYWkgPiBtYXhfZGlzdCkge1xyXG4gICAgICAgICAgICAgICAgbWF4X2Rpc3QgPSBkX2FpO1xyXG4gICAgICAgICAgICAgICAgYl9pbmRleCA9IGk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgbWF4X2Rpc3QgPSAtSW5maW5pdHk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgZF9iaSA9IGRpc3QoYl9pbmRleCwgaSlcclxuICAgICAgICAgICAgaWYgKGRfYmkgPiBtYXhfZGlzdCkge1xyXG4gICAgICAgICAgICAgICAgbWF4X2Rpc3QgPSBkX2JpO1xyXG4gICAgICAgICAgICAgICAgYV9pbmRleCA9IGk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIFthX2luZGV4LCBiX2luZGV4LCBtYXhfZGlzdF07XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBDb21wdXRlcyB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9IFRoZSB7QGxpbmsgZH0tZGltZW5zaW9uYWwgcHJvamVjdGlvbiBvZiB0aGUgZGF0YSBtYXRyaXgge0BsaW5rIFh9LlxyXG4gICAgICovXHJcbiAgICB0cmFuc2Zvcm0oKSB7XHJcbiAgICAgICAgY29uc3QgWCA9IHRoaXMuWDtcclxuICAgICAgICBjb25zdCBOID0gWC5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBkID0gdGhpcy5fZDtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgY29uc3QgWSA9IG5ldyBNYXRyaXgoTiwgZCwgMCk7XHJcbiAgICAgICAgbGV0IGRpc3QgPSAoYSwgYikgPT4gbWV0cmljKFgucm93KGEpLCBYLnJvdyhiKSk7XHJcblxyXG4gICAgICAgIGZvciAobGV0IF9jb2wgPSAwOyBfY29sIDwgZDsgKytfY29sKSB7XHJcbiAgICAgICAgICAgIGxldCBvbGRfZGlzdCA9IGRpc3Q7XHJcbiAgICAgICAgICAgIC8vIGNob29zZSBwaXZvdCBvYmplY3RzXHJcbiAgICAgICAgICAgIGNvbnN0IFthX2luZGV4LCBiX2luZGV4LCBkX2FiXSA9IHRoaXMuX2Nob29zZV9kaXN0YW50X29iamVjdHMoZGlzdCk7XHJcbiAgICAgICAgICAgIC8vIHJlY29yZCBpZCBvZiBwaXZvdCBvYmplY3RzXHJcbiAgICAgICAgICAgIC8vUEFbMF0ucHVzaChhX2luZGV4KTtcclxuICAgICAgICAgICAgLy9QQVsxXS5wdXNoKGJfaW5kZXgpO1xyXG4gICAgICAgICAgICAvKiBpZiAoZF9hYiA9PT0gMCkge1xyXG4gICAgICAgICAgICAgICAgLy8gYmVjYXVzZSBhbGwgaW50ZXItb2JqZWN0IGRpc3RhbmNlcyBhcmUgemVyb3NcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgWS5zZXRfZW50cnkoaSwgX2NvbCwgMCk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0gZWxzZSB7ICovXHJcbiAgICAgICAgICAgIGlmIChkX2FiICE9PSAwKSB7XHJcbiAgICAgICAgICAgICAgICAvLyBwcm9qZWN0IHRoZSBvYmplY3RzIG9uIHRoZSBsaW5lIChPX2EsIE9fYilcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgZF9haSA9IGRpc3QoYV9pbmRleCwgaSk7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgZF9iaSA9IGRpc3QoYl9pbmRleCwgaSk7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgeV9pID0gKGRfYWkgKiogMiArIGRfYWIgKiogMiAtIGRfYmkgKiogMikgLyAoMiAqIGRfYWIpO1xyXG4gICAgICAgICAgICAgICAgICAgIFkuc2V0X2VudHJ5KGksIF9jb2wsIHlfaSk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAvLyBjb25zaWRlciB0aGUgcHJvamVjdGlvbnMgb2YgdGhlIG9iamVjdHMgb24gYVxyXG4gICAgICAgICAgICAgICAgLy8gaHlwZXJwbGFuZSBwZXJwZW5kaWNsdWFyIHRvIHRoZSBsaW5lIChhLCBiKTtcclxuICAgICAgICAgICAgICAgIC8vIHRoZSBkaXN0YW5jZSBmdW5jdGlvbiBEJygpIGJldHdlZW4gdHdvIFxyXG4gICAgICAgICAgICAgICAgLy8gcHJvamVjdGlvbnMgaXMgZ2l2ZW4gYnkgRXEuNFxyXG4gICAgICAgICAgICAgICAgZGlzdCA9IChhLCBiKSA9PiBNYXRoLnNxcnQob2xkX2Rpc3QoYSwgYikgKiogMiAtIChZLmVudHJ5KGEsIF9jb2wpIC0gWS5lbnRyeShiLCBfY29sKSkgKiogMilcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICAvLyByZXR1cm4gZW1iZWRkaW5nXHJcbiAgICAgICAgdGhpcy5ZID0gWTtcclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./dimred/FASTMAP.js\n");
+
+/***/ }),
+
+/***/ "./dimred/ISOMAP.js":
+/*!**************************!*\
+  !*** ./dimred/ISOMAP.js ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"ISOMAP\": () => (/* binding */ ISOMAP)\n/* harmony export */ });\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _datastructure_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../datastructure/index */ \"./datastructure/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n\n/**\r\n * @class\r\n * @alias ISOMAP\r\n */\n\nclass ISOMAP extends _DR_js__WEBPACK_IMPORTED_MODULE_4__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias ISOMAP\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} neighbors - the number of neighbors {@link ISOMAP} should use to project the data.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection. \r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points. \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   */\n  constructor(X, neighbors, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_2__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"k\"];\n    this.parameter(\"k\", Math.min(neighbors ?? Math.max(Math.floor(this.X.shape[0] / 10), 2), this._N - 1));\n    return this;\n  }\n  /**\r\n   * Computes the projection.\r\n   * @returns {Matrix} Returns the projection.\r\n   */\n\n\n  transform() {\n    this.check_init();\n    const X = this.X;\n    const rows = this._N;\n    const metric = this._metric; // TODO: make knn extern and parameter for constructor or transform?\n\n    const D = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix();\n    D.shape = [rows, rows, (i, j) => i <= j ? metric(X.row(i), X.row(j)) : D.entry(j, i)];\n    const kNearestNeighbors = [];\n\n    for (let i = 0; i < rows; ++i) {\n      const row = [];\n\n      for (let j = 0; j < rows; ++j) {\n        row.push({\n          \"index\": j,\n          \"distance\": D.entry(i, j)\n        });\n      }\n\n      const H = new _datastructure_index__WEBPACK_IMPORTED_MODULE_3__.Heap(row, d => d.distance, \"min\");\n      kNearestNeighbors.push(H.toArray().slice(1, this._k + 1));\n    }\n    /*D = dijkstra(kNearestNeighbors);*/\n    // compute shortest paths\n    // TODO: make extern\n\n    /** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */\n\n\n    const G = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix(rows, rows, (i, j) => {\n      const other = kNearestNeighbors[i].find(n => n.index === j);\n      return other ? other.distance : Infinity;\n    });\n\n    for (let i = 0; i < rows; ++i) {\n      for (let j = 0; j < rows; ++j) {\n        for (let k = 0; k < rows; ++k) {\n          G.set_entry(i, j, Math.min(G.entry(i, j), G.entry(i, k) + G.entry(k, j)));\n        }\n      }\n    }\n\n    let ai_ = new Float64Array(rows);\n    let a_j = new Float64Array(rows);\n    let a__ = 0;\n    let A = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix(rows, rows, (i, j) => {\n      let val = G.entry(i, j);\n      val = val === Infinity ? 0 : val;\n      ai_[i] += val;\n      a_j[j] += val;\n      a__ += val;\n      return val;\n    });\n    ai_ = ai_.map(v => v / rows);\n    a_j = a_j.map(v => v / rows);\n    a__ /= rows ** 2;\n    const B = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix(rows, rows, (i, j) => A.entry(i, j) - ai_[i] - a_j[j] + a__); // compute d eigenvectors\n\n    const {\n      eigenvectors: V\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__.simultaneous_poweriteration)(B, this._d);\n    this.Y = _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix.from(V).transpose(); // return embedding\n\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9JU09NQVAuanM/ODczZSJdLCJuYW1lcyI6WyJJU09NQVAiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsIm5laWdoYm9ycyIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwicGFyYW1ldGVyX2xpc3QiLCJwYXJhbWV0ZXIiLCJNYXRoIiwibWluIiwibWF4IiwiZmxvb3IiLCJzaGFwZSIsIl9OIiwidHJhbnNmb3JtIiwiY2hlY2tfaW5pdCIsInJvd3MiLCJfbWV0cmljIiwiRCIsIk1hdHJpeCIsImkiLCJqIiwicm93IiwiZW50cnkiLCJrTmVhcmVzdE5laWdoYm9ycyIsInB1c2giLCJIIiwiSGVhcCIsImRpc3RhbmNlIiwidG9BcnJheSIsInNsaWNlIiwiX2siLCJHIiwib3RoZXIiLCJmaW5kIiwibiIsImluZGV4IiwiSW5maW5pdHkiLCJrIiwic2V0X2VudHJ5IiwiYWlfIiwiRmxvYXQ2NEFycmF5IiwiYV9qIiwiYV9fIiwiQSIsInZhbCIsIm1hcCIsInYiLCJCIiwiZWlnZW52ZWN0b3JzIiwiViIsInNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbiIsIl9kIiwiWSIsInRyYW5zcG9zZSIsInByb2plY3Rpb24iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxNQUFOLFNBQXFCQyxzQ0FBckIsQ0FBd0I7QUFDM0I7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLENBQUQsRUFBSUMsU0FBSixFQUFlQyxDQUFDLEdBQUcsQ0FBbkIsRUFBc0JDLE1BQU0sR0FBR0MscURBQS9CLEVBQTBDQyxJQUFJLEdBQUMsSUFBL0MsRUFBcUQ7QUFDNUQsVUFBTUwsQ0FBTixFQUFTRSxDQUFULEVBQVlDLE1BQVosRUFBb0JFLElBQXBCO0FBQ0EsVUFBTUMsY0FBTixHQUF1QixDQUFDLEdBQUQsQ0FBdkI7QUFDQSxTQUFLQyxTQUFMLENBQWUsR0FBZixFQUFvQkMsSUFBSSxDQUFDQyxHQUFMLENBQVNSLFNBQVMsSUFBSU8sSUFBSSxDQUFDRSxHQUFMLENBQVNGLElBQUksQ0FBQ0csS0FBTCxDQUFXLEtBQUtYLENBQUwsQ0FBT1ksS0FBUCxDQUFhLENBQWIsSUFBa0IsRUFBN0IsQ0FBVCxFQUEyQyxDQUEzQyxDQUF0QixFQUFxRSxLQUFLQyxFQUFMLEdBQVMsQ0FBOUUsQ0FBcEI7QUFDQSxXQUFPLElBQVA7QUFDSDtBQUVEO0FBQ0o7QUFDQTtBQUNBOzs7QUFDSUMsV0FBUyxHQUFHO0FBQ1IsU0FBS0MsVUFBTDtBQUNBLFVBQU1mLENBQUMsR0FBRyxLQUFLQSxDQUFmO0FBQ0EsVUFBTWdCLElBQUksR0FBRyxLQUFLSCxFQUFsQjtBQUNBLFVBQU1WLE1BQU0sR0FBRyxLQUFLYyxPQUFwQixDQUpRLENBS1I7O0FBQ0EsVUFBTUMsQ0FBQyxHQUFHLElBQUlDLGlEQUFKLEVBQVY7QUFDQUQsS0FBQyxDQUFDTixLQUFGLEdBQVUsQ0FBQ0ksSUFBRCxFQUFPQSxJQUFQLEVBQWEsQ0FBQ0ksQ0FBRCxFQUFHQyxDQUFILEtBQVNELENBQUMsSUFBSUMsQ0FBTCxHQUFTbEIsTUFBTSxDQUFDSCxDQUFDLENBQUNzQixHQUFGLENBQU1GLENBQU4sQ0FBRCxFQUFXcEIsQ0FBQyxDQUFDc0IsR0FBRixDQUFNRCxDQUFOLENBQVgsQ0FBZixHQUFzQ0gsQ0FBQyxDQUFDSyxLQUFGLENBQVFGLENBQVIsRUFBVUQsQ0FBVixDQUE1RCxDQUFWO0FBQ0EsVUFBTUksaUJBQWlCLEdBQUcsRUFBMUI7O0FBQ0EsU0FBSyxJQUFJSixDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSixJQUFwQixFQUEwQixFQUFFSSxDQUE1QixFQUErQjtBQUMzQixZQUFNRSxHQUFHLEdBQUcsRUFBWjs7QUFDQSxXQUFLLElBQUlELENBQUMsR0FBRyxDQUFiLEVBQWdCQSxDQUFDLEdBQUdMLElBQXBCLEVBQTBCLEVBQUVLLENBQTVCLEVBQStCO0FBQzNCQyxXQUFHLENBQUNHLElBQUosQ0FBUztBQUNMLG1CQUFTSixDQURKO0FBRUwsc0JBQVlILENBQUMsQ0FBQ0ssS0FBRixDQUFRSCxDQUFSLEVBQVdDLENBQVg7QUFGUCxTQUFUO0FBSUg7O0FBQ0QsWUFBTUssQ0FBQyxHQUFHLElBQUlDLHNEQUFKLENBQVNMLEdBQVQsRUFBY3BCLENBQUMsSUFBSUEsQ0FBQyxDQUFDMEIsUUFBckIsRUFBK0IsS0FBL0IsQ0FBVjtBQUNBSix1QkFBaUIsQ0FBQ0MsSUFBbEIsQ0FBdUJDLENBQUMsQ0FBQ0csT0FBRixHQUFZQyxLQUFaLENBQWtCLENBQWxCLEVBQXFCLEtBQUtDLEVBQUwsR0FBVSxDQUEvQixDQUF2QjtBQUNIO0FBRUQ7QUFDQTtBQUNBOztBQUNBOzs7QUFDQSxVQUFNQyxDQUFDLEdBQUcsSUFBSWIsaURBQUosQ0FBV0gsSUFBWCxFQUFpQkEsSUFBakIsRUFBdUIsQ0FBQ0ksQ0FBRCxFQUFHQyxDQUFILEtBQVM7QUFDdEMsWUFBTVksS0FBSyxHQUFHVCxpQkFBaUIsQ0FBQ0osQ0FBRCxDQUFqQixDQUFxQmMsSUFBckIsQ0FBMEJDLENBQUMsSUFBSUEsQ0FBQyxDQUFDQyxLQUFGLEtBQVlmLENBQTNDLENBQWQ7QUFDQSxhQUFPWSxLQUFLLEdBQUdBLEtBQUssQ0FBQ0wsUUFBVCxHQUFvQlMsUUFBaEM7QUFDSCxLQUhTLENBQVY7O0FBS0EsU0FBSyxJQUFJakIsQ0FBQyxHQUFHLENBQWIsRUFBZ0JBLENBQUMsR0FBR0osSUFBcEIsRUFBMEIsRUFBRUksQ0FBNUIsRUFBK0I7QUFDM0IsV0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHTCxJQUFwQixFQUEwQixFQUFFSyxDQUE1QixFQUErQjtBQUMzQixhQUFLLElBQUlpQixDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHdEIsSUFBcEIsRUFBMEIsRUFBRXNCLENBQTVCLEVBQStCO0FBQzNCTixXQUFDLENBQUNPLFNBQUYsQ0FBWW5CLENBQVosRUFBZUMsQ0FBZixFQUFrQmIsSUFBSSxDQUFDQyxHQUFMLENBQVN1QixDQUFDLENBQUNULEtBQUYsQ0FBUUgsQ0FBUixFQUFXQyxDQUFYLENBQVQsRUFBd0JXLENBQUMsQ0FBQ1QsS0FBRixDQUFRSCxDQUFSLEVBQVdrQixDQUFYLElBQWdCTixDQUFDLENBQUNULEtBQUYsQ0FBUWUsQ0FBUixFQUFXakIsQ0FBWCxDQUF4QyxDQUFsQjtBQUNIO0FBQ0o7QUFDSjs7QUFFRCxRQUFJbUIsR0FBRyxHQUFHLElBQUlDLFlBQUosQ0FBaUJ6QixJQUFqQixDQUFWO0FBQ0EsUUFBSTBCLEdBQUcsR0FBRyxJQUFJRCxZQUFKLENBQWlCekIsSUFBakIsQ0FBVjtBQUNBLFFBQUkyQixHQUFHLEdBQUcsQ0FBVjtBQUNBLFFBQUlDLENBQUMsR0FBRyxJQUFJekIsaURBQUosQ0FBV0gsSUFBWCxFQUFpQkEsSUFBakIsRUFBdUIsQ0FBQ0ksQ0FBRCxFQUFHQyxDQUFILEtBQVM7QUFDcEMsVUFBSXdCLEdBQUcsR0FBR2IsQ0FBQyxDQUFDVCxLQUFGLENBQVFILENBQVIsRUFBV0MsQ0FBWCxDQUFWO0FBQ0F3QixTQUFHLEdBQUdBLEdBQUcsS0FBS1IsUUFBUixHQUFtQixDQUFuQixHQUF1QlEsR0FBN0I7QUFDQUwsU0FBRyxDQUFDcEIsQ0FBRCxDQUFILElBQVV5QixHQUFWO0FBQ0FILFNBQUcsQ0FBQ3JCLENBQUQsQ0FBSCxJQUFVd0IsR0FBVjtBQUNBRixTQUFHLElBQUlFLEdBQVA7QUFDQSxhQUFPQSxHQUFQO0FBQ0gsS0FQTyxDQUFSO0FBU0FMLE9BQUcsR0FBR0EsR0FBRyxDQUFDTSxHQUFKLENBQVFDLENBQUMsSUFBSUEsQ0FBQyxHQUFHL0IsSUFBakIsQ0FBTjtBQUNBMEIsT0FBRyxHQUFHQSxHQUFHLENBQUNJLEdBQUosQ0FBUUMsQ0FBQyxJQUFJQSxDQUFDLEdBQUcvQixJQUFqQixDQUFOO0FBQ0EyQixPQUFHLElBQUszQixJQUFJLElBQUksQ0FBaEI7QUFDQSxVQUFNZ0MsQ0FBQyxHQUFHLElBQUk3QixpREFBSixDQUFXSCxJQUFYLEVBQWlCQSxJQUFqQixFQUF1QixDQUFDSSxDQUFELEVBQUdDLENBQUgsS0FBVXVCLENBQUMsQ0FBQ3JCLEtBQUYsQ0FBUUgsQ0FBUixFQUFVQyxDQUFWLElBQWVtQixHQUFHLENBQUNwQixDQUFELENBQWxCLEdBQXdCc0IsR0FBRyxDQUFDckIsQ0FBRCxDQUEzQixHQUFpQ3NCLEdBQWxFLENBQVYsQ0FyRFEsQ0F1RFI7O0FBQ0EsVUFBTTtBQUFFTSxrQkFBWSxFQUFFQztBQUFoQixRQUFzQkMsa0ZBQTJCLENBQUNILENBQUQsRUFBSSxLQUFLSSxFQUFULENBQXZEO0FBQ0EsU0FBS0MsQ0FBTCxHQUFTbEMsc0RBQUEsQ0FBWStCLENBQVosRUFBZUksU0FBZixFQUFULENBekRRLENBMERSOztBQUNBLFdBQU8sS0FBS0MsVUFBWjtBQUNIOztBQW5GMEIiLCJmaWxlIjoiLi9kaW1yZWQvSVNPTUFQLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9ufSBmcm9tIFwiLi4vbGluZWFyX2FsZ2VicmEvaW5kZXhcIjtcclxuaW1wb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4uL21hdHJpeC9pbmRleFwiO1xyXG5pbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBIZWFwIH0gZnJvbSBcIi4uL2RhdGFzdHJ1Y3R1cmUvaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5cclxuLyoqXHJcbiAqIEBjbGFzc1xyXG4gKiBAYWxpYXMgSVNPTUFQXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgSVNPTUFQIGV4dGVuZHMgRFIge1xyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBjb25zdHJ1Y3RvclxyXG4gICAgICogQG1lbWJlcm9mIG1vZHVsZTpkaW1lbnNpb25hbGl0eV9yZWR1Y3Rpb25cclxuICAgICAqIEBhbGlhcyBJU09NQVBcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBYIC0gdGhlIGhpZ2gtZGltZW5zaW9uYWwgZGF0YS4gXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gbmVpZ2hib3JzIC0gdGhlIG51bWJlciBvZiBuZWlnaGJvcnMge0BsaW5rIElTT01BUH0gc2hvdWxkIHVzZSB0byBwcm9qZWN0IHRoZSBkYXRhLlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uIFxyXG4gICAgICogQHBhcmFtIHtGdW5jdGlvbn0gW21ldHJpYyA9IGV1Y2xpZGVhbl0gLSB0aGUgbWV0cmljIHdoaWNoIGRlZmluZXMgdGhlIGRpc3RhbmNlIGJldHdlZW4gdHdvIHBvaW50cy4gXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxMjEyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgbmVpZ2hib3JzLCBkID0gMiwgbWV0cmljID0gZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpO1xyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW1wia1wiXTtcclxuICAgICAgICB0aGlzLnBhcmFtZXRlcihcImtcIiwgTWF0aC5taW4obmVpZ2hib3JzID8/IE1hdGgubWF4KE1hdGguZmxvb3IodGhpcy5YLnNoYXBlWzBdIC8gMTApLCAyKSwgdGhpcy5fTiAtMSkpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ29tcHV0ZXMgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fSBSZXR1cm5zIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICovXHJcbiAgICB0cmFuc2Zvcm0oKSB7XHJcbiAgICAgICAgdGhpcy5jaGVja19pbml0KCk7XHJcbiAgICAgICAgY29uc3QgWCA9IHRoaXMuWDtcclxuICAgICAgICBjb25zdCByb3dzID0gdGhpcy5fTjtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgLy8gVE9ETzogbWFrZSBrbm4gZXh0ZXJuIGFuZCBwYXJhbWV0ZXIgZm9yIGNvbnN0cnVjdG9yIG9yIHRyYW5zZm9ybT9cclxuICAgICAgICBjb25zdCBEID0gbmV3IE1hdHJpeCgpO1xyXG4gICAgICAgIEQuc2hhcGUgPSBbcm93cywgcm93cywgKGksaikgPT4gaSA8PSBqID8gbWV0cmljKFgucm93KGkpLCBYLnJvdyhqKSkgOiBELmVudHJ5KGosaSldXHJcbiAgICAgICAgY29uc3Qga05lYXJlc3ROZWlnaGJvcnMgPSBbXTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IHJvd3M7ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCByb3cgPSBbXTtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCByb3dzOyArK2opIHtcclxuICAgICAgICAgICAgICAgIHJvdy5wdXNoKHtcclxuICAgICAgICAgICAgICAgICAgICBcImluZGV4XCI6IGosXHJcbiAgICAgICAgICAgICAgICAgICAgXCJkaXN0YW5jZVwiOiBELmVudHJ5KGksIGopLFxyXG4gICAgICAgICAgICAgICAgfSlcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBjb25zdCBIID0gbmV3IEhlYXAocm93LCBkID0+IGQuZGlzdGFuY2UsIFwibWluXCIpO1xyXG4gICAgICAgICAgICBrTmVhcmVzdE5laWdoYm9ycy5wdXNoKEgudG9BcnJheSgpLnNsaWNlKDEsIHRoaXMuX2sgKyAxKSlcclxuICAgICAgICB9XHJcbiAgICAgICAgXHJcbiAgICAgICAgLypEID0gZGlqa3N0cmEoa05lYXJlc3ROZWlnaGJvcnMpOyovXHJcbiAgICAgICAgLy8gY29tcHV0ZSBzaG9ydGVzdCBwYXRoc1xyXG4gICAgICAgIC8vIFRPRE86IG1ha2UgZXh0ZXJuXHJcbiAgICAgICAgLyoqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL0Zsb3lkJUUyJTgwJTkzV2Fyc2hhbGxfYWxnb3JpdGhtfSAqL1xyXG4gICAgICAgIGNvbnN0IEcgPSBuZXcgTWF0cml4KHJvd3MsIHJvd3MsIChpLGopID0+IHtcclxuICAgICAgICAgICAgY29uc3Qgb3RoZXIgPSBrTmVhcmVzdE5laWdoYm9yc1tpXS5maW5kKG4gPT4gbi5pbmRleCA9PT0gaik7XHJcbiAgICAgICAgICAgIHJldHVybiBvdGhlciA/IG90aGVyLmRpc3RhbmNlIDogSW5maW5pdHlcclxuICAgICAgICB9KTtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCByb3dzOyArK2kpIHtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCByb3dzOyArK2opIHtcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGsgPSAwOyBrIDwgcm93czsgKytrKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgRy5zZXRfZW50cnkoaSwgaiwgTWF0aC5taW4oRy5lbnRyeShpLCBqKSwgRy5lbnRyeShpLCBrKSArIEcuZW50cnkoaywgaikpKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICBcclxuICAgICAgICBsZXQgYWlfID0gbmV3IEZsb2F0NjRBcnJheShyb3dzKTtcclxuICAgICAgICBsZXQgYV9qID0gbmV3IEZsb2F0NjRBcnJheShyb3dzKTtcclxuICAgICAgICBsZXQgYV9fID0gMDtcclxuICAgICAgICBsZXQgQSA9IG5ldyBNYXRyaXgocm93cywgcm93cywgKGksaikgPT4ge1xyXG4gICAgICAgICAgICBsZXQgdmFsID0gRy5lbnRyeShpLCBqKTtcclxuICAgICAgICAgICAgdmFsID0gdmFsID09PSBJbmZpbml0eSA/IDAgOiB2YWw7XHJcbiAgICAgICAgICAgIGFpX1tpXSArPSB2YWw7XHJcbiAgICAgICAgICAgIGFfaltqXSArPSB2YWw7XHJcbiAgICAgICAgICAgIGFfXyArPSB2YWw7XHJcbiAgICAgICAgICAgIHJldHVybiB2YWw7XHJcbiAgICAgICAgfSk7XHJcbiAgICAgICAgXHJcbiAgICAgICAgYWlfID0gYWlfLm1hcCh2ID0+IHYgLyByb3dzKTtcclxuICAgICAgICBhX2ogPSBhX2oubWFwKHYgPT4gdiAvIHJvd3MpO1xyXG4gICAgICAgIGFfXyAvPSAocm93cyAqKiAyKTtcclxuICAgICAgICBjb25zdCBCID0gbmV3IE1hdHJpeChyb3dzLCByb3dzLCAoaSxqKSA9PiAoQS5lbnRyeShpLGopIC0gYWlfW2ldIC0gYV9qW2pdICsgYV9fKSk7XHJcbiAgICAgICAgICAgICBcclxuICAgICAgICAvLyBjb21wdXRlIGQgZWlnZW52ZWN0b3JzXHJcbiAgICAgICAgY29uc3QgeyBlaWdlbnZlY3RvcnM6IFYgfSA9IHNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbihCLCB0aGlzLl9kKTtcclxuICAgICAgICB0aGlzLlkgPSBNYXRyaXguZnJvbShWKS50cmFuc3Bvc2UoKTtcclxuICAgICAgICAvLyByZXR1cm4gZW1iZWRkaW5nXHJcbiAgICAgICAgcmV0dXJuIHRoaXMucHJvamVjdGlvbjtcclxuICAgIH1cclxuXHJcblxyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./dimred/ISOMAP.js\n");
+
+/***/ }),
+
+/***/ "./dimred/LDA.js":
+/*!***********************!*\
+  !*** ./dimred/LDA.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"LDA\": () => (/* binding */ LDA)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n/**\r\n * @class\r\n * @alias LDA\r\n */\n\nclass LDA extends _DR_js__WEBPACK_IMPORTED_MODULE_3__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias LDA\r\n   * @param {Matrix} X - the high-dimensional data.\r\n   * @param {Array} labels - the label / class of each data point.\r\n   * @param {number} [d = 2] - the dimensionality of the projection.\r\n   * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   */\n  constructor(X, labels, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"labels\"];\n    this.parameter(\"labels\", labels);\n    return this;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality {@link d}.\r\n   */\n\n\n  transform() {\n    let X = this.X;\n    let [rows, cols] = X.shape;\n    let labels = this._labels;\n    let unique_labels = {};\n    let label_id = 0;\n    labels.forEach((l, i) => {\n      if (l in unique_labels) {\n        unique_labels[l].count++;\n        unique_labels[l].rows.push(X.row(i));\n      } else {\n        unique_labels[l] = {\n          \"id\": label_id++,\n          \"count\": 1,\n          \"rows\": [X.row(i)]\n        };\n      }\n    }); // create X_mean and vector means;\n\n    let X_mean = X.mean;\n    let V_mean = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(label_id, cols);\n\n    for (let label in unique_labels) {\n      let V = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(unique_labels[label].rows);\n      let v_mean = V.meanCols;\n\n      for (let j = 0; j < cols; ++j) {\n        V_mean.set_entry(unique_labels[label].id, j, v_mean[j]);\n      }\n    } // scatter_between\n\n\n    let S_b = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, cols);\n\n    for (let label in unique_labels) {\n      let v = V_mean.row(unique_labels[label].id);\n      let m = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, 1, j => v[j] - X_mean);\n      let N = unique_labels[label].count;\n      S_b = S_b.add(m.dot(m.transpose()).mult(N));\n    } // scatter_within\n\n\n    let S_w = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, cols);\n\n    for (let label in unique_labels) {\n      let v = V_mean.row(unique_labels[label].id);\n      let m = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, 1, j => v[j]);\n      let R = unique_labels[label].rows;\n\n      for (let i = 0, n = unique_labels[label].count; i < n; ++i) {\n        let row_v = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, 1, (j, _) => R[i][j] - m.entry(j, 0));\n        S_w = S_w.add(row_v.dot(row_v.transpose()));\n      }\n    }\n\n    let {\n      eigenvectors: V\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__.simultaneous_poweriteration)(S_w.inverse().dot(S_b), this._d);\n    V = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(V).transpose();\n    this.Y = X.dot(V); // return embedding\n\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9MREEuanM/MjE2ZCJdLCJuYW1lcyI6WyJMREEiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsImxhYmVscyIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwicGFyYW1ldGVyX2xpc3QiLCJwYXJhbWV0ZXIiLCJ0cmFuc2Zvcm0iLCJyb3dzIiwiY29scyIsInNoYXBlIiwiX2xhYmVscyIsInVuaXF1ZV9sYWJlbHMiLCJsYWJlbF9pZCIsImZvckVhY2giLCJsIiwiaSIsImNvdW50IiwicHVzaCIsInJvdyIsIlhfbWVhbiIsIm1lYW4iLCJWX21lYW4iLCJNYXRyaXgiLCJsYWJlbCIsIlYiLCJ2X21lYW4iLCJtZWFuQ29scyIsImoiLCJzZXRfZW50cnkiLCJpZCIsIlNfYiIsInYiLCJtIiwiTiIsImFkZCIsImRvdCIsInRyYW5zcG9zZSIsIm11bHQiLCJTX3ciLCJSIiwibiIsInJvd192IiwiXyIsImVudHJ5IiwiZWlnZW52ZWN0b3JzIiwic2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uIiwiaW52ZXJzZSIsIl9kIiwiWSIsInByb2plY3Rpb24iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxHQUFOLFNBQWtCQyxzQ0FBbEIsQ0FBcUI7QUFDeEI7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLENBQUQsRUFBSUMsTUFBSixFQUFZQyxDQUFDLEdBQUcsQ0FBaEIsRUFBbUJDLE1BQU0sR0FBR0MscURBQTVCLEVBQXVDQyxJQUFJLEdBQUMsSUFBNUMsRUFBa0Q7QUFDekQsVUFBTUwsQ0FBTixFQUFTRSxDQUFULEVBQVlDLE1BQVosRUFBb0JFLElBQXBCO0FBQ0EsVUFBTUMsY0FBTixHQUF1QixDQUFDLFFBQUQsQ0FBdkI7QUFDQSxTQUFLQyxTQUFMLENB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c0NvbnRlbnQiOlsiaW1wb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4uL21hdHJpeC9pbmRleFwiO1xyXG5pbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb259IGZyb20gXCIuLi9saW5lYXJfYWxnZWJyYS9pbmRleFwiO1xyXG5pbXBvcnQgeyBEUiB9IGZyb20gXCIuL0RSLmpzXCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBMREFcclxuICovXHJcbmV4cG9ydCBjbGFzcyBMREEgZXh0ZW5kcyBEUiB7XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIExEQVxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFggLSB0aGUgaGlnaC1kaW1lbnNpb25hbCBkYXRhLlxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gbGFiZWxzIC0gdGhlIGxhYmVsIC8gY2xhc3Mgb2YgZWFjaCBkYXRhIHBvaW50LlxyXG4gICAgICogQHBhcmFtIHtudW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxMjEyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgbGFiZWxzLCBkID0gMiwgbWV0cmljID0gZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpO1xyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW1wibGFiZWxzXCJdO1xyXG4gICAgICAgIHRoaXMucGFyYW1ldGVyKFwibGFiZWxzXCIsIGxhYmVscyk7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBUcmFuc2Zvcm1zIHRoZSBpbnB1dGRhdGEge0BsaW5rIFh9IHRvIGRpbWVuaW9uYWxpdHkge0BsaW5rIGR9LlxyXG4gICAgICovXHJcbiAgICB0cmFuc2Zvcm0oKSB7XHJcbiAgICAgICAgbGV0IFggPSB0aGlzLlg7XHJcbiAgICAgICAgbGV0IFsgcm93cywgY29scyBdID0gWC5zaGFwZTtcclxuICAgICAgICBsZXQgbGFiZWxzID0gdGhpcy5fbGFiZWxzO1xyXG4gICAgICAgIGxldCB1bmlxdWVfbGFiZWxzID0ge307XHJcbiAgICAgICAgbGV0IGxhYmVsX2lkID0gMDtcclxuICAgICAgICBsYWJlbHMuZm9yRWFjaCgobCwgaSkgPT4ge1xyXG4gICAgICAgICAgICBpZiAobCBpbiB1bmlxdWVfbGFiZWxzKSB7XHJcbiAgICAgICAgICAgICAgICB1bmlxdWVfbGFiZWxzW2xdLmNvdW50Kys7XHJcbiAgICAgICAgICAgICAgICB1bmlxdWVfbGFiZWxzW2xdLnJvd3MucHVzaChYLnJvdyhpKSk7XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICB1bmlxdWVfbGFiZWxzW2xdID0ge1xyXG4gICAgICAgICAgICAgICAgICAgIFwiaWRcIjogbGFiZWxfaWQrKyxcclxuICAgICAgICAgICAgICAgICAgICBcImNvdW50XCI6IDEsXHJcbiAgICAgICAgICAgICAgICAgICAgXCJyb3dzXCI6IFtYLnJvdyhpKV1cclxuICAgICAgICAgICAgICAgIH07XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9KVxyXG4gICAgICAgIFxyXG4gICAgICAgIC8vIGNyZWF0ZSBYX21lYW4gYW5kIHZlY3RvciBtZWFucztcclxuICAgICAgICBsZXQgWF9tZWFuID0gWC5tZWFuO1xyXG4gICAgICAgIGxldCBWX21lYW4gPSBuZXcgTWF0cml4KGxhYmVsX2lkLCBjb2xzKVxyXG4gICAgICAgIGZvciAobGV0IGxhYmVsIGluIHVuaXF1ZV9sYWJlbHMpIHtcclxuICAgICAgICAgICAgbGV0IFYgPSBNYXRyaXguZnJvbSh1bmlxdWVfbGFiZWxzW2xhYmVsXS5yb3dzKTtcclxuICAgICAgICAgICAgbGV0IHZfbWVhbiA9IFYubWVhbkNvbHM7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgY29sczsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBWX21lYW4uc2V0X2VudHJ5KHVuaXF1ZV9sYWJlbHNbbGFiZWxdLmlkLCBqLCB2X21lYW5bal0pO1xyXG4gICAgICAgICAgICB9ICAgICAgICAgICBcclxuICAgICAgICB9XHJcbiAgICAgICAgLy8gc2NhdHRlcl9iZXR3ZWVuXHJcbiAgICAgICAgbGV0IFNfYiA9IG5ldyBNYXRyaXgoY29scywgY29scyk7XHJcbiAgICAgICAgZm9yIChsZXQgbGFiZWwgaW4gdW5pcXVlX2xhYmVscykge1xyXG4gICAgICAgICAgICBsZXQgdiA9IFZfbWVhbi5yb3codW5pcXVlX2xhYmVsc1tsYWJlbF0uaWQpO1xyXG4gICAgICAgICAgICBsZXQgbSA9IG5ldyBNYXRyaXgoY29scywgMSwgKGopID0+IHZbal0gLSBYX21lYW4pO1xyXG4gICAgICAgICAgICBsZXQgTiA9IHVuaXF1ZV9sYWJlbHNbbGFiZWxdLmNvdW50O1xyXG4gICAgICAgICAgICBTX2IgPSBTX2IuYWRkKG0uZG90KG0udHJhbnNwb3NlKCkpLm11bHQoTikpO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gc2NhdHRlcl93aXRoaW5cclxuICAgICAgICBsZXQgU193ID0gbmV3IE1hdHJpeChjb2xzLCBjb2xzKTtcclxuICAgICAgICBmb3IgKGxldCBsYWJlbCBpbiB1bmlxdWVfbGFiZWxzKSB7XHJcbiAgICAgICAgICAgIGxldCB2ID0gVl9tZWFuLnJvdyh1bmlxdWVfbGFiZWxzW2xhYmVsXS5pZCk7XHJcbiAgICAgICAgICAgIGxldCBtID0gbmV3IE1hdHJpeChjb2xzLCAxLCAoaikgPT4gdltqXSlcclxuICAgICAgICAgICAgbGV0IFIgPSB1bmlxdWVfbGFiZWxzW2xhYmVsXS5yb3dzO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gMCwgbiA9IHVuaXF1ZV9sYWJlbHNbbGFiZWxdLmNvdW50OyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgcm93X3YgPSBuZXcgTWF0cml4KGNvbHMsIDEsIChqLF8pID0+IFJbaV1bal0gLSBtLmVudHJ5KGosIDApKTtcclxuICAgICAgICAgICAgICAgIFNfdyA9IFNfdy5hZGQocm93X3YuZG90KHJvd192LnRyYW5zcG9zZSgpKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIGxldCB7IGVpZ2VudmVjdG9yczogViB9ID0gc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uKFNfdy5pbnZlcnNlKCkuZG90KFNfYiksIHRoaXMuX2QpXHJcbiAgICAgICAgViA9IE1hdHJpeC5mcm9tKFYpLnRyYW5zcG9zZSgpXHJcbiAgICAgICAgdGhpcy5ZID0gWC5kb3QoVilcclxuXHJcbiAgICAgICAgLy8gcmV0dXJuIGVtYmVkZGluZ1xyXG4gICAgICAgIHJldHVybiB0aGlzLnByb2plY3Rpb247XHJcbiAgICB9XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./dimred/LDA.js\n");
+
+/***/ }),
+
+/***/ "./dimred/LLE.js":
+/*!***********************!*\
+  !*** ./dimred/LLE.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"LLE\": () => (/* binding */ LLE)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n\n\n/**\r\n * @class\r\n * @alias LLE\r\n */\n\nclass LLE extends _DR_js__WEBPACK_IMPORTED_MODULE_4__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias LLE\r\n   * @param {Matrix} X - the high-dimensional data.\r\n   * @param {Number} neighbors - the label / class of each data point.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   */\n  constructor(X, neighbors, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"k\"];\n    this.parameter(\"k\", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));\n    return this;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality {@link d}.\r\n   */\n\n\n  transform() {\n    const X = this.X;\n    const d = this._d;\n    const rows = this._N;\n    const cols = this._D;\n    const k = this.parameter(\"k\");\n    const nN = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.k_nearest_neighbors)(X, k, null, this._metric);\n    const O = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(k, 1, 1);\n    const W = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(rows, rows);\n\n    for (let row = 0; row < rows; ++row) {\n      const nN_row = nN[row];\n      const Z = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(k, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));\n      const C = Z.dot(Z.T);\n\n      if (k > cols) {\n        const C_trace = (0,_numerical_index__WEBPACK_IMPORTED_MODULE_3__.neumair_sum)(C.diag) / 1000;\n\n        for (let j = 0; j < k; ++j) {\n          C.set_entry(j, j, C.entry(j, j) + C_trace);\n        }\n      } // reconstruct;\n\n\n      let w = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.solve_CG(C, O, this._randomizer);\n      w = w.divide(w.sum);\n\n      for (let j = 0; j < k; ++j) {\n        W.set_entry(row, nN_row[j].j, w.entry(j, 0));\n      }\n    } // comp embedding\n\n\n    const I = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(rows, rows, \"identity\");\n    const IW = I.sub(W);\n    const M = IW.T.dot(IW);\n    const {\n      eigenvectors: V\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__.simultaneous_poweriteration)(M.T.inverse(), d + 1);\n    this.Y = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(V.slice(1, 1 + d)).T; // return embedding\n\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9MTEUuanM/YmQxZSJdLCJuYW1lcyI6WyJMTEUiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsIm5laWdoYm9ycyIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwicGFyYW1ldGVyX2xpc3QiLCJwYXJhbWV0ZXIiLCJNYXRoIiwibWluIiwibWF4IiwiZmxvb3IiLCJfTiIsInRyYW5zZm9ybSIsIl9kIiwicm93cyIsImNvbHMiLCJfRCIsImsiLCJuTiIsImtfbmVhcmVzdF9uZWlnaGJvcnMiLCJfbWV0cmljIiwiTyIsIk1hdHJpeCIsIlciLCJyb3ciLCJuTl9yb3ciLCJaIiwiaSIsImoiLCJlbnRyeSIsIkMiLCJkb3QiLCJUIiwiQ190cmFjZSIsIm5ldW1haXJfc3VtIiwiZGlhZyIsInNldF9lbnRyeSIsInciLCJfcmFuZG9taXplciIsImRpdmlkZSIsInN1bSIsIkkiLCJJVyIsInN1YiIsIk0iLCJlaWdlbnZlY3RvcnMiLCJWIiwic2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uIiwiaW52ZXJzZSIsIlkiLCJzbGljZSIsInByb2plY3Rpb24iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUVBO0FBQ0E7QUFDQTtBQUNBOztBQUNPLE1BQU1BLEdBQU4sU0FBa0JDLHNDQUFsQixDQUFxQjtBQUN4QjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxTQUFKLEVBQWVDLENBQUMsR0FBQyxDQUFqQixFQUFvQkMsTUFBTSxHQUFDQyxxREFBM0IsRUFBc0NDLElBQUksR0FBQyxJQUEzQyxFQUFpRDtBQUN4RCxVQUFNTCxDQUFOLEVBQVNFLENBQVQsRUFBWUMsTUFBWixFQUFvQkUsSUFBcEI7QUFDQSxVQUFNQyxjQUFOLEdBQXVCLENBQUMsR0FBRCxDQUF2QjtBQUNBLFNB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QUFFLEdBQUdELENBQUMsQ0FBQ0UsR0FBRixDQUFNcEIsQ0FBTixDQUFYO0FBQ0EsVUFBTXFCLENBQUMsR0FBR0YsRUFBRSxDQUFDVixDQUFILENBQUtELEdBQUwsQ0FBU1csRUFBVCxDQUFWO0FBQ0EsVUFBTTtBQUFFRyxrQkFBWSxFQUFFQztBQUFoQixRQUFzQkMsa0ZBQTJCLENBQUNILENBQUMsQ0FBQ1osQ0FBRixDQUFJZ0IsT0FBSixFQUFELEVBQWdCL0MsQ0FBQyxHQUFHLENBQXBCLENBQXZEO0FBQ0EsU0FBS2dELENBQUwsR0FBUzNCLHNEQUFBLENBQVl3QixDQUFDLENBQUNJLEtBQUYsQ0FBUSxDQUFSLEVBQVcsSUFBSWpELENBQWYsQ0FBWixFQUErQitCLENBQXhDLENBaENRLENBa0NSOztBQUNBLFdBQU8sS0FBS21CLFVBQVo7QUFDSDs7QUExRHVCIiwiZmlsZSI6Ii4vZGltcmVkL0xMRS5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9ufSBmcm9tIFwiLi4vbGluZWFyX2FsZ2VicmEvaW5kZXhcIjtcclxuaW1wb3J0IHsga19uZWFyZXN0X25laWdoYm9ycyB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgbmV1bWFpcl9zdW0gfSBmcm9tIFwiLi4vbnVtZXJpY2FsL2luZGV4XCI7XHJcbmltcG9ydCB7IERSIH0gZnJvbSBcIi4vRFIuanNcIjtcclxuXHJcbi8qKlxyXG4gKiBAY2xhc3NcclxuICogQGFsaWFzIExMRVxyXG4gKi9cclxuZXhwb3J0IGNsYXNzIExMRSBleHRlbmRzIERSIHtcclxuICAgIC8qKlxyXG4gICAgICogXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6ZGltZW5zaW9uYWxpdHlfcmVkdWN0aW9uXHJcbiAgICAgKiBAYWxpYXMgTExFXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWCAtIHRoZSBoaWdoLWRpbWVuc2lvbmFsIGRhdGEuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gbmVpZ2hib3JzIC0gdGhlIGxhYmVsIC8gY2xhc3Mgb2YgZWFjaCBkYXRhIHBvaW50LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxMjEyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgbmVpZ2hib3JzLCBkPTIsIG1ldHJpYz1ldWNsaWRlYW4sIHNlZWQ9MTIxMikge1xyXG4gICAgICAgIHN1cGVyKFgsIGQsIG1ldHJpYywgc2VlZCk7XHJcbiAgICAgICAgc3VwZXIucGFyYW1ldGVyX2xpc3QgPSBbXCJrXCJdO1xyXG4gICAgICAgIHRoaXMucGFyYW1ldGVyKFwia1wiLCBNYXRoLm1pbihuZWlnaGJvcnMgPz8gTWF0aC5tYXgoTWF0aC5mbG9vcih0aGlzLl9OIC8gMTApLCAyKSwgdGhpcy5fTiAtIDEpKTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFRyYW5zZm9ybXMgdGhlIGlucHV0ZGF0YSB7QGxpbmsgWH0gdG8gZGltZW5pb25hbGl0eSB7QGxpbmsgZH0uXHJcbiAgICAgKi9cclxuICAgIHRyYW5zZm9ybSgpIHtcclxuICAgICAgICBjb25zdCBYID0gdGhpcy5YO1xyXG4gICAgICAgIGNvbnN0IGQgPSB0aGlzLl9kO1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSB0aGlzLl9OO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9EO1xyXG4gICAgICAgIGNvbnN0IGsgPSB0aGlzLnBhcmFtZXRlcihcImtcIik7XHJcbiAgICAgICAgY29uc3Qgbk4gPSBrX25lYXJlc3RfbmVpZ2hib3JzKFgsIGssIG51bGwsIHRoaXMuX21ldHJpYyk7XHJcbiAgICAgICAgY29uc3QgTyA9IG5ldyBNYXRyaXgoaywgMSwgMSk7XHJcbiAgICAgICAgY29uc3QgVyA9IG5ldyBNYXRyaXgocm93cywgcm93cyk7XHJcblxyXG4gICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgIGNvbnN0IG5OX3JvdyA9IG5OW3Jvd107XHJcbiAgICAgICAgICAgIGNvbnN0IFogPSBuZXcgTWF0cml4KGssIGNvbHMsIChpLCBqKSA9PiBYLmVudHJ5KG5OX3Jvd1tpXS5qLCBqKSAtIFguZW50cnkocm93LCBqKSk7XHJcbiAgICAgICAgICAgIGNvbnN0IEMgPSBaLmRvdChaLlQpO1xyXG4gICAgICAgICAgICBpZiAoIGsgPiBjb2xzICkge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgQ190cmFjZSA9IG5ldW1haXJfc3VtKEMuZGlhZykgLyAxMDAwO1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBrOyArK2opIHtcclxuICAgICAgICAgICAgICAgICAgICBDLnNldF9lbnRyeShqLCBqLCBDLmVudHJ5KGosIGopICsgQ190cmFjZSk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgLy8gcmVjb25zdHJ1Y3Q7XHJcbiAgICAgICAgICAgIGxldCB3ID0gTWF0cml4LnNvbHZlX0NHKEMsIE8sIHRoaXMuX3JhbmRvbWl6ZXIpO1xyXG4gICAgICAgICAgICB3ID0gdy5kaXZpZGUody5zdW0pO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IGs7ICsraikge1xyXG4gICAgICAgICAgICAgICAgVy5zZXRfZW50cnkocm93LCBuTl9yb3dbal0uaiwgdy5lbnRyeShqLCAwKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgLy8gY29tcCBlbWJlZGRpbmdcclxuICAgICAgICBjb25zdCBJID0gbmV3IE1hdHJpeChyb3dzLCByb3dzLCBcImlkZW50aXR5XCIpO1xyXG4gICAgICAgIGNvbnN0IElXID0gSS5zdWIoVyk7XHJcbiAgICAgICAgY29uc3QgTSA9IElXLlQuZG90KElXKTtcclxuICAgICAgICBjb25zdCB7IGVpZ2VudmVjdG9yczogViB9ID0gc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uKE0uVC5pbnZlcnNlKCksIGQgKyAxKTtcclxuICAgICAgICB0aGlzLlkgPSBNYXRyaXguZnJvbShWLnNsaWNlKDEsIDEgKyBkKSkuVDtcclxuXHJcbiAgICAgICAgLy8gcmV0dXJuIGVtYmVkZGluZ1xyXG4gICAgICAgIHJldHVybiB0aGlzLnByb2plY3Rpb247XHJcbiAgICB9XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./dimred/LLE.js\n");
+
+/***/ }),
+
+/***/ "./dimred/LSP.js":
+/*!***********************!*\
+  !*** ./dimred/LSP.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"LSP\": () => (/* binding */ LSP)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n/* harmony import */ var _MDS_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./MDS.js */ \"./dimred/MDS.js\");\n/* harmony import */ var _clustering_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../clustering/index */ \"./clustering/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _knn_index__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../knn/index */ \"./knn/index.js\");\n\n\n\n\n\n\n/**\r\n * @class\r\n * @alias LSP\r\n */\n\nclass LSP extends _DR_js__WEBPACK_IMPORTED_MODULE_1__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias LSP\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {number} [k = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.\r\n   * @param {number} [control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints\r\n   * @param {number} [d = 2] - the dimensionality of the projection.\r\n   * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @returns {LSP}\r\n   * @see {@link https://ieeexplore.ieee.org/document/4378370}\r\n   */\n  constructor(X, k, control_points, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_4__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"k\", \"control_points\"];\n    this.parameter(\"k\", Math.min(k ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));\n    this.parameter(\"control_points\", Math.min(control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));\n    this._is_initialized = false;\n    return this;\n  }\n  /**\r\n   * \r\n   * @param {DR} DR - method used for position control points.\r\n   * @param {DR_parameters} DR_parameters - array containing parameters for the DR method which projects the control points\r\n   * @returns {LSP} \r\n   */\n\n\n  init(DR = _MDS_js__WEBPACK_IMPORTED_MODULE_2__.MDS, DR_parameters = [], KNN = _knn_index__WEBPACK_IMPORTED_MODULE_5__.BallTree) {\n    if (this._is_initialized) return this;\n    const X = this.X;\n    const N = this._N;\n    const K = this.parameter(\"k\");\n    const d = this._d;\n    const metric = this._metric;\n    const nc = this.parameter(\"control_points\");\n    const control_points = new _clustering_index__WEBPACK_IMPORTED_MODULE_3__.KMedoids(X, nc, null, metric).get_clusters().medoids;\n    const C = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(nc, N, \"zeros\");\n    control_points.forEach((c_i, i) => {\n      C.set_entry(i, c_i, 1);\n    });\n    const Y_C = new DR(_matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(control_points.map(c_i => X.row(c_i))), ...DR_parameters, d).transform();\n    const XA = X.to2dArray;\n    const knn = new KNN(XA, metric);\n    const L = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, \"I\");\n    const alpha = -1 / K;\n    XA.forEach((x_i, i) => {\n      for (const {\n        \"index\": j\n      } of knn.search(x_i, K).iterate()) {\n        if (i === j) continue;\n        L.set_entry(i, j, alpha);\n      }\n    });\n    const A = L.concat(C, \"vertical\");\n    const z = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, \"zeros\");\n    const b = z.concat(Y_C, \"vertical\");\n    this._A = A;\n    this._b = b;\n    this._is_initialized = true;\n    return this;\n  }\n  /**\r\n   * Computes the projection.\r\n   * @returns {Matrix} Returns the projection.\r\n   */\n\n\n  transform() {\n    this.check_init();\n    const A = this._A;\n    const AT = A.T;\n    const b = this._b;\n    const ATA = AT.dot(A);\n    const ATb = AT.dot(b);\n    this.Y = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.solve_CG(ATA, ATb, this._randomizer);\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9MU1AuanM/ZTg0NyJdLCJuYW1lcyI6WyJMU1AiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsImsiLCJjb250cm9sX3BvaW50cyIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwicGFyYW1ldGVyX2xpc3QiLCJwYXJhbWV0ZXIiLCJNYXRoIiwibWluIiwibWF4IiwiZmxvb3IiLCJfTiIsImNlaWwiLCJzcXJ0IiwiX2lzX2luaXRpYWxpemVkIiwiaW5pdCIsIk1EUyIsIkRSX3BhcmFtZXRlcnMiLCJLTk4iLCJCYWxsVHJlZSIsIk4iLCJLIiwiX2QiLCJfbWV0cmljIiwibmMiLCJLTWVkb2lkcyIsImdldF9jbHVzdGVycyIsIm1lZG9pZHMiLCJDIiwiTWF0cml4IiwiZm9yRWFjaCIsImNfaSIsImkiLCJzZXRfZW50cnkiLCJZX0MiLCJtYXAiLCJyb3ciLCJ0cmFuc2Zvcm0iLCJYQSIsInRvMmRBcnJheSIsImtubiIsIkwiLCJhbHBoYSIsInhfaSIsImoiLCJzZWFyY2giLCJpdGVyYXRlIiwiQSIsImNvbmNhdCIsInoiLCJiIiwiX0EiLCJfYiIsImNoZWNrX2luaXQiLCJBVCIsIlQiLCJBVEEiLCJkb3QiLCJBVGIiLCJZIiwiX3JhbmRvbWl6ZXIiLCJwcm9qZWN0aW9uIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBQ08sTUFBTUEsR0FBTixTQUFrQkMsc0NBQWxCLENBQXFCO0FBQ3hCO0FBQ0o7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxDQUFKLEVBQU9DLGNBQVAsRUFBdUJDLENBQUMsR0FBQyxDQUF6QixFQUE0QkMsTUFBTSxHQUFDQyxxREFBbkMsRUFBOENDLElBQUksR0FBQyxJQUFuRCxFQUF5RDtBQUNo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YTtBQUNiSCxTQUFDLENBQUNSLFNBQUYsQ0FBWUQsQ0FBWixFQUFlWSxDQUFmLEVBQWtCRixLQUFsQjtBQUNIO0FBQ0osS0FMRDtBQU1BLFVBQU1LLENBQUMsR0FBR04sQ0FBQyxDQUFDTyxNQUFGLENBQVNwQixDQUFULEVBQVksVUFBWixDQUFWO0FBRUEsVUFBTXFCLENBQUMsR0FBRyxJQUFJcEIsaURBQUosQ0FBV1QsQ0FBWCxFQUFjbkIsQ0FBZCxFQUFpQixPQUFqQixDQUFWO0FBQ0EsVUFBTWlELENBQUMsR0FBR0QsQ0FBQyxDQUFDRCxNQUFGLENBQVNkLEdBQVQsRUFBYyxVQUFkLENBQVY7QUFFQSxTQUFLaUIsRUFBTCxHQUFVSixDQUFWO0FBQ0EsU0FBS0ssRUFBTCxHQUFVRixDQUFWO0FBQ0EsU0FBS3BDLGVBQUwsR0FBdUIsSUFBdkI7QUFDQSxXQUFPLElBQVA7QUFDSDtBQUdEO0FBQ0o7QUFDQTtBQUNBOzs7QUFDSXVCLFdBQVMsR0FBRztBQUNSLFNBQUtnQixVQUFMO0FBQ0EsVUFBTU4sQ0FBQyxHQUFHLEtBQUtJLEVBQWY7QUFDQSxVQUFNRyxFQUFFLEdBQUdQLENBQUMsQ0FBQ1EsQ0FBYjtBQUNBLFVBQU1MLENBQUMsR0FBRyxLQUFLRSxFQUFmO0FBQ0EsVUFBTUksR0FBRyxHQUFHRixFQUFFLENBQUNHLEdBQUgsQ0FBT1YsQ0FBUCxDQUFaO0FBQ0EsVUFBTVcsR0FBRyxHQUFHSixFQUFFLENBQUNHLEdBQUgsQ0FBT1AsQ0FBUCxDQUFaO0FBQ0EsU0FBS1MsQ0FBTCxHQUFTOUIsMERBQUEsQ0FBZ0IyQixHQUFoQixFQUFxQkUsR0FBckIsRUFBMEIsS0FBS0UsV0FBL0IsQ0FBVDtBQUNBLFdBQU8sS0FBS0MsVUFBWjtBQUNIOztBQS9FdUIiLCJmaWxlIjoiLi9kaW1yZWQvTFNQLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4uL21hdHJpeC9pbmRleFwiO1xyXG5pbXBvcnQgeyBEUiB9IGZyb20gXCIuL0RSLmpzXCI7XHJcbmltcG9ydCB7IE1EUyB9IGZyb20gXCIuL01EUy5qc1wiO1xyXG5pbXBvcnQgeyBLTWVkb2lkcyB9IGZyb20gXCIuLi9jbHVzdGVyaW5nL2luZGV4XCI7XHJcbmltcG9ydCB7IGV1Y2xpZGVhbiB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4XCI7XHJcbmltcG9ydCB7IEJhbGxUcmVlIH0gZnJvbSBcIi4uL2tubi9pbmRleFwiO1xyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBMU1BcclxuICovXHJcbmV4cG9ydCBjbGFzcyBMU1AgZXh0ZW5kcyBEUiB7XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIExTUFxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFggLSB0aGUgaGlnaC1kaW1lbnNpb25hbCBkYXRhLiBcclxuICAgICAqIEBwYXJhbSB7bnVtYmVyfSBbayA9IE1hdGgubWF4KE1hdGguZmxvb3IoTiAvIDEwKSwgMildIC0gbnVtYmVyIG9mIG5laWdoYm9ycyB0byBjb25zaWRlci5cclxuICAgICAqIEBwYXJhbSB7bnVtYmVyfSBbY29udHJvbF9wb2ludHMgPSBNYXRoLmNlaWwoTWF0aC5zcXJ0KE4pKV0gLSBudW1iZXIgb2YgY29udHJvbHBvaW50c1xyXG4gICAgICogQHBhcmFtIHtudW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcmV0dXJucyB7TFNQfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9pZWVleHBsb3JlLmllZWUub3JnL2RvY3VtZW50LzQzNzgzNzB9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKFgsIGssIGNvbnRyb2xfcG9pbnRzLCBkPTIsIG1ldHJpYz1ldWNsaWRlYW4sIHNlZWQ9MTIxMikge1xyXG4gICAgICAgIHN1cGVyKFgsIGQsIG1ldHJpYywgc2VlZCk7XHJcbiAgICAgICAgc3VwZXIucGFyYW1ldGVyX2xpc3QgPSBbXCJrXCIsIFwiY29udHJvbF9wb2ludHNcIl07XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJrXCIsIE1hdGgubWluKGsgPz8gTWF0aC5tYXgoTWF0aC5mbG9vcih0aGlzLl9OIC8gMTApLCAyKSwgdGhpcy5fTiAtIDEpKTtcclxuICAgICAgICB0aGlzLnBhcmFtZXRlcihcImNvbnRyb2xfcG9pbnRzXCIsIE1hdGgubWluKGNvbnRyb2xfcG9pbnRzID8/IE1hdGguY2VpbChNYXRoLnNxcnQodGhpcy5fTikpLCB0aGlzLl9OIC0gMSkpO1xyXG4gICAgICAgIHRoaXMuX2lzX2luaXRpYWxpemVkID0gZmFsc2U7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBwYXJhbSB7RFJ9IERSIC0gbWV0aG9kIHVzZWQgZm9yIHBvc2l0aW9uIGNvbnRyb2wgcG9pbnRzLlxyXG4gICAgICogQHBhcmFtIHtEUl9wYXJhbWV0ZXJzfSBEUl9wYXJhbWV0ZXJzIC0gYXJyYXkgY29udGFpbmluZyBwYXJhbWV0ZXJzIGZvciB0aGUgRFIgbWV0aG9kIHdoaWNoIHByb2plY3RzIHRoZSBjb250cm9sIHBvaW50c1xyXG4gICAgICogQHJldHVybnMge0xTUH0gXHJcbiAgICAgKi9cclxuICAgIGluaXQoRFI9TURTLCBEUl9wYXJhbWV0ZXJzPVtdLCBLTk49QmFsbFRyZWUpIHtcclxuICAgICAgICBpZiAodGhpcy5faXNfaW5pdGlhbGl6ZWQpIHJldHVybiB0aGlzO1xyXG4gICAgICAgIGNvbnN0IFggPSB0aGlzLlg7XHJcbiAgICAgICAgY29uc3QgTiA9IHRoaXMuX047XHJcbiAgICAgICAgY29uc3QgSyA9IHRoaXMucGFyYW1ldGVyKFwia1wiKTtcclxuICAgICAgICBjb25zdCBkID0gdGhpcy5fZDtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgY29uc3QgbmMgPSB0aGlzLnBhcmFtZXRlcihcImNvbnRyb2xfcG9pbnRzXCIpO1xyXG4gICAgICAgIGNvbnN0IGNvbnRyb2xfcG9pbnRzID0gbmV3IEtNZWRvaWRzKFgsIG5jLCBudWxsLCBtZXRyaWMpLmdldF9jbHVzdGVycygpLm1lZG9pZHM7XHJcbiAgICAgICAgY29uc3QgQyA9IG5ldyBNYXRyaXgobmMsIE4sIFwiemVyb3NcIilcclxuICAgICAgICBjb250cm9sX3BvaW50cy5mb3JFYWNoKChjX2ksIGkpID0+IHtcclxuICAgICAgICAgICAgQy5zZXRfZW50cnkoaSwgY19pLCAxKTtcclxuICAgICAgICB9KVxyXG4gICAgICAgIGNvbnN0IFlfQyA9IG5ldyBEUihNYXRyaXguZnJvbShjb250cm9sX3BvaW50cy5tYXAoY19pID0+IFgucm93KGNfaSkpKSwgLi4uRFJfcGFyYW1ldGVycywgZCkudHJhbnNmb3JtKCk7XHJcbiAgICAgICAgXHJcbiAgICAgICAgY29uc3QgWEEgPSBYLnRvMmRBcnJheTtcclxuICAgICAgICBjb25zdCBrbm4gPSBuZXcgS05OKFhBLCBtZXRyaWMpO1xyXG4gICAgICAgIGNvbnN0IEwgPSBuZXcgTWF0cml4KE4sIE4sIFwiSVwiKTtcclxuICAgICAgICBjb25zdCBhbHBoYSA9IC0xL0s7XHJcbiAgICAgICAgWEEuZm9yRWFjaCgoeF9pLCBpKSA9PiB7XHJcbiAgICAgICAgICAgIGZvciAoY29uc3Qge1wiaW5kZXhcIjogan0gb2Yga25uLnNlYXJjaCh4X2ksIEspLml0ZXJhdGUoKSkge1xyXG4gICAgICAgICAgICAgICAgaWYgKGkgPT09IGopIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICAgICAgTC5zZXRfZW50cnkoaSwgaiwgYWxwaGEpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfSlcclxuICAgICAgICBjb25zdCBBID0gTC5jb25jYXQoQywgXCJ2ZXJ0aWNhbFwiKTtcclxuXHJcbiAgICAgICAgY29uc3QgeiA9IG5ldyBNYXRyaXgoTiwgZCwgXCJ6ZXJvc1wiKTtcclxuICAgICAgICBjb25zdCBiID0gei5jb25jYXQoWV9DLCBcInZlcnRpY2FsXCIpO1xyXG4gICAgICAgIFxyXG4gICAgICAgIHRoaXMuX0EgPSBBO1xyXG4gICAgICAgIHRoaXMuX2IgPSBiO1xyXG4gICAgICAgIHRoaXMuX2lzX2luaXRpYWxpemVkID0gdHJ1ZTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBDb21wdXRlcyB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9IFJldHVybnMgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKi9cclxuICAgIHRyYW5zZm9ybSgpIHtcclxuICAgICAgICB0aGlzLmNoZWNrX2luaXQoKTtcclxuICAgICAgICBjb25zdCBBID0gdGhpcy5fQTtcclxuICAgICAgICBjb25zdCBBVCA9IEEuVFxyXG4gICAgICAgIGNvbnN0IGIgPSB0aGlzLl9iO1xyXG4gICAgICAgIGNvbnN0IEFUQSA9IEFULmRvdChBKTtcclxuICAgICAgICBjb25zdCBBVGIgPSBBVC5kb3QoYik7XHJcbiAgICAgICAgdGhpcy5ZID0gTWF0cml4LnNvbHZlX0NHKEFUQSwgQVRiLCB0aGlzLl9yYW5kb21pemVyKTtcclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG59ICJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/LSP.js\n");
+
+/***/ }),
+
+/***/ "./dimred/LTSA.js":
+/*!************************!*\
+  !*** ./dimred/LTSA.js ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"LTSA\": () => (/* binding */ LTSA)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n/**\r\n * @class\r\n * @alias LTSA\r\n */\n\nclass LTSA extends _DR_js__WEBPACK_IMPORTED_MODULE_3__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias LTSA\r\n   * @param {Matrix} X - the high-dimensional data.\r\n   * @param {Number} neighbors - the label / class of each data point.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @see {@link https://epubs.siam.org/doi/abs/10.1137/S1064827502419154}\r\n   */\n  constructor(X, neighbors, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"k\"];\n    this.parameter(\"k\", Math.min(neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));\n    if (this._D <= d) throw `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`;\n    return this;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality {@link d}.\r\n   */\n\n\n  transform() {\n    const X = this.X;\n    const d = this._d;\n    const [rows, D] = X.shape;\n    const k = this.parameter(\"k\"); // 1.1 determine k nearest neighbors\n\n    const nN = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.k_nearest_neighbors)(X, k, null, this._metric); // center matrix\n\n    const O = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(D, D, \"center\");\n    const B = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(rows, rows, 0);\n\n    for (let row = 0; row < rows; ++row) {\n      // 1.2 compute the d largest eigenvectors of the correlation matrix\n      const I_i = [row, ...nN[row].map(n => n.j)];\n      let X_i = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(I_i.map(n => X.row(n))); // center X_i\n\n      X_i = X_i.dot(O); // correlation matrix\n\n      const C = X_i.dot(X_i.transpose());\n      const {\n        eigenvectors: g\n      } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__.simultaneous_poweriteration)(C, d); //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));\n\n      const G_i_t = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(g); // 2. Constructing alignment matrix\n\n      const W_i = G_i_t.transpose().dot(G_i_t).add(1 / Math.sqrt(k + 1));\n\n      for (let i = 0; i < k + 1; ++i) {\n        for (let j = 0; j < k + 1; ++j) {\n          B.set_entry(I_i[i], I_i[j], B.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0) + W_i.entry(i, j));\n        }\n      }\n    } // 3. Aligning global coordinates\n\n\n    const {\n      eigenvectors: Y\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_2__.simultaneous_poweriteration)(B, d + 1);\n    this.Y = _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix.from(Y.slice(1)).transpose(); // return embedding\n\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9MVFNBLmpzPzkzOWUiXSwibmFtZXMiOlsiTFRTQSIsIkRSIiwiY29uc3RydWN0b3IiLCJYIiwibmVpZ2hib3JzIiwiZCIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInNlZWQiLCJwYXJhbWV0ZXJfbGlzdCIsInBhcmFtZXRlciIsIk1hdGgiLCJtaW4iLCJtYXgiLCJmbG9vciIsIl9OIiwiX0QiLCJ0cmFuc2Zvcm0iLCJfZCIsInJvd3MiLCJEIiwic2hhcGUiLCJrIiwibk4iLCJrX25lYXJlc3RfbmVpZ2hib3JzIiwiX21ldHJpYyIsIk8iLCJNYXRyaXgiLCJCIiwicm93IiwiSV9pIiwibWFwIiwibiIsImoiLCJYX2kiLCJkb3QiLCJDIiwidHJhbnNwb3NlIiwiZWlnZW52ZWN0b3JzIiwiZyIsInNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbiIsIkdfaV90IiwiV19pIiwiYWRkIiwic3FydCIsImkiLCJzZXRfZW50cnkiLCJlbnRyeSIsIlkiLCJzbGljZSIsInByb2plY3Rpb24iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxJQUFOLFNBQW1CQyxzQ0FBbkIsQ0FBc0I7QUFDekI7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxTQUFKLEVBQWVDLENBQUMsR0FBQyxDQUFqQixFQUFvQkMsTUFBTSxHQUFDQyxxREFBM0IsRUFBc0NDLElBQUksR0FBQyxJQUEzQyxFQUFpRDtBQUN4RCxVQUFNTCxDQUFOLEVBQVNFLENBQVQsRUFBWUMsTUFBWixFQUFvQkUsSUFBcEI7QUFDQSxVQUFNQyxjQUFOLEdBQXVCLENBQUMsR0FBRCxDQUF2QjtBQUNBLFNBQUtDLFNBQUwsQ0FBZSxHQUFmLEVBQW9CQyxJQUFJLENBQUNDLEdBQUwsQ0FBU1Is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LENBQU4sR0FBVSxDQUFWLEdBQWMsQ0FBekMsSUFBK0NTLEdBQUcsQ0FBQ0ssS0FBSixDQUFVRixDQUFWLEVBQWFaLENBQWIsQ0FBM0U7QUFDSDtBQUNKO0FBQ0osS0E3Qk8sQ0ErQlI7OztBQUNBLFVBQU07QUFBRUssa0JBQVksRUFBRVU7QUFBaEIsUUFBc0JSLGtGQUEyQixDQUFDWixDQUFELEVBQUl2QixDQUFDLEdBQUcsQ0FBUixDQUF2RDtBQUNBLFNBQUsyQyxDQUFMLEdBQVNyQixzREFBQSxDQUFZcUIsQ0FBQyxDQUFDQyxLQUFGLENBQVEsQ0FBUixDQUFaLEVBQXdCWixTQUF4QixFQUFULENBakNRLENBbUNSOztBQUNBLFdBQU8sS0FBS2EsVUFBWjtBQUNIOztBQTdEd0IiLCJmaWxlIjoiLi9kaW1yZWQvTFRTQS5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCwga19uZWFyZXN0X25laWdoYm9ycyB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9ufSBmcm9tIFwiLi4vbGluZWFyX2FsZ2VicmEvaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5cclxuLyoqXHJcbiAqIEBjbGFzc1xyXG4gKiBAYWxpYXMgTFRTQVxyXG4gKi9cclxuZXhwb3J0IGNsYXNzIExUU0EgZXh0ZW5kcyBEUiB7XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIExUU0FcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBYIC0gdGhlIGhpZ2gtZGltZW5zaW9uYWwgZGF0YS5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuZWlnaGJvcnMgLSB0aGUgbGFiZWwgLyBjbGFzcyBvZiBlYWNoIGRhdGEgcG9pbnQuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIC0gdGhlIG1ldHJpYyB3aGljaCBkZWZpbmVzIHRoZSBkaXN0YW5jZSBiZXR3ZWVuIHR3byBwb2ludHMuICBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gdGhlIGRpbWVuc2lvbmFsaXR5IG9mIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9lcHVicy5zaWFtLm9yZy9kb2kvYWJzLzEwLjExMzcvUzEwNjQ4Mjc1MDI0MTkxNTR9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKFgsIG5laWdoYm9ycywgZD0yLCBtZXRyaWM9ZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpO1xyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW1wia1wiXTtcclxuICAgICAgICB0aGlzLnBhcmFtZXRlcihcImtcIiwgTWF0aC5taW4obmVpZ2hib3JzID8/IE1hdGgubWF4KE1hdGguZmxvb3IodGhpcy5fTiAvIDEwKSwgMiksIHRoaXMuX04gLSAxKSk7XHJcbiAgICAgICAgaWYgKHRoaXMuX0QgPD0gZCkgdGhyb3cgYERpbWVuc2lvbmFsaXR5IG9mIFggKEQgPSAke3RoaXMuX0R9KSBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB0aGUgcmVxdWlyZWQgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHJlc3VsdCAoZCA9ICR7ZH0pIWA7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBUcmFuc2Zvcm1zIHRoZSBpbnB1dGRhdGEge0BsaW5rIFh9IHRvIGRpbWVuaW9uYWxpdHkge0BsaW5rIGR9LlxyXG4gICAgICovXHJcbiAgICB0cmFuc2Zvcm0oKSB7XHJcbiAgICAgICAgY29uc3QgWCA9IHRoaXMuWDtcclxuICAgICAgICBjb25zdCBkID0gdGhpcy5fZDtcclxuICAgICAgICBjb25zdCBbIHJvd3MsIEQgXSA9IFguc2hhcGU7XHJcbiAgICAgICAgY29uc3QgayA9IHRoaXMucGFyYW1ldGVyKFwia1wiKTtcclxuICAgICAgICAvLyAxLjEgZGV0ZXJtaW5lIGsgbmVhcmVzdCBuZWlnaGJvcnNcclxuICAgICAgICBjb25zdCBuTiA9IGtfbmVhcmVzdF9uZWlnaGJvcnMoWCwgaywgbnVsbCwgdGhpcy5fbWV0cmljKTtcclxuICAgICAgICAvLyBjZW50ZXIgbWF0cml4XHJcbiAgICAgICAgY29uc3QgTyA9IG5ldyBNYXRyaXgoRCwgRCwgXCJjZW50ZXJcIik7XHJcbiAgICAgICAgY29uc3QgQiA9IG5ldyBNYXRyaXgocm93cywgcm93cywgMCk7XHJcbiAgICAgICAgXHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgLy8gMS4yIGNvbXB1dGUgdGhlIGQgbGFyZ2VzdCBlaWdlbnZlY3RvcnMgb2YgdGhlIGNvcnJlbGF0aW9uIG1hdHJpeFxyXG4gICAgICAgICAgICBjb25zdCBJX2kgPSBbcm93LCAuLi5uTltyb3ddLm1hcChuID0+IG4uaildXHJcbiAgICAgICAgICAgIGxldCBYX2kgPSBNYXRyaXguZnJvbShJX2kubWFwKG4gPT4gWC5yb3cobikpKTtcclxuICAgICAgICAgICAgLy8gY2VudGVyIFhfaVxyXG4gICAgICAgICAgICBYX2kgPSBYX2kuZG90KE8pXHJcbiAgICAgICAgICAgIC8vIGNvcnJlbGF0aW9uIG1hdHJpeFxyXG4gICAgICAgICAgICBjb25zdCBDID0gWF9pLmRvdChYX2kudHJhbnNwb3NlKCkpO1xyXG4gICAgICAgICAgICBjb25zdCB7IGVpZ2VudmVjdG9yczogZyB9ID0gc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uKEMsIGQpO1xyXG4gICAgICAgICAgICAvL2cucHVzaChsaW5zcGFjZSgwLCBrKS5tYXAoXyA9PiAxIC8gTWF0aC5zcXJ0KGsgKyAxKSkpO1xyXG4gICAgICAgICAgICBjb25zdCBHX2lfdCA9IE1hdHJpeC5mcm9tKGcpO1xyXG4gICAgICAgICAgICAvLyAyLiBDb25zdHJ1Y3RpbmcgYWxpZ25tZW50IG1hdHJpeFxyXG4gICAgICAgICAgICBjb25zdCBXX2kgPSBHX2lfdC50cmFuc3Bvc2UoKS5kb3QoR19pX3QpLmFkZCgxIC8gTWF0aC5zcXJ0KGsgKyAxKSk7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgayArIDE7ICsraSkge1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBrICsgMTsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgQi5zZXRfZW50cnkoSV9pW2ldLCBJX2lbal0sIEIuZW50cnkoSV9pW2ldLCBJX2lbal0pIC0gKGkgPT09IGogPyAxIDogMCApICsgV19pLmVudHJ5KGksIGopKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gMy4gQWxpZ25pbmcgZ2xvYmFsIGNvb3JkaW5hdGVzXHJcbiAgICAgICAgY29uc3QgeyBlaWdlbnZlY3RvcnM6IFkgfSA9IHNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbihCLCBkICsgMSk7XHJcbiAgICAgICAgdGhpcy5ZID0gTWF0cml4LmZyb20oWS5zbGljZSgxKSkudHJhbnNwb3NlKCk7XHJcblxyXG4gICAgICAgIC8vIHJldHVybiBlbWJlZGRpbmdcclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./dimred/LTSA.js\n");
+
+/***/ }),
+
+/***/ "./dimred/MDS.js":
+/*!***********************!*\
+  !*** ./dimred/MDS.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"MDS\": () => (/* binding */ MDS)\n/* harmony export */ });\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n/**\r\n * @class\r\n * @alias MDS\r\n */\n\nclass MDS extends _DR_js__WEBPACK_IMPORTED_MODULE_3__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias MDS\r\n   * @param {Matrix} X - the high-dimensional data.\r\n   * @param {Number} neighbors - the label / class of each data point.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   */\n  constructor(X, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_2__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    return this;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality {@link d}.\r\n   */\n\n\n  transform() {\n    const X = this.X;\n    const rows = X.shape[0];\n    const metric = this._metric;\n    let ai_ = new Float64Array(rows);\n    let a_j = new Float64Array(rows);\n    let a__ = 0;\n    const A = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix();\n    A.shape = [rows, rows, (i, j) => {\n      if (i === j) return 0;\n      const val = i < j ? metric(X.row(i), X.row(j)) : A.entry(j, i);\n      ai_[i] += val;\n      a_j[j] += val;\n      a__ += val;\n      return val;\n    }];\n    this._d_X = A;\n    ai_ = ai_.map(v => v / rows);\n    a_j = a_j.map(v => v / rows);\n    a__ /= rows ** 2;\n    const B = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix(rows, rows, (i, j) => A.entry(i, j) - ai_[i] - a_j[j] + a__); //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]\n\n    const {\n      eigenvectors: V\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__.simultaneous_poweriteration)(B, this._d);\n    this.Y = _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix.from(V).transpose();\n    return this.projection;\n  }\n\n  get stress() {\n    const N = this.X.shape[0];\n    const Y = this.Y;\n    const d_X = this._d_X;\n    /*new Matrix();\r\n    d_X.shape = [N, N, (i, j) => {\r\n    return i < j ? metric(X.row(i), X.row(j)) : d_X.entry(j, i);\r\n    }]*/\n\n    const d_Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix();\n    d_Y.shape = [N, N, (i, j) => {\n      return i < j ? (0,_metrics_index__WEBPACK_IMPORTED_MODULE_2__.euclidean)(Y.row(i), Y.row(j)) : d_Y.entry(j, i);\n    }];\n    let top_sum = 0;\n    let bottom_sum = 0;\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = i + 1; j < N; ++j) {\n        top_sum += Math.pow(d_X.entry(i, j) - d_Y.entry(i, j), 2);\n        bottom_sum += Math.pow(d_X.entry(i, j), 2);\n      }\n    }\n\n    return Math.sqrt(top_sum / bottom_sum);\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9NRFMuanM/YmI4YiJdLCJuYW1lcyI6WyJNRFMiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwidHJhbnNmb3JtIiwicm93cyIsInNoYXBlIiwiX21ldHJpYyIsImFpXyIsIkZsb2F0NjRBcnJheSIsImFfaiIsImFfXyIsIkEiLCJNYXRyaXgiLCJpIiwiaiIsInZhbCIsInJvdyIsImVudHJ5IiwiX2RfWCIsIm1hcCIsInYiLCJCIiwiZWlnZW52ZWN0b3JzIiwiViIsInNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbiIsIl9kIiwiWSIsInRyYW5zcG9zZSIsInByb2plY3Rpb24iLCJzdHJlc3MiLCJOIiwiZF9YIiwiZF9ZIiwidG9wX3N1bSIsImJvdHRvbV9zdW0iLCJNYXRoIiwicG93Iiwic3FydCJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUVBO0FBQ0E7QUFDQTtBQUNBOztBQUNPLE1BQU1BLEdBQU4sU0FBa0JDLHNDQUFsQixDQUFvQjtBQUN2QjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRUlDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxDQUFDLEdBQUMsQ0FBTixFQUFTQyxNQUFNLEdBQUNDLHFEQUFoQixFQUEyQkMsSUFBSSxHQUFDLElBQWhDLEVBQXNDO0FBQzdDLFVBQU1KLENBQU4sRUFBU0MsQ0FBVCxFQUFZQyxNQUFaLEVBQW9CRSxJQUFwQjtBQUNBLFdBQU8sSUFBUDtBQUNIO0FBRUQ7QUFDSjtBQUNBOzs7QUFDSUMsV0FBUyxHQUFHO0FBQ1IsVUFBTUwsQ0FBQyxHQUFHLEtBQUtBLENBQWY7QUFDQSxVQUFNTSxJQUFJLEdBQUdOLENBQUMsQ0FBQ08sS0FBRixDQUFRLENBQVIsQ0FBYjtBQUNBLFVBQU1MLE1BQU0sR0FBRyxLQUFLTSxPQUFwQjtBQUNBLFFBQUlD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QUN4QixXQUFLLElBQUlDLENBQUMsR0FBR0QsQ0FBQyxHQUFHLENBQWpCLEVBQW9CQyxDQUFDLEdBQUdnQixDQUF4QixFQUEyQixFQUFFaEIsQ0FBN0IsRUFBZ0M7QUFDNUJtQixlQUFPLElBQUlFLElBQUksQ0FBQ0MsR0FBTCxDQUFTTCxHQUFHLENBQUNkLEtBQUosQ0FBVUosQ0FBVixFQUFhQyxDQUFiLElBQWtCa0IsR0FBRyxDQUFDZixLQUFKLENBQVVKLENBQVYsRUFBYUMsQ0FBYixDQUEzQixFQUE0QyxDQUE1QyxDQUFYO0FBQ0FvQixrQkFBVSxJQUFJQyxJQUFJLENBQUNDLEdBQUwsQ0FBU0wsR0FBRyxDQUFDZCxLQUFKLENBQVVKLENBQVYsRUFBYUMsQ0FBYixDQUFULEVBQTBCLENBQTFCLENBQWQ7QUFDSDtBQUNKOztBQUNELFdBQU9xQixJQUFJLENBQUNFLElBQUwsQ0FBVUosT0FBTyxHQUFHQyxVQUFwQixDQUFQO0FBQ0g7O0FBdkVzQiIsImZpbGUiOiIuL2RpbXJlZC9NRFMuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb259IGZyb20gXCIuLi9saW5lYXJfYWxnZWJyYS9pbmRleFwiO1xyXG5pbXBvcnQgeyBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcbmltcG9ydCB7IGV1Y2xpZGVhbiB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4XCI7XHJcbmltcG9ydCB7IERSIH0gZnJvbSBcIi4vRFIuanNcIjtcclxuXHJcbi8qKlxyXG4gKiBAY2xhc3NcclxuICogQGFsaWFzIE1EU1xyXG4gKi9cclxuZXhwb3J0IGNsYXNzIE1EUyBleHRlbmRzIERSe1xyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBjb25zdHJ1Y3RvclxyXG4gICAgICogQG1lbWJlcm9mIG1vZHVsZTpkaW1lbnNpb25hbGl0eV9yZWR1Y3Rpb25cclxuICAgICAqIEBhbGlhcyBNRFNcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBYIC0gdGhlIGhpZ2gtZGltZW5zaW9uYWwgZGF0YS5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuZWlnaGJvcnMgLSB0aGUgbGFiZWwgLyBjbGFzcyBvZiBlYWNoIGRhdGEgcG9pbnQuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIC0gdGhlIG1ldHJpYyB3aGljaCBkZWZpbmVzIHRoZSBkaXN0YW5jZSBiZXR3ZWVuIHR3byBwb2ludHMuICBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gdGhlIGRpbWVuc2lvbmFsaXR5IG9mIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICovXHJcbiAgICBcclxuICAgIGNvbnN0cnVjdG9yKFgsIGQ9MiwgbWV0cmljPWV1Y2xpZGVhbiwgc2VlZD0xMjEyKSB7XHJcbiAgICAgICAgc3VwZXIoWCwgZCwgbWV0cmljLCBzZWVkKTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFRyYW5zZm9ybXMgdGhlIGlucHV0ZGF0YSB7QGxpbmsgWH0gdG8gZGltZW5pb25hbGl0eSB7QGxpbmsgZH0uXHJcbiAgICAgKi9cclxuICAgIHRyYW5zZm9ybSgpIHtcclxuICAgICAgICBjb25zdCBYID0gdGhpcy5YO1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSBYLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBsZXQgYWlfID0gbmV3IEZsb2F0NjRBcnJheShyb3dzKTtcclxuICAgICAgICBsZXQgYV9qID0gbmV3IEZsb2F0NjRBcnJheShyb3dzKTtcclxuICAgICAgICBsZXQgYV9fID0gMDtcclxuXHJcbiAgICAgICAgY29uc3QgQSA9IG5ldyBNYXRyaXgoKTtcclxuICAgICAgICBBLnNoYXBlID0gW3Jvd3MsIHJvd3MsIChpLGopID0+IHtcclxuICAgICAgICAgICAgaWYgKGkgPT09IGopIHJldHVybiAwO1xyXG4gICAgICAgICAgICBjb25zdCB2YWwgPSAoaSA8IGopID8gbWV0cmljKFgucm93KGkpLCBYLnJvdyhqKSkgOiBBLmVudHJ5KGosaSk7XHJcbiAgICAgICAgICAgIGFpX1tpXSArPSB2YWw7XHJcbiAgICAgICAgICAgIGFfaltqXSArPSB2YWw7XHJcbiAgICAgICAgICAgIGFfXyArPSB2YWw7XHJcbiAgICAgICAgICAgIHJldHVybiB2YWw7XHJcbiAgICAgICAgfV07XHJcbiAgICAgICAgdGhpcy5fZF9YID0gQTtcclxuICAgICAgICBhaV8gPSBhaV8ubWFwKHYgPT4gdiAvIHJvd3MpO1xyXG4gICAgICAgIGFfaiA9IGFfai5tYXAodiA9PiB2IC8gcm93cyk7XHJcbiAgICAgICAgYV9fIC89IChyb3dzICoqIDIpO1xyXG4gICAgICAgIGNvbnN0IEIgPSBuZXcgTWF0cml4KHJvd3MsIHJvd3MsIChpLCBqKSA9PiAoQS5lbnRyeShpLCBqKSAtIGFpX1tpXSAtIGFfaltqXSArIGFfXykpO1xyXG4gICAgICAgIC8vQi5zaGFwZSA9IFtyb3dzLCByb3dzLCAoaSxqKSA9PiAoQS5lbnRyeShpLGopIC0gKEEucm93KGkpLnJlZHVjZShzdW1fcmVkdWNlKSAvIHJvd3MpIC0gKEEuY29sKGopLnJlZHVjZShzdW1fcmVkdWNlKSAvIHJvd3MpICsgYV9fKV1cclxuICAgICAgICAgICAgICAgIFxyXG4gICAgICAgIGNvbnN0IHsgZWlnZW52ZWN0b3JzOiBWIH0gPSBzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb24oQiwgdGhpcy5fZCk7XHJcbiAgICAgICAgdGhpcy5ZID0gTWF0cml4LmZyb20oVikudHJhbnNwb3NlKClcclxuICAgICAgICBcclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG5cclxuICAgIGdldCBzdHJlc3MoKSB7XHJcbiAgICAgICAgY29uc3QgTiA9IHRoaXMuWC5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBZID0gdGhpcy5ZO1xyXG4gICAgICAgIGNvbnN0IGRfWCA9IHRoaXMuX2RfWDsgLypuZXcgTWF0cml4KCk7XHJcbiAgICAgICAgZF9YLnNoYXBlID0gW04sIE4sIChpLCBqKSA9PiB7XHJcbiAgICAgICAgICAgIHJldHVybiBpIDwgaiA/IG1ldHJpYyhYLnJvdyhpKSwgWC5yb3coaikpIDogZF9YLmVudHJ5KGosIGkpO1xyXG4gICAgICAgIH1dKi9cclxuICAgICAgICBjb25zdCBkX1kgPSBuZXcgTWF0cml4KCk7XHJcbiAgICAgICAgZF9ZLnNoYXBlID0gW04sIE4sIChpLCBqKSA9PiB7XHJcbiAgICAgICAgICAgIHJldHVybiBpIDwgaiA/IGV1Y2xpZGVhbihZLnJvdyhpKSwgWS5yb3coaikpIDogZF9ZLmVudHJ5KGosIGkpO1xyXG4gICAgICAgIH1dXHJcbiAgICAgICAgbGV0IHRvcF9zdW0gPSAwO1xyXG4gICAgICAgIGxldCBib3R0b21fc3VtID0gMDtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IE47ICsraSkge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gaSArIDE7IGogPCBOOyArK2opIHtcclxuICAgICAgICAgICAgICAgIHRvcF9zdW0gKz0gTWF0aC5wb3coZF9YLmVudHJ5KGksIGopIC0gZF9ZLmVudHJ5KGksIGopLCAyKTtcclxuICAgICAgICAgICAgICAgIGJvdHRvbV9zdW0gKz0gTWF0aC5wb3coZF9YLmVudHJ5KGksIGopLCAyKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gTWF0aC5zcXJ0KHRvcF9zdW0gLyBib3R0b21fc3VtKTtcclxuICAgIH1cclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/MDS.js\n");
+
+/***/ }),
+
+/***/ "./dimred/PCA.js":
+/*!***********************!*\
+  !*** ./dimred/PCA.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"PCA\": () => (/* binding */ PCA)\n/* harmony export */ });\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n/**\r\n * @class\r\n * @alias PCA\r\n * @augments DR\r\n */\n\nclass PCA extends _DR_js__WEBPACK_IMPORTED_MODULE_2__.DR {\n  /**\r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias PCA \r\n   * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @returns {PCA}\r\n   */\n  constructor(X, d = 2) {\n    super(X, d);\n    return this;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality {@link d}.\r\n   */\n\n\n  transform() {\n    let X = this.X;\n    let D = X.shape[1];\n    let O = new _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix(D, D, \"center\");\n    let X_cent = X.dot(O);\n    let C = X_cent.transpose().dot(X_cent);\n    let {\n      eigenvectors: V\n    } = (0,_linear_algebra_index__WEBPACK_IMPORTED_MODULE_0__.simultaneous_poweriteration)(C, this._d);\n    V = _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix.from(V).transpose();\n    this.Y = X.dot(V);\n    return this.projection;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9QQ0EuanM/OGQ3ZiJdLCJuYW1lcyI6WyJQQ0EiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsImQiLCJ0cmFuc2Zvcm0iLCJEIiwic2hhcGUiLCJPIiwiTWF0cml4IiwiWF9jZW50IiwiZG90IiwiQyIsInRyYW5zcG9zZSIsImVpZ2VudmVjdG9ycyIsIlYiLCJzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb24iLCJfZCIsIlkiLCJwcm9qZWN0aW9uIl0sIm1hcHBpbmdzIjoiOzs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxHQUFOLFNBQWtCQyxzQ0FBbEIsQ0FBb0I7QUFDdkI7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLENBQUQsRUFBSUMsQ0FBQyxHQUFDLENBQU4sRUFBUztBQUNoQixVQUFNRCxDQUFOLEVBQVNDLENBQVQ7QUFDQSxXQUFPLElBQVA7QUFDSDtBQUVEO0FBQ0o7QUFDQTs7O0FBQ0lDLFdBQVMsR0FBRztBQUNSLFFBQUlGLENBQUMsR0FBRyxLQUFLQSxDQUFiO0FBQ0EsUUFBSUcsQ0FBQyxHQUFHSCxDQUFDLENBQUNJLEtBQUYsQ0FBUSxDQUFSLENBQVI7QUFDQSxRQUFJQyxDQUFDLEdBQUcsSUFBSUMsaURBQUosQ0FBV0gsQ0FBWCxFQUFjQSxDQUFkLEVBQWlCLFFBQWpCLENBQVI7QUFDQSxRQUFJSSxNQUFNLEdBQUdQLENBQUMsQ0FBQ1EsR0FBRixDQUFNSCxDQUFOLENBQWI7QUFFQSxRQUFJSSxDQUFDLEdBQUdGLE1BQU0sQ0FBQ0csU0FBUCxHQUFtQkYsR0FBbkIsQ0FBdUJELE1BQXZCLENBQVI7QUFDQSxRQUFJO0FBQUVJLGtCQUFZLEVBQUVDO0FBQWhCLFFBQXNCQyxrRkFBMkIsQ0FBQ0osQ0FBRCxFQUFJLEtBQUtLLEVBQVQsQ0FBckQ7QUFDQUYsS0FBQyxHQUFHTixzREFBQSxDQUFZTSxDQUFaLEVBQWVGLFNBQWYsRUFBSjtBQUNBLFNBQUtLLENBQUwsR0FBU2YsQ0FBQyxDQUFDUSxHQUFGLENBQU1JLENBQU4sQ0FBVDtBQUNBLFdBQU8sS0FBS0ksVUFBWjtBQUNIOztBQTVCc0IiLCJmaWxlIjoiLi9kaW1yZWQvUENBLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9ufSBmcm9tIFwiLi4vbGluZWFyX2FsZ2VicmEvaW5kZXhcIjtcclxuaW1wb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4uL21hdHJpeC9pbmRleFwiO1xyXG5pbXBvcnQgeyBEUiB9IGZyb20gXCIuL0RSLmpzXCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBQQ0FcclxuICogQGF1Z21lbnRzIERSXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgUENBIGV4dGVuZHMgRFJ7XHJcbiAgICAvKipcclxuICAgICAqIEBjb25zdHJ1Y3RvclxyXG4gICAgICogQG1lbWJlcm9mIG1vZHVsZTpkaW1lbnNpb25hbGl0eV9yZWR1Y3Rpb25cclxuICAgICAqIEBhbGlhcyBQQ0EgXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeHxBcnJheTxBcnJheTxOdW1iZXI+Pn0gWCAtIHRoZSBoaWdoLWRpbWVuc2lvbmFsIGRhdGEuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtQQ0F9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKFgsIGQ9Mikge1xyXG4gICAgICAgIHN1cGVyKFgsIGQpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogVHJhbnNmb3JtcyB0aGUgaW5wdXRkYXRhIHtAbGluayBYfSB0byBkaW1lbmlvbmFsaXR5IHtAbGluayBkfS5cclxuICAgICAqL1xyXG4gICAgdHJhbnNmb3JtKCkge1xyXG4gICAgICAgIGxldCBYID0gdGhpcy5YO1xyXG4gICAgICAgIGxldCBEID0gWC5zaGFwZVsxXTtcclxuICAgICAgICBsZXQgTyA9IG5ldyBNYXRyaXgoRCwgRCwgXCJjZW50ZXJcIik7XHJcbiAgICAgICAgbGV0IFhfY2VudCA9IFguZG90KE8pO1xyXG5cclxuICAgICAgICBsZXQgQyA9IFhfY2VudC50cmFuc3Bvc2UoKS5kb3QoWF9jZW50KVxyXG4gICAgICAgIGxldCB7IGVpZ2VudmVjdG9yczogViB9ID0gc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uKEMsIHRoaXMuX2QpXHJcbiAgICAgICAgViA9IE1hdHJpeC5mcm9tKFYpLnRyYW5zcG9zZSgpXHJcbiAgICAgICAgdGhpcy5ZID0gWC5kb3QoVilcclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG59ICJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/PCA.js\n");
+
+/***/ }),
+
+/***/ "./dimred/SAMMON.js":
+/*!**************************!*\
+  !*** ./dimred/SAMMON.js ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"SAMMON\": () => (/* binding */ SAMMON)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./index.js */ \"./dimred/index.js\");\n\n\n\n\nclass SAMMON extends _DR_js__WEBPACK_IMPORTED_MODULE_2__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias SAMMON\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @returns {SAMMON}\r\n   * @see {@link https://arxiv.org/pdf/2009.01512.pdf}\r\n   */\n  constructor(X, max_halves = 5, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"max_halves\"];\n    this.parameter(\"max_halves\", max_halves);\n    [this._N, this._D] = this.X.shape;\n    return this;\n  }\n  /**\r\n   * initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.\r\n   */\n\n\n  init(DR = \"random\", Distance_matrix = null) {\n    const N = this._N;\n    const d = this._d;\n\n    if (DR === \"random\") {\n      const randomizer = this._randomizer;\n      console.log(randomizer);\n      this.Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, () => randomizer.random);\n    } else {\n      this.Y = DR.transform(this.X);\n    }\n\n    const Y = this.Y;\n\n    if (!Distance_matrix) {\n      Distance_matrix = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N);\n    }\n\n    const metric = this._metric;\n    let distance_matrix = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N);\n    let distance_inverse_matrix = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N);\n\n    for (let i = 0; i < N; ++i) {\n      const Y_i = Y.row(i);\n\n      for (let j = i; j < N; ++j) {\n        let distance = i === j ? 1 : metric(Y_i, Y.row(j));\n        let distance_inverse = 1 / distance;\n        distance_matrix.set_entry(i, j, distance);\n        distance_matrix.set_entry(j, i, distance);\n        distance_inverse_matrix.set_entry(i, j, distance_inverse);\n        distance_inverse_matrix.set_entry(j, i, distance_inverse);\n\n        if (!Distance_matrix) {\n          let Distance = i === j ? 1 : metric(X.row(i), X.row(j));\n          Distance_matrix.set_entry(i, j, Distance);\n          Distance_matrix.set_entry(j, i, Distance);\n        }\n      }\n    }\n\n    let Distance_inverse_matrix = Distance_matrix._apply(1, (d, v) => v / d);\n\n    let delta = Distance_matrix.sub(distance_matrix);\n\n    let E = delta._apply(2, (d, v) => Math.pow(d, v)).mult(Distance_inverse_matrix);\n\n    console.log(E);\n    this._distance_matrix = distance_matrix;\n    this._distance_inverse_matrix = distance_inverse_matrix;\n    this._Distance_matrix = Distance_matrix;\n    this._Distance_inverse_matrix = distance_inverse_matrix;\n    this._delta = delta;\n    this._ones = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, 1);\n    this._E = E.sum;\n    return this;\n  }\n  /**\r\n   * @private\r\n   * @param {Matrix} A\r\n   * @returns {Matrix} \r\n   */\n\n\n  __distance_matrix(A) {\n    const metric = this._metric;\n    const N = A.shape[0];\n    const D = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N);\n\n    for (let i = 0; i < N; ++i) {\n      const A_i = A.row(i);\n\n      for (let j = i; j < N; ++j) {\n        let distance = i === j ? 1 : metric(A_i, A.row(j));\n        D.set_entry(i, j, distance);\n        D.set_entry(j, i, distance);\n      }\n    }\n\n    return D;\n  }\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality 2.\r\n   */\n\n\n  transform(max_iter = 20) {\n    if (!this._is_initialized) this.init();\n\n    for (let j = 0; j < max_iter; ++j) {\n      console.log([...this.Y]);\n\n      this._step();\n    }\n\n    return this.projection;\n  }\n\n  *generator() {\n    if (!this._is_initialized) this.init();\n\n    for (let j = 0; j < max_iter; ++j) {\n      this._step();\n\n      yield this.projection;\n    }\n\n    return this.projection;\n  }\n\n  _step() {\n    const max_halves = this.parameter(\"max_halves\");\n    let distance_matrix = this._distance_matrix;\n    let distance_inverse_matrix = this._distance_inverse_matrix;\n    let Distance_matrix = this._Distance_matrix;\n    let Distance_inverse_matrix = this._Distance_inverse_matrix;\n    let ones = this._ones;\n    let E = this._E;\n    let Y = this.Y;\n    let delta = distance_inverse_matrix.sub(Distance_inverse_matrix);\n    let delta_one = delta.dot(ones);\n    let g = delta.dot(Y).sub(Y.mult(delta_one));\n\n    let dinv3 = distance_inverse_matrix._apply(3, (d, v) => Math.pow(d, v));\n\n    let Y2 = Y._apply(2, (d, v) => Math.pow(d, v));\n\n    let H = dinv3.dot(Y2).sub(delta_one).sub(Y.mult(2).mult(dinv3.dot(Y))).add(Y2.mult(dinv3.dot(ones)));\n    H = H._apply(null, d => Math.abs(d));\n    let s = g.divide(H);\n    let Y_old = Y.clone();\n\n    for (let j = 0; j < max_halves; ++j) {\n      Y = Y_old.add(s);\n      distance_matrix = this.__distance_matrix(Y);\n      distance_inverse_matrix = distance_matrix._apply(1, (d, v) => v / d);\n      delta = Distance_matrix.sub(distance_matrix);\n\n      let E_new = delta._apply(2, (d, v) => Math.pow(d, v)).mult(Distance_inverse_matrix).sum;\n\n      if (E_new < E) {\n        break;\n      } else {\n        s = s.mult(.5);\n      }\n    }\n\n    this.Y = Y;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9TQU1NT04uanM/ZWZiNyJdLCJuYW1lcyI6WyJTQU1NT04iLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsIm1heF9oYWx2ZXMiLCJkIiwibWV0cmljIiwiZXVjbGlkZWFuIiwic2VlZCIsInBhcmFtZXRlcl9saXN0IiwicGFyYW1ldGVyIiwiX04iLCJfRCIsInNoYXBlIiwiaW5pdCIsIkRpc3RhbmNlX21hdHJpeCIsIk4iLCJfZCIsInJhbmRvbWl6ZXIiLCJfcmFuZG9taXplciIsImNvbnNvbGUiLCJsb2ciLCJZIiwiTWF0cml4IiwicmFuZG9tIiwidHJhbnNmb3JtIiwiX21ldHJpYyIsImRpc3RhbmNlX21hdHJpeCIsImRpc3RhbmNlX2ludmVyc2VfbWF0cml4IiwiaSIsIllfaSIsInJvdyIsImoiLCJkaXN0YW5jZSIsImRpc3RhbmNlX2ludmVyc2UiLCJzZXRfZW50cnkiLCJEaXN0YW5jZSIsIkRpc3RhbmNlX2ludmVyc2VfbWF0cml4IiwiX2FwcGx5IiwidiIsImRlbHRhIiwic3ViIiwiRSIsIk1hdGgiLCJwb3ciLCJtdWx0IiwiX2Rpc3RhbmNlX21hdHJpeCIsIl9kaXN0YW5jZV9pbnZlcnNlX21hdHJpeCIsIl9EaXN0YW5jZV9tYXRyaXgiLCJfRGlzdGFuY2VfaW52ZXJzZV9tYXRyaXgiLCJfZGVsdGEiLCJfb25lcyIsIl9FIiwic3VtIiwiX19kaXN0YW5jZV9tYXRyaXgiLCJBIiwiRCIsIkFfaSIsIm1heF9pdGVyIiwiX2lzX2luaXRpYWxpemVkIiwiX3N0ZXAiLCJwcm9qZWN0aW9uIiwiZ2VuZXJhdG9yIiwib25lcyIsImRlbHRhX29uZSIsImRvdCIsImciLCJkaW52MyIsIlkyIiwiSCIsImFkZCIsImFicyIsInMiLCJkaXZpZGUiLCJZX29sZCIsImNsb25lIiwiRV9uZXciXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFFTyxNQUFNQSxNQUFOLFNBQXFCQyxzQ0FBckIsQ0FB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QjtBQUNBTSw2QkFBdUIsR0FBR0QsZUFBZSxDQUFDVyxNQUFoQixDQUF1QixDQUF2QixFQUEwQixDQUFDakMsQ0FBRCxFQUFJa0MsQ0FBSixLQUFVQSxDQUFDLEdBQUdsQyxDQUF4QyxDQUExQjtBQUNBbUMsV0FBSyxHQUFHekIsZUFBZSxDQUFDMEIsR0FBaEIsQ0FBb0JkLGVBQXBCLENBQVI7O0FBQ0EsVUFBSWlELEtBQUssR0FBR3BDLEtBQUssQ0FBQ0YsTUFBTixDQUFhLENBQWIsRUFBZ0IsQ0FBQ2pDLENBQUQsRUFBSWtDLENBQUosS0FBVUksSUFBSSxDQUFDQyxHQUFMLENBQVN2QyxDQUFULEVBQVlrQyxDQUFaLENBQTFCLEVBQTBDTSxJQUExQyxDQUErQ1IsdUJBQS9DLEVBQXdFZ0IsR0FBcEY7O0FBQ0EsVUFBSXVCLEtBQUssR0FBR2xDLENBQVosRUFBZTtBQUNYO0FBQ0gsT0FGRCxNQUVPO0FBQ0g4QixTQUFDLEdBQUdBLENBQUMsQ0FBQzNCLElBQUYsQ0FBTyxFQUFQLENBQUo7QUFDSDtBQUNKOztBQUVELFNBQUt2QixDQUFMLEdBQVNBLENBQVQ7QUFDSDs7QUEzSjBCIiwiZmlsZSI6Ii4vZGltcmVkL1NBTU1PTi5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5pbXBvcnQgeyBQQ0EgfSBmcm9tIFwiLi9pbmRleC5qc1wiO1xyXG5cclxuZXhwb3J0IGNsYXNzIFNBTU1PTiBleHRlbmRzIERSIHtcclxuICAgIC8qKlxyXG4gICAgICogXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6ZGltZW5zaW9uYWxpdHlfcmVkdWN0aW9uXHJcbiAgICAgKiBAYWxpYXMgU0FNTU9OXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWCAtIHRoZSBoaWdoLWRpbWVuc2lvbmFsIGRhdGEuIFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtkID0gMl0gLSB0aGUgZGltZW5zaW9uYWxpdHkgb2YgdGhlIHByb2plY3Rpb24uXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBbbWV0cmljID0gZXVjbGlkZWFuXSAtIHRoZSBtZXRyaWMgd2hpY2ggZGVmaW5lcyB0aGUgZGlzdGFuY2UgYmV0d2VlbiB0d28gcG9pbnRzLiAgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW3NlZWQgPSAxMjEyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEByZXR1cm5zIHtTQU1NT059XHJcbiAgICAgKiBAc2VlIHtAbGluayBodHRwczovL2FyeGl2Lm9yZy9wZGYvMjAwOS4wMTUxMi5wZGZ9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKFgsIG1heF9oYWx2ZXM9NSwgZD0yLCBtZXRyaWM9ZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpXHJcbiAgICAgICAgc3VwZXIucGFyYW1ldGVyX2xpc3QgPSBbXCJtYXhfaGFsdmVzXCJdO1xyXG4gICAgICAgIHRoaXMucGFyYW1ldGVyKFwibWF4X2hhbHZlc1wiLCBtYXhfaGFsdmVzKTtcclxuICAgICAgICBbIHRoaXMuX04sIHRoaXMuX0QgXSA9IHRoaXMuWC5zaGFwZTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIGluaXRpYWxpemVzIFNBTU1PTi4gU2V0cyBhbGwgcHJvamN0ZWQgcG9pbnRzIHRvIHplcm8sIGFuZCBjb21wdXRlcyBhIG1pbmltdW0gc3Bhbm5pbmcgdHJlZS5cclxuICAgICAqL1xyXG4gICAgaW5pdChEUj1cInJhbmRvbVwiLCBEaXN0YW5jZV9tYXRyaXg9bnVsbCkge1xyXG4gICAgICAgIGNvbnN0IE4gPSB0aGlzLl9OO1xyXG4gICAgICAgIGNvbnN0IGQgPSB0aGlzLl9kO1xyXG5cclxuICAgICAgICBpZiAoRFIgPT09IFwicmFuZG9tXCIpIHtcclxuICAgICAgICAgICAgY29uc3QgcmFuZG9taXplciA9IHRoaXMuX3JhbmRvbWl6ZXI7XHJcbiAgICAgICAgICAgIGNvbnNvbGUubG9nKHJhbmRvbWl6ZXIpXHJcbiAgICAgICAgICAgIHRoaXMuWSA9IG5ldyBNYXRyaXgoTiwgZCwgKCkgPT4gcmFuZG9taXplci5yYW5kb20pO1xyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIHRoaXMuWSA9IERSLnRyYW5zZm9ybSh0aGlzLlgpO1xyXG4gICAgICAgIH1cclxuICAgICAgICBjb25zdCBZID0gdGhpcy5ZO1xyXG5cclxuICAgICAgICBpZiAoIURpc3RhbmNlX21hdHJpeCkge1xyXG4gICAgICAgICAgICBEaXN0YW5jZV9tYXRyaXggPSBuZXcgTWF0cml4KE4sIE4pO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgY29uc3QgbWV0cmljID0gdGhpcy5fbWV0cmljO1xyXG4gICAgICAgIGxldCBkaXN0YW5jZV9tYXRyaXggPSBuZXcgTWF0cml4KE4sIE4pO1xyXG4gICAgICAgIGxldCBkaXN0YW5jZV9pbnZlcnNlX21hdHJpeCA9IG5ldyBNYXRyaXgoTiwgTik7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgWV9pID0gWS5yb3coaSk7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSBpOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgZGlzdGFuY2UgPSBpID09PSBqID8gMSA6IG1ldHJpYyhZX2ksIFkucm93KGopKTtcclxuICAgICAgICAgICAgICAgIGxldCBkaXN0YW5jZV9pbnZlcnNlID0gMSAvIGRpc3RhbmNlO1xyXG4gICAgICAgICAgICAgICAgZGlzdGFuY2VfbWF0cml4LnNldF9lbnRyeShpLCBqLCBkaXN0YW5jZSk7XHJcbiAgICAgICAgICAgICAgICBkaXN0YW5jZV9tYXRyaXguc2V0X2VudHJ5KGosIGksIGRpc3RhbmNlKTtcclxuICAgICAgICAgICAgICAgIGRpc3RhbmNlX2ludmVyc2VfbWF0cml4LnNldF9lbnRyeShpLCBqLCBkaXN0YW5jZV9pbnZlcnNlKTtcclxuICAgICAgICAgICAgICAgIGRpc3RhbmNlX2ludmVyc2VfbWF0cml4LnNldF9lbnRyeShqLCBpLCBkaXN0YW5jZV9pbnZlcnNlKTtcclxuICAgICAgICAgICAgICAgIGlmICghRGlzdGFuY2VfbWF0cml4KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IERpc3RhbmNlID0gaSA9PT0gaiA/IDEgOiBtZXRyaWMoWC5yb3coaSksIFgucm93KGopKTtcclxuICAgICAgICAgICAgICAgICAgICBEaXN0YW5jZV9tYXRyaXguc2V0X2VudHJ5KGksIGosIERpc3RhbmNlKTtcclxuICAgICAgICAgICAgICAgICAgICBEaXN0YW5jZV9tYXRyaXguc2V0X2VudHJ5KGosIGksIERpc3RhbmNlKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICBsZXQgRGlzdGFuY2VfaW52ZXJzZV9tYXRyaXggPSBEaXN0YW5jZV9tYXRyaXguX2FwcGx5KDEsIChkLCB2KSA9PiB2IC8gZCk7XHJcbiAgICAgICAgbGV0IGRlbHRhID0gRGlzdGFuY2VfbWF0cml4LnN1YihkaXN0YW5jZV9tYXRyaXgpO1xyXG4gICAgICAgIGxldCBFID0gZGVsdGEuX2FwcGx5KDIsIChkLCB2KSA9PiBNYXRoLnBvdyhkLCB2KSkubXVsdChEaXN0YW5jZV9pbnZlcnNlX21hdHJpeCk7XHJcbiAgICAgICAgY29uc29sZS5sb2coRSlcclxuICAgICAgICB0aGlzLl9kaXN0YW5jZV9tYXRyaXggPSBkaXN0YW5jZV9tYXRyaXg7XHJcbiAgICAgICAgdGhpcy5fZGlzdGFuY2VfaW52ZXJzZV9tYXRyaXggPSBkaXN0YW5jZV9pbnZlcnNlX21hdHJpeDtcclxuICAgICAgICB0aGlzLl9EaXN0YW5jZV9tYXRyaXggPSBEaXN0YW5jZV9tYXRyaXg7XHJcbiAgICAgICAgdGhpcy5fRGlzdGFuY2VfaW52ZXJzZV9tYXRyaXggPSBkaXN0YW5jZV9pbnZlcnNlX21hdHJpeDtcclxuICAgICAgICB0aGlzLl9kZWx0YSA9IGRlbHRhO1xyXG4gICAgICAgIHRoaXMuX29uZXMgPSBuZXcgTWF0cml4KE4sIGQsIDEpO1xyXG4gICAgICAgIHRoaXMuX0UgPSBFLnN1bTtcclxuXHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IEFcclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9IFxyXG4gICAgICovXHJcbiAgICBfX2Rpc3RhbmNlX21hdHJpeChBKSB7XHJcbiAgICAgICAgY29uc3QgbWV0cmljID0gdGhpcy5fbWV0cmljO1xyXG4gICAgICAgIGNvbnN0IE4gPSBBLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IEQgPSBuZXcgTWF0cml4KE4sIE4pO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IEFfaSA9IEEucm93KGkpO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gaTsgaiA8IE47ICsraikge1xyXG4gICAgICAgICAgICAgICAgbGV0IGRpc3RhbmNlID0gKGkgPT09IGogPyAxIDogbWV0cmljKEFfaSwgQS5yb3coaikpKTtcclxuICAgICAgICAgICAgICAgIEQuc2V0X2VudHJ5KGksIGosIGRpc3RhbmNlKTtcclxuICAgICAgICAgICAgICAgIEQuc2V0X2VudHJ5KGosIGksIGRpc3RhbmNlKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gRDsgICAgICAgICAgICAgICAgXHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBUcmFuc2Zvcm1zIHRoZSBpbnB1dGRhdGEge0BsaW5rIFh9IHRvIGRpbWVuaW9uYWxpdHkgMi5cclxuICAgICAqL1xyXG4gICAgdHJhbnNmb3JtKG1heF9pdGVyPTIwKSB7XHJcbiAgICAgICAgaWYgKCF0aGlzLl9pc19pbml0aWFsaXplZCkgdGhpcy5pbml0KCk7XHJcblxyXG4gICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgbWF4X2l0ZXI7ICsraikge1xyXG4gICAgICAgICAgICBjb25zb2xlLmxvZyhbLi4udGhpcy5ZXSlcclxuICAgICAgICAgICAgdGhpcy5fc3RlcCgpXHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG5cclxuICAgICogZ2VuZXJhdG9yKCkge1xyXG4gICAgICAgIGlmICghdGhpcy5faXNfaW5pdGlhbGl6ZWQpIHRoaXMuaW5pdCgpO1xyXG5cclxuICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IG1heF9pdGVyOyArK2opIHtcclxuICAgICAgICAgICAgdGhpcy5fc3RlcCgpXHJcbiAgICAgICAgICAgIHlpZWxkIHRoaXMucHJvamVjdGlvbjtcclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIHJldHVybiB0aGlzLnByb2plY3Rpb247XHJcbiAgICB9XHJcblxyXG4gICAgX3N0ZXAoKSB7XHJcbiAgICAgICAgY29uc3QgbWF4X2hhbHZlcyA9IHRoaXMucGFyYW1ldGVyKFwibWF4X2hhbHZlc1wiKTtcclxuXHJcbiAgICAgICAgbGV0IGRpc3RhbmNlX21hdHJpeCA9IHRoaXMuX2Rpc3RhbmNlX21hdHJpeDtcclxuICAgICAgICBsZXQgZGlzdGFuY2VfaW52ZXJzZV9tYXRyaXggPSB0aGlzLl9kaXN0YW5jZV9pbnZlcnNlX21hdHJpeDtcclxuICAgICAgICBsZXQgRGlzdGFuY2VfbWF0cml4ID0gdGhpcy5fRGlzdGFuY2VfbWF0cml4O1xyXG4gICAgICAgIGxldCBEaXN0YW5jZV9pbnZlcnNlX21hdHJpeCA9IHRoaXMuX0Rpc3RhbmNlX2ludmVyc2VfbWF0cml4O1xyXG4gICAgICAgIGxldCBvbmVzID0gdGhpcy5fb25lcztcclxuICAgICAgICBsZXQgRSA9IHRoaXMuX0U7XHJcbiAgICAgICAgbGV0IFkgPSB0aGlzLlk7XHJcblxyXG4gICAgICAgIGxldCBkZWx0YSA9IGRpc3RhbmNlX2ludmVyc2VfbWF0cml4LnN1YihEaXN0YW5jZV9pbnZlcnNlX21hdHJpeCk7XHJcbiAgICAgICAgbGV0IGRlbHRhX29uZSA9IGRlbHRhLmRvdChvbmVzKTtcclxuICAgICAgICBsZXQgZyA9IGRlbHRhLmRvdChZKS5zdWIoWS5tdWx0KGRlbHRhX29uZSkpO1xyXG4gICAgICAgIGxldCBkaW52MyA9IGRpc3RhbmNlX2ludmVyc2VfbWF0cml4Ll9hcHBseSgzLCAoZCwgdikgPT4gTWF0aC5wb3coZCwgdikpO1xyXG4gICAgICAgIGxldCBZMiA9IFkuX2FwcGx5KDIsIChkLCB2KSA9PiBNYXRoLnBvdyhkLCB2KSk7XHJcbiAgICAgICAgbGV0IEggPSBkaW52My5kb3QoWTIpLnN1YihkZWx0YV9vbmUpLnN1YihZLm11bHQoMikubXVsdChkaW52My5kb3QoWSkpKS5hZGQoWTIubXVsdChkaW52My5kb3Qob25lcykpKTtcclxuICAgICAgICBIID0gSC5fYXBwbHkobnVsbCwgKGQpID0+IE1hdGguYWJzKGQpKTtcclxuICAgICAgICBsZXQgcyA9IGcuZGl2aWRlKEgpO1xyXG4gICAgICAgIGxldCBZX29sZCA9IFkuY2xvbmUoKTtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBtYXhfaGFsdmVzOyArK2opIHtcclxuICAgICAgICAgICAgWSA9IFlfb2xkLmFkZChzKTtcclxuICAgICAgICAgICAgZGlzdGFuY2VfbWF0cml4ID0gdGhpcy5fX2Rpc3RhbmNlX21hdHJpeChZKTtcclxuICAgICAgICAgICAgZGlzdGFuY2VfaW52ZXJzZV9tYXRyaXggPSBkaXN0YW5jZV9tYXRyaXguX2FwcGx5KDEsIChkLCB2KSA9PiB2IC8gZCk7XHJcbiAgICAgICAgICAgIGRlbHRhID0gRGlzdGFuY2VfbWF0cml4LnN1YihkaXN0YW5jZV9tYXRyaXgpO1xyXG4gICAgICAgICAgICBsZXQgRV9uZXcgPSBkZWx0YS5fYXBwbHkoMiwgKGQsIHYpID0+IE1hdGgucG93KGQsIHYpKS5tdWx0KERpc3RhbmNlX2ludmVyc2VfbWF0cml4KS5zdW07XHJcbiAgICAgICAgICAgIGlmIChFX25ldyA8IEUpIHtcclxuICAgICAgICAgICAgICAgIGJyZWFrO1xyXG4gICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgcyA9IHMubXVsdCguNSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIHRoaXMuWSA9IFk7XHJcbiAgICB9XHJcbn0gIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./dimred/SAMMON.js\n");
+
+/***/ }),
+
+/***/ "./dimred/TSNE.js":
+/*!************************!*\
+  !*** ./dimred/TSNE.js ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"TSNE\": () => (/* binding */ TSNE)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n/**\r\n * @class\r\n * @alias TSNE\r\n */\n\nclass TSNE extends _DR_js__WEBPACK_IMPORTED_MODULE_2__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias TSNE\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} [perplexity = 50] - perplexity.\r\n   * @param {Number} [epsilon = 10] - learning parameter.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @returns {TSNE}\r\n   */\n  constructor(X, perplexity = 50, epsilon = 10, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"perplexity\", \"epsilon\"];\n    [this._N, this._D] = this.X.shape;\n    this.parameter(\"perplexity\", Math.min(perplexity, this._N - 1));\n    this.parameter(\"epsilon\", epsilon);\n    this._iter = 0;\n    this.Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(this._N, this._d, () => this._randomizer.random);\n    return this;\n  }\n\n  init(distance_matrix = null) {\n    // init\n    const Htarget = Math.log(this._perplexity);\n    const N = this._N;\n    const D = this._D;\n    const metric = this._metric;\n    const X = this.X;\n    let Delta;\n\n    if (distance_matrix) {\n      Delta = distance_matrix;\n    } else {\n      Delta = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N);\n\n      for (let i = 0; i < N; ++i) {\n        const X_i = X.row(i);\n\n        for (let j = i + 1; j < N; ++j) {\n          const distance = metric(X_i, X.row(j));\n          Delta.set_entry(i, j, distance);\n          Delta.set_entry(j, i, distance);\n        }\n      }\n    }\n\n    const P = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, \"zeros\");\n    this._ystep = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, D, \"zeros\");\n    this._gains = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, D, 1); // search for fitting sigma\n\n    let prow = new Array(N).fill(0);\n    const tol = 1e-4;\n    const maxtries = 50;\n\n    for (let i = 0; i < N; ++i) {\n      let betamin = -Infinity;\n      let betamax = Infinity;\n      let beta = 1;\n      let done = false;\n      let num = 0;\n\n      while (!done) {\n        let psum = 0;\n\n        for (let j = 0; j < N; ++j) {\n          let pj = Math.exp(-Delta.entry(i, j) * beta);\n          if (i === j) pj = 0;\n          prow[j] = pj;\n          psum += pj;\n        }\n\n        let Hhere = 0;\n\n        for (let j = 0; j < N; ++j) {\n          let pj = psum === 0 ? 0 : prow[j] / psum;\n          prow[j] = pj;\n\n          if (pj > 1e-7) {\n            Hhere -= pj * Math.log(pj);\n          }\n        }\n\n        if (Hhere > Htarget) {\n          betamin = beta;\n          beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;\n        } else {\n          betamax = beta;\n          beta = betamin === -Infinity ? beta / 2 : (beta + betamin) / 2;\n        }\n\n        ++num;\n        if (Math.abs(Hhere - Htarget) < tol) done = true;\n        if (num >= maxtries) done = true;\n      }\n\n      for (let j = 0; j < N; ++j) {\n        P.set_entry(i, j, prow[j]);\n      }\n    } //compute probabilities\n\n\n    const Pout = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, \"zeros\");\n    const N2 = N * 2;\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = i; j < N; ++j) {\n        const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);\n        Pout.set_entry(i, j, p);\n        Pout.set_entry(j, i, p);\n      }\n    }\n\n    this._P = Pout;\n    return this;\n  }\n\n  transform(iterations = 500) {\n    this.check_init();\n\n    for (let i = 0; i < iterations; ++i) {\n      this.next();\n    }\n\n    return this.projection;\n  }\n\n  *generator() {\n    this.check_init();\n\n    while (true) {\n      this.next();\n      yield this.projection;\n    }\n  } // perform optimization\n\n\n  next() {\n    const iter = ++this._iter;\n    const P = this._P;\n    const ystep = this._ystep;\n    const gains = this._gains;\n    const N = this._N;\n    const epsilon = this._epsilon;\n    const dim = this._d;\n    let Y = this.Y; //calc cost gradient;\n\n    const pmul = iter < 100 ? 4 : 1; // compute Q dist (unnormalized)\n\n    const Qu = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, \"zeros\");\n    let qsum = 0;\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = i + 1; j < N; ++j) {\n        let dsum = 0;\n\n        for (let d = 0; d < dim; ++d) {\n          const dhere = Y.entry(i, d) - Y.entry(j, d);\n          dsum += dhere * dhere;\n        }\n\n        const qu = 1 / (1 + dsum);\n        Qu.set_entry(i, j, qu);\n        Qu.set_entry(j, i, qu);\n        qsum += 2 * qu;\n      }\n    } // normalize Q dist\n\n\n    const Q = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, 0);\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = i + 1; j < N; ++j) {\n        const val = Math.max(Qu.entry(i, j) / qsum, 1e-100);\n        Q.set_entry(i, j, val);\n        Q.set_entry(j, i, val);\n      }\n    }\n\n    const grad = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, dim, \"zeros\");\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = 0; j < N; ++j) {\n        const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);\n\n        for (let d = 0; d < dim; ++d) {\n          grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));\n        }\n      }\n    } // perform gradient step\n\n\n    let ymean = new Float64Array(dim);\n\n    for (let i = 0; i < N; ++i) {\n      for (let d = 0; d < dim; ++d) {\n        const gid = grad.entry(i, d);\n        const sid = ystep.entry(i, d);\n        const gainid = gains.entry(i, d);\n        let newgain = Math.sign(gid) === Math.sign(sid) ? gainid * .8 : gainid + .2;\n        if (newgain < .01) newgain = .01;\n        gains.set_entry(i, d, newgain);\n        const momval = iter < 250 ? .5 : .8;\n        const newsid = momval * sid - epsilon * newgain * gid;\n        ystep.set_entry(i, d, newsid);\n        Y.set_entry(i, d, Y.entry(i, d) + newsid);\n        ymean[d] += Y.entry(i, d);\n      }\n    }\n\n    for (let i = 0; i < N; ++i) {\n      for (let d = 0; d < 2; ++d) {\n        Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);\n      }\n    }\n\n    return this.Y;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9UU05FLmpzPzVjNWUiXSwibmFtZXMiOlsiVFNORSIsIkRSIiwiY29uc3RydWN0b3IiLCJYIiwicGVycGxleGl0eSIsImVwc2lsb24iLCJkIiwibWV0cmljIiwiZXVjbGlkZWFuIiwic2VlZCIsInBhcmFtZXRlcl9saXN0IiwiX04iLCJfRCIsInNoYXBlIiwicGFyYW1ldGVyIiwiTWF0aCIsIm1pbiIsIl9pdGVyIiwiWSIsIk1hdHJpeCIsIl9kIiwiX3JhbmRvbWl6ZXIiLCJyYW5kb20iLCJpbml0IiwiZGlzdGFuY2VfbWF0cml4IiwiSHRhcmdldCIsImxvZyIsIl9wZXJwbGV4aXR5IiwiTiIsIkQiLCJfbWV0cmljIiwiRGVsdGEiLCJpIiwiWF9pIiwicm93IiwiaiIsImRpc3RhbmNlIiwic2V0X2VudHJ5IiwiUCIsIl95c3RlcCIsIl9nYWlucyIsInByb3ciLCJBcnJheSIsImZpbGwiLCJ0b2wiLCJtYXh0cmllcyIsImJldGFtaW4iLCJJbmZpbml0eSIsImJldGFtYXgiLCJiZXRhIiwiZG9uZSIsIm51bSIsInBzdW0iLCJwaiIsImV4cCIsImVudHJ5IiwiSGhlcmUiLCJhYnMiLCJQb3V0IiwiTjIiLCJwIiwibWF4IiwiX1AiLCJ0cmFuc2Zvcm0iLCJpdGVyYXRpb25zIiwiY2hlY2tfaW5pdCIsIm5leHQiLCJwcm9qZWN0aW9uIiwiZ2VuZXJhdG9yIiwiaXRlciIsInlzdGVwIiwiZ2FpbnMiLCJfZXBzaWxvbiIsImRpbSIsInBtdWwiLCJRdSIsInFzdW0iLCJkc3VtIiwiZGhlcmUiLCJxdSIsIlEiLCJ2YWwiLCJncmFkIiwicHJlbXVsdCIsInltZWFuIiwiRmxvYXQ2NEFycmF5IiwiZ2lkIiwic2lkIiwiZ2FpbmlkIiwibmV3Z2FpbiIsInNpZ24iLCJtb212YWwiLCJuZXdzaWQiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTs7QUFDTyxNQUFNQSxJQUFOLFNB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LElBQWdCOEUsS0FBSyxDQUFDOUUsQ0FBRCxDQUFMLEdBQVdzQixDQUE3QztBQUNIO0FBQ0o7O0FBRUQsV0FBTyxLQUFLVixDQUFaO0FBQ0g7O0FBL013QiIsImZpbGUiOiIuL2RpbXJlZC9UU05FLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4uL21hdHJpeC9pbmRleFwiO1xyXG5pbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBEUiB9IGZyb20gXCIuL0RSLmpzXCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBUU05FXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgVFNORSBleHRlbmRzIERSIHtcclxuICAgIC8qKlxyXG4gICAgICogXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6ZGltZW5zaW9uYWxpdHlfcmVkdWN0aW9uXHJcbiAgICAgKiBAYWxpYXMgVFNORVxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFggLSB0aGUgaGlnaC1kaW1lbnNpb25hbCBkYXRhLiBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbcGVycGxleGl0eSA9IDUwXSAtIHBlcnBsZXhpdHkuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2Vwc2lsb24gPSAxMF0gLSBsZWFybmluZyBwYXJhbWV0ZXIuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIC0gdGhlIG1ldHJpYyB3aGljaCBkZWZpbmVzIHRoZSBkaXN0YW5jZSBiZXR3ZWVuIHR3byBwb2ludHMuICBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gdGhlIGRpbWVuc2lvbmFsaXR5IG9mIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICogQHJldHVybnMge1RTTkV9XHJcbiAgICAgKi9cclxuICAgIFxyXG4gICAgY29uc3RydWN0b3IoWCwgcGVycGxleGl0eT01MCwgZXBzaWxvbj0xMCwgZD0yLCBtZXRyaWM9ZXVjbGlkZWFuLCBzZWVkPTEyMTIpIHtcclxuICAgICAgICBzdXBlcihYLCBkLCBtZXRyaWMsIHNlZWQpO1xyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW1wicGVycGxleGl0eVwiLCBcImVwc2lsb25cIl07XHJcbiAgICAgICAgWyB0aGlzLl9OLCB0aGlzLl9EIF0gPSB0aGlzLlguc2hhcGU7XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJwZXJwbGV4aXR5XCIsIE1hdGgubWluKHBlcnBsZXhpdHksIHRoaXMuX04gLSAxKSk7XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJlcHNpbG9uXCIsIGVwc2lsb24pO1xyXG4gICAgICAgIHRoaXMuX2l0ZXIgPSAwO1xyXG4gICAgICAgIHRoaXMuWSA9IG5ldyBNYXRyaXgodGhpcy5fTiwgdGhpcy5fZCwgKCkgPT4gdGhpcy5fcmFuZG9taXplci5yYW5kb20pO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIGluaXQoZGlzdGFuY2VfbWF0cml4PW51bGwpIHtcclxuICAgICAgICAvLyBpbml0XHJcbiAgICAgICAgY29uc3QgSHRhcmdldCA9IE1hdGgubG9nKHRoaXMuX3BlcnBsZXhpdHkpO1xyXG4gICAgICAgIGNvbnN0IE4gPSB0aGlzLl9OO1xyXG4gICAgICAgIGNvbnN0IEQgPSB0aGlzLl9EO1xyXG4gICAgICAgIGNvbnN0IG1ldHJpYyA9IHRoaXMuX21ldHJpYztcclxuICAgICAgICBjb25zdCBYID0gdGhpcy5YO1xyXG4gICAgICAgIGxldCBEZWx0YTtcclxuICAgICAgICBpZiAoZGlzdGFuY2VfbWF0cml4KSB7XHJcbiAgICAgICAgICAgIERlbHRhID0gZGlzdGFuY2VfbWF0cml4O1xyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIERlbHRhID0gbmV3IE1hdHJpeChOLCBOKTtcclxuICAgICAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgICAgIGNvbnN0IFhfaSA9IFgucm93KGkpO1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgZGlzdGFuY2UgPSBtZXRyaWMoWF9pLCBYLnJvdyhqKSlcclxuICAgICAgICAgICAgICAgICAgICBEZWx0YS5zZXRfZW50cnkoaSwgaiwgZGlzdGFuY2UpO1xyXG4gICAgICAgICAgICAgICAgICAgIERlbHRhLnNldF9lbnRyeShqLCBpLCBkaXN0YW5jZSk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuXHJcbiAgICAgICAgfSBcclxuICAgICAgICAgICAgXHJcbiAgICAgICAgY29uc3QgUCA9IG5ldyBNYXRyaXgoTiwgTiwgXCJ6ZXJvc1wiKTtcclxuXHJcbiAgICAgICAgdGhpcy5feXN0ZXAgPSBuZXcgTWF0cml4KE4sIEQsIFwiemVyb3NcIik7XHJcbiAgICAgICAgdGhpcy5fZ2FpbnMgPSBuZXcgTWF0cml4KE4sIEQsIDEpO1xyXG5cclxuICAgICAgICAvLyBzZWFyY2ggZm9yIGZpdHRpbmcgc2lnbWFcclxuICAgICAgICBsZXQgcHJvdyA9IG5ldyBBcnJheShOKS5maWxsKDApO1xyXG4gICAgICAgIGNvbnN0IHRvbCA9IDFlLTQ7XHJcbiAgICAgICAgY29uc3QgbWF4dHJpZXMgPSA1MDtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IE47ICsraSkge1xyXG4gICAgICAgICAgICBsZXQgYmV0YW1pbiA9IC1JbmZpbml0eTtcclxuICAgICAgICAgICAgbGV0IGJldGFtYXggPSBJbmZpbml0eTtcclxuICAgICAgICAgICAgbGV0IGJldGEgPSAxO1xyXG4gICAgICAgICAgICBsZXQgZG9uZSA9IGZhbHNlO1xyXG5cclxuICAgICAgICAgICAgbGV0IG51bSA9IDA7XHJcbiAgICAgICAgICAgIHdoaWxlKCFkb25lKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgcHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IE47ICsraikge1xyXG4gICAgICAgICAgICAgICAgICAgIGxldCBwaiA9IE1hdGguZXhwKC1EZWx0YS5lbnRyeShpLCBqKSAqIGJldGEpO1xyXG4gICAgICAgICAgICAgICAgICAgIGlmIChpID09PSBqKSBwaiA9IDA7XHJcbiAgICAgICAgICAgICAgICAgICAgcHJvd1tqXSA9IHBqO1xyXG4gICAgICAgICAgICAgICAgICAgIHBzdW0gKz0gcGo7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBsZXQgSGhlcmUgPSAwO1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBOOyArK2opIHtcclxuICAgICAgICAgICAgICAgICAgICBsZXQgcGogPSAocHN1bSA9PT0gMCkgPyAwIDogcHJvd1tqXSAvIHBzdW07XHJcbiAgICAgICAgICAgICAgICAgICAgcHJvd1tqXSA9IHBqO1xyXG4gICAgICAgICAgICAgICAgICAgIGlmIChwaiA+IDFlLTcpIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgSGhlcmUgLT0gcGogKiBNYXRoLmxvZyhwaik7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgaWYgKEhoZXJlID4gSHRhcmdldCkge1xyXG4gICAgICAgICAgICAgICAgICAgIGJldGFtaW4gPSBiZXRhO1xyXG4gICAgICAgICAgICAgICAgICAgIGJldGEgPSAoYmV0YW1heCA9PT0gSW5maW5pdHkpID8gKGJldGEgKiAyKSA6ICgoYmV0YSArIGJldGFtYXgpIC8gMik7XHJcbiAgICAgICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgICAgIGJldGFtYXggPSBiZXRhO1xyXG4gICAgICAgICAgICAgICAgICAgIGJldGEgPSAoYmV0YW1pbiA9PT0gLUluZmluaXR5KSA/IChiZXRhIC8gMikgOiAoKGJldGEgKyBiZXRhbWluKSAvIDIpO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgKytudW07XHJcbiAgICAgICAgICAgICAgICBpZiAoTWF0aC5hYnMoSGhlcmUgLSBIdGFyZ2V0KSA8IHRvbCkgZG9uZSA9IHRydWU7XHJcbiAgICAgICAgICAgICAgICBpZiAobnVtID49IG1heHRyaWVzKSBkb25lID0gdHJ1ZTtcclxuICAgICAgICAgICAgfVxyXG5cclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IDA7IGogPCBOOyArK2opIHtcclxuICAgICAgICAgICAgICAgIFAuc2V0X2VudHJ5KGksIGosIHByb3dbal0pO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICAvL2NvbXB1dGUgcHJvYmFiaWxpdGllc1xyXG4gICAgICAgIGNvbnN0IFBvdXQgPSBuZXcgTWF0cml4KE4sIE4sIFwiemVyb3NcIilcclxuICAgICAgICBjb25zdCBOMiA9IE4gKiAyO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSBpOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBwID0gTWF0aC5tYXgoKFAuZW50cnkoaSwgaikgKyBQLmVudHJ5KGosIGkpKSAvIE4yLCAxZS0xMDApO1xyXG4gICAgICAgICAgICAgICAgUG91dC5zZXRfZW50cnkoaSwgaiwgcCk7XHJcbiAgICAgICAgICAgICAgICBQb3V0LnNldF9lbnRyeShqLCBpLCBwKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICB0aGlzLl9QID0gUG91dDtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICB0cmFuc2Zvcm0oaXRlcmF0aW9ucz01MDApIHtcclxuICAgICAgICB0aGlzLmNoZWNrX2luaXQoKTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGl0ZXJhdGlvbnM7ICsraSkge1xyXG4gICAgICAgICAgICB0aGlzLm5leHQoKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHRoaXMucHJvamVjdGlvbjtcclxuICAgIH1cclxuXHJcbiAgICAqIGdlbmVyYXRvcigpIHtcclxuICAgICAgICB0aGlzLmNoZWNrX2luaXQoKTtcclxuICAgICAgICB3aGlsZSAodHJ1ZSkge1xyXG4gICAgICAgICAgICB0aGlzLm5leHQoKTtcclxuICAgICAgICAgICAgeWllbGQgdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvLyBwZXJmb3JtIG9wdGltaXphdGlvblxyXG4gICAgbmV4dCgpIHtcclxuICAgICAgICBjb25zdCBpdGVyID0gKyt0aGlzLl9pdGVyO1xyXG4gICAgICAgIGNvbnN0IFAgPSB0aGlzLl9QO1xyXG4gICAgICAgIGNvbnN0IHlzdGVwID0gdGhpcy5feXN0ZXA7XHJcbiAgICAgICAgY29uc3QgZ2FpbnMgPSB0aGlzLl9nYWlucztcclxuICAgICAgICBjb25zdCBOID0gdGhpcy5fTjtcclxuICAgICAgICBjb25zdCBlcHNpbG9uID0gdGhpcy5fZXBzaWxvbjtcclxuICAgICAgICBjb25zdCBkaW0gPSB0aGlzLl9kO1xyXG4gICAgICAgIGxldCBZID0gdGhpcy5ZO1xyXG5cclxuICAgICAgICAvL2NhbGMgY29zdCBncmFkaWVudDtcclxuICAgICAgICBjb25zdCBwbXVsID0gaXRlciA8IDEwMCA/IDQgOiAxO1xyXG4gICAgICAgIFxyXG4gICAgICAgIC8vIGNvbXB1dGUgUSBkaXN0ICh1bm5vcm1hbGl6ZWQpXHJcbiAgICAgICAgY29uc3QgUXUgPSBuZXcgTWF0cml4KE4sIE4sIFwiemVyb3NcIilcclxuICAgICAgICBsZXQgcXN1bSA9IDA7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgZHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBkID0gMDsgZCA8IGRpbTsgKytkKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgZGhlcmUgPSBZLmVudHJ5KGksIGQpIC0gWS5lbnRyeShqLCBkKTtcclxuICAgICAgICAgICAgICAgICAgICBkc3VtICs9IGRoZXJlICogZGhlcmU7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBjb25zdCBxdSA9IDEgLyAoMSArIGRzdW0pO1xyXG4gICAgICAgICAgICAgICAgUXUuc2V0X2VudHJ5KGksIGosIHF1KTtcclxuICAgICAgICAgICAgICAgIFF1LnNldF9lbnRyeShqLCBpLCBxdSk7XHJcbiAgICAgICAgICAgICAgICBxc3VtICs9IDIgKiBxdTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gbm9ybWFsaXplIFEgZGlzdFxyXG4gICAgICAgIGNvbnN0IFEgPSBuZXcgTWF0cml4KE4sIE4sIDApXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCB2YWwgPSBNYXRoLm1heChRdS5lbnRyeShpLCBqKSAvIHFzdW0sIDFlLTEwMCk7XHJcbiAgICAgICAgICAgICAgICBRLnNldF9lbnRyeShpLCBqLCB2YWwpO1xyXG4gICAgICAgICAgICAgICAgUS5zZXRfZW50cnkoaiwgaSwgdmFsKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgY29uc3QgZ3JhZCA9IG5ldyBNYXRyaXgoTiwgZGltLCBcInplcm9zXCIpO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBwcmVtdWx0ID0gNCAqIChwbXVsICogUC5lbnRyeShpLCBqKSAtIFEuZW50cnkoaSwgaikpICogUXUuZW50cnkoaSwgaik7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBkID0gMDsgZCA8IGRpbTsgKytkKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgZ3JhZC5zZXRfZW50cnkoaSwgZCwgZ3JhZC5lbnRyeShpLCBkKSArIHByZW11bHQgKiAoWS5lbnRyeShpLCBkKSAtIFkuZW50cnkoaiwgZCkpKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gcGVyZm9ybSBncmFkaWVudCBzdGVwXHJcbiAgICAgICAgbGV0IHltZWFuID0gbmV3IEZsb2F0NjRBcnJheShkaW0pO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGQgPSAwOyBkIDwgZGltOyArK2QpIHtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGdpZCA9IGdyYWQuZW50cnkoaSwgZCk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBzaWQgPSB5c3RlcC5lbnRyeShpLCBkKTtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGdhaW5pZCA9IGdhaW5zLmVudHJ5KGksIGQpO1xyXG4gICAgICAgICAgICAgICAgXHJcbiAgICAgICAgICAgICAgICBsZXQgbmV3Z2FpbiA9IE1hdGguc2lnbihnaWQpID09PSBNYXRoLnNpZ24oc2lkKSA/IGdhaW5pZCAqIC44IDogZ2FpbmlkICsgLjI7XHJcbiAgICAgICAgICAgICAgICBpZiAobmV3Z2FpbiA8IC4wMSkgbmV3Z2FpbiA9IC4wMTtcclxuICAgICAgICAgICAgICAgIGdhaW5zLnNldF9lbnRyeShpLCBkLCBuZXdnYWluKTtcclxuXHJcbiAgICAgICAgICAgICAgICBjb25zdCBtb212YWwgPSBpdGVyIDwgMjUwID8gLjUgOiAuODtcclxuICAgICAgICAgICAgICAgIGNvbnN0IG5ld3NpZCA9IG1vbXZhbCAqIHNpZCAtIGVwc2lsb24gKiBuZXdnYWluICogZ2lkO1xyXG4gICAgICAgICAgICAgICAgeXN0ZXAuc2V0X2VudHJ5KGksIGQsIG5ld3NpZCk7XHJcblxyXG4gICAgICAgICAgICAgICAgWS5zZXRfZW50cnkoaSwgZCwgWS5lbnRyeShpLCBkKSArIG5ld3NpZCk7XHJcbiAgICAgICAgICAgICAgICB5bWVhbltkXSArPSBZLmVudHJ5KGksIGQpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IE47ICsraSkge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBkID0gMDsgZCA8IDI7ICsrZCkge1xyXG4gICAgICAgICAgICAgICAgWS5zZXRfZW50cnkoaSwgZCwgWS5lbnRyeShpLCBkKSAtIHltZWFuW2RdIC8gTilcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgcmV0dXJuIHRoaXMuWTtcclxuICAgIH1cclxufSAiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./dimred/TSNE.js\n");
+
+/***/ }),
+
+/***/ "./dimred/TopoMap.js":
+/*!***************************!*\
+  !*** ./dimred/TopoMap.js ***!
+  \***************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"TopoMap\": () => (/* binding */ TopoMap)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\n\n\n\nclass TopoMap extends _DR_js__WEBPACK_IMPORTED_MODULE_2__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias Topomap\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @returns {TopoMap}\r\n   * @see {@link https://arxiv.org/pdf/2009.01512.pdf}\r\n   */\n  constructor(X, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n\n    _defineProperty(this, \"__align_components\", (u, v, w) => {\n      const points_u = [...u.__disjoint_set.children];\n      const points_v = [...v.__disjoint_set.children];\n\n      const hull_u = this.__hull(points_u);\n\n      const hull_v = this.__hull(points_v);\n\n      const t_u = this.__align_hull(hull_u, u, false);\n\n      const t_v = this.__align_hull(hull_v, v, true);\n\n      this.__transform_component(points_u, t_u, 0);\n\n      this.__transform_component(points_v, t_v, w);\n    });\n\n    super.parameter_list = [];\n    [this._N, this._D] = this.X.shape;\n    this._distance_matrix = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(this._N, this._N, 0);\n    return this;\n  }\n  /**\r\n   * @private\r\n   */\n\n\n  __lazy_distance_matrix(i, j, metric) {\n    const D = this._distance_matrix;\n    const X = this.X;\n    const D_ij = D.entry(i, j);\n\n    if (D_ij === 0) {\n      let dist = metric(X.row(i), X.row(j));\n      D.set_entry(i, j, dist);\n      D.set_entry(j, i, dist);\n      return dist;\n    }\n\n    return D_ij;\n  }\n  /**\r\n   * Computes the minimum spanning tree, using a given metric\r\n   * @private\r\n   * @param {Function} metric \r\n   * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}\r\n   */\n\n\n  _make_minimum_spanning_tree(metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean) {\n    const N = this._N;\n    const X = [...this.X];\n    let disjoint_set = new DisjointSet(X);\n    const F = [];\n    let E = [];\n\n    for (let i = 0; i < N; ++i) {\n      for (let j = i + 1; j < N; ++j) {\n        E.push([i, j, this.__lazy_distance_matrix(i, j, metric)]);\n      }\n    }\n\n    E = E.sort((a, b) => a[2] - b[2]);\n\n    for (const [u, v, w] of E) {\n      const set_u = disjoint_set.find(X[u]);\n      const set_v = disjoint_set.find(X[v]);\n\n      if (set_u !== set_v) {\n        F.push([u, v, w]);\n        disjoint_set.union(set_u, set_v);\n      }\n    }\n\n    return F.sort((a, b) => a[2] - b[2]);\n  }\n  /**\r\n   * initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.\r\n   */\n\n\n  init() {\n    this.Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(this._N, this._d, 0);\n    this._Emst = this._make_minimum_spanning_tree(this._metric);\n    this._is_initialized = true;\n    return this;\n  }\n  /**\r\n   * Returns true if Point C is left of line AB.\r\n   * @private\r\n   * @param {Array} PointA - Point A of line AB\r\n   * @param {Array} PointB - Point B of line AB\r\n   * @param {Array} PointC - Point C\r\n   * @returns {Boolean}\r\n   */\n\n\n  __hull_cross([ax, ay], [bx, by], [sx, sy]) {\n    return (bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0;\n  }\n  /**\r\n   * Computes the convex hull of the set of Points S\r\n   * @private\r\n   * @param {Array} S - Set of Points.\r\n   * @see {@link https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#JavaScript}\r\n   * @returns {Array} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.\r\n   */\n\n\n  __hull(S) {\n    const points = S.sort(([x1, y1], [x2, y2]) => y1 - y2 || x1 - x2);\n    const N = points.length;\n    if (N <= 2) return points;\n    const lower = [];\n\n    for (let i = 0; i < N; ++i) {\n      while (lower.length >= 2 && this.__hull_cross(lower[lower.length - 2], lower[lower.length - 1], points[i])) {\n        lower.pop();\n      }\n\n      lower.push(points[i]);\n    }\n\n    const upper = [];\n\n    for (let i = N - 1; i >= 0; --i) {\n      while (upper.length >= 2 && this.__hull_cross(upper[upper.length - 2], upper[upper.length - 1], points[i])) {\n        upper.pop();\n      }\n\n      upper.push(points[i]);\n    }\n\n    upper.pop();\n    lower.pop();\n    return lower.concat(upper);\n  }\n  /**\r\n   * Finds the angle to rotate Point A and B to lie on a line parallel to the x-axis.\r\n   * @private\r\n   * @param {Array} PointA \r\n   * @param {Array} PointB\r\n   * @return {Object} Object containing the sinus- and cosinus-values for a rotation.  \r\n   */\n\n\n  __findAngle([p1x, p1y], [p2x, p2y]) {\n    const n = (0,_metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean)([p1x, p1y], [p2x, p2y]);\n    if (n === 0) return {\n      \"sin\": 0,\n      \"cos\": 1\n    };\n    const vec = [(p2x - p1x) / n, (p2y - p1y) / n];\n    const cos = vec[0];\n    let sin = Math.sqrt(1 - cos * cos);\n    sin = vec[1] >= 0 ? -sin : sin;\n    return {\n      \"sin\": sin,\n      \"cos\": cos\n    };\n  }\n  /**\r\n   * @private\r\n   * @param {Array} hull \r\n   * @param {Array} p \r\n   * @param {Bool} topEdge\r\n   */\n\n\n  __align_hull(hull, p, topEdge) {\n    let v = -1;\n    let d2;\n\n    for (let i = 0; i < hull.length; ++i) {\n      const d = (0,_metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean)(hull[i], p);\n\n      if (v === -1) {\n        d2 = d;\n        v = i;\n      } else {\n        if (d2 > d) {\n          d2 = d;\n          v = i;\n        }\n      }\n    }\n\n    let v1;\n    let v2;\n\n    if (topEdge) {\n      v1 = hull[v];\n      v2 = hull[(v + 1) % hull.length];\n    } else {\n      if (v == 0) v = hull.length - 1;\n      v1 = hull[v];\n      v2 = hull[(v - 1) % hull.length];\n    }\n\n    const transformation = {\n      \"tx\": -hull[v][0],\n      \"ty\": -hull[v][1]\n    };\n\n    if (hull.length >= 2) {\n      const {\n        sin,\n        cos\n      } = this.__findAngle(v1, v2);\n\n      transformation.sin = sin;\n      transformation.cos = cos;\n    } else {\n      transformation.sin = 0;\n      transformation.cos = 1;\n    }\n\n    return transformation;\n  }\n  /**\r\n   * @private\r\n   * @param {Array} Point - The point which should get transformed.\r\n   * @param {Object} Transformation - contains the values for translation and rotation.\r\n   */\n\n\n  __transform([px, py], {\n    tx,\n    ty,\n    sin,\n    cos\n  }) {\n    let x = px + tx;\n    let y = py + ty;\n    let xx = x * cos - y * sin;\n    let yy = x * sin + y * cos;\n    return [xx, yy];\n  }\n  /**\r\n   * Calls {@link __transform} for each point in Set C\r\n   * @private\r\n   * @param {Array} C - Set of points.\r\n   * @param {Object} t - Transform object. \r\n   * @param {Number} yOffset - value to offset set C.\r\n   */\n\n\n  __transform_component(C, t, yOffset) {\n    const N = C.length;\n\n    for (let i = 0; i < N; ++i) {\n      const c = C[i];\n\n      const [cx, cy] = this.__transform(c, t);\n\n      c[0] = cx;\n      c[1] = cy + yOffset;\n    }\n  }\n  /**\r\n   * @private\r\n   * @param {Array} u - point u\r\n   * @param {Array} v - point v\r\n   * @param {Number} w - edge weight w\r\n   */\n\n\n  /**\r\n   * Transforms the inputdata {@link X} to dimenionality 2.\r\n   */\n  transform() {\n    if (!this._is_initialized) this.init();\n    const Emst = this._Emst;\n    const Y = [...this.Y];\n    const components = new DisjointSet(Y.map((y, i) => {\n      y.i = i;\n      return y;\n    }));\n\n    for (const [u, v, w] of Emst) {\n      const component_u = components.find(Y[u]);\n      const component_v = components.find(Y[v]);\n      if (component_u === component_v) continue;\n\n      this.__align_components(component_u, component_v, w);\n\n      components.union(component_u, component_v);\n    }\n\n    return this.projection;\n  }\n\n  *generator() {\n    if (!this._is_initialized) this.init();\n    const Emst = this._Emst;\n    const Y = [...this.Y];\n    const components = new DisjointSet(Y.map((y, i) => {\n      y.i = i;\n      return y;\n    }));\n\n    for (const [u, v, w] of Emst) {\n      const component_u = components.find(Y[u]);\n      const component_v = components.find(Y[v]);\n      if (component_u === component_v) continue;\n\n      this.__align_components(component_u, component_v, w);\n\n      components.union(component_u, component_v);\n      /* let ok = true\r\n      Y.forEach(([x, y]) => ok = ok && !isNaN(x) && !isNaN(y))\r\n      if (!ok) {\r\n          console.log(...Y) \r\n          throw \"error\" \r\n      } */\n\n      yield this.projection;\n    }\n\n    return this.projection;\n  }\n\n}\n/**\r\n * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}\r\n */\n\nclass DisjointSet {\n  constructor(elements = null) {\n    this._list = new Set();\n\n    if (elements) {\n      for (const e of elements) {\n        this.make_set(e);\n      }\n    }\n\n    return this;\n  }\n\n  make_set(x) {\n    const list = this._list;\n\n    if (!list.has(x)) {\n      list.add(x);\n      x.__disjoint_set = {};\n      x.__disjoint_set.parent = x;\n      x.__disjoint_set.children = new Set([x]);\n      x.__disjoint_set.size = 1;\n    }\n\n    return this;\n  }\n\n  find(x) {\n    const list = this._list;\n\n    if (list.has(x)) {\n      if (x.__disjoint_set.parent !== x) {\n        x.__disjoint_set.children.add(...x);\n\n        x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);\n        return x.__disjoint_set.parent;\n      } else {\n        return x;\n      }\n    } else {\n      return null;\n    }\n  }\n\n  union(x, y) {\n    let node_x = this.find(x);\n    let node_y = this.find(y);\n    if (node_x === node_y) return this;\n    if (node_x.__disjoint_set.size < node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];\n    node_y.__disjoint_set.parent = node_x; // keep track of children?\n\n    node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);\n\n    node_x.__disjoint_set.size += node_y.__disjoint_set.size;\n    return this;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9Ub3BvTWFwLmpzPzBkYWEiXSwibmFtZXMiOlsiVG9wb01hcCIsIkRSIiwiY29uc3RydWN0b3IiLCJYIiwiZCIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInNlZWQiLCJ1IiwidiIsInciLCJwb2ludHNfdSIsIl9fZGlzam9pbnRfc2V0IiwiY2hpbGRyZW4iLCJwb2ludHNfdiIsImh1bGxfdSIsIl9faHVsbCIsImh1bGxfdiIsInRfdSIsIl9fYWxpZ25faHVsbCIsInRfdiIsIl9fdHJhbnNmb3JtX2NvbXBvbmVudCIsInBhcmFtZXRlcl9saXN0IiwiX04iLCJfRCIsInNoYXBlIiwiX2Rpc3RhbmNlX21hdHJpeCIsIk1hdHJpeCIsIl9fbGF6eV9kaXN0YW5jZV9tYXRyaXgiLCJpIiwiaiIsIkQiLCJEX2lqIiwiZW50cnkiLCJkaXN0Iiwicm93Iiwic2V0X2VudHJ5IiwiX21ha2VfbWluaW11bV9zcGFubmluZ190cmVlIiwiTiIsImRpc2pvaW50X3NldCIsIkRpc2pvaW50U2V0IiwiRiIsIkUiLCJwdXNoIiwic29ydCIsImEiLCJiIiwic2V0X3UiLCJmaW5kIiwic2V0X3YiLCJ1bmlvbiIsImluaXQiLCJZIiwiX2QiLCJfRW1zdCIsIl9tZXRyaWMiLCJfaXNfaW5pdGlhbGl6ZWQiLCJfX2h1bGxfY3Jvc3MiLCJheCIsImF5IiwiYngiLCJieSIsInN4Iiwic3kiLCJTIiwicG9pbnRzIiwieDEiLCJ5MSIsIngyIiwieTIiLCJsZW5ndGgiLCJsb3dlciIsInBvcCIsInVwcGVyIiwiY29uY2F0IiwiX19maW5kQW5nbGUiLCJwMXgiLCJwMXkiLCJwMngiLCJwMnkiLCJuIiwidmVjIiwiY29zIiwic2luIiwiTWF0aCIsInNxcnQiLCJodWxsIiwicCIsInRvcEVkZ2UiLCJkMiIsInYxIiwidjIiLCJ0cmFuc2Zvcm1hdGlvbiIsIl9fdHJhbnNmb3JtIiwicHgiLCJweSIsInR4IiwidHkiLCJ4IiwieSIsInh4IiwieXkiLCJDIiwidCIsInlPZmZzZXQiLCJjIiwiY3giLCJjeSIsInRyYW5zZm9ybSIsIkVtc3QiLCJjb21wb25lbnRzIiwibWFwIiwiY29tcG9uZW50X3UiLCJjb21wb25lbnRfdiIsIl9fYWxpZ25fY29tcG9uZW50cyIsInByb2plY3Rpb24iLCJnZW5lcmF0b3IiLCJlbGVtZW50cyIsIl9saXN0IiwiU2V0IiwiZSIsIm1ha2Vfc2V0IiwibGlzdCIsImhhcyIsImFkZCIsInBhcmVudCIsInNpemUiLCJub2RlX3giLCJub2RlX3kiLCJmb3JFYWNoIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFFTyxNQUFNQSxPQUFOLFNBQXNCQyxzQ0FBdEIsQ0FBeUI7QUFDNUI7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsQ0FBRCxFQUFJQyxDQUFDLEdBQUMsQ0FBTixFQUFTQyxNQUFNLEdBQUNDLHFEQUFoQixFQUEyQkMsSUFBSSxHQUFDLElBQWhDLEVBQXNDO0FBQzdDLFVBQU1KLENBQU4sRUFBU0MsQ0FBVCxFQUFZQyxNQUFaLEVBQW9CRSxJQUFwQjs7QUFENkMsZ0RBME41QixDQUFDQyxDQUFELEVBQUlDLENBQUosRUFBT0MsQ0FBUCxLQUFjO0FBQy9CLFlBQU1DLFFBQVEsR0FBRyxDQUFDLEdBQUdILENBQUMsQ0FBQ0ksY0FBRixDQUFpQkMsUUFBckIsQ0FBakI7QUFDQSxZQUFNQyxRQUFRLEdBQUcsQ0FBQyxHQUFHTCxDQUFDLENBQUNHLGNBQUYsQ0FBaUJDLFFBQXJCLENBQWpCOztBQUVBLFlBQU1FLE1BQU0sR0FBRyxLQUFLQyxNQUFMLENBQVlMLFFBQVosQ0FBZjs7QUFDQSxZQUFNTSxNQUFNLEdBQUcsS0FBS0QsTUFBTCxDQUFZRixRQUFaLENBQWY7O0FBRUEsWUFBTUksR0FBRyxHQUFHLEtBQUtDLFlBQUwsQ0FBa0JKLE1BQWxCLEVBQTBCUCxDQUExQixFQUE2QixLQUE3QixDQUFaOztBQUNBLFlBQU1ZLEdB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aW1yZWQvVG9wb01hcC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5cclxuZXhwb3J0IGNsYXNzIFRvcG9NYXAgZXh0ZW5kcyBEUiB7XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIFRvcG9tYXBcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBYIC0gdGhlIGhpZ2gtZGltZW5zaW9uYWwgZGF0YS4gXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIC0gdGhlIG1ldHJpYyB3aGljaCBkZWZpbmVzIHRoZSBkaXN0YW5jZSBiZXR3ZWVuIHR3byBwb2ludHMuICBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gdGhlIGRpbWVuc2lvbmFsaXR5IG9mIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICogQHJldHVybnMge1RvcG9NYXB9XHJcbiAgICAgKiBAc2VlIHtAbGluayBodHRwczovL2FyeGl2Lm9yZy9wZGYvMjAwOS4wMTUxMi5wZGZ9XHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKFgsIGQ9MiwgbWV0cmljPWV1Y2xpZGVhbiwgc2VlZD0xMjEyKSB7XHJcbiAgICAgICAgc3VwZXIoWCwgZCwgbWV0cmljLCBzZWVkKVxyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW107XHJcbiAgICAgICAgWyB0aGlzLl9OLCB0aGlzLl9EIF0gPSB0aGlzLlguc2hhcGU7XHJcbiAgICAgICAgdGhpcy5fZGlzdGFuY2VfbWF0cml4ID0gbmV3IE1hdHJpeCh0aGlzLl9OLCB0aGlzLl9OLCAwKTtcclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKi9cclxuICAgIF9fbGF6eV9kaXN0YW5jZV9tYXRyaXgoaSwgaiwgbWV0cmljKSB7XHJcbiAgICAgICAgY29uc3QgRCA9IHRoaXMuX2Rpc3RhbmNlX21hdHJpeDtcclxuICAgICAgICBjb25zdCBYID0gdGhpcy5YO1xyXG4gICAgICAgIGNvbnN0IERfaWogPSBELmVudHJ5KGksIGopO1xyXG4gICAgICAgIGlmIChEX2lqID09PSAwKSB7XHJcbiAgICAgICAgICAgIGxldCBkaXN0ID0gbWV0cmljKFgucm93KGkpLCBYLnJvdyhqKSk7XHJcbiAgICAgICAgICAgIEQuc2V0X2VudHJ5KGksIGosIGRpc3QpO1xyXG4gICAgICAgICAgICBELnNldF9lbnRyeShqLCBpLCBkaXN0KTtcclxuICAgICAgICAgICAgcmV0dXJuIGRpc3Q7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiBEX2lqO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ29tcHV0ZXMgdGhlIG1pbmltdW0gc3Bhbm5pbmcgdHJlZSwgdXNpbmcgYSBnaXZlbiBtZXRyaWNcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge0Z1bmN0aW9ufSBtZXRyaWMgXHJcbiAgICAgKiBAc2VlIHtAbGluayBodHRwczovL2VuLndpa2lwZWRpYS5vcmcvd2lraS9LcnVza2FsJTI3c19hbGdvcml0aG19XHJcbiAgICAgKi9cclxuICAgIF9tYWtlX21pbmltdW1fc3Bhbm5pbmdfdHJlZShtZXRyaWMgPSBldWNsaWRlYW4pIHtcclxuICAgICAgICBjb25zdCBOID0gdGhpcy5fTjtcclxuICAgICAgICBjb25zdCBYID0gWy4uLnRoaXMuWF07XHJcblxyXG4gICAgICAgIGxldCBkaXNqb2ludF9zZXQgPSBuZXcgRGlzam9pbnRTZXQoWCk7XHJcbiAgICAgICAgY29uc3QgRiA9IFtdO1xyXG4gICAgICAgIGxldCBFID0gW107XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBFLnB1c2goW2ksIGosIHRoaXMuX19sYXp5X2Rpc3RhbmNlX21hdHJpeChpLCBqLCBtZXRyaWMpXSlcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICBFID0gRS5zb3J0KChhLCBiKSA9PiBhWzJdIC0gYlsyXSk7XHJcblxyXG4gICAgICAgIGZvciAoY29uc3QgW3UsIHYsIHddIG9mIEUpIHtcclxuICAgICAgICAgICAgY29uc3Qgc2V0X3UgPSBkaXNqb2ludF9zZXQuZmluZChYW3VdKTtcclxuICAgICAgICAgICAgY29uc3Qgc2V0X3YgPSBkaXNqb2ludF9zZXQuZmluZChYW3ZdKTtcclxuICAgICAgICAgICAgaWYgKHNldF91ICE9PSBzZXRfdikge1xyXG4gICAgICAgICAgICAgICAgRi5wdXNoKFt1LCB2LCB3XSk7XHJcbiAgICAgICAgICAgICAgICBkaXNqb2ludF9zZXQudW5pb24oc2V0X3UsIHNldF92KTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgcmV0dXJuIEYuc29ydCgoYSwgYikgPT4gYVsyXSAtIGJbMl0pXHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBpbml0aWFsaXplcyBUb3BvTWFwLiBTZXRzIGFsbCBwcm9qY3RlZCBwb2ludHMgdG8gemVybywgYW5kIGNvbXB1dGVzIGEgbWluaW11bSBzcGFubmluZyB0cmVlLlxyXG4gICAgICovXHJcbiAgICBpbml0KCkge1xyXG4gICAgICAgIHRoaXMuWSA9IG5ldyBNYXRyaXgodGhpcy5fTiwgdGhpcy5fZCwgMCk7XHJcbiAgICAgICAgdGhpcy5fRW1zdCA9IHRoaXMuX21ha2VfbWluaW11bV9zcGFubmluZ190cmVlKHRoaXMuX21ldHJpYyk7XHJcbiAgICAgICAgdGhpcy5faXNfaW5pdGlhbGl6ZWQgPSB0cnVlO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyB0cnVlIGlmIFBvaW50IEMgaXMgbGVmdCBvZiBsaW5lIEFCLlxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7QXJyYXl9IFBvaW50QSAtIFBvaW50IEEgb2YgbGluZSBBQlxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gUG9pbnRCIC0gUG9pbnQgQiBvZiBsaW5lIEFCXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBQb2ludEMgLSBQb2ludCBDXHJcbiAgICAgKiBAcmV0dXJucyB7Qm9vbGVhbn1cclxuICAgICAqL1xyXG4gICAgX19odWxsX2Nyb3NzKFtheCwgYXldLCBbYngsIGJ5XSwgW3N4LCBzeV0pIHtcclxuICAgICAgICByZXR1cm4gKChieCAtIGF4KSAqIChzeSAtIGF5KSAtIChieSAtIGF5KSAqIChzeCAtIGF4KSA8PSAwKVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ29tcHV0ZXMgdGhlIGNvbnZleCBodWxsIG9mIHRoZSBzZXQgb2YgUG9pbnRzIFNcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBTIC0gU2V0IG9mIFBvaW50cy5cclxuICAgICAqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraWJvb2tzLm9yZy93aWtpL0FsZ29yaXRobV9JbXBsZW1lbnRhdGlvbi9HZW9tZXRyeS9Db252ZXhfaHVsbC9Nb25vdG9uZV9jaGFpbiNKYXZhU2NyaXB0fVxyXG4gICAgICogQHJldHVybnMge0FycmF5fSBjb252ZXggaHVsbCBvZiBTLiBTdGFydHMgYXQgdGhlIGJvdHRvbS1tb3N0IHBvaW50IGFuZCBjb250aW51ZXMgY291bnRlci1jbG9ja3dpc2UuXHJcbiAgICAgKi9cclxuICAgIF9faHVsbChTKSB7XHJcbiAgICAgICAgY29uc3QgcG9pbnRzID0gUy5zb3J0KChbeDEsIHkxXSwgW3gyLCB5Ml0pID0+IHkxIC0geTIgfHwgeDEgLSB4Mik7XHJcbiAgICAgICAgY29uc3QgTiA9IHBvaW50cy5sZW5ndGg7XHJcbiAgICAgICAgaWYgKE4gPD0gMikgcmV0dXJuIHBvaW50cztcclxuXHJcbiAgICAgICAgY29uc3QgbG93ZXIgPSBbXTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IE47ICsraSkge1xyXG4gICAgICAgICAgICB3aGlsZSAobG93ZXIubGVuZ3RoID49IDIgJiYgdGhpcy5fX2h1bGxfY3Jvc3MobG93ZXJbbG93ZXIubGVuZ3RoIC0gMl0sIGxvd2VyW2xvd2VyLmxlbmd0aCAtMV0sIHBvaW50c1tpXSkpIHtcclxuICAgICAgICAgICAgICAgIGxvd2VyLnBvcCgpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGxvd2VyLnB1c2gocG9pbnRzW2ldKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgY29uc3QgdXBwZXIgPSBbXTtcclxuICAgICAgICBmb3IgKGxldCBpID0gTiAtIDE7IGkgPj0gMDsgLS1pKSB7XHJcbiAgICAgICAgICAgIHdoaWxlICh1cHBlci5sZW5ndGggPj0gMiAmJiB0aGlzLl9faHVsbF9jcm9zcyh1cHBlclt1cHBlci5sZW5ndGggLSAyXSwgdXBwZXJbdXBwZXIubGVuZ3RoIC0xXSwgcG9pbnRzW2ldKSkge1xyXG4gICAgICAgICAgICAgICAgdXBwZXIucG9wKCk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgdXBwZXIucHVzaChwb2ludHNbaV0pO1xyXG4gICAgICAgIH1cclxuICAgICAgICB1cHBlci5wb3AoKTtcclxuICAgICAgICBsb3dlci5wb3AoKTtcclxuICAgICAgICByZXR1cm4gbG93ZXIuY29uY2F0KHVwcGVyKTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEZpbmRzIHRoZSBhbmdsZSB0byByb3RhdGUgUG9pbnQgQSBhbmQgQiB0byBsaWUgb24gYSBsaW5lIHBhcmFsbGVsIHRvIHRoZSB4LWF4aXMuXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gUG9pbnRBIFxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gUG9pbnRCXHJcbiAgICAgKiBAcmV0dXJuIHtPYmplY3R9IE9iamVjdCBjb250YWluaW5nIHRoZSBzaW51cy0gYW5kIGNvc2ludXMtdmFsdWVzIGZvciBhIHJvdGF0aW9uLiAgXHJcbiAgICAgKi9cclxuICAgIF9fZmluZEFuZ2xlKFtwMXgsIHAxeV0sIFtwMngsIHAyeV0pIHtcclxuICAgICAgICBjb25zdCBuID0gZXVjbGlkZWFuKFtwMXgsIHAxeV0sIFtwMngsIHAyeV0pO1xyXG4gICAgICAgIGlmIChuID09PSAwKSByZXR1cm4ge1xyXG4gICAgICAgICAgICBcInNpblwiOiAwLCBcclxuICAgICAgICAgICAgXCJjb3NcIjogMVxyXG4gICAgICAgIH1cclxuICAgICAgICBjb25zdCB2ZWMgPSBbKHAyeCAtIHAxeCkgLyBuLCAocDJ5IC0gcDF5KSAvIG5dO1xyXG4gICAgICAgIGNvbnN0IGNvcyA9IHZlY1swXTtcclxuICAgICAgICBsZXQgc2luID0gTWF0aC5zcXJ0KDEgLSAoY29zICogY29zKSk7XHJcbiAgICAgICAgc2luID0gdmVjWzFdID49IDAgPyAtc2luIDogc2luO1xyXG4gICAgICAgIHJldHVybiB7XHJcbiAgICAgICAgICAgIFwic2luXCI6IHNpbiwgXHJcbiAgICAgICAgICAgIFwiY29zXCI6IGNvc1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBodWxsIFxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gcCBcclxuICAgICAqIEBwYXJhbSB7Qm9vbH0gdG9wRWRnZVxyXG4gICAgICovXHJcbiAgICBfX2FsaWduX2h1bGwoaHVsbCwgcCwgdG9wRWRnZSkge1xyXG4gICAgICAgIGxldCB2ID0gLTE7XHJcbiAgICAgICAgbGV0IGQyO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgaHVsbC5sZW5ndGg7ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCBkID0gZXVjbGlkZWFuKGh1bGxbaV0sIHApO1xyXG4gICAgICAgICAgICBpZiAodiA9PT0gLTEpIHtcclxuICAgICAgICAgICAgICAgIGQyID0gZDsgXHJcbiAgICAgICAgICAgICAgICB2ID0gaTtcclxuICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgICAgIGlmIChkMiA+IGQpIHtcclxuICAgICAgICAgICAgICAgICAgICBkMiA9IGQ7IFxyXG4gICAgICAgICAgICAgICAgICAgIHYgPSBpO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICBsZXQgdjE7XHJcbiAgICAgICAgbGV0IHYyO1xyXG4gICAgICAgIGlmICh0b3BFZGdlKSB7XHJcbiAgICAgICAgICAgIHYxID0gaHVsbFt2XTtcclxuICAgICAgICAgICAgdjIgPSBodWxsWyh2ICsgMSkgJSBodWxsLmxlbmd0aF07XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgaWYgKHYgPT0gMCkgdiA9IGh1bGwubGVuZ3RoIC0gMTtcclxuICAgICAgICAgICAgdjEgPSBodWxsW3ZdO1xyXG4gICAgICAgICAgICB2MiA9IGh1bGxbKHYgLSAxKSAlIGh1bGwubGVuZ3RoXTtcclxuICAgICAgICB9XHJcbiAgICAgICAgXHJcbiAgICAgICAgY29uc3QgdHJhbnNmb3JtYXRpb24gPSB7XHJcbiAgICAgICAgICAgIFwidHhcIjogLWh1bGxbdl1bMF0sXHJcbiAgICAgICAgICAgIFwidHlcIjogLWh1bGxbdl1bMV0sXHJcbiAgICAgICAgfTtcclxuXHJcbiAgICAgICAgaWYgKGh1bGwubGVuZ3RoID49IDIpIHtcclxuICAgICAgICAgICAgY29uc3Qge3NpbiwgY29zfSA9IHRoaXMuX19maW5kQW5nbGUodjEsIHYyKTtcclxuICAgICAgICAgICAgdHJhbnNmb3JtYXRpb24uc2luID0gc2luO1xyXG4gICAgICAgICAgICB0cmFuc2Zvcm1hdGlvbi5jb3MgPSBjb3M7XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgdHJhbnNmb3JtYXRpb24uc2luID0gMDtcclxuICAgICAgICAgICAgdHJhbnNmb3JtYXRpb24uY29zID0gMTtcclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIHJldHVybiB0cmFuc2Zvcm1hdGlvbjtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBQb2ludCAtIFRoZSBwb2ludCB3aGljaCBzaG91bGQgZ2V0IHRyYW5zZm9ybWVkLlxyXG4gICAgICogQHBhcmFtIHtPYmplY3R9IFRyYW5zZm9ybWF0aW9uIC0gY29udGFpbnMgdGhlIHZhbHVlcyBmb3IgdHJhbnNsYXRpb24gYW5kIHJvdGF0aW9uLlxyXG4gICAgICovXHJcbiAgICBfX3RyYW5zZm9ybShbcHgsIHB5XSwge3R4LCB0eSwgc2luLCBjb3N9KSB7XHJcbiAgICAgICAgbGV0IHggPSBweCArIHR4O1xyXG4gICAgICAgIGxldCB5ID0gcHkgKyB0eTtcclxuICAgICAgICBsZXQgeHggPSB4ICogY29zIC0geSAqIHNpbjtcclxuICAgICAgICBsZXQgeXkgPSB4ICogc2luICsgeSAqIGNvcztcclxuICAgICAgICByZXR1cm4gW3h4LCB5eV07XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBDYWxscyB7QGxpbmsgX190cmFuc2Zvcm19IGZvciBlYWNoIHBvaW50IGluIFNldCBDXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtBcnJheX0gQyAtIFNldCBvZiBwb2ludHMuXHJcbiAgICAgKiBAcGFyYW0ge09iamVjdH0gdCAtIFRyYW5zZm9ybSBvYmplY3QuIFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IHlPZmZzZXQgLSB2YWx1ZSB0byBvZmZzZXQgc2V0IEMuXHJcbiAgICAgKi9cclxuICAgIF9fdHJhbnNmb3JtX2NvbXBvbmVudChDLCB0LCB5T2Zmc2V0KSB7XHJcbiAgICAgICAgY29uc3QgTiA9IEMubGVuZ3RoO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGMgPSBDW2ldO1xyXG4gICAgICAgICAgICBjb25zdCBbY3gsIGN5XSA9IHRoaXMuX190cmFuc2Zvcm0oYywgdCk7XHJcbiAgICAgICAgICAgIGNbMF0gPSBjeDsgXHJcbiAgICAgICAgICAgIGNbMV0gPSBjeSArIHlPZmZzZXQ7XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7QXJyYXl9IHUgLSBwb2ludCB1XHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSB2IC0gcG9pbnQgdlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IHcgLSBlZGdlIHdlaWdodCB3XHJcbiAgICAgKi9cclxuICAgIF9fYWxpZ25fY29tcG9uZW50cyA9ICh1LCB2LCB3KSAgPT4ge1xyXG4gICAgICAgIGNvbnN0IHBvaW50c191ID0gWy4uLnUuX19kaXNqb2ludF9zZXQuY2hpbGRyZW5dO1xyXG4gICAgICAgIGNvbnN0IHBvaW50c192ID0gWy4uLnYuX19kaXNqb2ludF9zZXQuY2hpbGRyZW5dO1xyXG4gICAgICAgIFxyXG4gICAgICAgIGNvbnN0IGh1bGxfdSA9IHRoaXMuX19odWxsKHBvaW50c191KTtcclxuICAgICAgICBjb25zdCBodWxsX3YgPSB0aGlzLl9faHVsbChwb2ludHNfdik7ICAgICAgICBcclxuXHJcbiAgICAgICAgY29uc3QgdF91ID0gdGhpcy5fX2FsaWduX2h1bGwoaHVsbF91LCB1LCBmYWxzZSk7XHJcbiAgICAgICAgY29uc3QgdF92ID0gdGhpcy5fX2FsaWduX2h1bGwoaHVsbF92LCB2LCB0cnVlKTtcclxuXHJcbiAgICAgICAgdGhpcy5fX3RyYW5zZm9ybV9jb21wb25lbnQocG9pbnRzX3UsIHRfdSwgMCk7XHJcbiAgICAgICAgdGhpcy5fX3RyYW5zZm9ybV9jb21wb25lbnQocG9pbnRzX3YsIHRfdiwgdyk7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBUcmFuc2Zvcm1zIHRoZSBpbnB1dGRhdGEge0BsaW5rIFh9IHRvIGRpbWVuaW9uYWxpdHkgMi5cclxuICAgICAqL1xyXG4gICAgdHJhbnNmb3JtKCkge1xyXG4gICAgICAgIGlmICghdGhpcy5faXNfaW5pdGlhbGl6ZWQpIHRoaXMuaW5pdCgpO1xyXG4gICAgICAgIGNvbnN0IEVtc3QgPSB0aGlzLl9FbXN0O1xyXG4gICAgICAgIGNvbnN0IFkgPSBbLi4udGhpcy5ZXTtcclxuICAgICAgICBjb25zdCBjb21wb25lbnRzID0gbmV3IERpc2pvaW50U2V0KFkubWFwKCh5LCBpKSA9PiB7XHJcbiAgICAgICAgICAgIHkuaSA9IGk7XHJcbiAgICAgICAgICAgIHJldHVybiB5O1xyXG4gICAgICAgIH0pKTtcclxuICAgICAgICBcclxuICAgICAgICBmb3IgKGNvbnN0IFt1LCB2LCB3XSBvZiBFbXN0KSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGNvbXBvbmVudF91ID0gY29tcG9uZW50cy5maW5kKFlbdV0pO1xyXG4gICAgICAgICAgICBjb25zdCBjb21wb25lbnRfdiA9IGNvbXBvbmVudHMuZmluZChZW3ZdKTtcclxuICAgICAgICAgICAgaWYgKGNvbXBvbmVudF91ID09PSBjb21wb25lbnRfdikgY29udGludWU7XHJcbiAgICAgICAgICAgIHRoaXMuX19hbGlnbl9jb21wb25lbnRzKGNvbXBvbmVudF91LCBjb21wb25lbnRfdiwgdyk7XHJcbiAgICAgICAgICAgIGNvbXBvbmVudHMudW5pb24oY29tcG9uZW50X3UsIGNvbXBvbmVudF92KTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHRoaXMucHJvamVjdGlvbjtcclxuICAgIH1cclxuXHJcbiAgICAqIGdlbmVyYXRvcigpIHtcclxuICAgICAgICBpZiAoIXRoaXMuX2lzX2luaXRpYWxpemVkKSB0aGlzLmluaXQoKTtcclxuICAgICAgICBjb25zdCBFbXN0ID0gdGhpcy5fRW1zdDtcclxuICAgICAgICBjb25zdCBZID0gWy4uLnRoaXMuWV07XHJcbiAgICAgICAgY29uc3QgY29tcG9uZW50cyA9IG5ldyBEaXNqb2ludFNldChZLm1hcCgoeSwgaSkgPT4ge1xyXG4gICAgICAgICAgICB5LmkgPSBpO1xyXG4gICAgICAgICAgICByZXR1cm4geTtcclxuICAgICAgICB9KSk7XHJcbiAgICAgICAgXHJcbiAgICAgICAgZm9yIChjb25zdCBbdSwgdiwgd10gb2YgRW1zdCkge1xyXG4gICAgICAgICAgICBjb25zdCBjb21wb25lbnRfdSA9IGNvbXBvbmVudHMuZmluZChZW3VdKTtcclxuICAgICAgICAgICAgY29uc3QgY29tcG9uZW50X3YgPSBjb21wb25lbnRzLmZpbmQoWVt2XSk7XHJcbiAgICAgICAgICAgIGlmIChjb21wb25lbnRfdSA9PT0gY29tcG9uZW50X3YpIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICB0aGlzLl9fYWxpZ25fY29tcG9uZW50cyhjb21wb25lbnRfdSwgY29tcG9uZW50X3YsIHcpO1xyXG4gICAgICAgICAgICBjb21wb25lbnRzLnVuaW9uKGNvbXBvbmVudF91LCBjb21wb25lbnRfdik7XHJcbiAgICAgICAgICAgIC8qIGxldCBvayA9IHRydWVcclxuICAgICAgICAgICAgWS5mb3JFYWNoKChbeCwgeV0pID0+IG9rID0gb2sgJiYgIWlzTmFOKHgpICYmICFpc05hTih5KSlcclxuICAgICAgICAgICAgaWYgKCFvaykge1xyXG4gICAgICAgICAgICAgICAgY29uc29sZS5sb2coLi4uWSkgXHJcbiAgICAgICAgICAgICAgICB0aHJvdyBcImVycm9yXCIgXHJcbiAgICAgICAgICAgIH0gKi9cclxuICAgICAgICAgICAgeWllbGQgdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG59IFxyXG5cclxuLyoqXHJcbiAqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL0Rpc2pvaW50LXNldF9kYXRhX3N0cnVjdHVyZX1cclxuICovXHJcbmNsYXNzIERpc2pvaW50U2V0IHtcclxuICAgIGNvbnN0cnVjdG9yKGVsZW1lbnRzID0gbnVsbCkge1xyXG4gICAgICAgIHRoaXMuX2xpc3QgPSBuZXcgU2V0KCk7XHJcbiAgICAgICAgaWYgKGVsZW1lbnRzKSB7XHJcbiAgICAgICAgICAgIGZvciAoY29uc3QgZSBvZiBlbGVtZW50cykge1xyXG4gICAgICAgICAgICAgICAgdGhpcy5tYWtlX3NldChlKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICBtYWtlX3NldCh4KSB7XHJcbiAgICAgICAgY29uc3QgbGlzdCA9IHRoaXMuX2xpc3Q7XHJcbiAgICAgICAgaWYgKCFsaXN0Lmhhcyh4KSkge1xyXG4gICAgICAgICAgICBsaXN0LmFkZCh4KTtcclxuICAgICAgICAgICAgeC5fX2Rpc2pvaW50X3NldCA9IHt9O1xyXG4gICAgICAgICAgICB4Ll9fZGlzam9pbnRfc2V0LnBhcmVudCA9IHg7XHJcbiAgICAgICAgICAgIHguX19kaXNqb2ludF9zZXQuY2hpbGRyZW4gPSBuZXcgU2V0KFt4XSk7XHJcbiAgICAgICAgICAgIHguX19kaXNqb2ludF9zZXQuc2l6ZSA9IDE7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIGZpbmQoeCkge1xyXG4gICAgICAgIGNvbnN0IGxpc3QgPSB0aGlzLl9saXN0O1xyXG4gICAgICAgIGlmIChsaXN0Lmhhcyh4KSkge1xyXG4gICAgICAgICAgICBpZiAoeC5fX2Rpc2pvaW50X3NldC5wYXJlbnQgIT09IHgpIHtcclxuICAgICAgICAgICAgICAgIHguX19kaXNqb2ludF9zZXQuY2hpbGRyZW4uYWRkKC4uLngpO1xyXG4gICAgICAgICAgICAgICAgeC5fX2Rpc2pvaW50X3NldC5wYXJlbnQgPSB0aGlzLmZpbmQoeC5fX2Rpc2pvaW50X3NldC5wYXJlbnQpO1xyXG4gICAgICAgICAgICAgICAgcmV0dXJuIHguX19kaXNqb2ludF9zZXQucGFyZW50O1xyXG4gICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgcmV0dXJuIHg7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICByZXR1cm4gbnVsbDtcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgdW5pb24oeCwgeSkge1xyXG4gICAgICAgIGxldCBub2RlX3ggPSB0aGlzLmZpbmQoeCk7XHJcbiAgICAgICAgbGV0IG5vZGVfeSA9IHRoaXMuZmluZCh5KTtcclxuXHJcbiAgICAgICAgaWYgKG5vZGVfeCA9PT0gbm9kZV95KSByZXR1cm4gdGhpcztcclxuICAgICAgICBpZiAobm9kZV94Ll9fZGlzam9pbnRfc2V0LnNpemUgPCBub2RlX3kuX19kaXNqb2ludF9zZXQuc2l6ZSkgW25vZGVfeCwgbm9kZV95XSA9IFtub2RlX3ksIG5vZGVfeF07XHJcblxyXG4gICAgICAgIG5vZGVfeS5fX2Rpc2pvaW50X3NldC5wYXJlbnQgPSBub2RlX3g7XHJcbiAgICAgICAgLy8ga2VlcCB0cmFjayBvZiBjaGlsZHJlbj9cclxuICAgICAgICBub2RlX3kuX19kaXNqb2ludF9zZXQuY2hpbGRyZW4uZm9yRWFjaChub2RlX3guX19kaXNqb2ludF9zZXQuY2hpbGRyZW4uYWRkLCBub2RlX3guX19kaXNqb2ludF9zZXQuY2hpbGRyZW4pO1xyXG4gICAgICAgIG5vZGVfeC5fX2Rpc2pvaW50X3NldC5zaXplICs9IG5vZGVfeS5fX2Rpc2pvaW50X3NldC5zaXplO1xyXG5cclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/TopoMap.js\n");
+
+/***/ }),
+
+/***/ "./dimred/TriMap.js":
+/*!**************************!*\
+  !*** ./dimred/TriMap.js ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"TriMap\": () => (/* binding */ TriMap)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _PCA__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./PCA */ \"./dimred/PCA.js\");\n/* harmony import */ var _knn_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../knn/index */ \"./knn/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n\n\n\n\n\n/**\r\n * @class\r\n * @alias TriMap\r\n */\n\nclass TriMap extends _DR_js__WEBPACK_IMPORTED_MODULE_4__.DR {\n  /**\r\n   * \r\n   * @constructor\r\n   * @memberof module:dimensionality_reduction\r\n   * @alias TriMap\r\n   * @param {Matrix} X - the high-dimensional data. \r\n   * @param {Number} [weight_adj = 500] - scaling factor.\r\n   * @param {Number} [c = 5] - number of triplets multiplier.\r\n   * @param {Number} [d = 2] - the dimensionality of the projection.\r\n   * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  \r\n   * @param {Number} [seed = 1212] - the dimensionality of the projection.\r\n   * @returns {TriMap}\r\n   * @see {@link https://arxiv.org/pdf/1910.00204v1.pdf}\r\n   * @see {@link https://github.com/eamid/trimap}\r\n   */\n  constructor(X, weight_adj = 500, c = 5, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"weight_adj\", \"c\"];\n    this.parameter(\"weight_adj\", weight_adj);\n    this.parameter(\"c\", c);\n    return this;\n  }\n  /**\r\n   * \r\n   * @param {Matrix} [pca = null] - Initial Embedding (if null then PCA gets used). \r\n   * @param {KNN} [knn = null] - KNN Object (if null then BallTree gets used). \r\n   */\n\n\n  init(pca = null, knn = null) {\n    const X = this.X;\n    const N = X.shape[0];\n    const d = this._d;\n    const metric = this._metric;\n    const c = this._c;\n    this.n_inliers = 2 * c;\n    this.n_outliers = 1 * c;\n    this.n_random = 1 * c;\n    this.Y = pca || new _PCA__WEBPACK_IMPORTED_MODULE_2__.PCA(X, d).transform(); //.mult(.01);\n\n    this.knn = knn || new _knn_index__WEBPACK_IMPORTED_MODULE_3__.BallTree(X.to2dArray, metric);\n\n    const {\n      triplets,\n      weights\n    } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);\n\n    this.triplets = triplets;\n    this.weights = weights;\n    this.lr = 1000 * N / triplets.shape[0];\n    this.C = Infinity;\n    this.tol = 1e-7;\n    this.vel = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, 0);\n    this.gain = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, d, 1);\n    return this;\n  }\n  /**\r\n   * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.\r\n   * @param {Number} n_inliers \r\n   * @param {Number} n_outliers \r\n   * @param {Number} n_random \r\n   */\n\n\n  _generate_triplets(n_inliers, n_outliers, n_random) {\n    const metric = this._metric;\n    const weight_adj = this._weight_adj;\n    const X = this.X;\n    const N = X.shape[0];\n    const knn = this.knn;\n    const n_extra = Math.min(n_inliers + 20, N);\n    const nbrs = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, n_extra);\n    const knn_distances = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, n_extra);\n\n    for (let i = 0; i < N; ++i) {\n      knn.search(X.row(i), n_extra + 1).raw_data().filter(d => d.value != 0).sort((a, b) => a.value - b.value).forEach((d, j) => {\n        nbrs.set_entry(i, j, d.element.index);\n        knn_distances.set_entry(i, j, d.value);\n      });\n    } // scale parameter\n\n\n    const sig = new Float64Array(N);\n\n    for (let i = 0; i < N; ++i) {\n      sig[i] = Math.max((knn_distances.entry(i, 3) + knn_distances.entry(i, 4) + knn_distances.entry(i, 5) + knn_distances.entry(i, 6)) / 4, 1e-10);\n    }\n\n    const P = this._find_p(knn_distances, sig, nbrs);\n\n    let triplets = this._sample_knn_triplets(P, nbrs, n_inliers, n_outliers);\n\n    let n_triplets = triplets.shape[0];\n    const outlier_distances = new Float64Array(n_triplets);\n\n    for (let i = 0; i < n_triplets; ++i) {\n      const j = triplets.entry(i, 0);\n      const k = triplets.entry(i, 2);\n      outlier_distances[i] = metric(X.row(j), X.row(k));\n    }\n\n    let weights = this._find_weights(triplets, P, nbrs, outlier_distances, sig);\n\n    if (n_random > 0) {\n      const {\n        random_triplets,\n        random_weights\n      } = this._sample_random_triplets(X, n_random, sig);\n\n      triplets = triplets.concat(random_triplets, \"vertical\");\n      weights = Float64Array.from([...weights, ...random_weights]);\n    }\n\n    n_triplets = triplets.shape[0];\n    let max_weight = -Infinity;\n\n    for (let i = 0; i < n_triplets; ++i) {\n      if (isNaN(weights[i])) {\n        weights[i] = 0;\n      }\n\n      if (max_weight < weights[i]) max_weight = weights[i];\n    }\n\n    let max_weight_2 = -Infinity;\n\n    for (let i = 0; i < n_triplets; ++i) {\n      weights[i] /= max_weight;\n      weights[i] += .0001;\n      weights[i] = Math.log(1 + weight_adj * weights[i]);\n      if (max_weight_2 < weights[i]) max_weight_2 = weights[i];\n    }\n\n    for (let i = 0; i < n_triplets; ++i) {\n      weights[i] /= max_weight_2;\n    }\n\n    return {\n      \"triplets\": triplets,\n      \"weights\": weights\n    };\n  }\n  /**\r\n   * Calculates the similarity matrix P\r\n   * @private\r\n   * @param {Matrix} knn_distances - matrix of pairwise knn distances\r\n   * @param {Float64Array} sig - scaling factor for the distances\r\n   * @param {Matrix} nbrs - nearest neighbors\r\n   * @returns {Matrix} pairwise similarity matrix\r\n   */\n\n\n  _find_p(knn_distances, sig, nbrs) {\n    const [N, n_neighbors] = knn_distances.shape;\n    return new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, n_neighbors, (i, j) => {\n      return Math.exp(-(knn_distances.entry(i, j) ** 2 / sig[i] / sig[nbrs.entry(i, j)]));\n    });\n  }\n  /**\r\n   * Sample nearest neighbors triplets based on the similarity values given in P.\r\n   * @private\r\n   * @param {Matrix} P - Matrix of pairwise similarities between each point and its neighbors given in matrix nbrs.\r\n   * @param {Matrix} nbrs - Nearest neighbors indices for each point. The similarity values are given in matrix {@link P}. Row i corresponds to the i-th point.\r\n   * @param {Number} n_inliers - Number of inlier points.\r\n   * @param {Number} n_outliers - Number of outlier points.\r\n   * \r\n   */\n\n\n  _sample_knn_triplets(P, nbrs, n_inliers, n_outliers) {\n    const N = nbrs.shape[0];\n    const triplets = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N * n_inliers * n_outliers, 3);\n\n    for (let i = 0; i < N; ++i) {\n      let n_i = i * n_inliers * n_outliers;\n\n      const sort_indices = this.__argsort(P.row(i).map(d => -d));\n\n      for (let j = 0; j < n_inliers; ++j) {\n        let n_j = j * n_outliers;\n        const sim = nbrs.entry(i, sort_indices[j]);\n\n        const samples = this._rejection_sample(n_outliers, N, sort_indices.slice(0, j + 1));\n\n        for (let k = 0; k < n_outliers; ++k) {\n          const index = n_i + n_j + k;\n          const out = samples[k];\n          triplets.set_entry(index, 0, i);\n          triplets.set_entry(index, 1, sim);\n          triplets.set_entry(index, 2, out);\n        }\n      }\n    }\n\n    return triplets;\n  }\n  /**\r\n   * Should do the same as np.argsort()\r\n   * @private\r\n   * @param {Array} A \r\n   */\n\n\n  __argsort(A) {\n    return A.map((d, i) => {\n      return {\n        d: d,\n        i: i\n      };\n    }).sort((a, b) => a.d - b.d).map(d => d.i);\n  }\n  /**\r\n   * Samples {@link n_samples} integers from a given interval [0, {@link max_int}] while rejection the values that are in the {@link rejects}.\r\n   * @private\r\n   * @param {*} n_samples \r\n   * @param {*} max_int \r\n   * @param {*} rejects \r\n   */\n\n\n  _rejection_sample(n_samples, max_int, rejects) {\n    const randomizer = this._randomizer;\n    const interval = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, max_int - 1).filter(d => rejects.indexOf(d) < 0);\n    return randomizer.choice(interval, Math.min(n_samples, interval.length - 2));\n  }\n  /**\r\n   * Calculates the weights for the sampled nearest neighbors triplets\r\n   * @private\r\n   * @param {Matrix} triplets - Sampled Triplets.\r\n   * @param {Matrix} P - Pairwise similarity matrix.\r\n   * @param {Matrix} nbrs - nearest Neighbors\r\n   * @param {Float64Array} outlier_distances - Matrix of pairwise outlier distances\r\n   * @param {Float64Array} sig - scaling factor for the distances.\r\n   */\n\n\n  _find_weights(triplets, P, nbrs, outlier_distances, sig) {\n    const n_triplets = triplets.shape[0];\n    const weights = new Float64Array(n_triplets);\n\n    for (let t = 0; t < n_triplets; ++t) {\n      const i = triplets.entry(t, 0);\n      const sim = nbrs.row(i).indexOf(triplets.entry(t, 1));\n      const p_sim = P.entry(i, sim);\n      let p_out = Math.exp(-(outlier_distances[t] ** 2 / (sig[i] * sig[triplets.entry(t, 2)])));\n      if (p_out < 1e-20) p_out = 1e-20;\n      weights[t] = p_sim / p_out;\n    }\n\n    return weights;\n  }\n  /**\r\n   * Sample uniformly ranom triplets\r\n   * @private\r\n   * @param {Matrix} X - Data matrix.\r\n   * @param {Number} n_random - Number of random triplets per point\r\n   * @param {Float64Array} sig - Scaling factor for the distances\r\n   */\n\n\n  _sample_random_triplets(X, n_random, sig) {\n    const metric = this._metric;\n    const randomizer = this._randomizer;\n    const N = X.shape[0];\n    const random_triplets = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N * n_random, 3);\n    const random_weights = new Float64Array(N * n_random);\n\n    for (let i = 0; i < N; ++i) {\n      const n_i = i * n_random;\n      const indices = [...(0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, i - 1), ...(0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(i + 1, N - 1)];\n\n      for (let j = 0; j < n_random; ++j) {\n        let [sim, out] = randomizer.choice(indices, 2);\n        let p_sim = Math.exp(-(metric(X.row(i), X.row(sim)) ** 2 / (sig[i] * sig[sim])));\n        if (p_sim < 1e-20) p_sim = 1e-20;\n        let p_out = Math.exp(-(metric(X.row(i), X.row(out)) ** 2 / (sig[i] * sig[out])));\n        if (p_out < 1e-20) p_out = 1e-20;\n\n        if (p_sim < p_out) {\n          [sim, out] = [out, sim];\n          [p_sim, p_out] = [p_out, p_sim];\n        }\n\n        const index = n_i + j;\n        random_triplets.set_entry(index, 0, i);\n        random_triplets.set_entry(index, 1, sim);\n        random_triplets.set_entry(index, 2, out);\n        random_weights[index] = p_sim / p_out;\n      }\n    }\n\n    return {\n      \"random_triplets\": random_triplets,\n      \"random_weights\": random_weights\n    };\n  }\n  /**\r\n   * Computes the gradient for updating the embedding.\r\n   * @param {Matrix} Y - The embedding\r\n   */\n\n\n  _grad(Y) {\n    const n_inliers = this.n_inliers;\n    const n_outliers = this.n_outliers;\n    const triplets = this.triplets;\n    const weights = this.weights;\n    const [N, dim] = Y.shape;\n    const n_triplets = triplets.shape[0];\n    const grad = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, dim, 0);\n    let y_ij = new Array(dim).fill(0);\n    let y_ik = new Array(dim).fill(0);\n    let d_ij = 1;\n    let d_ik = 1;\n    let n_viol = 0;\n    let loss = 0;\n    const n_knn_triplets = N * n_inliers * n_outliers;\n\n    for (let t = 0; t < n_triplets; ++t) {\n      const [i, j, k] = triplets.row(t); // update y_ij, y_ik, d_ij, d_ik\n\n      if (t % n_outliers == 0 || t >= n_knn_triplets) {\n        d_ij = 1;\n        d_ik = 1;\n\n        for (let d = 0; d < dim; ++d) {\n          const Y_id = Y.entry(i, d);\n          const Y_jd = Y.entry(j, d);\n          const Y_kd = Y.entry(k, d);\n          y_ij[d] = Y_id - Y_jd;\n          y_ik[d] = Y_id - Y_kd;\n          d_ij += y_ij[d] ** 2;\n          d_ik += y_ik[d] ** 2;\n        } // update y_ik and d_ik only\n\n      } else {\n        d_ik = 1;\n\n        for (let d = 0; d < dim; ++d) {\n          const Y_id = Y.entry(i, d);\n          const Y_kd = Y.entry(k, d);\n          y_ik[d] = Y_id - Y_kd;\n          d_ik += y_ik[d] ** 2;\n        }\n      }\n\n      if (d_ij > d_ik) ++n_viol;\n      loss += weights[t] / (1 + d_ik / d_ij);\n      const w = (weights[t] / (d_ij + d_ik)) ** 2;\n\n      for (let d = 0; d < dim; ++d) {\n        const gs = y_ij[d] * d_ik * w;\n        const go = y_ik[d] * d_ij * w;\n        grad.set_entry(i, d, grad.entry(i, d) + gs - go);\n        grad.set_entry(j, d, grad.entry(j, d) - gs);\n        grad.set_entry(k, d, grad.entry(k, d) + go);\n      }\n    }\n\n    return {\n      \"grad\": grad,\n      \"loss\": loss,\n      \"n_viol\": n_viol\n    };\n  }\n  /**\r\n   * \r\n   * @param {Number} max_iteration \r\n   */\n\n\n  transform(max_iteration = 400) {\n    this.check_init();\n\n    for (let iter = 0; iter < max_iteration; ++iter) {\n      this._next(iter);\n    }\n\n    return this.projection;\n  }\n  /**\r\n   * @yields {Matrix}\r\n   * @returns {Matrix}\r\n   */\n\n\n  *generator() {\n    this.check_init();\n\n    for (let iter = 0; iter < 800; ++iter) {\n      this._next(iter);\n\n      yield this.projection;\n    }\n\n    return this.projection;\n  }\n  /**\r\n   * Does the iteration step.\r\n   * @private\r\n   * @param {Number} iter \r\n   */\n\n\n  _next(iter) {\n    const gamma = iter > 150 ? .5 : .3;\n    const old_C = this.C;\n    const vel = this.vel;\n    const Y = this.Y.add(vel.mult(gamma));\n\n    const {\n      grad,\n      loss,\n      n_viol\n    } = this._grad(Y);\n\n    this.C = loss;\n    this.Y = this._update_embedding(Y, iter, grad);\n    this.lr *= old_C > loss + this.tol ? 1.01 : .9;\n    return this.Y;\n  }\n  /**\r\n   * Updates the embedding.\r\n   * @private\r\n   * @param {Matrix} Y \r\n   * @param {Number} iter \r\n   * @param {Matrix} grad \r\n   */\n\n\n  _update_embedding(Y, iter, grad) {\n    const [N, dim] = Y.shape;\n    const gamma = iter > 150 ? .9 : .5; // moment parameter\n\n    const min_gain = .01;\n    const gain = this.gain;\n    const vel = this.vel;\n    const lr = this.lr;\n\n    for (let i = 0; i < N; ++i) {\n      for (let d = 0; d < dim; ++d) {\n        const new_gain = Math.sign(vel.entry(i, d)) != Math.sign(grad.entry(i, d)) ? gain.entry(i, d) + .2 : Math.max(gain.entry(i, d) * .8, min_gain);\n        gain.set_entry(i, d, new_gain);\n        vel.set_entry(i, d, gamma * vel.entry(i, d) - lr * gain.entry(i, d) * grad.entry(i, d));\n        Y.set_entry(i, d, Y.entry(i, d) + vel.entry(i, d));\n      }\n    }\n\n    return Y;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9UcmlNYXAuanM/NmZhOCJdLCJuYW1lcyI6WyJUcmlNYXAiLCJEUiIsImNvbnN0cnVjdG9yIiwiWCIsIndlaWdodF9hZGoiLCJjIiwiZCIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInNlZWQiLCJwYXJhbWV0ZXJfbGlzdCIsInBhcmFtZXRlciIsImluaXQiLCJwY2EiLCJrbm4iLCJOIiwic2hhcGUiLCJfZCIsIl9tZXRyaWMiLCJfYyIsIm5faW5saWVycyIsIm5fb3V0bGllcnMiLCJuX3JhbmRvbSIsIlkiLCJQQ0EiLCJ0cmFuc2Zvcm0iLCJCYWxsVHJlZSIsInRvMmRBcnJheSIsInRyaXBsZXRzIiwid2VpZ2h0cyIsIl9nZW5lcmF0ZV90cmlwbGV0cyIsImxyIiwiQyIsIkluZmluaXR5IiwidG9sIiwidmVsIiwiTWF0cml4IiwiZ2FpbiIsIl93ZWlnaHRfYWRqIiwibl9leHRyYSIsIk1hdGgiLCJtaW4iLCJuYnJzIiwia25uX2Rpc3RhbmNlcyIsImkiLCJzZWFyY2giLCJyb3ciLCJyYXdfZGF0YSIsImZpbHRlciIsInZhbHVlIiwic29ydCIsImEiLCJiIiwiZm9yRWFjaCIsImoiLCJzZXRfZW50cnkiLCJlbGVtZW50IiwiaW5kZXgiLCJzaWciLCJGbG9hdDY0QXJyYXkiLCJtYXgiLCJlbnRyeSIsIlAiLCJfZmluZF9wIiwiX3NhbXBsZV9rbm5fdHJpcGxldHMiLCJuX3RyaXBsZXRzIiwib3V0bGllcl9kaXN0YW5jZXMiLCJrIiwiX2ZpbmRfd2VpZ2h0cyIsInJhbmRvbV90cmlwbGV0cyIsInJhbmRvbV93ZWlnaHRzIiwiX3NhbXBsZV9yYW5kb21fdHJpcGxldHMiLCJjb25jYXQiLCJmcm9tIiwibWF4X3dlaWdodCIsImlzTmFOIiwibWF4X3dlaWdodF8yIiwibG9nIiwibl9uZWlnaGJvcnMiLCJleHAiLCJuX2kiLCJzb3J0X2luZGljZXMiLCJfX2FyZ3NvcnQiLCJtYXAiLCJuX2oiLCJzaW0iLCJzYW1wbGVzIiwiX3JlamVjdGlvbl9zYW1wbGUiLCJzbGljZSIsIm91dCIsIkEiLCJuX3NhbXBsZXMiLCJtYXhfaW50IiwicmVqZWN0cyIsInJhbmRvbWl6ZXIiLCJfcmFuZG9taXplciIsImludGVydmFsIiwibGluc3BhY2UiLCJpbmRleE9mIiwiY2hvaWNlIiwibGVuZ3RoIiwidCIsInBfc2ltIiwicF9vdXQiLCJpbmRpY2VzIiwiX2dyYWQiLCJkaW0iLCJncmFkIiwieV9paiIsIkFycmF5IiwiZmlsbCIsInlfaWsiLCJkX2lqIiwiZF9payIsIm5fdmlvbCIsImxvc3MiLCJuX2tubl90cmlwbGV0cyIsIllfaWQiLCJZX2pkIiwiWV9rZCIsInciLCJncyIsImdvIiwibWF4X2l0ZXJhdGlvbiIsImNoZWNrX2luaXQiLCJpdGVyIiwiX25leHQiLCJwcm9qZWN0aW9uIiwiZ2VuZXJhdG9yIiwiZ2FtbWEiLCJvbGRfQyIsImFkZCIsIm11bHQiLCJfdXBkYXRlX2VtYmVkZGluZyIsIm1pbl9nYWluIiwibmV3X2dhaW4iLCJzaWduIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7O0FBQ08sTUFBTUEsTUFBTixTQUFxQkMsc0NBQXJCLENBQXVCO0FBQzFCO0FBQ0o7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLENBQUQsRUFBSUMsVUFBVSxHQUFHLEdBQWpCLEVBQXNCQyxDQUFDLEdBQUcsQ0FBMUIsRUFBNkJDLENBQUMsR0FBRyxDQUFqQyxFQUFvQ0MsTUFBTSxHQUFHQyxxREFBN0MsRUFBd0RDLElBQUksR0FBQyxJQUE3RCxFQUFtRTtBQUMxRSxVQUFNTixDQUFOLEVBQVNHLENBQVQsRUFBWUMsTUFBWixFQUFvQkUsSUFBcEI7QUFDQSxVQUFNQyxjQUFOLEdBQXVCLENBQUMsWUFBRCxFQUFlLEdBQWYsQ0FBdkI7QUFDQSxTQUFLQyxTQUFMLENBQWUs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Q0FBdkc7QUFDQWpHLFlBQUksQ0FBQ2tCLFNBQUwsQ0FBZVgsQ0FBZixFQUFrQnRDLENBQWxCLEVBQXFCaUksUUFBckI7QUFDQXBHLFdBQUcsQ0FBQ29CLFNBQUosQ0FBY1gsQ0FBZCxFQUFpQnRDLENBQWpCLEVBQW9CMkgsS0FBSyxHQUFHOUYsR0FBRyxDQUFDMEIsS0FBSixDQUFVakIsQ0FBVixFQUFhdEMsQ0FBYixDQUFSLEdBQTBCeUIsRUFBRSxHQUFHTSxJQUFJLENBQUN3QixLQUFMLENBQVdqQixDQUFYLEVBQWN0QyxDQUFkLENBQUwsR0FBd0JxRyxJQUFJLENBQUM5QyxLQUFMLENBQVdqQixDQUFYLEVBQWN0QyxDQUFkLENBQXRFO0FBQ0FpQixTQUFDLENBQUNnQyxTQUFGLENBQVlYLENBQVosRUFBZXRDLENBQWYsRUFBa0JpQixDQUFDLENBQUNzQyxLQUFGLENBQVFqQixDQUFSLEVBQVd0QyxDQUFYLElBQWdCNkIsR0FBRyxDQUFDMEIsS0FBSixDQUFVakIsQ0FBVixFQUFhdEMsQ0FBYixDQUFsQztBQUNIO0FBQ0o7O0FBQ0QsV0FBT2lCLENBQVA7QUFDSDs7QUFyWXlCIiwiZmlsZSI6Ii4vZGltcmVkL1RyaU1hcC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCwgbGluc3BhY2UgfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcbmltcG9ydCB7IGV1Y2xpZGVhbiB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4XCI7XHJcbmltcG9ydCB7IFBDQSB9IGZyb20gXCIuL1BDQVwiO1xyXG5pbXBvcnQgeyBCYWxsVHJlZSB9IGZyb20gXCIuLi9rbm4vaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5cclxuLyoqXHJcbiAqIEBjbGFzc1xyXG4gKiBAYWxpYXMgVHJpTWFwXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgVHJpTWFwIGV4dGVuZHMgRFJ7XHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOmRpbWVuc2lvbmFsaXR5X3JlZHVjdGlvblxyXG4gICAgICogQGFsaWFzIFRyaU1hcFxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFggLSB0aGUgaGlnaC1kaW1lbnNpb25hbCBkYXRhLiBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbd2VpZ2h0X2FkaiA9IDUwMF0gLSBzY2FsaW5nIGZhY3Rvci5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbYyA9IDVdIC0gbnVtYmVyIG9mIHRyaXBsZXRzIG11bHRpcGxpZXIuXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2QgPSAyXSAtIHRoZSBkaW1lbnNpb25hbGl0eSBvZiB0aGUgcHJvamVjdGlvbi5cclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIC0gdGhlIG1ldHJpYyB3aGljaCBkZWZpbmVzIHRoZSBkaXN0YW5jZSBiZXR3ZWVuIHR3byBwb2ludHMuICBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBbc2VlZCA9IDEyMTJdIC0gdGhlIGRpbWVuc2lvbmFsaXR5IG9mIHRoZSBwcm9qZWN0aW9uLlxyXG4gICAgICogQHJldHVybnMge1RyaU1hcH1cclxuICAgICAqIEBzZWUge0BsaW5rIGh0dHBzOi8vYXJ4aXYub3JnL3BkZi8xOTEwLjAwMjA0djEucGRmfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9naXRodWIuY29tL2VhbWlkL3RyaW1hcH1cclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoWCwgd2VpZ2h0X2FkaiA9IDUwMCwgYyA9IDUsIGQgPSAyLCBtZXRyaWMgPSBldWNsaWRlYW4sIHNlZWQ9MTIxMikge1xyXG4gICAgICAgIHN1cGVyKFgsIGQsIG1ldHJpYywgc2VlZCk7XHJcbiAgICAgICAgc3VwZXIucGFyYW1ldGVyX2xpc3QgPSBbXCJ3ZWlnaHRfYWRqXCIsIFwiY1wiXTtcclxuICAgICAgICB0aGlzLnBhcmFtZXRlcihcIndlaWdodF9hZGpcIiwgd2VpZ2h0X2Fkaik7XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJjXCIsIGMpXHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBbcGNhID0gbnVsbF0gLSBJbml0aWFsIEVtYmVkZGluZyAoaWYgbnVsbCB0aGVuIFBDQSBnZXRzIHVzZWQpLiBcclxuICAgICAqIEBwYXJhbSB7S05OfSBba25uID0gbnVsbF0gLSBLTk4gT2JqZWN0IChpZiBudWxsIHRoZW4gQmFsbFRyZWUgZ2V0cyB1c2VkKS4gXHJcbiAgICAgKi9cclxuICAgIGluaXQocGNhID0gbnVsbCwga25uID0gbnVsbCkge1xyXG4gICAgICAgIGNvbnN0IFggPSB0aGlzLlg7XHJcbiAgICAgICAgY29uc3QgTiA9IFguc2hhcGVbMF07XHJcbiAgICAgICAgY29uc3QgZCA9IHRoaXMuX2Q7XHJcbiAgICAgICAgY29uc3QgbWV0cmljID0gdGhpcy5fbWV0cmljO1xyXG4gICAgICAgIGNvbnN0IGMgPSB0aGlzLl9jO1xyXG4gICAgICAgIHRoaXMubl9pbmxpZXJzID0gMiAqIGM7XHJcbiAgICAgICAgdGhpcy5uX291dGxpZXJzID0gMSAqIGM7XHJcbiAgICAgICAgdGhpcy5uX3JhbmRvbSA9IDEgKiBjO1xyXG4gICAgICAgIHRoaXMuWSA9IHBjYSB8fCBuZXcgUENBKFgsIGQpLnRyYW5zZm9ybSgpLy8ubXVsdCguMDEpO1xyXG4gICAgICAgIHRoaXMua25uID0ga25uIHx8IG5ldyBCYWxsVHJlZShYLnRvMmRBcnJheSwgbWV0cmljKTtcclxuICAgICAgICBjb25zdCB7dHJpcGxldHMsIHdlaWdodHN9ID0gdGhpcy5fZ2VuZXJhdGVfdHJpcGxldHModGhpcy5uX2lubGllcnMsIHRoaXMubl9vdXRsaWVycywgdGhpcy5uX3JhbmRvbSk7XHJcbiAgICAgICAgdGhpcy50cmlwbGV0cyA9IHRyaXBsZXRzO1xyXG4gICAgICAgIHRoaXMud2VpZ2h0cyA9IHdlaWdodHM7XHJcbiAgICAgICAgdGhpcy5sciA9IDEwMDAgKiBOIC8gdHJpcGxldHMuc2hhcGVbMF07XHJcbiAgICAgICAgdGhpcy5DID0gSW5maW5pdHk7XHJcbiAgICAgICAgdGhpcy50b2wgPSAxZS03O1xyXG4gICAgICAgIHRoaXMudmVsID0gbmV3IE1hdHJpeChOLCBkLCAwKTtcclxuICAgICAgICB0aGlzLmdhaW4gPSBuZXcgTWF0cml4KE4sIGQsIDEpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogR2VuZXJhdGVzIHtAbGluayBuX2lubGllcnN9IHgge0BsaW5rIG5fb3V0bGllcnN9IHgge0BsaW5rIG5fcmFuZG9tfSB0cmlwbGV0cy5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuX2lubGllcnMgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gbl9vdXRsaWVycyBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuX3JhbmRvbSBcclxuICAgICAqL1xyXG4gICAgX2dlbmVyYXRlX3RyaXBsZXRzKG5faW5saWVycywgbl9vdXRsaWVycywgbl9yYW5kb20pIHtcclxuICAgICAgICBjb25zdCBtZXRyaWMgPSB0aGlzLl9tZXRyaWM7XHJcbiAgICAgICAgY29uc3Qgd2VpZ2h0X2FkaiA9IHRoaXMuX3dlaWdodF9hZGo7XHJcbiAgICAgICAgY29uc3QgWCA9IHRoaXMuWDtcclxuICAgICAgICBjb25zdCBOID0gWC5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBrbm4gPSB0aGlzLmtubjtcclxuICAgICAgICBjb25zdCBuX2V4dHJhID0gTWF0aC5taW4obl9pbmxpZXJzICsgMjAsIE4pO1xyXG4gICAgICAgIGNvbnN0IG5icnMgPSBuZXcgTWF0cml4KE4sIG5fZXh0cmEpO1xyXG4gICAgICAgIGNvbnN0IGtubl9kaXN0YW5jZXMgPSBuZXcgTWF0cml4KE4sIG5fZXh0cmEpO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGtubi5zZWFyY2goWC5yb3coaSksIG5fZXh0cmEgKyAxKVxyXG4gICAgICAgICAgICAgICAgLnJhd19kYXRhKClcclxuICAgICAgICAgICAgICAgIC5maWx0ZXIoZCA9PiBkLnZhbHVlICE9IDApXHJcbiAgICAgICAgICAgICAgICAuc29ydCgoYSwgYikgPT4gYS52YWx1ZSAtIGIudmFsdWUpXHJcbiAgICAgICAgICAgICAgICAuZm9yRWFjaCgoZCwgaikgPT4ge1xyXG4gICAgICAgICAgICAgICAgICAgIG5icnMuc2V0X2VudHJ5KGksIGosIGQuZWxlbWVudC5pbmRleClcclxuICAgICAgICAgICAgICAgICAgICBrbm5fZGlzdGFuY2VzLnNldF9lbnRyeShpLCBqLCBkLnZhbHVlKVxyXG4gICAgICAgICAgICAgICAgfSk7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIC8vIHNjYWxlIHBhcmFtZXRlclxyXG4gICAgICAgIGNvbnN0IHNpZyA9IG5ldyBGbG9hdDY0QXJyYXkoTik7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgc2lnW2ldID0gTWF0aC5tYXgoXHJcbiAgICAgICAgICAgICAgICAgICAoa25uX2Rpc3RhbmNlcy5lbnRyeShpLCAzKSArXHJcbiAgICAgICAgICAgICAgICAgICAga25uX2Rpc3RhbmNlcy5lbnRyeShpLCA0KSArXHJcbiAgICAgICAgICAgICAgICAgICAga25uX2Rpc3RhbmNlcy5lbnRyeShpLCA1KSArXHJcbiAgICAgICAgICAgICAgICAgICAga25uX2Rpc3RhbmNlcy5lbnRyeShpLCA2KSkgLyA0LFxyXG4gICAgICAgICAgICAgICAgICAgIDFlLTEwKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgXHJcbiAgICAgICAgY29uc3QgUCA9IHRoaXMuX2ZpbmRfcChrbm5fZGlzdGFuY2VzLCBzaWcsIG5icnMpO1xyXG4gICAgICAgIFxyXG4gICAgICAgIGxldCB0cmlwbGV0cyA9IHRoaXMuX3NhbXBsZV9rbm5fdHJpcGxldHMoUCwgbmJycywgbl9pbmxpZXJzLCBuX291dGxpZXJzKTtcclxuICAgICAgICBsZXQgbl90cmlwbGV0cyA9IHRyaXBsZXRzLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IG91dGxpZXJfZGlzdGFuY2VzID0gbmV3IEZsb2F0NjRBcnJheShuX3RyaXBsZXRzKTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IG5fdHJpcGxldHM7ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCBqID0gdHJpcGxldHMuZW50cnkoaSwgMCk7XHJcbiAgICAgICAgICAgIGNvbnN0IGsgPSB0cmlwbGV0cy5lbnRyeShpLCAyKTtcclxuICAgICAgICAgICAgb3V0bGllcl9kaXN0YW5jZXNbaV0gPSBtZXRyaWMoWC5yb3coaiksIFgucm93KGspKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgbGV0IHdlaWdodHMgPSB0aGlzLl9maW5kX3dlaWdodHModHJpcGxldHMsIFAsIG5icnMsIG91dGxpZXJfZGlzdGFuY2VzLCBzaWcpO1xyXG4gICAgICAgIFxyXG4gICAgICAgIGlmIChuX3JhbmRvbSA+IDApIHtcclxuICAgICAgICAgICAgY29uc3Qge3JhbmRvbV90cmlwbGV0cywgcmFuZG9tX3dlaWdodHN9ID0gdGhpcy5fc2FtcGxlX3JhbmRvbV90cmlwbGV0cyhYLCBuX3JhbmRvbSwgc2lnKTtcclxuICAgICAgICAgICAgdHJpcGxldHMgPSB0cmlwbGV0cy5jb25jYXQocmFuZG9tX3RyaXBsZXRzLCBcInZlcnRpY2FsXCIpO1xyXG4gICAgICAgICAgICB3ZWlnaHRzID0gRmxvYXQ2NEFycmF5LmZyb20oWy4uLndlaWdodHMsIC4uLnJhbmRvbV93ZWlnaHRzXSlcclxuICAgICAgICB9XHJcbiAgICAgICAgbl90cmlwbGV0cyA9IHRyaXBsZXRzLnNoYXBlWzBdO1xyXG4gICAgICAgIGxldCBtYXhfd2VpZ2h0ID0gLUluZmluaXR5O1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbl90cmlwbGV0czsgKytpKSB7XHJcbiAgICAgICAgICAgIGlmIChpc05hTih3ZWlnaHRzW2ldKSkge3dlaWdodHNbaV0gPSAwO31cclxuICAgICAgICAgICAgaWYgKG1heF93ZWlnaHQgPCB3ZWlnaHRzW2ldKSBtYXhfd2VpZ2h0ID0gd2VpZ2h0c1tpXTtcclxuICAgICAgICB9XHJcbiAgICAgICAgbGV0IG1heF93ZWlnaHRfMiA9IC1JbmZpbml0eTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IG5fdHJpcGxldHM7ICsraSkge1xyXG4gICAgICAgICAgICB3ZWlnaHRzW2ldIC89IG1heF93ZWlnaHQ7XHJcbiAgICAgICAgICAgIHdlaWdodHNbaV0gKz0gLjAwMDE7XHJcbiAgICAgICAgICAgIHdlaWdodHNbaV0gPSBNYXRoLmxvZygxICsgd2VpZ2h0X2FkaiAqIHdlaWdodHNbaV0pO1xyXG4gICAgICAgICAgICBpZiAobWF4X3dlaWdodF8yIDwgd2VpZ2h0c1tpXSkgbWF4X3dlaWdodF8yID0gd2VpZ2h0c1tpXTtcclxuICAgICAgICB9XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuX3RyaXBsZXRzOyArK2kpIHtcclxuICAgICAgICAgICAgd2VpZ2h0c1tpXSAvPSBtYXhfd2VpZ2h0XzI7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB7XHJcbiAgICAgICAgICAgIFwidHJpcGxldHNcIjogdHJpcGxldHMsXHJcbiAgICAgICAgICAgIFwid2VpZ2h0c1wiOiB3ZWlnaHRzLFxyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENhbGN1bGF0ZXMgdGhlIHNpbWlsYXJpdHkgbWF0cml4IFBcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0ga25uX2Rpc3RhbmNlcyAtIG1hdHJpeCBvZiBwYWlyd2lzZSBrbm4gZGlzdGFuY2VzXHJcbiAgICAgKiBAcGFyYW0ge0Zsb2F0NjRBcnJheX0gc2lnIC0gc2NhbGluZyBmYWN0b3IgZm9yIHRoZSBkaXN0YW5jZXNcclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBuYnJzIC0gbmVhcmVzdCBuZWlnaGJvcnNcclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9IHBhaXJ3aXNlIHNpbWlsYXJpdHkgbWF0cml4XHJcbiAgICAgKi9cclxuICAgIF9maW5kX3Aoa25uX2Rpc3RhbmNlcywgc2lnLCBuYnJzKSB7XHJcbiAgICAgICAgY29uc3QgW04sIG5fbmVpZ2hib3JzXSA9IGtubl9kaXN0YW5jZXMuc2hhcGU7XHJcbiAgICAgICAgcmV0dXJuIG5ldyBNYXRyaXgoTiwgbl9uZWlnaGJvcnMsIChpLCBqKSA9PiB7XHJcbiAgICAgICAgICAgIHJldHVybiBNYXRoLmV4cCgtKChrbm5fZGlzdGFuY2VzLmVudHJ5KGksIGopICoqIDIpIC8gc2lnW2ldIC8gc2lnW25icnMuZW50cnkoaSwgaildKSk7XHJcbiAgICAgICAgfSk7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBTYW1wbGUgbmVhcmVzdCBuZWlnaGJvcnMgdHJpcGxldHMgYmFzZWQgb24gdGhlIHNpbWlsYXJpdHkgdmFsdWVzIGdpdmVuIGluIFAuXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFAgLSBNYXRyaXggb2YgcGFpcndpc2Ugc2ltaWxhcml0aWVzIGJldHdlZW4gZWFjaCBwb2ludCBhbmQgaXRzIG5laWdoYm9ycyBnaXZlbiBpbiBtYXRyaXggbmJycy5cclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBuYnJzIC0gTmVhcmVzdCBuZWlnaGJvcnMgaW5kaWNlcyBmb3IgZWFjaCBwb2ludC4gVGhlIHNpbWlsYXJpdHkgdmFsdWVzIGFyZSBnaXZlbiBpbiBtYXRyaXgge0BsaW5rIFB9LiBSb3cgaSBjb3JyZXNwb25kcyB0byB0aGUgaS10aCBwb2ludC5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuX2lubGllcnMgLSBOdW1iZXIgb2YgaW5saWVyIHBvaW50cy5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBuX291dGxpZXJzIC0gTnVtYmVyIG9mIG91dGxpZXIgcG9pbnRzLlxyXG4gICAgICogXHJcbiAgICAgKi9cclxuICAgIF9zYW1wbGVfa25uX3RyaXBsZXRzKFAsIG5icnMsIG5faW5saWVycywgbl9vdXRsaWVycykge1xyXG4gICAgICAgIGNvbnN0IE4gPSBuYnJzLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IHRyaXBsZXRzID0gbmV3IE1hdHJpeChOICogbl9pbmxpZXJzICogbl9vdXRsaWVycywgMyk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgbGV0IG5faSA9IGkgKiBuX2lubGllcnMgKiBuX291dGxpZXJzO1xyXG4gICAgICAgICAgICBjb25zdCBzb3J0X2luZGljZXMgPSB0aGlzLl9fYXJnc29ydChQLnJvdyhpKS5tYXAoZCA9PiAtZCkpO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IG5faW5saWVyczsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgbl9qID0gaiAqIG5fb3V0bGllcnM7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBzaW0gPSBuYnJzLmVudHJ5KGksIHNvcnRfaW5kaWNlc1tqXSk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBzYW1wbGVzID0gdGhpcy5fcmVqZWN0aW9uX3NhbXBsZShuX291dGxpZXJzLCBOLCBzb3J0X2luZGljZXMuc2xpY2UoMCwgaiArIDEpKTtcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGsgPSAwOyBrIDwgbl9vdXRsaWVyczsgKytrKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgaW5kZXggPSBuX2kgKyBuX2ogKyBrO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IG91dCA9IHNhbXBsZXNba107XHJcbiAgICAgICAgICAgICAgICAgICAgdHJpcGxldHMuc2V0X2VudHJ5KGluZGV4LCAwLCBpKTtcclxuICAgICAgICAgICAgICAgICAgICB0cmlwbGV0cy5zZXRfZW50cnkoaW5kZXgsIDEsIHNpbSk7XHJcbiAgICAgICAgICAgICAgICAgICAgdHJpcGxldHMuc2V0X2VudHJ5KGluZGV4LCAyLCBvdXQpO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0cmlwbGV0cztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFNob3VsZCBkbyB0aGUgc2FtZSBhcyBucC5hcmdzb3J0KClcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBBIFxyXG4gICAgICovXHJcbiAgICBfX2FyZ3NvcnQoQSkge1xyXG4gICAgICAgIHJldHVybiBBXHJcbiAgICAgICAgICAgIC5tYXAoKGQsIGkpID0+IHtyZXR1cm4ge2Q6IGQsIGk6IGl9O30pXHJcbiAgICAgICAgICAgIC5zb3J0KChhLCBiKSA9PiBhLmQgLSBiLmQpXHJcbiAgICAgICAgICAgIC5tYXAoKGQpID0+IGQuaSk7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBTYW1wbGVzIHtAbGluayBuX3NhbXBsZXN9IGludGVnZXJzIGZyb20gYSBnaXZlbiBpbnRlcnZhbCBbMCwge0BsaW5rIG1heF9pbnR9XSB3aGlsZSByZWplY3Rpb24gdGhlIHZhbHVlcyB0aGF0IGFyZSBpbiB0aGUge0BsaW5rIHJlamVjdHN9LlxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7Kn0gbl9zYW1wbGVzIFxyXG4gICAgICogQHBhcmFtIHsqfSBtYXhfaW50IFxyXG4gICAgICogQHBhcmFtIHsqfSByZWplY3RzIFxyXG4gICAgICovXHJcbiAgICBfcmVqZWN0aW9uX3NhbXBsZShuX3NhbXBsZXMsIG1heF9pbnQsIHJlamVjdHMpIHtcclxuICAgICAgICBjb25zdCByYW5kb21pemVyID0gdGhpcy5fcmFuZG9taXplcjtcclxuICAgICAgICBjb25zdCBpbnRlcnZhbCA9IGxpbnNwYWNlKDAsIG1heF9pbnQgLSAxKS5maWx0ZXIoZCA9PiByZWplY3RzLmluZGV4T2YoZCkgPCAwKTtcclxuICAgICAgICByZXR1cm4gcmFuZG9taXplci5jaG9pY2UoaW50ZXJ2YWwsIE1hdGgubWluKG5fc2FtcGxlcywgaW50ZXJ2YWwubGVuZ3RoIC0gMikpO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ2FsY3VsYXRlcyB0aGUgd2VpZ2h0cyBmb3IgdGhlIHNhbXBsZWQgbmVhcmVzdCBuZWlnaGJvcnMgdHJpcGxldHNcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gdHJpcGxldHMgLSBTYW1wbGVkIFRyaXBsZXRzLlxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IFAgLSBQYWlyd2lzZSBzaW1pbGFyaXR5IG1hdHJpeC5cclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBuYnJzIC0gbmVhcmVzdCBOZWlnaGJvcnNcclxuICAgICAqIEBwYXJhbSB7RmxvYXQ2NEFycmF5fSBvdXRsaWVyX2Rpc3RhbmNlcyAtIE1hdHJpeCBvZiBwYWlyd2lzZSBvdXRsaWVyIGRpc3RhbmNlc1xyXG4gICAgICogQHBhcmFtIHtGbG9hdDY0QXJyYXl9IHNpZyAtIHNjYWxpbmcgZmFjdG9yIGZvciB0aGUgZGlzdGFuY2VzLlxyXG4gICAgICovXHJcbiAgICBfZmluZF93ZWlnaHRzKHRyaXBsZXRzLCBQLCBuYnJzLCBvdXRsaWVyX2Rpc3RhbmNlcywgc2lnKSB7XHJcbiAgICAgICAgY29uc3Qgbl90cmlwbGV0cyA9IHRyaXBsZXRzLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IHdlaWdodHMgPSBuZXcgRmxvYXQ2NEFycmF5KG5fdHJpcGxldHMpO1xyXG4gICAgICAgIGZvciAobGV0IHQgPSAwOyB0IDwgbl90cmlwbGV0czsgKyt0KSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGkgPSB0cmlwbGV0cy5lbnRyeSh0LCAwKTtcclxuICAgICAgICAgICAgY29uc3Qgc2ltID0gbmJycy5yb3coaSkuaW5kZXhPZih0cmlwbGV0cy5lbnRyeSh0LCAxKSk7XHJcbiAgICAgICAgICAgIGNvbnN0IHBfc2ltID0gUC5lbnRyeShpLCBzaW0pO1xyXG4gICAgICAgICAgICBsZXQgcF9vdXQgPSBNYXRoLmV4cCgtKG91dGxpZXJfZGlzdGFuY2VzW3RdICoqIDIgLyAoc2lnW2ldICogc2lnW3RyaXBsZXRzLmVudHJ5KHQsIDIpXSkpKTtcclxuICAgICAgICAgICAgaWYgKHBfb3V0IDwgMWUtMjApIHBfb3V0ID0gMWUtMjA7XHJcbiAgICAgICAgICAgIHdlaWdodHNbdF0gPSBwX3NpbSAvIHBfb3V0O1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gd2VpZ2h0cztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFNhbXBsZSB1bmlmb3JtbHkgcmFub20gdHJpcGxldHNcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWCAtIERhdGEgbWF0cml4LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IG5fcmFuZG9tIC0gTnVtYmVyIG9mIHJhbmRvbSB0cmlwbGV0cyBwZXIgcG9pbnRcclxuICAgICAqIEBwYXJhbSB7RmxvYXQ2NEFycmF5fSBzaWcgLSBTY2FsaW5nIGZhY3RvciBmb3IgdGhlIGRpc3RhbmNlc1xyXG4gICAgICovXHJcbiAgICBfc2FtcGxlX3JhbmRvbV90cmlwbGV0cyhYLCBuX3JhbmRvbSwgc2lnKSB7XHJcbiAgICAgICAgY29uc3QgbWV0cmljID0gdGhpcy5fbWV0cmljO1xyXG4gICAgICAgIGNvbnN0IHJhbmRvbWl6ZXIgPSB0aGlzLl9yYW5kb21pemVyO1xyXG4gICAgICAgIGNvbnN0IE4gPSBYLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IHJhbmRvbV90cmlwbGV0cyA9IG5ldyBNYXRyaXgoTiAqIG5fcmFuZG9tLCAzKTtcclxuICAgICAgICBjb25zdCByYW5kb21fd2VpZ2h0cyA9IG5ldyBGbG9hdDY0QXJyYXkoTiAqIG5fcmFuZG9tKTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IE47ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCBuX2kgPSBpICogbl9yYW5kb207XHJcbiAgICAgICAgICAgIGNvbnN0IGluZGljZXMgPSBbLi4ubGluc3BhY2UoMCwgaSAtIDEpLCAuLi5saW5zcGFjZShpICsgMSwgTiAtIDEpXVxyXG4gICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IG5fcmFuZG9tOyArK2opIHtcclxuICAgICAgICAgICAgICAgIGxldCBbc2ltLCBvdXRdID0gcmFuZG9taXplci5jaG9pY2UoaW5kaWNlcywgMik7XHJcbiAgICAgICAgICAgICAgICBsZXQgcF9zaW0gPSBNYXRoLmV4cCgtKChtZXRyaWMoWC5yb3coaSksIFgucm93KHNpbSkpICoqIDIpIC8gKHNpZ1tpXSAqIHNpZ1tzaW1dKSkpO1xyXG4gICAgICAgICAgICAgICAgaWYgKHBfc2ltIDwgMWUtMjApIHBfc2ltID0gMWUtMjA7XHJcbiAgICAgICAgICAgICAgICBsZXQgcF9vdXQgPSBNYXRoLmV4cCgtKChtZXRyaWMoWC5yb3coaSksIFgucm93KG91dCkpICoqIDIpIC8gKHNpZ1tpXSAqIHNpZ1tvdXRdKSkpOyBcclxuICAgICAgICAgICAgICAgIGlmIChwX291dCA8IDFlLTIwKSBwX291dCA9IDFlLTIwO1xyXG5cclxuICAgICAgICAgICAgICAgIGlmIChwX3NpbSA8IHBfb3V0KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgW3NpbSwgb3V0XSA9IFtvdXQsIHNpbV07XHJcbiAgICAgICAgICAgICAgICAgICAgW3Bfc2ltLCBwX291dF0gPSBbcF9vdXQsIHBfc2ltXTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGNvbnN0IGluZGV4ID0gbl9pICsgajtcclxuICAgICAgICAgICAgICAgIHJhbmRvbV90cmlwbGV0cy5zZXRfZW50cnkoaW5kZXgsIDAsIGkpO1xyXG4gICAgICAgICAgICAgICAgcmFuZG9tX3RyaXBsZXRzLnNldF9lbnRyeShpbmRleCwgMSwgc2ltKTtcclxuICAgICAgICAgICAgICAgIHJhbmRvbV90cmlwbGV0cy5zZXRfZW50cnkoaW5kZXgsIDIsIG91dCk7XHJcbiAgICAgICAgICAgICAgICByYW5kb21fd2VpZ2h0c1tpbmRleF0gPSBwX3NpbSAvIHBfb3V0O1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB7XHJcbiAgICAgICAgICAgIFwicmFuZG9tX3RyaXBsZXRzXCI6IHJhbmRvbV90cmlwbGV0cyxcclxuICAgICAgICAgICAgXCJyYW5kb21fd2VpZ2h0c1wiOiByYW5kb21fd2VpZ2h0cyxcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBDb21wdXRlcyB0aGUgZ3JhZGllbnQgZm9yIHVwZGF0aW5nIHRoZSBlbWJlZGRpbmcuXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWSAtIFRoZSBlbWJlZGRpbmdcclxuICAgICAqL1xyXG4gICAgX2dyYWQoWSkge1xyXG4gICAgICAgIGNvbnN0IG5faW5saWVycyA9IHRoaXMubl9pbmxpZXJzO1xyXG4gICAgICAgIGNvbnN0IG5fb3V0bGllcnMgPSB0aGlzLm5fb3V0bGllcnM7XHJcbiAgICAgICAgY29uc3QgdHJpcGxldHMgPSB0aGlzLnRyaXBsZXRzO1xyXG4gICAgICAgIGNvbnN0IHdlaWdodHMgPSB0aGlzLndlaWdodHM7XHJcbiAgICAgICAgY29uc3QgW04sIGRpbV0gPSBZLnNoYXBlO1xyXG4gICAgICAgIGNvbnN0IG5fdHJpcGxldHMgPSB0cmlwbGV0cy5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBncmFkID0gbmV3IE1hdHJpeChOLCBkaW0sIDApO1xyXG4gICAgICAgIGxldCB5X2lqID0gbmV3IEFycmF5KGRpbSkuZmlsbCgwKTtcclxuICAgICAgICBsZXQgeV9payA9IG5ldyBBcnJheShkaW0pLmZpbGwoMCk7XHJcbiAgICAgICAgbGV0IGRfaWogPSAxO1xyXG4gICAgICAgIGxldCBkX2lrID0gMTtcclxuICAgICAgICBsZXQgbl92aW9sID0gMDtcclxuICAgICAgICBsZXQgbG9zcyA9IDA7XHJcbiAgICAgICAgY29uc3Qgbl9rbm5fdHJpcGxldHMgPSBOICogbl9pbmxpZXJzICogbl9vdXRsaWVycztcclxuXHJcbiAgICAgICAgZm9yIChsZXQgdCA9IDA7IHQgPCBuX3RyaXBsZXRzOyArK3QpIHtcclxuICAgICAgICAgICAgY29uc3QgW2ksIGosIGtdID0gdHJpcGxldHMucm93KHQpO1xyXG4gICAgICAgICAgICAvLyB1cGRhdGUgeV9paiwgeV9paywgZF9paiwgZF9pa1xyXG4gICAgICAgICAgICBpZiAodCAlIG5fb3V0bGllcnMgPT0gMCB8fCB0ID49IG5fa25uX3RyaXBsZXRzKSB7XHJcbiAgICAgICAgICAgICAgICBkX2lqID0gMVxyXG4gICAgICAgICAgICAgICAgZF9payA9IDFcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGQgPSAwOyBkIDwgZGltOyArK2QpIHtcclxuICAgICAgICAgICAgICAgICAgICBjb25zdCBZX2lkID0gWS5lbnRyeShpLCBkKTtcclxuICAgICAgICAgICAgICAgICAgICBjb25zdCBZX2pkID0gWS5lbnRyeShqLCBkKTtcclxuICAgICAgICAgICAgICAgICAgICBjb25zdCBZX2tkID0gWS5lbnRyeShrLCBkKTtcclxuICAgICAgICAgICAgICAgICAgICB5X2lqW2RdID0gWV9pZCAtIFlfamQ7XHJcbiAgICAgICAgICAgICAgICAgICAgeV9pa1tkXSA9IFlfaWQgLSBZX2tkO1xyXG4gICAgICAgICAgICAgICAgICAgIGRfaWogKz0gKHlfaWpbZF0gKiogMik7XHJcbiAgICAgICAgICAgICAgICAgICAgZF9payArPSAoeV9pa1tkXSAqKiAyKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgLy8gdXBkYXRlIHlfaWsgYW5kIGRfaWsgb25seVxyXG4gICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgZF9payA9IDE7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBkID0gMDsgZCA8IGRpbTsgKytkKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgWV9pZCA9IFkuZW50cnkoaSwgZCk7XHJcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgWV9rZCA9IFkuZW50cnkoaywgZCk7XHJcbiAgICAgICAgICAgICAgICAgICAgeV9pa1tkXSA9IFlfaWQgLSBZX2tkO1xyXG4gICAgICAgICAgICAgICAgICAgIGRfaWsgKz0gKHlfaWtbZF0gKiogMik7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuXHJcbiAgICAgICAgICAgIGlmIChkX2lqID4gZF9paykgKytuX3Zpb2w7XHJcbiAgICAgICAgICAgIGxvc3MgKz0gd2VpZ2h0c1t0XSAvICgxICsgZF9payAvIGRfaWopO1xyXG4gICAgICAgICAgICBjb25zdCB3ID0gKHdlaWdodHNbdF0gLyAoZF9paiArIGRfaWspKSAqKiAyO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBkID0gMDsgZCA8IGRpbTsgKytkKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBncyA9IHlfaWpbZF0gKiBkX2lrICogdztcclxuICAgICAgICAgICAgICAgIGNvbnN0IGdvID0geV9pa1tkXSAqIGRfaWogKiB3O1xyXG4gICAgICAgICAgICAgICAgZ3JhZC5zZXRfZW50cnkoaSwgZCwgZ3JhZC5lbnRyeShpLCBkKSArIGdzIC0gZ28pO1xyXG4gICAgICAgICAgICAgICAgZ3JhZC5zZXRfZW50cnkoaiwgZCwgZ3JhZC5lbnRyeShqLCBkKSAtIGdzKTtcclxuICAgICAgICAgICAgICAgIGdyYWQuc2V0X2VudHJ5KGssIGQsIGdyYWQuZW50cnkoaywgZCkgKyBnbyk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHtcclxuICAgICAgICAgICAgXCJncmFkXCI6IGdyYWQsXHJcbiAgICAgICAgICAgIFwibG9zc1wiOiBsb3NzLFxyXG4gICAgICAgICAgICBcIm5fdmlvbFwiOiBuX3Zpb2wsXHJcbiAgICAgICAgfTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IG1heF9pdGVyYXRpb24gXHJcbiAgICAgKi9cclxuICAgIHRyYW5zZm9ybShtYXhfaXRlcmF0aW9uID0gNDAwKSB7XHJcbiAgICAgICAgdGhpcy5jaGVja19pbml0KCk7XHJcbiAgICAgICAgZm9yIChsZXQgaXRlciA9IDA7IGl0ZXIgPCBtYXhfaXRlcmF0aW9uOyArK2l0ZXIpIHtcclxuICAgICAgICAgICAgdGhpcy5fbmV4dChpdGVyKVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHlpZWxkcyB7TWF0cml4fVxyXG4gICAgICogQHJldHVybnMge01hdHJpeH1cclxuICAgICAqL1xyXG4gICAgKiBnZW5lcmF0b3IoKSB7XHJcbiAgICAgICAgdGhpcy5jaGVja19pbml0KCk7XHJcbiAgICAgICAgZm9yIChsZXQgaXRlciA9IDA7IGl0ZXIgPCA4MDA7ICsraXRlcikge1xyXG4gICAgICAgICAgICB0aGlzLl9uZXh0KGl0ZXIpO1xyXG4gICAgICAgICAgICB5aWVsZCB0aGlzLnByb2plY3Rpb247XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzLnByb2plY3Rpb247XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBEb2VzIHRoZSBpdGVyYXRpb24gc3RlcC5cclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gaXRlciBcclxuICAgICAqL1xyXG4gICAgX25leHQoaXRlcikge1xyXG4gICAgICAgIGNvbnN0IGdhbW1hID0gaXRlciA+IDE1MCA/IC41IDogLjM7XHJcbiAgICAgICAgY29uc3Qgb2xkX0MgPSB0aGlzLkM7XHJcbiAgICAgICAgY29uc3QgdmVsID0gdGhpcy52ZWw7XHJcbiAgICAgICAgY29uc3QgWSA9IHRoaXMuWS5hZGQodmVsLm11bHQoZ2FtbWEpKTtcclxuICAgICAgICBjb25zdCB7Z3JhZCwgbG9zcywgbl92aW9sfSA9IHRoaXMuX2dyYWQoWSk7XHJcbiAgICAgICAgdGhpcy5DID0gbG9zcztcclxuICAgICAgICB0aGlzLlkgPSB0aGlzLl91cGRhdGVfZW1iZWRkaW5nKFksIGl0ZXIsIGdyYWQpO1xyXG4gICAgICAgIHRoaXMubHIgKj0gKG9sZF9DID4gbG9zcyArIHRoaXMudG9sKSAgPyAxLjAxIDogLjk7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuWTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFVwZGF0ZXMgdGhlIGVtYmVkZGluZy5cclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gWSBcclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBpdGVyIFxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IGdyYWQgXHJcbiAgICAgKi9cclxuICAgIF91cGRhdGVfZW1iZWRkaW5nKFksIGl0ZXIsIGdyYWQpIHtcclxuICAgICAgICBjb25zdCBbTiwgZGltXSA9IFkuc2hhcGU7XHJcbiAgICAgICAgY29uc3QgZ2FtbWEgPSBpdGVyID4gMTUwID8gLjkgOiAuNTsgLy8gbW9tZW50IHBhcmFtZXRlclxyXG4gICAgICAgIGNvbnN0IG1pbl9nYWluID0gLjAxO1xyXG4gICAgICAgIGNvbnN0IGdhaW4gPSB0aGlzLmdhaW47XHJcbiAgICAgICAgY29uc3QgdmVsID0gdGhpcy52ZWw7XHJcbiAgICAgICAgY29uc3QgbHIgPSB0aGlzLmxyO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgTjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGQgPSAwOyBkIDwgZGltOyArK2QpIHtcclxuICAgICAgICAgICAgICAgIGNvbnN0IG5ld19nYWluID0gKE1hdGguc2lnbih2ZWwuZW50cnkoaSwgZCkpICE9IE1hdGguc2lnbihncmFkLmVudHJ5KGksIGQpKSkgPyBnYWluLmVudHJ5KGksIGQpICsgLjIgOiBNYXRoLm1heChnYWluLmVudHJ5KGksIGQpICogLjgsIG1pbl9nYWluKTtcclxuICAgICAgICAgICAgICAgIGdhaW4uc2V0X2VudHJ5KGksIGQsIG5ld19nYWluKTtcclxuICAgICAgICAgICAgICAgIHZlbC5zZXRfZW50cnkoaSwgZCwgZ2FtbWEgKiB2ZWwuZW50cnkoaSwgZCkgLSBsciAqIGdhaW4uZW50cnkoaSwgZCkgKiBncmFkLmVudHJ5KGksIGQpKTtcclxuICAgICAgICAgICAgICAgIFkuc2V0X2VudHJ5KGksIGQsIFkuZW50cnkoaSwgZCkgKyB2ZWwuZW50cnkoaSwgZCkpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiBZO1xyXG4gICAgfVxyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./dimred/TriMap.js\n");
+
+/***/ }),
+
+/***/ "./dimred/UMAP.js":
+/*!************************!*\
+  !*** ./dimred/UMAP.js ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"UMAP\": () => (/* binding */ UMAP)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _knn_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../knn/index */ \"./knn/index.js\");\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\n/* harmony import */ var _optimization_index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../optimization/index */ \"./optimization/index.js\");\n/* harmony import */ var _DR_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DR.js */ \"./dimred/DR.js\");\n/* harmony import */ var _util_index__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../util/index */ \"./util/index.js\");\n\n\n\n\n\n\n\n\nclass UMAP extends _DR_js__WEBPACK_IMPORTED_MODULE_5__.DR {\n  constructor(X, n_neighbors = 15, local_connectivity = 1, min_dist = 1, d = 2, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean, seed = 1212) {\n    super(X, d, metric, seed);\n    super.parameter_list = [\"n_neighbors\", \"local_connectivity\", \"min_dist\"];\n    [this._N, this._D] = this.X.shape;\n    n_neighbors = Math.min(this._N - 1, n_neighbors);\n    this.parameter(\"n_neighbors\", n_neighbors);\n    this.parameter(\"local_connectivity\", Math.min(local_connectivity, n_neighbors - 1));\n    this.parameter(\"min_dist\", min_dist);\n    this._iter = 0;\n    this._spread = 1;\n    this._set_op_mix_ratio = 1;\n    this._repulsion_strength = 1;\n    this._negative_sample_rate = 5;\n    this._n_epochs = 350;\n    this._initial_alpha = 1;\n    this.Y = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(this._N, this._d, () => this._randomizer.random);\n    return this;\n  }\n\n  _find_ab_params(spread, min_dist) {\n    const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));\n\n    const xv = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, spread * 3, 300);\n    const yv = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, spread * 3, 300);\n\n    for (let i = 0, n = xv.length; i < n; ++i) {\n      const xv_i = xv[i];\n      yv[i] = xv_i < min_dist ? 1 : Math.exp(-(xv_i - min_dist) / spread);\n    }\n\n    const err = p => {\n      const error = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));\n      return Math.sqrt((0,_numerical_index__WEBPACK_IMPORTED_MODULE_3__.neumair_sum)(error.map(e => e * e)));\n    };\n\n    return (0,_optimization_index__WEBPACK_IMPORTED_MODULE_4__.powell)(err, [1, 1]);\n  }\n\n  _compute_membership_strengths(distances, sigmas, rhos) {\n    for (let i = 0, n = distances.length; i < n; ++i) {\n      for (let j = 0, m = distances[i].length; j < m; ++j) {\n        const v = distances[i][j].value - rhos[i];\n        distances[i][j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1;\n      }\n    }\n\n    return distances;\n  }\n\n  _smooth_knn_dist(knn, k) {\n    const SMOOTH_K_TOLERANCE = 1e-5;\n    const MIN_K_DIST_SCALE = 1e-3;\n    const n_iter = 64;\n    const local_connectivity = this._local_connectivity;\n    const target = Math.log2(k);\n    const rhos = [];\n    const sigmas = [];\n    const X = this.X;\n    const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());\n\n    for (let i = 0, n = X.shape[0]; i < n; ++i) {\n      let lo = 0;\n      let hi = Infinity;\n      let mid = 1;\n      const search_result = distances[i];\n      const non_zero_dist = search_result.filter(d => d.value > 0);\n      const non_zero_dist_length = non_zero_dist.length;\n\n      if (non_zero_dist_length >= local_connectivity) {\n        const index = Math.floor(local_connectivity);\n        const interpolation = local_connectivity - index;\n\n        if (index > 0) {\n          rhos.push(non_zero_dist[index - 1]);\n\n          if (interpolation > SMOOTH_K_TOLERANCE) {\n            rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1]);\n          }\n        } else {\n          rhos[i].value = interpolation * non_zero_dist[0].value;\n        }\n      } else if (non_zero_dist_length > 0) {\n        rhos[i] = non_zero_dist[non_zero_dist_length - 1].value;\n      }\n\n      for (let x = 0; x < n_iter; ++x) {\n        let psum = 0;\n\n        for (let j = 0; j < k; ++j) {\n          const d = search_result[j].value - rhos[i];\n          psum += d > 0 ? Math.exp(-(d / mid)) : 1;\n        }\n\n        if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {\n          break;\n        }\n\n        if (psum > target) {\n          [hi, mid] = [mid, (lo + hi) / 2];\n        } else {\n          if (hi === Infinity) {\n            [lo, mid] = [mid, mid * 2];\n          } else {\n            [lo, mid] = [mid, (lo + hi) / 2];\n          }\n        }\n      }\n\n      sigmas[i] = mid;\n      const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length; //let mean_d = null;\n\n      if (rhos[i] > 0) {\n        if (sigmas[i] < MIN_K_DIST_SCALE * mean_ithd) {\n          sigmas[i] = MIN_K_DIST_SCALE * mean_ithd;\n        }\n      } else {\n        const mean_d = distances.reduce((acc, res) => acc + res.reduce((a, b) => a + b.value, 0) / res.length);\n\n        if (sigmas[i] > MIN_K_DIST_SCALE * mean_d) {\n          sigmas[i] = MIN_K_DIST_SCALE * mean_d;\n        }\n      }\n    }\n\n    return {\n      \"distances\": distances,\n      \"sigmas\": sigmas,\n      \"rhos\": rhos\n    };\n  }\n\n  _fuzzy_simplicial_set(X, n_neighbors) {\n    const N = X.shape[0];\n    const knn = new _knn_index__WEBPACK_IMPORTED_MODULE_2__.BallTree(X.to2dArray, _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean);\n\n    let {\n      distances,\n      sigmas,\n      rhos\n    } = this._smooth_knn_dist(knn, n_neighbors);\n\n    distances = this._compute_membership_strengths(distances, sigmas, rhos);\n    const result = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(N, N, \"zeros\");\n\n    for (let i = 0; i < N; ++i) {\n      const distances_i = distances[i];\n\n      for (let j = 0; j < distances_i.length; ++j) {\n        result.set_entry(i, distances_i[j].element.index, distances_i[j].value);\n      }\n    }\n\n    const transposed_result = result.T;\n    const prod_matrix = result.mult(transposed_result);\n    return result.add(transposed_result).sub(prod_matrix).mult(this._set_op_mix_ratio).add(prod_matrix.mult(1 - this._set_op_mix_ratio));\n  }\n\n  _make_epochs_per_sample(n_epochs) {\n    const weights = this._weights;\n    const result = new Float32Array(weights.length).fill(-1);\n    const weights_max = (0,_util_index__WEBPACK_IMPORTED_MODULE_6__.max)(weights);\n    const n_samples = weights.map(w => n_epochs * (w / weights_max));\n\n    for (let i = 0; i < result.length; ++i) if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);\n\n    return result;\n  }\n\n  _tocoo(graph) {\n    const rows = [];\n    const cols = [];\n    const data = [];\n    const [rows_n, cols_n] = graph.shape;\n\n    for (let row = 0; row < rows_n; ++row) {\n      for (let col = 0; col < cols_n; ++col) {\n        const entry = graph.entry(row, col);\n\n        if (entry !== 0) {\n          rows.push(row);\n          cols.push(col);\n          data.push(entry);\n        }\n      }\n    }\n\n    return {\n      \"rows\": rows,\n      \"cols\": cols,\n      \"data\": data\n    };\n  }\n\n  init() {\n    const [a, b] = this._find_ab_params(this._spread, this._min_dist);\n\n    this._a = a;\n    this._b = b;\n    this._graph = this._fuzzy_simplicial_set(this.X, this._n_neighbors);\n\n    const {\n      rows,\n      cols,\n      data: weights\n    } = this._tocoo(this._graph);\n\n    this._head = rows;\n    this._tail = cols;\n    this._weights = weights;\n    this._epochs_per_sample = this._make_epochs_per_sample(this._n_epochs);\n    this._epochs_per_negative_sample = this._epochs_per_sample.map(d => d * this._negative_sample_rate);\n    this._epoch_of_next_sample = this._epochs_per_sample.slice();\n    this._epoch_of_next_negative_sample = this._epochs_per_negative_sample.slice();\n    return this;\n  }\n\n  set local_connectivity(value) {\n    this._local_connectivity = value;\n  }\n\n  get local_connectivity() {\n    return this._local_connectivity;\n  }\n\n  set min_dist(value) {\n    this._min_dist = value;\n  }\n\n  get min_dist() {\n    return this._min_dist;\n  }\n\n  graph() {\n    this.check_init();\n    return {\n      cols: this._head,\n      rows: this._tail,\n      weights: this._weights\n    };\n  }\n\n  transform(iterations) {\n    this.check_init();\n    iterations = iterations || this._n_epochs;\n\n    for (let i = 0; i < iterations; ++i) {\n      this.next();\n    }\n\n    return this.projection;\n  }\n\n  *generator() {\n    this.check_init();\n    this._iter = 0;\n\n    while (this._iter < this._n_epochs) {\n      this.next();\n      yield this.projection;\n    }\n\n    return this.projection;\n  }\n\n  _clip(x) {\n    if (x > 4) return 4;\n    if (x < -4) return -4;\n    return x;\n  }\n\n  _optimize_layout(head_embedding, tail_embedding, head, tail) {\n    const {\n      _d: dim,\n      _alpha: alpha,\n      _repulsion_strength: repulsion_strength,\n      _a: a,\n      _b: b,\n      _epochs_per_sample: epochs_per_sample,\n      _epochs_per_negative_sample: epochs_per_negative_sample,\n      _epoch_of_next_negative_sample: epoch_of_next_negative_sample,\n      _epoch_of_next_sample: epoch_of_next_sample,\n      _clip: clip\n    } = this;\n    const tail_length = tail.length;\n\n    for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {\n      if (epoch_of_next_sample[i] <= this._iter) {\n        const j = head[i];\n        const k = tail[i];\n        const current = head_embedding.row(j);\n        const other = tail_embedding.row(k);\n        const dist = (0,_metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean_squared)(current, other); //this._metric(current, other);\n\n        let grad_coeff = 0;\n\n        if (dist > 0) {\n          grad_coeff = -2 * a * b * Math.pow(dist, b - 1) / (a * Math.pow(dist, b) + 1);\n        }\n\n        for (let d = 0; d < dim; ++d) {\n          const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;\n          const c = current[d] + grad_d;\n          const o = other[d] - grad_d;\n          current[d] = c;\n          other[d] = o;\n          head_embedding.set_entry(j, d, c);\n          tail_embedding.set_entry(k, d, o);\n        }\n\n        epoch_of_next_sample[i] += epochs_per_sample[i];\n        const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];\n\n        for (let p = 0; p < n_neg_samples; ++p) {\n          const k = Math.floor(this._randomizer.random * tail_length);\n          const other = tail_embedding.row(tail[k]);\n          const dist = (0,_metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean_squared)(current, other); //this._metric(current, other);\n\n          let grad_coeff = 0;\n\n          if (dist > 0) {\n            grad_coeff = 2 * repulsion_strength * b / ((.01 + dist) * (a * Math.pow(dist, b) + 1));\n          } else if (j === k) {\n            continue;\n          }\n\n          for (let d = 0; d < dim; ++d) {\n            const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;\n            const c = current[d] + grad_d;\n            const o = other[d] - grad_d;\n            current[d] = c;\n            other[d] = o;\n            head_embedding.set_entry(j, d, c);\n            tail_embedding.set_entry(tail[k], d, o);\n          }\n        }\n\n        epoch_of_next_negative_sample[i] += n_neg_samples * epochs_per_negative_sample[i];\n      }\n    }\n\n    return head_embedding;\n  }\n\n  next() {\n    let iter = ++this._iter;\n    let Y = this.Y;\n    this._alpha = this._initial_alpha * (1 - iter / this._n_epochs);\n    this.Y = this._optimize_layout(Y, Y, this._head, this._tail);\n    return this.Y;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9VTUFQLmpzPzRlOWYiXSwibmFtZXMiOlsiVU1BUCIsIkRSIiwiY29uc3RydWN0b3IiLCJYIiwibl9uZWlnaGJvcnMiLCJsb2NhbF9jb25uZWN0aXZpdHkiLCJtaW5fZGlzdCIsImQiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJzZWVkIiwicGFyYW1ldGVyX2xpc3QiLCJfTiIsIl9EIiwic2hhcGUiLCJNYXRoIiwibWluIiwicGFyYW1ldGVyIiwiX2l0ZXIiLCJfc3ByZWFkIiwiX3NldF9vcF9taXhfcmF0aW8iLCJfcmVwdWxzaW9uX3N0cmVuZ3RoIiwiX25lZ2F0aXZlX3NhbXBsZV9yYXRlIiwiX25fZXBvY2hzIiwiX2luaXRpYWxfYWxwaGEiLCJZIiwiTWF0cml4IiwiX2QiLCJfcmFuZG9taXplciIsInJhbmRvbSIsIl9maW5kX2FiX3BhcmFtcyIsInNwcmVhZCIsImN1cnZlIiwieCIsImEiLCJiIiwicG93IiwieHYiLCJsaW5zcGFjZSIsInl2IiwiaSIsIm4iLCJsZW5ndGgiLCJ4dl9pIiwiZXhwIiwiZXJyIiwicCIsImVycm9yIiwibWFwIiwiXyIsInNxcnQiLCJuZXVtYWlyX3N1bSIsImUiLCJwb3dlbGwiLCJfY29tcHV0ZV9tZW1iZXJzaGlwX3N0cmVuZ3RocyIsImRpc3RhbmNlcyIsInNpZ21hcyIsInJob3MiLCJqIiwibSIsInYiLCJ2YWx1ZSIsIl9zbW9vdGhfa25uX2Rpc3QiLCJrbm4iLCJrIiwiU01PT1RIX0tfVE9MRVJBTkNFIiwiTUlOX0tfRElTVF9TQ0FMRSIsIm5faXRlciIsIl9sb2NhbF9jb25uZWN0aXZpdHkiLCJ0YXJnZXQiLCJsb2cyIiwieF9pIiwic2VhcmNoIiwicmF3X2RhdGEiLCJyZXZlcnNlIiwibG8iLCJoaSIsIkluZmluaXR5IiwibWlkIiwic2VhcmNoX3Jlc3VsdCIsIm5vbl96ZXJvX2Rpc3QiLCJmaWx0ZXIiLCJub25femVyb19kaXN0X2xlbmd0aCIsImluZGV4IiwiZmxvb3IiLCJpbnRlcnBvbGF0aW9uIiwicHVzaCIsInBzdW0iLCJhYnMiLCJtZWFuX2l0aGQiLCJyZWR1Y2UiLCJtZWFuX2QiLCJhY2MiLCJyZXMiLCJfZnV6enlfc2ltcGxpY2lhbF9zZXQiLCJOIiwiQmFsbFRyZWUiLCJ0bzJkQXJyYXkiLCJyZXN1bHQiLCJkaXN0YW5jZXNfaSIsInNldF9lbnRyeSIsImVsZW1lbnQiLCJ0cmFuc3Bvc2VkX3Jlc3VsdCIsIlQiLCJwcm9kX21hdHJpeCIsIm11bHQiLCJhZGQiLCJzdWIiLCJfbWFrZV9lcG9jaHNfcGVyX3NhbXBsZSIsIm5fZXBvY2hzIiwid2VpZ2h0cyIsIl93ZWlnaHRzIiwiRmxvYXQzMkFycmF5IiwiZmlsbCIsIndlaWdodHNfbWF4IiwibWF4Iiwibl9zYW1wbGVzIiwidyIsInJvdW5kIiwiX3RvY29vIiwiZ3JhcGgiLCJyb3dzIiwiY29scyIsImRhdGEiLCJyb3dzX24iLCJjb2xzX24iLCJyb3ciLCJjb2wiLCJlbnRyeSIsImluaXQiLCJfbWluX2Rpc3QiLCJfYSIsIl9iIiwiX2dyYXBoIiwiX25fbmVpZ2hib3JzIiwiX2hlYWQiLCJfdGFpbCIsIl9lcG9jaHNfcGVyX3NhbXBsZSIsIl9lcG9jaHNfcGVyX25lZ2F0aXZlX3NhbXBsZSIsIl9lcG9jaF9vZl9uZXh0X3NhbXBsZSIsInNsaWNlIiwiX2Vwb2NoX29mX25leHRfbmVnYXRpdmVfc2FtcGxlIiwiY2hlY2tfaW5pdCIsInRyYW5zZm9ybSIsIml0ZXJhdGlvbnMiLCJuZXh0IiwicHJvamVjdGlvbiIsImdlbmVyYXRvciIsIl9jbGlwIiwiX29wdGltaXplX2xheW91dCIsImhlYWRfZW1iZWRkaW5nIiwidGFpbF9lbWJlZGRpbmciLCJoZWFkIiwidGFpbCIsImRpbSIsIl9hbHBoYSIsImFscGhhIiwicmVwdWxzaW9uX3N0cmVuZ3RoIiwiZXBvY2hzX3Blcl9zYW1wbGUiLCJlcG9jaHNfcGVyX25lZ2F0aXZlX3NhbXBsZSIsImVwb2NoX29mX25leHRfbmVnYXRpdmVfc2FtcGxlIiwiZXBvY2hfb2ZfbmV4dF9zYW1wbGUiLCJjbGlwIiwidGFpbF9sZW5ndGgiLCJjdXJyZW50Iiwib3RoZXIiLCJkaXN0IiwiZXVjbGlkZWFuX3NxdWFyZWQiLCJncmFkX2NvZWZmIiwiZ3JhZF9kIiwiYyIsIm8iLCJuX25lZ19zYW1wbGVzIiwiaXRlciJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRU8sTUFBTUEsSUFBTixTQUFtQkMsc0NBQW5CLENBQXNCO0FBQ3pCQyxhQUFXLENBQUNDLENBQUQsRUFBSUMsV0FBVyxHQUFDLEVBQWhCLEVBQW9CQyxrQkFBa0IsR0FBQyxDQUF2QyxFQUEwQ0MsUUFBUSxHQUFDLENBQW5ELEVBQXNEQyxDQUFDLEdBQUMsQ0FBeEQsRUFBMkRDLE1BQU0sR0FBQ0MscURBQWxFLEVBQTZFQyxJQUFJLEdBQUMsSUFBbEYsRUFBd0Y7QUFDL0YsVUFBTVAsQ0FBTixFQUFTSSxDQUFULEVBQVlDLE1BQVosRUFBb0JFLElBQXBCO0FBQ0EsVUFBTUMsY0FBTixHQUF1QixDQUFDLGFBQUQsRUFBZ0Isb0JBQWhCLEVBQXNDLFVBQXRDLENBQXZCO0FBQ0EsS0FBRSxLQUFLQyxFQUFQLEVBQVcsS0FBS0MsRUFBaEIsSUFBdUIsS0FBS1YsQ0FBTCxDQUFPVyxLQUE5QjtBQUNBVixlQUFXLEdBQUdXLElBQUksQ0FBQ0MsR0FBTCxDQUFTLEtBQUtKLEVBQUwsR0FBVSxDQUFuQixFQUFzQlIsV0FBdEIsQ0FBZDtBQUNBLFNBQUthLFNBQUwsQ0FBZSxhQUFmLEVBQThCYixXQUE5QjtBQUNBLFNBQUthLFNBQUwsQ0FBZSxvQkFBZixFQUFxQ0YsSUFBSSxDQUFDQyxHQUFMLENBQVNYLGtCQUFULEVBQTZCRCxXQUFXLEdBQUcsQ0FBM0MsQ0FBckM7QUFDQSxTQUFLYSxTQUFMLENBQWUsVUFBZixFQUEyQlgsUUFBM0I7QUFDQSxTQUFLWSxLQUFMLEdBQWEsQ0FBYjtBQUNBLFNBQUtDLE9BQUwsR0FBZSxDQUFmO0FBQ0EsU0FBS0MsaUJBQUwsR0FB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TUFBckI7QUFDQUwsbUJBQU8sQ0FBQzdKLENBQUQsQ0FBUCxHQUFhbUssQ0FBYjtBQUNBTCxpQkFBSyxDQUFDOUosQ0FBRCxDQUFMLEdBQVdvSyxDQUFYO0FBQ0FyQiwwQkFBYyxDQUFDbEQsU0FBZixDQUF5QjFDLENBQXpCLEVBQTRCbkQsQ0FBNUIsRUFBK0JtSyxDQUEvQjtBQUNBbkIsMEJBQWMsQ0FBQ25ELFNBQWYsQ0FBeUJxRCxJQUFJLENBQUN6RixDQUFELENBQTdCLEVBQWtDekQsQ0FBbEMsRUFBcUNvSyxDQUFyQztBQUNIO0FBQ0o7O0FBQ0RYLHFDQUE2QixDQUFDeEgsQ0FBRCxDQUE3QixJQUFxQ29JLGFBQWEsR0FBR2IsMEJBQTBCLENBQUN2SCxDQUFELENBQS9FO0FBQ0g7QUFDSjs7QUFDRCxXQUFPOEcsY0FBUDtBQUNIOztBQUVETCxNQUFJLEdBQUc7QUFDSCxRQUFJNEIsSUFBSSxHQUFHLEVBQUUsS0FBSzNKLEtBQWxCO0FBQ0EsUUFBSU8sQ0FBQyxHQUFHLEtBQUtBLENBQWI7QUFFQSxTQUFLa0ksTUFBTCxHQUFlLEtBQUtuSSxjQUFMLElBQXVCLElBQUlxSixJQUFJLEdBQUcsS0FBS3RKLFNBQXZDLENBQWY7QUFDQSxTQUFLRSxDQUFMLEdBQVMsS0FBSzRILGdCQUFMLENBQXNCNUgsQ0FBdEIsRUFBeUJBLENBQXpCLEVBQTRCLEtBQUs4RyxLQUFqQyxFQUF3QyxLQUFLQyxLQUE3QyxDQUFUO0FBRUEsV0FBTyxLQUFLL0csQ0FBWjtBQUNIOztBQXRUd0IiLCJmaWxlIjoiLi9kaW1yZWQvVU1BUC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuLCBldWNsaWRlYW5fc3F1YXJlZCB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4XCI7XHJcbmltcG9ydCB7IEJhbGxUcmVlIH0gZnJvbSBcIi4uL2tubi9pbmRleFwiO1xyXG5pbXBvcnQgeyBuZXVtYWlyX3N1bSB9IGZyb20gXCIuLi9udW1lcmljYWwvaW5kZXhcIjtcclxuaW1wb3J0IHsgbGluc3BhY2UgfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcbmltcG9ydCB7IHBvd2VsbCB9IGZyb20gXCIuLi9vcHRpbWl6YXRpb24vaW5kZXhcIjtcclxuaW1wb3J0IHsgRFIgfSBmcm9tIFwiLi9EUi5qc1wiO1xyXG5pbXBvcnQgeyBtYXggfSBmcm9tIFwiLi4vdXRpbC9pbmRleFwiO1xyXG5cclxuZXhwb3J0IGNsYXNzIFVNQVAgZXh0ZW5kcyBEUiB7XHJcbiAgICBjb25zdHJ1Y3RvcihYLCBuX25laWdoYm9ycz0xNSwgbG9jYWxfY29ubmVjdGl2aXR5PTEsIG1pbl9kaXN0PTEsIGQ9MiwgbWV0cmljPWV1Y2xpZGVhbiwgc2VlZD0xMjEyKSB7XHJcbiAgICAgICAgc3VwZXIoWCwgZCwgbWV0cmljLCBzZWVkKVxyXG4gICAgICAgIHN1cGVyLnBhcmFtZXRlcl9saXN0ID0gW1wibl9uZWlnaGJvcnNcIiwgXCJsb2NhbF9jb25uZWN0aXZpdHlcIiwgXCJtaW5fZGlzdFwiXTtcclxuICAgICAgICBbIHRoaXMuX04sIHRoaXMuX0QgXSA9IHRoaXMuWC5zaGFwZTtcclxuICAgICAgICBuX25laWdoYm9ycyA9IE1hdGgubWluKHRoaXMuX04gLSAxLCBuX25laWdoYm9ycyk7XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJuX25laWdoYm9yc1wiLCBuX25laWdoYm9ycyk7XHJcbiAgICAgICAgdGhpcy5wYXJhbWV0ZXIoXCJsb2NhbF9jb25uZWN0aXZpdHlcIiwgTWF0aC5taW4obG9jYWxfY29ubmVjdGl2aXR5LCBuX25laWdoYm9ycyAtIDEpKTtcclxuICAgICAgICB0aGlzLnBhcmFtZXRlcihcIm1pbl9kaXN0XCIsIG1pbl9kaXN0KTtcclxuICAgICAgICB0aGlzLl9pdGVyID0gMDtcclxuICAgICAgICB0aGlzLl9zcHJlYWQgPSAxO1xyXG4gICAgICAgIHRoaXMuX3NldF9vcF9taXhfcmF0aW8gPSAxO1xyXG4gICAgICAgIHRoaXMuX3JlcHVsc2lvbl9zdHJlbmd0aCA9IDE7XHJcbiAgICAgICAgdGhpcy5fbmVnYXRpdmVfc2FtcGxlX3JhdGUgPSA1O1xyXG4gICAgICAgIHRoaXMuX25fZXBvY2hzID0gMzUwO1xyXG4gICAgICAgIHRoaXMuX2luaXRpYWxfYWxwaGEgPSAxO1xyXG4gICAgICAgIHRoaXMuWSA9IG5ldyBNYXRyaXgodGhpcy5fTiwgdGhpcy5fZCwgKCkgPT4gdGhpcy5fcmFuZG9taXplci5yYW5kb20pO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIF9maW5kX2FiX3BhcmFtcyhzcHJlYWQsIG1pbl9kaXN0KSB7XHJcbiAgICAgICAgY29uc3QgY3VydmUgPSAoeCwgYSwgYikgPT4gMSAvICgxICsgYSAqIE1hdGgucG93KHgsIDIgKiBiKSk7XHJcbiAgICAgICAgY29uc3QgeHYgPSBsaW5zcGFjZSgwLCBzcHJlYWQgKiAzLCAzMDApO1xyXG4gICAgICAgIGNvbnN0IHl2ID0gbGluc3BhY2UoMCwgc3ByZWFkICogMywgMzAwKTtcclxuICAgICAgICBcclxuICAgICAgICBmb3IgKGxldCBpID0gMCwgbiA9IHh2Lmxlbmd0aDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCB4dl9pID0geHZbaV07XHJcbiAgICAgICAgICAgIHl2W2ldID0gKHh2X2kgPCBtaW5fZGlzdCA/IDEgOiBNYXRoLmV4cCgtKHh2X2kgLSBtaW5fZGlzdCkgLyBzcHJlYWQpKTtcclxuICAgICAgICB9XHJcbiAgICAgIFxyXG4gICAgICAgIGNvbnN0IGVyciA9IChwKSA9PiB7XHJcbiAgICAgICAgICAgIGNvbnN0IGVycm9yID0gbGluc3BhY2UoMSwgMzAwKS5tYXAoKF8sIGkpID0+IHl2W2ldIC0gY3VydmUoeHZbaV0sIHBbMF0sIHBbMV0pKTtcclxuICAgICAgICAgICAgcmV0dXJuIE1hdGguc3FydChuZXVtYWlyX3N1bShlcnJvci5tYXAoZSA9PiBlICogZSkpKTtcclxuICAgICAgICB9XHJcbiAgICAgIFxyXG4gICAgICAgIHJldHVybiBwb3dlbGwoZXJyLCBbMSwgMV0pO1xyXG4gICAgfVxyXG5cclxuICAgIF9jb21wdXRlX21lbWJlcnNoaXBfc3RyZW5ndGhzKGRpc3RhbmNlcywgc2lnbWFzLCByaG9zKSB7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDAsIG4gPSBkaXN0YW5jZXMubGVuZ3RoOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwLCBtID0gZGlzdGFuY2VzW2ldLmxlbmd0aDsgaiA8IG07ICsraikge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgdiA9IGRpc3RhbmNlc1tpXVtqXS52YWx1ZSAtIHJob3NbaV07XHJcbiAgICAgICAgICAgICAgICBkaXN0YW5jZXNbaV1bal0udmFsdWUgPSB2ID4gMCA/IE1hdGguZXhwKC12IC8gc2lnbWFzW2ldKSA6IDE7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIGRpc3RhbmNlcztcclxuICAgIH1cclxuXHJcbiAgICBfc21vb3RoX2tubl9kaXN0KGtubiwgaykge1xyXG4gICAgICAgIGNvbnN0IFNNT09USF9LX1RPTEVSQU5DRSA9IDFlLTU7XHJcbiAgICAgICAgY29uc3QgTUlOX0tfRElTVF9TQ0FMRSA9IDFlLTM7XHJcbiAgICAgICAgY29uc3Qgbl9pdGVyID0gNjQ7XHJcbiAgICAgICAgY29uc3QgbG9jYWxfY29ubmVjdGl2aXR5ID0gdGhpcy5fbG9jYWxfY29ubmVjdGl2aXR5O1xyXG4gICAgICAgIGNvbnN0IHRhcmdldCA9IE1hdGgubG9nMihrKTtcclxuICAgICAgICBjb25zdCByaG9zID0gW11cclxuICAgICAgICBjb25zdCBzaWdtYXMgPSBbXVxyXG4gICAgICAgIGNvbnN0IFggPSB0aGlzLlhcclxuXHJcbiAgICAgICAgY29uc3QgZGlzdGFuY2VzID0gWy4uLlhdLm1hcCh4X2kgPT4ga25uLnNlYXJjaCh4X2ksIGspLnJhd19kYXRhKCkucmV2ZXJzZSgpKTtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDAsIG4gPSBYLnNoYXBlWzBdOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgIGxldCBsbyA9IDA7XHJcbiAgICAgICAgICAgIGxldCBoaSA9IEluZmluaXR5O1xyXG4gICAgICAgICAgICBsZXQgbWlkID0gMTtcclxuXHJcbiAgICAgICAgICAgIGNvbnN0IHNlYXJjaF9yZXN1bHQgPSBkaXN0YW5jZXNbaV1cclxuICAgICAgICAgICAgY29uc3Qgbm9uX3plcm9fZGlzdCA9IHNlYXJjaF9yZXN1bHQuZmlsdGVyKGQgPT4gZC52YWx1ZSA+IDApO1xyXG4gICAgICAgICAgICBjb25zdCBub25femVyb19kaXN0X2xlbmd0aCA9IG5vbl96ZXJvX2Rpc3QubGVuZ3RoO1xyXG4gICAgICAgICAgICBpZiAobm9uX3plcm9fZGlzdF9sZW5ndGggPj0gbG9jYWxfY29ubmVjdGl2aXR5KSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBpbmRleCA9IE1hdGguZmxvb3IobG9jYWxfY29ubmVjdGl2aXR5KTtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGludGVycG9sYXRpb24gPSBsb2NhbF9jb25uZWN0aXZpdHkgLSBpbmRleDtcclxuICAgICAgICAgICAgICAgIGlmIChpbmRleCA+IDApIHtcclxuICAgICAgICAgICAgICAgICAgICByaG9zLnB1c2gobm9uX3plcm9fZGlzdFtpbmRleCAtIDFdKTtcclxuICAgICAgICAgICAgICAgICAgICBpZiAoaW50ZXJwb2xhdGlvbiA+IFNNT09USF9LX1RPTEVSQU5DRSkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICByaG9zW2ldLnZhbHVlICs9IGludGVycG9sYXRpb24gKiAobm9uX3plcm9fZGlzdFtpbmRleF0udmFsdWUgLSBub25femVyb19kaXN0W2luZGV4IC0gMV0pO1xyXG4gICAgICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICAgICAgcmhvc1tpXS52YWx1ZSA9IGludGVycG9sYXRpb24gKiBub25femVyb19kaXN0WzBdLnZhbHVlO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9IGVsc2UgaWYgKG5vbl96ZXJvX2Rpc3RfbGVuZ3RoID4gMCkge1xyXG4gICAgICAgICAgICAgICAgcmhvc1tpXSA9IG5vbl96ZXJvX2Rpc3Rbbm9uX3plcm9fZGlzdF9sZW5ndGggLSAxXS52YWx1ZTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBmb3IgKGxldCB4ID0gMDsgeCA8IG5faXRlcjsgKyt4KSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgcHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IGs7ICsraikge1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGQgPSBzZWFyY2hfcmVzdWx0W2pdLnZhbHVlIC0gcmhvc1tpXTtcclxuICAgICAgICAgICAgICAgICAgICBwc3VtICs9IChkID4gMCA/IE1hdGguZXhwKC0oZCAvIG1pZCkpIDogMSk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBpZiAoTWF0aC5hYnMocHN1bSAtIHRhcmdldCkgPCBTTU9PVEhfS19UT0xFUkFOQ0UpIHtcclxuICAgICAgICAgICAgICAgICAgICBicmVhaztcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGlmIChwc3VtID4gdGFyZ2V0KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgW2hpLCBtaWRdID0gW21pZCwgKGxvICsgaGkpIC8gMl07XHJcbiAgICAgICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgICAgIGlmIChoaSA9PT0gSW5maW5pdHkpIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgW2xvLCBtaWRdID0gW21pZCwgbWlkICogMl07XHJcbiAgICAgICAgICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgW2xvLCBtaWRdID0gW21pZCwgKGxvICsgaGkpIC8gMl07XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHNpZ21hc1tpXSA9IG1pZDtcclxuXHJcbiAgICAgICAgICAgIGNvbnN0IG1lYW5faXRoZCA9IHNlYXJjaF9yZXN1bHQucmVkdWNlKChhLCBiKSA9PiBhICsgYi52YWx1ZSwgMCkgLyBzZWFyY2hfcmVzdWx0Lmxlbmd0aDtcclxuICAgICAgICAgICAgLy9sZXQgbWVhbl9kID0gbnVsbDtcclxuICAgICAgICAgICAgaWYgKHJob3NbaV0gPiAwKSB7XHJcbiAgICAgICAgICAgICAgICBpZiAoc2lnbWFzW2ldIDwgTUlOX0tfRElTVF9TQ0FMRSAqIG1lYW5faXRoZCkge1xyXG4gICAgICAgICAgICAgICAgICAgIHNpZ21hc1tpXSA9IE1JTl9LX0RJU1RfU0NBTEUgKiBtZWFuX2l0aGQ7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBtZWFuX2QgPSBkaXN0YW5jZXMucmVkdWNlKChhY2MsIHJlcykgPT4gYWNjICsgcmVzLnJlZHVjZSgoYSwgYikgPT4gYSArIGIudmFsdWUsIDApIC8gcmVzLmxlbmd0aCk7XHJcbiAgICAgICAgICAgICAgICBpZiAoc2lnbWFzW2ldID4gTUlOX0tfRElTVF9TQ0FMRSAqIG1lYW5fZCkge1xyXG4gICAgICAgICAgICAgICAgICAgIHNpZ21hc1tpXSA9IE1JTl9LX0RJU1RfU0NBTEUgKiBtZWFuX2Q7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4ge1xyXG4gICAgICAgICAgICBcImRpc3RhbmNlc1wiOiBkaXN0YW5jZXMsIFxyXG4gICAgICAgICAgICBcInNpZ21hc1wiOiBzaWdtYXMsIFxyXG4gICAgICAgICAgICBcInJob3NcIjogcmhvc1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICBfZnV6enlfc2ltcGxpY2lhbF9zZXQoWCwgbl9uZWlnaGJvcnMpIHtcclxuICAgICAgICBjb25zdCBOID0gWC5zaGFwZVswXTtcclxuICAgICAgICBjb25zdCBrbm4gPSBuZXcgQmFsbFRyZWUoWC50bzJkQXJyYXksIGV1Y2xpZGVhbik7XHJcbiAgICAgICAgbGV0IHsgZGlzdGFuY2VzLCBzaWdtYXMsIHJob3MgfSA9IHRoaXMuX3Ntb290aF9rbm5fZGlzdChrbm4sIG5fbmVpZ2hib3JzKTtcclxuICAgICAgICBkaXN0YW5jZXMgPSB0aGlzLl9jb21wdXRlX21lbWJlcnNoaXBfc3RyZW5ndGhzKGRpc3RhbmNlcywgc2lnbWFzLCByaG9zKTtcclxuICAgICAgICBjb25zdCByZXN1bHQgPSBuZXcgTWF0cml4KE4sIE4sIFwiemVyb3NcIik7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgZGlzdGFuY2VzX2kgPSBkaXN0YW5jZXNbaV07XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgZGlzdGFuY2VzX2kubGVuZ3RoOyArK2opIHtcclxuICAgICAgICAgICAgICAgIHJlc3VsdC5zZXRfZW50cnkoaSwgZGlzdGFuY2VzX2lbal0uZWxlbWVudC5pbmRleCwgZGlzdGFuY2VzX2lbal0udmFsdWUpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGNvbnN0IHRyYW5zcG9zZWRfcmVzdWx0ID0gcmVzdWx0LlQ7XHJcbiAgICAgICAgY29uc3QgcHJvZF9tYXRyaXggPSByZXN1bHQubXVsdCh0cmFuc3Bvc2VkX3Jlc3VsdCk7XHJcbiAgICAgICAgcmV0dXJuIHJlc3VsdFxyXG4gICAgICAgICAgICAuYWRkKHRyYW5zcG9zZWRfcmVzdWx0KVxyXG4gICAgICAgICAgICAuc3ViKHByb2RfbWF0cml4KVxyXG4gICAgICAgICAgICAubXVsdCh0aGlzLl9zZXRfb3BfbWl4X3JhdGlvKVxyXG4gICAgICAgICAgICAuYWRkKHByb2RfbWF0cml4Lm11bHQoMSAtIHRoaXMuX3NldF9vcF9taXhfcmF0aW8pKTtcclxuICAgIH1cclxuXHJcbiAgICBfbWFrZV9lcG9jaHNfcGVyX3NhbXBsZShuX2Vwb2Nocykge1xyXG4gICAgICAgIGNvbnN0IHdlaWdodHMgPSB0aGlzLl93ZWlnaHRzO1xyXG4gICAgICAgIGNvbnN0IHJlc3VsdCA9IG5ldyBGbG9hdDMyQXJyYXkod2VpZ2h0cy5sZW5ndGgpLmZpbGwoLTEpO1xyXG4gICAgICAgIGNvbnN0IHdlaWdodHNfbWF4ID0gbWF4KHdlaWdodHMpO1xyXG4gICAgICAgIGNvbnN0IG5fc2FtcGxlcyA9IHdlaWdodHMubWFwKHcgPT4gbl9lcG9jaHMgKiAodyAvIHdlaWdodHNfbWF4KSk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCByZXN1bHQubGVuZ3RoOyArK2kpIFxyXG4gICAgICAgICAgaWYgKG5fc2FtcGxlc1tpXSA+IDApIHJlc3VsdFtpXSA9IE1hdGgucm91bmQobl9lcG9jaHMgLyBuX3NhbXBsZXNbaV0pO1xyXG4gICAgICAgIHJldHVybiByZXN1bHQ7XHJcbiAgICB9XHJcblxyXG4gICAgX3RvY29vKGdyYXBoKSB7XHJcbiAgICAgICAgY29uc3Qgcm93cyA9IFtdO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSBbXTtcclxuICAgICAgICBjb25zdCBkYXRhID0gW107XHJcbiAgICAgICAgY29uc3QgWyByb3dzX24sIGNvbHNfbiBdID0gZ3JhcGguc2hhcGU7XHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93c19uOyArK3Jvdykge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzX247ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBlbnRyeSA9IGdyYXBoLmVudHJ5KHJvdywgY29sKTtcclxuICAgICAgICAgICAgICAgIGlmIChlbnRyeSAhPT0gMCkge1xyXG4gICAgICAgICAgICAgICAgICAgIHJvd3MucHVzaChyb3cpO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbHMucHVzaChjb2wpO1xyXG4gICAgICAgICAgICAgICAgICAgIGRhdGEucHVzaChlbnRyeSk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHtcclxuICAgICAgICAgICAgXCJyb3dzXCI6IHJvd3MsIFxyXG4gICAgICAgICAgICBcImNvbHNcIjogY29scywgXHJcbiAgICAgICAgICAgIFwiZGF0YVwiOiBkYXRhXHJcbiAgICAgICAgfTtcclxuICAgIH1cclxuXHJcbiAgICBpbml0KCkge1xyXG4gICAgICAgIGNvbnN0IFsgYSwgYiBdID0gdGhpcy5fZmluZF9hYl9wYXJhbXModGhpcy5fc3ByZWFkLCB0aGlzLl9taW5fZGlzdCk7XHJcbiAgICAgICAgdGhpcy5fYSA9IGE7XHJcbiAgICAgICAgdGhpcy5fYiA9IGI7XHJcbiAgICAgICAgdGhpcy5fZ3JhcGggPSB0aGlzLl9mdXp6eV9zaW1wbGljaWFsX3NldCh0aGlzLlgsIHRoaXMuX25fbmVpZ2hib3JzKTtcclxuICAgICAgICBjb25zdCB7IHJvd3MsIGNvbHMsIGRhdGE6IHdlaWdodHMgfSA9IHRoaXMuX3RvY29vKHRoaXMuX2dyYXBoKTtcclxuICAgICAgICB0aGlzLl9oZWFkID0gcm93cztcclxuICAgICAgICB0aGlzLl90YWlsID0gY29scztcclxuICAgICAgICB0aGlzLl93ZWlnaHRzID0gd2VpZ2h0cztcclxuICAgICAgICB0aGlzLl9lcG9jaHNfcGVyX3NhbXBsZSA9IHRoaXMuX21ha2VfZXBvY2hzX3Blcl9zYW1wbGUodGhpcy5fbl9lcG9jaHMpO1xyXG4gICAgICAgIHRoaXMuX2Vwb2Noc19wZXJfbmVnYXRpdmVfc2FtcGxlID0gdGhpcy5fZXBvY2hzX3Blcl9zYW1wbGUubWFwKGQgPT4gZCAqIHRoaXMuX25lZ2F0aXZlX3NhbXBsZV9yYXRlKTtcclxuICAgICAgICB0aGlzLl9lcG9jaF9vZl9uZXh0X3NhbXBsZSA9IHRoaXMuX2Vwb2Noc19wZXJfc2FtcGxlLnNsaWNlKCk7XHJcbiAgICAgICAgdGhpcy5fZXBvY2hfb2ZfbmV4dF9uZWdhdGl2ZV9zYW1wbGUgPSB0aGlzLl9lcG9jaHNfcGVyX25lZ2F0aXZlX3NhbXBsZS5zbGljZSgpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIHNldCBsb2NhbF9jb25uZWN0aXZpdHkodmFsdWUpIHtcclxuICAgICAgICB0aGlzLl9sb2NhbF9jb25uZWN0aXZpdHkgPSB2YWx1ZTtcclxuICAgIH1cclxuXHJcbiAgICBnZXQgbG9jYWxfY29ubmVjdGl2aXR5KCkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLl9sb2NhbF9jb25uZWN0aXZpdHk7XHJcbiAgICB9XHJcblxyXG4gICAgc2V0IG1pbl9kaXN0KHZhbHVlKSB7XHJcbiAgICAgICAgdGhpcy5fbWluX2Rpc3QgPSB2YWx1ZTtcclxuICAgIH1cclxuXHJcbiAgICBnZXQgbWluX2Rpc3QoKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX21pbl9kaXN0O1xyXG4gICAgfVxyXG5cclxuICAgIGdyYXBoKCkge1xyXG4gICAgICAgIHRoaXMuY2hlY2tfaW5pdCgpO1xyXG4gICAgICAgIHJldHVybiB7IGNvbHM6IHRoaXMuX2hlYWQsIHJvd3M6IHRoaXMuX3RhaWwsIHdlaWdodHM6IHRoaXMuX3dlaWdodHMgfTtcclxuICAgIH1cclxuXHJcbiAgICB0cmFuc2Zvcm0oaXRlcmF0aW9ucykge1xyXG4gICAgICAgIHRoaXMuY2hlY2tfaW5pdCgpO1xyXG4gICAgICAgIGl0ZXJhdGlvbnMgPSBpdGVyYXRpb25zIHx8IHRoaXMuX25fZXBvY2hzO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgaXRlcmF0aW9uczsgKytpKSB7XHJcbiAgICAgICAgICAgIHRoaXMubmV4dCgpO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG5cclxuICAgICogZ2VuZXJhdG9yKCkge1xyXG4gICAgICAgIHRoaXMuY2hlY2tfaW5pdCgpO1xyXG4gICAgICAgIHRoaXMuX2l0ZXIgPSAwXHJcbiAgICAgICAgd2hpbGUgKHRoaXMuX2l0ZXIgPCB0aGlzLl9uX2Vwb2Nocykge1xyXG4gICAgICAgICAgICB0aGlzLm5leHQoKTtcclxuICAgICAgICAgICAgeWllbGQgdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcy5wcm9qZWN0aW9uO1xyXG4gICAgfVxyXG5cclxuICAgIF9jbGlwKHgpIHtcclxuICAgICAgICBpZiAoeCA+IDQpIHJldHVybiA0O1xyXG4gICAgICAgIGlmICh4IDwgLTQpIHJldHVybiAtNDtcclxuICAgICAgICByZXR1cm4geDtcclxuICAgIH1cclxuXHJcbiAgICBfb3B0aW1pemVfbGF5b3V0KGhlYWRfZW1iZWRkaW5nLCB0YWlsX2VtYmVkZGluZywgaGVhZCwgdGFpbCkge1xyXG4gICAgICAgIGNvbnN0IHsgXHJcbiAgICAgICAgICAgIF9kOiBkaW0sIFxyXG4gICAgICAgICAgICBfYWxwaGE6IGFscGhhLCBcclxuICAgICAgICAgICAgX3JlcHVsc2lvbl9zdHJlbmd0aDogcmVwdWxzaW9uX3N0cmVuZ3RoLCBcclxuICAgICAgICAgICAgX2E6IGEsIFxyXG4gICAgICAgICAgICBfYjogYixcclxuICAgICAgICAgICAgX2Vwb2Noc19wZXJfc2FtcGxlOiBlcG9jaHNfcGVyX3NhbXBsZSxcclxuICAgICAgICAgICAgX2Vwb2Noc19wZXJfbmVnYXRpdmVfc2FtcGxlOiBlcG9jaHNfcGVyX25lZ2F0aXZlX3NhbXBsZSxcclxuICAgICAgICAgICAgX2Vwb2NoX29mX25leHRfbmVnYXRpdmVfc2FtcGxlOiBlcG9jaF9vZl9uZXh0X25lZ2F0aXZlX3NhbXBsZSxcclxuICAgICAgICAgICAgX2Vwb2NoX29mX25leHRfc2FtcGxlOiBlcG9jaF9vZl9uZXh0X3NhbXBsZSxcclxuICAgICAgICAgICAgX2NsaXA6IGNsaXBcclxuICAgICAgICB9ID0gdGhpcztcclxuICAgICAgICBjb25zdCB0YWlsX2xlbmd0aCA9IHRhaWwubGVuZ3RoO1xyXG5cclxuICAgICAgICBmb3IgKGxldCBpID0gMCwgbiA9IGVwb2Noc19wZXJfc2FtcGxlLmxlbmd0aDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICBpZiAoZXBvY2hfb2ZfbmV4dF9zYW1wbGVbaV0gPD0gdGhpcy5faXRlcikge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgaiA9IGhlYWRbaV07XHJcbiAgICAgICAgICAgICAgICBjb25zdCBrID0gdGFpbFtpXTtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGN1cnJlbnQgPSBoZWFkX2VtYmVkZGluZy5yb3coaik7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBvdGhlciA9IHRhaWxfZW1iZWRkaW5nLnJvdyhrKTtcclxuICAgICAgICAgICAgICAgIGNvbnN0IGRpc3QgPSBldWNsaWRlYW5fc3F1YXJlZChjdXJyZW50LCBvdGhlcikvL3RoaXMuX21ldHJpYyhjdXJyZW50LCBvdGhlcik7XHJcbiAgICAgICAgICAgICAgICBsZXQgZ3JhZF9jb2VmZiA9IDA7XHJcbiAgICAgICAgICAgICAgICBpZiAoZGlzdCA+IDApIHtcclxuICAgICAgICAgICAgICAgICAgICBncmFkX2NvZWZmID0gKC0yICogYSAqIGIgKiBNYXRoLnBvdyhkaXN0LCBiIC0gMSkpIC8gKGEgKiBNYXRoLnBvdyhkaXN0LCBiKSArIDEpO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgZCA9IDA7IGQgPCBkaW07ICsrZCkge1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGdyYWRfZCA9IGNsaXAoZ3JhZF9jb2VmZiAqIChjdXJyZW50W2RdIC0gb3RoZXJbZF0pKSAqIGFscGhhO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGMgPSBjdXJyZW50W2RdICsgZ3JhZF9kO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IG8gPSBvdGhlcltkXSAtIGdyYWRfZDtcclxuICAgICAgICAgICAgICAgICAgICBjdXJyZW50W2RdID0gYztcclxuICAgICAgICAgICAgICAgICAgICBvdGhlcltkXSA9IG87XHJcbiAgICAgICAgICAgICAgICAgICAgaGVhZF9lbWJlZGRpbmcuc2V0X2VudHJ5KGosIGQsIGMpO1xyXG4gICAgICAgICAgICAgICAgICAgIHRhaWxfZW1iZWRkaW5nLnNldF9lbnRyeShrLCBkLCBvKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGVwb2NoX29mX25leHRfc2FtcGxlW2ldICs9IGVwb2Noc19wZXJfc2FtcGxlW2ldO1xyXG4gICAgICAgICAgICAgICAgY29uc3Qgbl9uZWdfc2FtcGxlcyA9ICh0aGlzLl9pdGVyIC0gZXBvY2hfb2ZfbmV4dF9uZWdhdGl2ZV9zYW1wbGVbaV0pIC8gZXBvY2hzX3Blcl9uZWdhdGl2ZV9zYW1wbGVbaV07XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBwID0gMDsgcCA8IG5fbmVnX3NhbXBsZXM7ICsrcCkge1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGsgPSBNYXRoLmZsb29yKHRoaXMuX3JhbmRvbWl6ZXIucmFuZG9tICogdGFpbF9sZW5ndGgpO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IG90aGVyID0gdGFpbF9lbWJlZGRpbmcucm93KHRhaWxba10pO1xyXG4gICAgICAgICAgICAgICAgICAgIGNvbnN0IGRpc3QgPSBldWNsaWRlYW5fc3F1YXJlZChjdXJyZW50LCBvdGhlcikvL3RoaXMuX21ldHJpYyhjdXJyZW50LCBvdGhlcik7XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IGdyYWRfY29lZmYgPSAwO1xyXG4gICAgICAgICAgICAgICAgICAgIGlmIChkaXN0ID4gMCkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBncmFkX2NvZWZmID0gKDIgKiByZXB1bHNpb25fc3RyZW5ndGggKiBiKSAvICgoLjAxICsgZGlzdCkgKiAoYSAqIE1hdGgucG93KGRpc3QsIGIpICsgMSkpO1xyXG4gICAgICAgICAgICAgICAgICAgIH0gZWxzZSBpZiAoaiA9PT0gaykge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBjb250aW51ZTtcclxuICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAgICAgZm9yIChsZXQgZCA9IDA7IGQgPCBkaW07ICsrZCkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBjb25zdCBncmFkX2QgPSBjbGlwKGdyYWRfY29lZmYgKiAoY3VycmVudFtkXSAtIG90aGVyW2RdKSkgKiBhbHBoYTtcclxuICAgICAgICAgICAgICAgICAgICAgICAgY29uc3QgYyA9IGN1cnJlbnRbZF0gKyBncmFkX2Q7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGNvbnN0IG8gPSBvdGhlcltkXSAtIGdyYWRfZDtcclxuICAgICAgICAgICAgICAgICAgICAgICAgY3VycmVudFtkXSA9IGM7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIG90aGVyW2RdID0gbztcclxuICAgICAgICAgICAgICAgICAgICAgICAgaGVhZF9lbWJlZGRpbmcuc2V0X2VudHJ5KGosIGQsIGMpO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICB0YWlsX2VtYmVkZGluZy5zZXRfZW50cnkodGFpbFtrXSwgZCwgbyk7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgZXBvY2hfb2ZfbmV4dF9uZWdhdGl2ZV9zYW1wbGVbaV0gKz0gKG5fbmVnX3NhbXBsZXMgKiBlcG9jaHNfcGVyX25lZ2F0aXZlX3NhbXBsZVtpXSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIGhlYWRfZW1iZWRkaW5nO1xyXG4gICAgfVxyXG5cclxuICAgIG5leHQoKSB7XHJcbiAgICAgICAgbGV0IGl0ZXIgPSArK3RoaXMuX2l0ZXI7XHJcbiAgICAgICAgbGV0IFkgPSB0aGlzLlk7XHJcblxyXG4gICAgICAgIHRoaXMuX2FscGhhID0gKHRoaXMuX2luaXRpYWxfYWxwaGEgKiAoMSAtIGl0ZXIgLyB0aGlzLl9uX2Vwb2NocykpO1xyXG4gICAgICAgIHRoaXMuWSA9IHRoaXMuX29wdGltaXplX2xheW91dChZLCBZLCB0aGlzLl9oZWFkLCB0aGlzLl90YWlsKTtcclxuXHJcbiAgICAgICAgcmV0dXJuIHRoaXMuWTtcclxuICAgIH1cclxufSAiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./dimred/UMAP.js\n");
+
+/***/ }),
+
+/***/ "./dimred/index.js":
+/*!*************************!*\
+  !*** ./dimred/index.js ***!
+  \*************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"PCA\": () => (/* reexport safe */ _PCA__WEBPACK_IMPORTED_MODULE_0__.PCA),\n/* harmony export */   \"MDS\": () => (/* reexport safe */ _MDS__WEBPACK_IMPORTED_MODULE_1__.MDS),\n/* harmony export */   \"ISOMAP\": () => (/* reexport safe */ _ISOMAP__WEBPACK_IMPORTED_MODULE_2__.ISOMAP),\n/* harmony export */   \"FASTMAP\": () => (/* reexport safe */ _FASTMAP__WEBPACK_IMPORTED_MODULE_3__.FASTMAP),\n/* harmony export */   \"LDA\": () => (/* reexport safe */ _LDA__WEBPACK_IMPORTED_MODULE_4__.LDA),\n/* harmony export */   \"LLE\": () => (/* reexport safe */ _LLE__WEBPACK_IMPORTED_MODULE_5__.LLE),\n/* harmony export */   \"LTSA\": () => (/* reexport safe */ _LTSA__WEBPACK_IMPORTED_MODULE_6__.LTSA),\n/* harmony export */   \"TSNE\": () => (/* reexport safe */ _TSNE__WEBPACK_IMPORTED_MODULE_7__.TSNE),\n/* harmony export */   \"UMAP\": () => (/* reexport safe */ _UMAP__WEBPACK_IMPORTED_MODULE_8__.UMAP),\n/* harmony export */   \"TriMap\": () => (/* reexport safe */ _TriMap__WEBPACK_IMPORTED_MODULE_9__.TriMap),\n/* harmony export */   \"LSP\": () => (/* reexport safe */ _LSP__WEBPACK_IMPORTED_MODULE_10__.LSP),\n/* harmony export */   \"TopoMap\": () => (/* reexport safe */ _TopoMap__WEBPACK_IMPORTED_MODULE_11__.TopoMap),\n/* harmony export */   \"SAMMON\": () => (/* reexport safe */ _SAMMON__WEBPACK_IMPORTED_MODULE_12__.SAMMON)\n/* harmony export */ });\n/* harmony import */ var _PCA__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./PCA */ \"./dimred/PCA.js\");\n/* harmony import */ var _MDS__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MDS */ \"./dimred/MDS.js\");\n/* harmony import */ var _ISOMAP__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ISOMAP */ \"./dimred/ISOMAP.js\");\n/* harmony import */ var _FASTMAP__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./FASTMAP */ \"./dimred/FASTMAP.js\");\n/* harmony import */ var _LDA__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./LDA */ \"./dimred/LDA.js\");\n/* harmony import */ var _LLE__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./LLE */ \"./dimred/LLE.js\");\n/* harmony import */ var _LTSA__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./LTSA */ \"./dimred/LTSA.js\");\n/* harmony import */ var _TSNE__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./TSNE */ \"./dimred/TSNE.js\");\n/* harmony import */ var _UMAP__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./UMAP */ \"./dimred/UMAP.js\");\n/* harmony import */ var _TriMap__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./TriMap */ \"./dimred/TriMap.js\");\n/* harmony import */ var _LSP__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./LSP */ \"./dimred/LSP.js\");\n/* harmony import */ var _TopoMap__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./TopoMap */ \"./dimred/TopoMap.js\");\n/* harmony import */ var _SAMMON__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./SAMMON */ \"./dimred/SAMMON.js\");\n/**\r\n * @module dimensionality_reduction\r\n */\n\n\n\n\n\n //export { MLLE } from \"./MLLE\";\n\n\n\n //export { OAP } from \"./OAP\";\n\n\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2RpbXJlZC9pbmRleC5qcz8yNDYxIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtDQUVBOztBQUNBO0FBQ0E7Q0FFQTs7QUFDQTtBQUNBO0FBQ0EiLCJmaWxlIjoiLi9kaW1yZWQvaW5kZXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogQG1vZHVsZSBkaW1lbnNpb25hbGl0eV9yZWR1Y3Rpb25cclxuICovXHJcbmV4cG9ydCB7IFBDQSB9IGZyb20gXCIuL1BDQVwiO1xyXG5leHBvcnQgeyBNRFMgfSBmcm9tIFwiLi9NRFNcIjtcclxuZXhwb3J0IHsgSVNPTUFQIH0gZnJvbSBcIi4vSVNPTUFQXCI7XHJcbmV4cG9ydCB7IEZBU1RNQVAgfSBmcm9tIFwiLi9GQVNUTUFQXCI7XHJcbmV4cG9ydCB7IExEQSB9IGZyb20gXCIuL0xEQVwiO1xyXG5leHBvcnQgeyBMTEUgfSBmcm9tIFwiLi9MTEVcIjtcclxuLy9leHBvcnQgeyBNTExFIH0gZnJvbSBcIi4vTUxMRVwiO1xyXG5leHBvcnQgeyBMVFNBIH0gZnJvbSBcIi4vTFRTQVwiO1xyXG5leHBvcnQgeyBUU05FIH0gZnJvbSBcIi4vVFNORVwiO1xyXG5leHBvcnQgeyBVTUFQIH0gZnJvbSBcIi4vVU1BUFwiO1xyXG4vL2V4cG9ydCB7IE9BUCB9IGZyb20gXCIuL09BUFwiO1xyXG5leHBvcnQgeyBUcmlNYXAgfSBmcm9tIFwiLi9UcmlNYXBcIjtcclxuZXhwb3J0IHsgTFNQIH0gZnJvbSBcIi4vTFNQXCI7XHJcbmV4cG9ydCB7IFRvcG9NYXAgfSBmcm9tIFwiLi9Ub3BvTWFwXCI7XHJcbmV4cG9ydCB7IFNBTU1PTiB9IGZyb20gXCIuL1NBTU1PTlwiOyJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./dimred/index.js\n");
+
+/***/ }),
+
+/***/ "./index.js":
+/*!******************!*\
+  !*** ./index.js ***!
+  \******************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Randomizer\": () => (/* reexport safe */ _util_index__WEBPACK_IMPORTED_MODULE_0__.Randomizer),\n/* harmony export */   \"max\": () => (/* reexport safe */ _util_index__WEBPACK_IMPORTED_MODULE_0__.max),\n/* harmony export */   \"kahan_sum\": () => (/* reexport safe */ _numerical_index__WEBPACK_IMPORTED_MODULE_1__.kahan_sum),\n/* harmony export */   \"neumair_sum\": () => (/* reexport safe */ _numerical_index__WEBPACK_IMPORTED_MODULE_1__.neumair_sum),\n/* harmony export */   \"canberra\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.canberra),\n/* harmony export */   \"chebyshev\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.chebyshev),\n/* harmony export */   \"cosine\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.cosine),\n/* harmony export */   \"euclidean\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.euclidean),\n/* harmony export */   \"euclidean_squared\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.euclidean_squared),\n/* harmony export */   \"manhattan\": () => (/* reexport safe */ _metrics_index__WEBPACK_IMPORTED_MODULE_2__.manhattan),\n/* harmony export */   \"Matrix\": () => (/* reexport safe */ _matrix_index__WEBPACK_IMPORTED_MODULE_3__.Matrix),\n/* harmony export */   \"distance_matrix\": () => (/* reexport safe */ _matrix_index__WEBPACK_IMPORTED_MODULE_3__.distance_matrix),\n/* harmony export */   \"k_nearest_neighbors\": () => (/* reexport safe */ _matrix_index__WEBPACK_IMPORTED_MODULE_3__.k_nearest_neighbors),\n/* harmony export */   \"linspace\": () => (/* reexport safe */ _matrix_index__WEBPACK_IMPORTED_MODULE_3__.linspace),\n/* harmony export */   \"norm\": () => (/* reexport safe */ _matrix_index__WEBPACK_IMPORTED_MODULE_3__.norm),\n/* harmony export */   \"BallTree\": () => (/* reexport safe */ _knn_index__WEBPACK_IMPORTED_MODULE_4__.BallTree),\n/* harmony export */   \"Heap\": () => (/* reexport safe */ _datastructure_index__WEBPACK_IMPORTED_MODULE_5__.Heap),\n/* harmony export */   \"qr\": () => (/* reexport safe */ _linear_algebra_index__WEBPACK_IMPORTED_MODULE_6__.qr),\n/* harmony export */   \"simultaneous_poweriteration\": () => (/* reexport safe */ _linear_algebra_index__WEBPACK_IMPORTED_MODULE_6__.simultaneous_poweriteration),\n/* harmony export */   \"FASTMAP\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.FASTMAP),\n/* harmony export */   \"ISOMAP\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.ISOMAP),\n/* harmony export */   \"LDA\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.LDA),\n/* harmony export */   \"LLE\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.LLE),\n/* harmony export */   \"LSP\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.LSP),\n/* harmony export */   \"LTSA\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.LTSA),\n/* harmony export */   \"MDS\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.MDS),\n/* harmony export */   \"PCA\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.PCA),\n/* harmony export */   \"SAMMON\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.SAMMON),\n/* harmony export */   \"TSNE\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.TSNE),\n/* harmony export */   \"TopoMap\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.TopoMap),\n/* harmony export */   \"TriMap\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.TriMap),\n/* harmony export */   \"UMAP\": () => (/* reexport safe */ _dimred_index__WEBPACK_IMPORTED_MODULE_7__.UMAP),\n/* harmony export */   \"powell\": () => (/* reexport safe */ _optimization_index__WEBPACK_IMPORTED_MODULE_8__.powell),\n/* harmony export */   \"Hierarchical_Clustering\": () => (/* reexport safe */ _clustering_index__WEBPACK_IMPORTED_MODULE_9__.Hierarchical_Clustering),\n/* harmony export */   \"KMeans\": () => (/* reexport safe */ _clustering_index__WEBPACK_IMPORTED_MODULE_9__.KMeans),\n/* harmony export */   \"KMedoids\": () => (/* reexport safe */ _clustering_index__WEBPACK_IMPORTED_MODULE_9__.KMedoids),\n/* harmony export */   \"OPTICS\": () => (/* reexport safe */ _clustering_index__WEBPACK_IMPORTED_MODULE_9__.OPTICS),\n/* harmony export */   \"version\": () => (/* reexport safe */ _package_json__WEBPACK_IMPORTED_MODULE_10__.version)\n/* harmony export */ });\n/* harmony import */ var _util_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util/index */ \"./util/index.js\");\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./numerical/index */ \"./numerical/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _knn_index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./knn/index */ \"./knn/index.js\");\n/* harmony import */ var _datastructure_index__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./datastructure/index */ \"./datastructure/index.js\");\n/* harmony import */ var _linear_algebra_index__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./linear_algebra/index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _dimred_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./dimred/index */ \"./dimred/index.js\");\n/* harmony import */ var _optimization_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./optimization/index */ \"./optimization/index.js\");\n/* harmony import */ var _clustering_index__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./clustering/index */ \"./clustering/index.js\");\n/* harmony import */ var _package_json__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./package.json */ \"./package.json\");\n\n\n\n\n\n\n\n\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2luZGV4LmpzPzQxZjUiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBIiwiZmlsZSI6Ii4vaW5kZXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgKiBmcm9tICcuL3V0aWwvaW5kZXgnO1xyXG5leHBvcnQgKiBmcm9tIFwiLi9udW1lcmljYWwvaW5kZXhcIjtcclxuZXhwb3J0ICogZnJvbSAnLi9tZXRyaWNzL2luZGV4JztcclxuZXhwb3J0ICogZnJvbSBcIi4vbWF0cml4L2luZGV4XCI7XHJcbmV4cG9ydCAqIGZyb20gJy4va25uL2luZGV4JztcclxuZXhwb3J0ICogZnJvbSAnLi9kYXRhc3RydWN0dXJlL2luZGV4JztcclxuZXhwb3J0ICogZnJvbSAnLi9saW5lYXJfYWxnZWJyYS9pbmRleCc7XHJcbmV4cG9ydCAqIGZyb20gXCIuL2RpbXJlZC9pbmRleFwiO1xyXG5leHBvcnQgKiBmcm9tIFwiLi9vcHRpbWl6YXRpb24vaW5kZXhcIjtcclxuZXhwb3J0ICogZnJvbSBcIi4vY2x1c3RlcmluZy9pbmRleFwiO1xyXG5leHBvcnQge3ZlcnNpb259IGZyb20gXCIuL3BhY2thZ2UuanNvblwiOyJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./index.js\n");
+
+/***/ }),
+
+/***/ "./knn/BallTree.js":
+/*!*************************!*\
+  !*** ./knn/BallTree.js ***!
+  \*************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"BallTree\": () => (/* binding */ BallTree)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _datastructure_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../datastructure/index */ \"./datastructure/index.js\");\n\n\n/**\r\n * @class\r\n * @alias BallTree\r\n */\n\nclass BallTree {\n  /**\r\n   * Generates a BallTree with given {@link elements}.\r\n   * @constructor\r\n   * @memberof module:knn\r\n   * @alias BallTree\r\n   * @param {Array=} elements - Elements which should be added to the BallTree\r\n   * @param {Function} [metric = euclidean] metric to use: (a, b) => distance\r\n   * @see {@link https://en.wikipedia.org/wiki/Ball_tree}\r\n   * @see {@link https://github.com/invisal/noobjs/blob/master/src/tree/BallTree.js}\r\n   * @returns {BallTree}\r\n   */\n  constructor(elements = null, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean) {\n    this._Node = class {\n      constructor(pivot, child1 = null, child2 = null, radius = null) {\n        this.pivot = pivot;\n        this.child1 = child1;\n        this.child2 = child2;\n        this.radius = radius;\n      }\n\n    };\n    this._Leaf = class {\n      constructor(points) {\n        this.points = points;\n      }\n\n    };\n    this._metric = metric;\n\n    if (elements) {\n      this.add(elements);\n    }\n\n    return this;\n  }\n  /**\r\n   * \r\n   * @param {Array<*>} elements - new elements.\r\n   * @returns {BallTree}\r\n   */\n\n\n  add(elements) {\n    elements = elements.map((element, index) => {\n      return {\n        index: index,\n        element: element\n      };\n    });\n    this._root = this._construct(elements);\n    return this;\n  }\n  /**\r\n   * @private\r\n   * @param {Array<*>} elements \r\n   * @returns {Node} root of balltree.\r\n   */\n\n\n  _construct(elements) {\n    if (elements.length === 1) {\n      return new this._Leaf(elements);\n    } else {\n      let c = this._greatest_spread(elements);\n\n      let sorted_elements = elements.sort((a, b) => a.element[c] - b.element[c]);\n      let n = sorted_elements.length;\n      let p_index = Math.floor(n / 2);\n      let p = elements[p_index];\n      let L = sorted_elements.slice(0, p_index);\n      let R = sorted_elements.slice(p_index, n);\n      let radius = Math.max(...elements.map(d => this._metric(p.element, d.element)));\n      let B;\n\n      if (L.length > 0 && R.length > 0) {\n        B = new this._Node(p, this._construct(L), this._construct(R), radius);\n      } else {\n        B = new this._Leaf(elements);\n      }\n\n      return B;\n    }\n  }\n  /**\r\n   * @private\r\n   * @param {Node} B \r\n   * @returns {Number}\r\n   */\n\n\n  _greatest_spread(B) {\n    let d = B[0].element.length;\n    let start = new Array(d);\n\n    for (let i = 0; i < d; ++i) {\n      start[i] = [Infinity, -Infinity];\n    }\n\n    let spread = B.reduce((acc, current) => {\n      for (let i = 0; i < d; ++i) {\n        acc[i][0] = Math.min(acc[i][0], current.element[i]);\n        acc[i][1] = Math.max(acc[i][1], current.element[i]);\n      }\n\n      return acc;\n    }, start);\n    spread = spread.map(d => d[1] - d[0]);\n    let c = 0;\n\n    for (let i = 0; i < d; ++i) {\n      c = spread[i] > spread[c] ? i : c;\n    }\n\n    return c;\n  }\n  /**\r\n   * \r\n   * @param {*} t - query element.\r\n   * @param {Number} [k = 5] - number of nearest neighbors to return.\r\n   * @returns {Heap} - Heap consists of the {@link k} nearest neighbors.\r\n   */\n\n\n  search(t, k = 5) {\n    return this._search(t, k, new _datastructure_index__WEBPACK_IMPORTED_MODULE_1__.Heap(null, d => this._metric(d.element, t), \"max\"), this._root);\n  }\n  /**\r\n   * @private\r\n   * @param {*} t - query element.\r\n   * @param {Number} [k = 5] - number of nearest neighbors to return.\r\n   * @param {Heap} Q - Heap consists of the currently found {@link k} nearest neighbors.\r\n   * @param {Node|Leaf} B \r\n   */\n\n\n  _search(t, k, Q, B) {\n    // B is Node\n    if (Q.length >= k && B.pivot && B.radius && this._metric(t, B.pivot.element) - B.radius >= Q.first.value) {\n      return Q;\n    }\n\n    if (B.child1) this._search(t, k, Q, B.child1);\n    if (B.child2) this._search(t, k, Q, B.child2); // B is leaf\n\n    if (B.points) {\n      for (let i = 0, n = B.points.length; i < n; ++i) {\n        let p = B.points[i];\n\n        if (k > Q.length) {\n          Q.push(p);\n        } else {\n          Q.push(p);\n          Q.pop();\n        }\n      }\n    }\n\n    return Q;\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2tubi9CYWxsVHJlZS5qcz9hMmExIl0sIm5hbWVzIjpbIkJhbGxUcmVlIiwiY29uc3RydWN0b3IiLCJlbGVtZW50cyIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsIl9Ob2RlIiwicGl2b3QiLCJjaGlsZDEiLCJjaGlsZDIiLCJyYWRpdXMiLCJfTGVhZiIsInBvaW50cyIsIl9tZXRyaWMiLCJhZGQiLCJtYXAiLCJlbGVtZW50IiwiaW5kZXgiLCJfcm9vdCIsIl9jb25zdHJ1Y3QiLCJsZW5ndGgiLCJjIiwiX2dyZWF0ZXN0X3NwcmVhZCIsInNvcnRlZF9lbGVtZW50cyIsInNvcnQiLCJhIiwiYiIsIm4iLCJwX2luZGV4IiwiTWF0aCIsImZsb29yIiwicCIsIkwiLCJzbGljZSIsIlIiLCJtYXgiLCJkIiwiQiIsInN0YXJ0IiwiQXJyYXkiLCJpIiwiSW5maW5pdHkiLCJzcHJlYWQiLCJyZWR1Y2UiLCJhY2MiLCJjdXJyZW50IiwibWluIiwic2VhcmNoIiwidCIsImsiLCJfc2VhcmNoIiwiSGVhcCIsIlEiLCJmaXJzdCIsInZhbHVlIiwicHVzaCIsInBvcCJdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUNPLE1BQU1BLFFBQU4sQ0FBZTtBQUNsQjtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsUUFBUSxHQUFHLElBQVosRUFBa0JDLE1BQU0sR0FBR0MscURBQTNCLEVBQXNDO0FBQzdDLFNBQUtDLEtBQUwsR0FBYSxNQUFNO0FBQ2ZKLGlCQUFXLENBQUNLLEtBQUQsRUFBUUMsTUFBTSxHQUFDLElBQWYsRUFBcUJDLE1BQU0sR0FBQyxJQUE1QixFQUFrQ0MsTUFBTSxHQUFDLElBQXpDLEVBQStDO0FBQ3RELGFBQUtILEtBQUwsR0FBYUEsS0FBYjtBQUNBLGFBQUtDLE1BQUwsR0FBY0EsTUFBZDtBQUNBLGFBQUtDLE1B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T0FBTCxDQUFhRixDQUFiLEVBQWdCQyxDQUFoQixFQUFtQkcsQ0FBbkIsRUFBc0JmLENBQUMsQ0FBQzVCLE1BQXhCLEVBTkUsQ0FRaEI7O0FBQ0EsUUFBSTRCLENBQUMsQ0FBQ3pCLE1BQU4sRUFBYztBQUNWLFdBQUssSUFBSTRCLENBQUMsR0FBRyxDQUFSLEVBQVdiLENBQUMsR0FBR1UsQ0FBQyxDQUFDekIsTUFBRixDQUFTUSxNQUE3QixFQUFxQ29CLENBQUMsR0FBR2IsQ0FBekMsRUFBNEMsRUFBRWEsQ0FBOUMsRUFBaUQ7QUFDN0MsWUFBSVQsQ0FBQyxHQUFHTSxDQUFDLENBQUN6QixNQUFGLENBQVM0QixDQUFULENBQVI7O0FBQ0EsWUFBSVMsQ0FBQyxHQUFHRyxDQUFDLENBQUNoQyxNQUFWLEVBQWtCO0FBQ2RnQyxXQUFDLENBQUNHLElBQUYsQ0FBT3hCLENBQVA7QUFDSCxTQUZELE1BRU87QUFDSHFCLFdBQUMsQ0FBQ0csSUFBRixDQUFPeEIsQ0FBUDtBQUNBcUIsV0FBQyxDQUFDSSxHQUFGO0FBQ0g7QUFDSjtBQUNKOztBQUNELFdBQU9KLENBQVA7QUFDSDs7QUE1SWlCIiwiZmlsZSI6Ii4va25uL0JhbGxUcmVlLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIjtcclxuaW1wb3J0IHsgSGVhcCB9IGZyb20gXCIuLi9kYXRhc3RydWN0dXJlL2luZGV4XCI7XHJcbi8qKlxyXG4gKiBAY2xhc3NcclxuICogQGFsaWFzIEJhbGxUcmVlXHJcbiAqL1xyXG5leHBvcnQgY2xhc3MgQmFsbFRyZWUge1xyXG4gICAgLyoqXHJcbiAgICAgKiBHZW5lcmF0ZXMgYSBCYWxsVHJlZSB3aXRoIGdpdmVuIHtAbGluayBlbGVtZW50c30uXHJcbiAgICAgKiBAY29uc3RydWN0b3JcclxuICAgICAqIEBtZW1iZXJvZiBtb2R1bGU6a25uXHJcbiAgICAgKiBAYWxpYXMgQmFsbFRyZWVcclxuICAgICAqIEBwYXJhbSB7QXJyYXk9fSBlbGVtZW50cyAtIEVsZW1lbnRzIHdoaWNoIHNob3VsZCBiZSBhZGRlZCB0byB0aGUgQmFsbFRyZWVcclxuICAgICAqIEBwYXJhbSB7RnVuY3Rpb259IFttZXRyaWMgPSBldWNsaWRlYW5dIG1ldHJpYyB0byB1c2U6IChhLCBiKSA9PiBkaXN0YW5jZVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvQmFsbF90cmVlfVxyXG4gICAgICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9naXRodWIuY29tL2ludmlzYWwvbm9vYmpzL2Jsb2IvbWFzdGVyL3NyYy90cmVlL0JhbGxUcmVlLmpzfVxyXG4gICAgICogQHJldHVybnMge0JhbGxUcmVlfVxyXG4gICAgICovXHJcbiAgICBjb25zdHJ1Y3RvcihlbGVtZW50cyA9IG51bGwsIG1ldHJpYyA9IGV1Y2xpZGVhbikge1xyXG4gICAgICAgIHRoaXMuX05vZGUgPSBjbGFzcyB7XHJcbiAgICAgICAgICAgIGNvbnN0cnVjdG9yKHBpdm90LCBjaGlsZDE9bnVsbCwgY2hpbGQyPW51bGwsIHJhZGl1cz1udWxsKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLnBpdm90ID0gcGl2b3Q7XHJcbiAgICAgICAgICAgICAgICB0aGlzLmNoaWxkMSA9IGNoaWxkMTtcclxuICAgICAgICAgICAgICAgIHRoaXMuY2hpbGQyID0gY2hpbGQyO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5yYWRpdXMgPSByYWRpdXM7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgdGhpcy5fTGVhZiA9IGNsYXNzIHtcclxuICAgICAgICAgICAgY29uc3RydWN0b3IocG9pbnRzKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLnBvaW50cyA9IHBvaW50cztcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICB0aGlzLl9tZXRyaWMgPSBtZXRyaWM7XHJcbiAgICAgICAgaWYgKGVsZW1lbnRzKSB7XHJcbiAgICAgICAgICAgIHRoaXMuYWRkKGVsZW1lbnRzKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBcclxuICAgICAqIEBwYXJhbSB7QXJyYXk8Kj59IGVsZW1lbnRzIC0gbmV3IGVsZW1lbnRzLlxyXG4gICAgICogQHJldHVybnMge0JhbGxUcmVlfVxyXG4gICAgICovXHJcbiAgICBhZGQoZWxlbWVudHMpIHtcclxuICAgICAgICBlbGVtZW50cyA9IGVsZW1lbnRzLm1hcCgoZWxlbWVudCwgaW5kZXgpID0+IHtcclxuICAgICAgICAgICAgcmV0dXJuIHtpbmRleDogaW5kZXgsIGVsZW1lbnQ6IGVsZW1lbnR9XHJcbiAgICAgICAgfSlcclxuICAgICAgICB0aGlzLl9yb290ID0gdGhpcy5fY29uc3RydWN0KGVsZW1lbnRzKVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQHByaXZhdGVcclxuICAgICAqIEBwYXJhbSB7QXJyYXk8Kj59IGVsZW1lbnRzIFxyXG4gICAgICogQHJldHVybnMge05vZGV9IHJvb3Qgb2YgYmFsbHRyZWUuXHJcbiAgICAgKi9cclxuICAgIF9jb25zdHJ1Y3QoZWxlbWVudHMpIHtcclxuICAgICAgICBpZiAoZWxlbWVudHMubGVuZ3RoID09PSAxKSB7XHJcbiAgICAgICAgICAgIHJldHVybiBuZXcgdGhpcy5fTGVhZihlbGVtZW50cyk7XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgbGV0IGMgPSB0aGlzLl9ncmVhdGVzdF9zcHJlYWQoZWxlbWVudHMpO1xyXG4gICAgICAgICAgICBsZXQgc29ydGVkX2VsZW1lbnRzID0gZWxlbWVudHMuc29ydCgoYSwgYikgPT4gYS5lbGVtZW50W2NdIC0gYi5lbGVtZW50W2NdKVxyXG4gICAgICAgICAgICBsZXQgbiA9IHNvcnRlZF9lbGVtZW50cy5sZW5ndGg7XHJcbiAgICAgICAgICAgIGxldCBwX2luZGV4ID0gTWF0aC5mbG9vcihuIC8gMik7XHJcbiAgICAgICAgICAgIGxldCBwID0gZWxlbWVudHNbcF9pbmRleF07XHJcbiAgICAgICAgICAgIGxldCBMID0gc29ydGVkX2VsZW1lbnRzLnNsaWNlKDAsIHBfaW5kZXgpO1xyXG4gICAgICAgICAgICBsZXQgUiA9IHNvcnRlZF9lbGVtZW50cy5zbGljZShwX2luZGV4LCBuKTtcclxuICAgICAgICAgICAgbGV0IHJhZGl1cyA9IE1hdGgubWF4KC4uLmVsZW1lbnRzLm1hcChkID0+IHRoaXMuX21ldHJpYyhwLmVsZW1lbnQsIGQuZWxlbWVudCkpKTtcclxuICAgICAgICAgICAgbGV0IEJcclxuICAgICAgICAgICAgaWYgKEwubGVuZ3RoID4gMCAmJiBSLmxlbmd0aCA+IDApIHsgICAgICAgICBcclxuICAgICAgICAgICAgICAgIEIgPSBuZXcgdGhpcy5fTm9kZShwLCB0aGlzLl9jb25zdHJ1Y3QoTCksIHRoaXMuX2NvbnN0cnVjdChSKSwgcmFkaXVzKTtcclxuICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgICAgIEIgPSBuZXcgdGhpcy5fTGVhZihlbGVtZW50cylcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICByZXR1cm4gQjtcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBAcHJpdmF0ZVxyXG4gICAgICogQHBhcmFtIHtOb2RlfSBCIFxyXG4gICAgICogQHJldHVybnMge051bWJlcn1cclxuICAgICAqL1xyXG4gICAgX2dyZWF0ZXN0X3NwcmVhZChCKSB7XHJcbiAgICAgICAgbGV0IGQgPSBCWzBdLmVsZW1lbnQubGVuZ3RoO1xyXG4gICAgICAgIGxldCBzdGFydCA9IG5ldyBBcnJheShkKTtcclxuXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBkOyArK2kpIHtcclxuICAgICAgICAgICAgc3RhcnRbaV0gPSBbSW5maW5pdHksIC1JbmZpbml0eV07XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICBsZXQgc3ByZWFkID0gQi5yZWR1Y2UoKGFjYywgY3VycmVudCkgPT4ge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGQ7ICsraSkge1xyXG4gICAgICAgICAgICAgICAgYWNjW2ldWzBdID0gTWF0aC5taW4oYWNjW2ldWzBdLCBjdXJyZW50LmVsZW1lbnRbaV0pO1xyXG4gICAgICAgICAgICAgICAgYWNjW2ldWzFdID0gTWF0aC5tYXgoYWNjW2ldWzFdLCBjdXJyZW50LmVsZW1lbnRbaV0pO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHJldHVybiBhY2M7XHJcbiAgICAgICAgfSwgc3RhcnQpXHJcbiAgICAgICAgc3ByZWFkID0gc3ByZWFkLm1hcChkID0+IGRbMV0gLSBkWzBdKTtcclxuICAgICAgICBcclxuICAgICAgICBsZXQgYyA9IDA7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBkOyArK2kpIHtcclxuICAgICAgICAgICAgYyA9IHNwcmVhZFtpXSA+IHNwcmVhZFtjXSA/IGkgOiBjO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gY1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogXHJcbiAgICAgKiBAcGFyYW0geyp9IHQgLSBxdWVyeSBlbGVtZW50LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtrID0gNV0gLSBudW1iZXIgb2YgbmVhcmVzdCBuZWlnaGJvcnMgdG8gcmV0dXJuLlxyXG4gICAgICogQHJldHVybnMge0hlYXB9IC0gSGVhcCBjb25zaXN0cyBvZiB0aGUge0BsaW5rIGt9IG5lYXJlc3QgbmVpZ2hib3JzLlxyXG4gICAgICovXHJcbiAgICBzZWFyY2godCwgayA9IDUpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5fc2VhcmNoKHQsIGssIG5ldyBIZWFwKG51bGwsIGQgPT4gdGhpcy5fbWV0cmljKGQuZWxlbWVudCwgdCksIFwibWF4XCIpLCB0aGlzLl9yb290KTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEBwcml2YXRlXHJcbiAgICAgKiBAcGFyYW0geyp9IHQgLSBxdWVyeSBlbGVtZW50LlxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtrID0gNV0gLSBudW1iZXIgb2YgbmVhcmVzdCBuZWlnaGJvcnMgdG8gcmV0dXJuLlxyXG4gICAgICogQHBhcmFtIHtIZWFwfSBRIC0gSGVhcCBjb25zaXN0cyBvZiB0aGUgY3VycmVudGx5IGZvdW5kIHtAbGluayBrfSBuZWFyZXN0IG5laWdoYm9ycy5cclxuICAgICAqIEBwYXJhbSB7Tm9kZXxMZWFmfSBCIFxyXG4gICAgICovXHJcbiAgICBfc2VhcmNoKHQsIGssIFEsIEIpIHtcclxuICAgICAgICAvLyBCIGlzIE5vZGVcclxuICAgICAgICBpZiAoUS5sZW5ndGggPj0gayAmJiBCLnBpdm90ICYmIEIucmFkaXVzICYmIHRoaXMuX21ldHJpYyh0LCBCLnBpdm90LmVsZW1lbnQpIC0gQi5yYWRpdXMgPj0gUS5maXJzdC52YWx1ZSkge1xyXG4gICAgICAgICAgICByZXR1cm4gUTtcclxuICAgICAgICB9IFxyXG4gICAgICAgIGlmIChCLmNoaWxkMSkgdGhpcy5fc2VhcmNoKHQsIGssIFEsIEIuY2hpbGQxKTtcclxuICAgICAgICBpZiAoQi5jaGlsZDIpIHRoaXMuX3NlYXJjaCh0LCBrLCBRLCBCLmNoaWxkMik7XHJcbiAgICAgICAgXHJcbiAgICAgICAgLy8gQiBpcyBsZWFmXHJcbiAgICAgICAgaWYgKEIucG9pbnRzKSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwLCBuID0gQi5wb2ludHMubGVuZ3RoOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgcCA9IEIucG9pbnRzW2ldO1xyXG4gICAgICAgICAgICAgICAgaWYgKGsgPiBRLmxlbmd0aCkge1xyXG4gICAgICAgICAgICAgICAgICAgIFEucHVzaChwKTtcclxuICAgICAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICAgICAgUS5wdXNoKHApO1xyXG4gICAgICAgICAgICAgICAgICAgIFEucG9wKCk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIFE7XHJcbiAgICB9XHJcblxyXG5cclxufVxyXG4iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./knn/BallTree.js\n");
+
+/***/ }),
+
+/***/ "./knn/index.js":
+/*!**********************!*\
+  !*** ./knn/index.js ***!
+  \**********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"BallTree\": () => (/* reexport safe */ _BallTree__WEBPACK_IMPORTED_MODULE_0__.BallTree)\n/* harmony export */ });\n/* harmony import */ var _BallTree__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BallTree */ \"./knn/BallTree.js\");\n/**\r\n * @module knn\r\n */\n//export { HNSW } from './HNSW'\n //export { NNDescent } from \"./NNDescent\"//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2tubi9pbmRleC5qcz9hZWE3Il0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7Q0FFQSIsImZpbGUiOiIuL2tubi9pbmRleC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBAbW9kdWxlIGtublxyXG4gKi9cclxuLy9leHBvcnQgeyBITlNXIH0gZnJvbSAnLi9ITlNXJ1xyXG5leHBvcnQgeyBCYWxsVHJlZSB9IGZyb20gJy4vQmFsbFRyZWUnXHJcbi8vZXhwb3J0IHsgTk5EZXNjZW50IH0gZnJvbSBcIi4vTk5EZXNjZW50XCIiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./knn/index.js\n");
+
+/***/ }),
+
+/***/ "./linear_algebra/index.js":
+/*!*********************************!*\
+  !*** ./linear_algebra/index.js ***!
+  \*********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"qr\": () => (/* reexport safe */ _qr__WEBPACK_IMPORTED_MODULE_0__.default),\n/* harmony export */   \"simultaneous_poweriteration\": () => (/* reexport safe */ _simultaneous_poweriteration__WEBPACK_IMPORTED_MODULE_1__.default)\n/* harmony export */ });\n/* harmony import */ var _qr__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./qr */ \"./linear_algebra/qr.js\");\n/* harmony import */ var _simultaneous_poweriteration__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./simultaneous_poweriteration */ \"./linear_algebra/simultaneous_poweriteration.js\");\n/**\r\n * @module linear_algebra\r\n */\n//export { default as poweriteration } from \"./poweriteration\"\n//export { default as lanczos } from \"./lanczos\"\n//export { default as sapi } from \"./sapi\"\n //export { default as qr_householder } from \"./qr_householder\";\n//export { default as qr_givens } from \"./qr_givens\";\n\n //export { default as lu } from \"./lu\"\n//export { default as svrg } from \"./svrg\"\n//export { default as poweriteration_m } from \"./poweriteration_m\"\n//export { default as poweriteration_n } from \"./poweriteration_n\"//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2xpbmVhcl9hbGdlYnJhL2luZGV4LmpzP2M5YjMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUVBO0FBQ0E7QUFDQTtDQUVBO0FBQ0E7O0NBRUE7QUFDQTtBQUNBO0FBQ0EiLCJmaWxlIjoiLi9saW5lYXJfYWxnZWJyYS9pbmRleC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBAbW9kdWxlIGxpbmVhcl9hbGdlYnJhXHJcbiAqL1xyXG5cclxuLy9leHBvcnQgeyBkZWZhdWx0IGFzIHBvd2VyaXRlcmF0aW9uIH0gZnJvbSBcIi4vcG93ZXJpdGVyYXRpb25cIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgbGFuY3pvcyB9IGZyb20gXCIuL2xhbmN6b3NcIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgc2FwaSB9IGZyb20gXCIuL3NhcGlcIlxyXG5leHBvcnQgeyBkZWZhdWx0IGFzIHFyIH0gZnJvbSBcIi4vcXJcIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgcXJfaG91c2Vob2xkZXIgfSBmcm9tIFwiLi9xcl9ob3VzZWhvbGRlclwiO1xyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgcXJfZ2l2ZW5zIH0gZnJvbSBcIi4vcXJfZ2l2ZW5zXCI7XHJcbmV4cG9ydCB7IGRlZmF1bHQgYXMgc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uIH0gZnJvbSBcIi4vc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uXCJcclxuLy9leHBvcnQgeyBkZWZhdWx0IGFzIGx1IH0gZnJvbSBcIi4vbHVcIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgc3ZyZyB9IGZyb20gXCIuL3N2cmdcIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgcG93ZXJpdGVyYXRpb25fbSB9IGZyb20gXCIuL3Bvd2VyaXRlcmF0aW9uX21cIlxyXG4vL2V4cG9ydCB7IGRlZmF1bHQgYXMgcG93ZXJpdGVyYXRpb25fbiB9IGZyb20gXCIuL3Bvd2VyaXRlcmF0aW9uX25cIiJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./linear_algebra/index.js\n");
+
+/***/ }),
+
+/***/ "./linear_algebra/qr.js":
+/*!******************************!*\
+  !*** ./linear_algebra/qr.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\n\n\n\n/**\r\n * Computes the QR Decomposition of the Matrix {@link A} using Gram-Schmidt process.\r\n * @memberof module:linear_algebra\r\n * @alias qr\r\n * @param {Matrix} A\r\n * @returns {{R: Matrix, Q: Matrix}}\r\n * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process}\r\n */\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(A) {\n  const [rows, cols] = A.shape;\n  const Q = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(rows, cols, \"identity\");\n  const R = new _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix(cols, cols, 0);\n\n  for (let j = 0; j < cols; ++j) {\n    let v = A.col(j);\n\n    for (let i = 0; i < j; ++i) {\n      const q = Q.col(i);\n      const q_dot_v = (0,_numerical_index__WEBPACK_IMPORTED_MODULE_2__.neumair_sum)(q.map((q_, k) => q_ * v[k]));\n      R.set_entry(i, j, q_dot_v);\n      v = v.map((v_, k) => v_ - q_dot_v * q[k]);\n    }\n\n    const v_norm = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.norm)(v, _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean);\n\n    for (let k = 0; k < rows; ++k) {\n      Q.set_entry(k, j, v[k] / v_norm);\n    }\n\n    R.set_entry(j, j, v_norm);\n  }\n\n  return {\n    \"R\": R,\n    \"Q\": Q\n  };\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2xpbmVhcl9hbGdlYnJhL3FyLmpzPzVmN2MiXSwibmFtZXMiOlsiQSIsInJvd3MiLCJjb2xzIiwic2hhcGUiLCJRIiwiTWF0cml4IiwiUiIsImoiLCJ2IiwiY29sIiwiaSIsInEiLCJxX2RvdF92IiwibmV1bWFpcl9zdW0iLCJtYXAiLCJxXyIsImsiLCJzZXRfZW50cnkiLCJ2XyIsInZfbm9ybSIsIm5vcm0iLCJldWNsaWRlYW4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVk7QUFDdkIsUUFBTSxDQUFDQyxJQUFELEVBQU9DLElBQVAsSUFBZUYsQ0FBQyxDQUFDRyxLQUF2QjtBQUNBLFFBQU1DLENBQUMsR0FBRyxJQUFJQyxpREFBSixDQUFXSixJQUFYLEVBQWlCQyxJQUFqQixFQUF1QixVQUF2QixDQUFWO0FBQ0EsUUFBTUksQ0FBQyxHQUFHLElBQUlELGlEQUFKLENBQVdILElBQVgsRUFBaUJBLElBQWpCLEVBQXVCLENBQXZCLENBQVY7O0FBRUEsT0FBSyxJQUFJSyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHTCxJQUFwQixFQUEwQixFQUFFSyxDQUE1QixFQUErQjtBQUMzQixRQUFJQyxDQUFDLEdBQUdSLENBQUMsQ0FBQ1MsR0FBRixDQUFNRixDQUFOLENBQVI7O0FBQ0EsU0FBSyxJQUFJRyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSCxDQUFwQixFQUF1QixFQUFFRyxDQUF6QixFQUE0QjtBQUN4QixZQUFNQyxDQUFDLEdBQUdQLENBQUMsQ0FBQ0ssR0FBRixDQUFNQyxDQUFOLENBQVY7QUFDQSxZQUFNRSxPQUFPLEdBQUdDLDZEQUFXLENBQUNGLENBQUMsQ0FBQ0csR0FBRixDQUFNLENBQUNDLEVBQUQsRUFBS0MsQ0FBTCxLQUFXRCxFQUFFLEdBQUdQLENBQUMsQ0FBQ1EsQ0FBRCxDQUF2QixDQUFELENBQTNCO0FBQ0FWLE9BQUMsQ0FBQ1csU0FBRixDQUFZUCxDQUFaLEVBQWNILENBQWQsRUFBaUJLLE9BQWpCO0FBQ0FKLE9BQUMsR0FBR0EsQ0FBQyxDQUFDTSxHQUFGLENBQU0sQ0FBQ0ksRUFBRCxFQUFLRixDQUFMLEtBQVdFLEVBQUUsR0FBR04sT0FBTyxHQUFHRCxDQUFDLENBQUNLLENBQUQsQ0FBakMsQ0FBSjtBQUNIOztBQUNELFVBQU1HLE1BQU0sR0FBR0MsbURBQUksQ0FBQ1osQ0FBRCxFQUFJYSxxREFBSixDQUFuQjs7QUFDQSxTQUFLLElBQUlMLENBQUMsR0FBRyxDQUFiLEVBQWdCQSxDQUFDLEdBQUdmLElBQXBCLEVBQTBCLEVBQUVlLENBQTVCLEVBQStCO0FBQzNCWixPQUFDLENBQUNhLFNBQUYsQ0FBWUQsQ0FBWixFQUFlVCxDQUFmLEVBQWtCQyxDQUFDLENBQUNRLENBQUQsQ0FBRCxHQUFPRyxNQUF6QjtBQUNIOztBQUNEYixLQUFDLENBQUNXLFNBQUYsQ0FBWVYsQ0FBWixFQUFjQSxDQUFkLEVBQWlCWSxNQUFqQjtBQUNIOztBQUNELFNBQU87QUFBQyxTQUFLYixDQUFOO0FBQVMsU0FBS0Y7QUFBZCxHQUFQO0FBQ0giLCJmaWxlIjoiLi9saW5lYXJfYWxnZWJyYS9xci5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1hdHJpeCwgbm9ybSB9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSBcIi4uL21ldHJpY3MvaW5kZXhcIlxyXG5pbXBvcnQgeyBuZXVtYWlyX3N1bSB9IGZyb20gXCIuLi9udW1lcmljYWwvaW5kZXhcIjtcclxuXHJcbi8qKlxyXG4gKiBDb21wdXRlcyB0aGUgUVIgRGVjb21wb3NpdGlvbiBvZiB0aGUgTWF0cml4IHtAbGluayBBfSB1c2luZyBHcmFtLVNjaG1pZHQgcHJvY2Vzcy5cclxuICogQG1lbWJlcm9mIG1vZHVsZTpsaW5lYXJfYWxnZWJyYVxyXG4gKiBAYWxpYXMgcXJcclxuICogQHBhcmFtIHtNYXRyaXh9IEFcclxuICogQHJldHVybnMge3tSOiBNYXRyaXgsIFE6IE1hdHJpeH19XHJcbiAqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL1FSX2RlY29tcG9zaXRpb24jVXNpbmdfdGhlX0dyYW0lRTIlODAlOTNTY2htaWR0X3Byb2Nlc3N9XHJcbiAqL1xyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihBKSB7XHJcbiAgICBjb25zdCBbcm93cywgY29sc10gPSBBLnNoYXBlO1xyXG4gICAgY29uc3QgUSA9IG5ldyBNYXRyaXgocm93cywgY29scywgXCJpZGVudGl0eVwiKTtcclxuICAgIGNvbnN0IFIgPSBuZXcgTWF0cml4KGNvbHMsIGNvbHMsIDApO1xyXG5cclxuICAgIGZvciAobGV0IGogPSAwOyBqIDwgY29sczsgKytqKSB7XHJcbiAgICAgICAgbGV0IHYgPSBBLmNvbChqKTtcclxuICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGo7ICsraSkge1xyXG4gICAgICAgICAgICBjb25zdCBxID0gUS5jb2woaSk7XHJcbiAgICAgICAgICAgIGNvbnN0IHFfZG90X3YgPSBuZXVtYWlyX3N1bShxLm1hcCgocV8sIGspID0+IHFfICogdltrXSkpO1xyXG4gICAgICAgICAgICBSLnNldF9lbnRyeShpLGosIHFfZG90X3YpO1xyXG4gICAgICAgICAgICB2ID0gdi5tYXAoKHZfLCBrKSA9PiB2XyAtIHFfZG90X3YgKiBxW2tdKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgY29uc3Qgdl9ub3JtID0gbm9ybSh2LCBldWNsaWRlYW4pO1xyXG4gICAgICAgIGZvciAobGV0IGsgPSAwOyBrIDwgcm93czsgKytrKSB7XHJcbiAgICAgICAgICAgIFEuc2V0X2VudHJ5KGssIGosIHZba10gLyB2X25vcm0pO1xyXG4gICAgICAgIH1cclxuICAgICAgICBSLnNldF9lbnRyeShqLGosIHZfbm9ybSlcclxuICAgIH1cclxuICAgIHJldHVybiB7XCJSXCI6IFIsIFwiUVwiOiBRfTtcclxufVxyXG5cclxuIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./linear_algebra/qr.js\n");
+
+/***/ }),
+
+/***/ "./linear_algebra/simultaneous_poweriteration.js":
+/*!*******************************************************!*\
+  !*** ./linear_algebra/simultaneous_poweriteration.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ \"./linear_algebra/index.js\");\n/* harmony import */ var _matrix_Matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/Matrix */ \"./matrix/Matrix.js\");\n/* harmony import */ var _util_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/index */ \"./util/index.js\");\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\n\n\n\n\n/**\r\n * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.\r\n * @param {Matrix} A - The Matrix\r\n * @param {Number} k - The number of eigenvectors and eigenvalues to compute.\r\n * @param {Number} [max_iterations=100] - The number of maxiumum iterations the algorithm should run.\r\n * @param {Number|Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm.\r\n * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.\r\n */\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(A, k = 2, max_iterations = 100, seed = 1212) {\n  const randomizer = seed instanceof _util_index__WEBPACK_IMPORTED_MODULE_2__.Randomizer ? seed : new _util_index__WEBPACK_IMPORTED_MODULE_2__.Randomizer(seed);\n  if (!(A instanceof _matrix_Matrix__WEBPACK_IMPORTED_MODULE_1__.Matrix)) A = _matrix_Matrix__WEBPACK_IMPORTED_MODULE_1__.Matrix.from(A);\n  const n = A.shape[0];\n  let {\n    Q: Q,\n    R: R\n  } = (0,_index__WEBPACK_IMPORTED_MODULE_0__.qr)(new _matrix_Matrix__WEBPACK_IMPORTED_MODULE_1__.Matrix(n, k, () => randomizer.random));\n\n  while (max_iterations--) {\n    const oldR = R.clone();\n    const Z = A.dot(Q);\n    const QR = (0,_index__WEBPACK_IMPORTED_MODULE_0__.qr)(Z);\n    Q = QR.Q;\n    R = QR.R;\n\n    if ((0,_numerical_index__WEBPACK_IMPORTED_MODULE_3__.neumair_sum)(R.sub(oldR).diag) / n < 1e-12) {\n      max_iterations = 0;\n    }\n  }\n\n  const eigenvalues = R.diag;\n  const eigenvectors = Q.transpose().to2dArray;\n  return {\n    \"eigenvalues\": eigenvalues,\n    \"eigenvectors\": eigenvectors\n  };\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL2xpbmVhcl9hbGdlYnJhL3NpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbi5qcz9jZTgwIl0sIm5hbWVzIjpbIkEiLCJrIiwibWF4X2l0ZXJhdGlvbnMiLCJzZWVkIiwicmFuZG9taXplciIsIlJhbmRvbWl6ZXIiLCJNYXRyaXgiLCJuIiwic2hhcGUiLCJRIiwiUiIsInFyIiwicmFuZG9tIiwib2xkUiIsImNsb25lIiwiWiIsImRvdCIsIlFSIiwibmV1bWFpcl9zdW0iLCJzdWIiLCJkaWFnIiwiZWlnZW52YWx1ZXMiLCJlaWdlbnZlY3RvcnMiLCJ0cmFuc3Bvc2UiLCJ0bzJkQXJyYXkiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFFQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLENBQUMsR0FBRyxDQUFoQixFQUFtQkMsY0FBYyxHQUFDLEdBQWxDLEVBQXVDQyxJQUFJLEdBQUMsSUFBNUMsRUFBa0Q7QUFDN0QsUUFBTUMsVUFBVSxHQUFHRCxJQUFJLFlBQVlFLG1EQUFoQixHQUE2QkYsSUFBN0IsR0FBb0MsSUFBSUUsbURBQUosQ0FBZUYsSUFBZixDQUF2RDtBQUNBLE1BQUksRUFBRUgsQ0FBQyxZQUFZTSxrREFBZixDQUFKLEVBQTRCTixDQUFDLEdBQUdNLHVEQUFBLENBQVlOLENBQVosQ0FBSjtBQUM1QixRQUFNTyxDQUFDLEdBQUdQLENBQUMsQ0FBQ1EsS0FBRixDQUFRLENBQVIsQ0FBVjtBQUNBLE1BQUk7QUFBRUMsS0FBQyxFQUFFQSxDQUFMO0FBQVFDLEtBQUMsRUFBRUE7QUFBWCxNQUFpQkMsMENBQUUsQ0FBQyxJQUFJTCxrREFBSixDQUFXQyxDQUFYLEVBQWNOLENBQWQsRUFBaUIsTUFBTUcsVUFBVSxDQUFDUSxNQUFsQyxDQUFELENBQXZCOztBQUNBLFNBQU9WLGNBQWMsRUFBckIsRUFBeUI7QUFDckIsVUFBTVcsSUFBSSxHQUFHSCxDQUFDLENBQUNJLEtBQUYsRUFBYjtBQUNBLFVBQU1DLENBQUMsR0FBR2YsQ0FBQyxDQUFDZ0IsR0FBRixDQUFNUCxDQUFOLENBQVY7QUFDQSxVQUFNUSxFQUFFLEdBQUdOLDBDQUFFLENBQUNJLENBQUQsQ0FBYjtBQUNBTixLQUFDLEdBQUdRLEVBQUUsQ0FBQ1IsQ0FBUDtBQUNBQyxLQUFDLEdBQUdPLEVBQUUsQ0FBQ1AsQ0FBUDs7QUFDQSxRQUFJUSw2REFBVyxDQUFDUixDQUFDLENBQUNTLEdBQUYsQ0FBTU4sSUFBTixFQUFZTyxJQUFiLENBQVgsR0FBZ0NiLENBQWhDLEdBQW9DLEtBQXhDLEVBQStDO0FBQzNDTCxvQkFBYyxHQUFHLENBQWpCO0FBQ0g7QUFDSjs7QUFFRCxRQUFNbUIsV0FBVyxHQUFHWCxDQUFDLENBQUNVLElBQXRCO0FBQ0EsUUFBTUUsWUFBWSxHQUFHYixDQUFDLENBQUNjLFNBQUYsR0FBY0MsU0FBbkM7QUFDQSxTQUFPO0FBQ0gsbUJBQWVILFdBRFo7QUFFSCxvQkFBZ0JDO0FBRmIsR0FBUDtBQUlIIiwiZmlsZSI6Ii4vbGluZWFyX2FsZ2VicmEvc2ltdWx0YW5lb3VzX3Bvd2VyaXRlcmF0aW9uLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgcXIgfSBmcm9tIFwiLi9pbmRleFwiO1xyXG5pbXBvcnQgeyBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L01hdHJpeFwiO1xyXG5pbXBvcnQgeyBSYW5kb21pemVyIH0gZnJvbSBcIi4uL3V0aWwvaW5kZXhcIjtcclxuaW1wb3J0IHsgbmV1bWFpcl9zdW0gfSBmcm9tIFwiLi4vbnVtZXJpY2FsL2luZGV4XCI7XHJcblxyXG4vKipcclxuICogQ29tcHV0ZXMgdGhlIHtAbGluayBrfSBiaWdnZXN0IEVpZ2VudmVjdG9ycyBhbmQgRWlnZW52YWx1ZXMgZnJvbSBNYXRyaXgge0BsaW5rIEF9IHdpdGggdGhlIFFSLUFsZ29yaXRobS5cclxuICogQHBhcmFtIHtNYXRyaXh9IEEgLSBUaGUgTWF0cml4XHJcbiAqIEBwYXJhbSB7TnVtYmVyfSBrIC0gVGhlIG51bWJlciBvZiBlaWdlbnZlY3RvcnMgYW5kIGVpZ2VudmFsdWVzIHRvIGNvbXB1dGUuXHJcbiAqIEBwYXJhbSB7TnVtYmVyfSBbbWF4X2l0ZXJhdGlvbnM9MTAwXSAtIFRoZSBudW1iZXIgb2YgbWF4aXVtdW0gaXRlcmF0aW9ucyB0aGUgYWxnb3JpdGhtIHNob3VsZCBydW4uXHJcbiAqIEBwYXJhbSB7TnVtYmVyfFJhbmRvbWl6ZXJ9IFtzZWVkPTEyMTJdIC0gVGhlIHNlZWQgdmFsdWUgb3IgYSByYW5kb21pemVyIHVzZWQgaW4gdGhlIGFsZ29yaXRobS5cclxuICogQHJldHVybnMge3tlaWdlbnZhbHVlczogQXJyYXksIGVpZ2VudmVjdG9yczogQXJyYXl9fSAtIFRoZSB7QGxpbmsga30gYmlnZ2VzdCBlaWdlbnZlY3RvcnMgYW5kIGVpZ2VudmFsdWVzIG9mIE1hdHJpeCB7QGxpbmsgQX0uXHJcbiAqL1xyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihBLCBrID0gMiwgbWF4X2l0ZXJhdGlvbnM9MTAwLCBzZWVkPTEyMTIpIHtcclxuICAgIGNvbnN0IHJhbmRvbWl6ZXIgPSBzZWVkIGluc3RhbmNlb2YgUmFuZG9taXplciA/IHNlZWQgOiBuZXcgUmFuZG9taXplcihzZWVkKTtcclxuICAgIGlmICghKEEgaW5zdGFuY2VvZiBNYXRyaXgpKSBBID0gTWF0cml4LmZyb20oQSk7XHJcbiAgICBjb25zdCBuID0gQS5zaGFwZVswXVxyXG4gICAgbGV0IHsgUTogUSwgUjogUiB9ID0gcXIobmV3IE1hdHJpeChuLCBrLCAoKSA9PiByYW5kb21pemVyLnJhbmRvbSkpO1xyXG4gICAgd2hpbGUgKG1heF9pdGVyYXRpb25zLS0pIHtcclxuICAgICAgICBjb25zdCBvbGRSID0gUi5jbG9uZSgpO1xyXG4gICAgICAgIGNvbnN0IFogPSBBLmRvdChRKTtcclxuICAgICAgICBjb25zdCBRUiA9IHFyKFopOyBcclxuICAgICAgICBRID0gUVIuUTtcclxuICAgICAgICBSID0gUVIuUjtcclxuICAgICAgICBpZiAobmV1bWFpcl9zdW0oUi5zdWIob2xkUikuZGlhZykgLyBuIDwgMWUtMTIpIHtcclxuICAgICAgICAgICAgbWF4X2l0ZXJhdGlvbnMgPSAwO1xyXG4gICAgICAgIH0gICAgICAgIFxyXG4gICAgfVxyXG5cclxuICAgIGNvbnN0IGVpZ2VudmFsdWVzID0gUi5kaWFnO1xyXG4gICAgY29uc3QgZWlnZW52ZWN0b3JzID0gUS50cmFuc3Bvc2UoKS50bzJkQXJyYXk7XHJcbiAgICByZXR1cm4ge1xyXG4gICAgICAgIFwiZWlnZW52YWx1ZXNcIjogZWlnZW52YWx1ZXMsXHJcbiAgICAgICAgXCJlaWdlbnZlY3RvcnNcIjogZWlnZW52ZWN0b3JzLFxyXG4gICAgfTtcclxufVxyXG5cclxuIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./linear_algebra/simultaneous_poweriteration.js\n");
+
+/***/ }),
+
+/***/ "./matrix/Matrix.js":
+/*!**************************!*\
+  !*** ./matrix/Matrix.js ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Matrix\": () => (/* binding */ Matrix)\n/* harmony export */ });\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\nlet _Symbol$iterator;\n\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\n\n/**\r\n * @class\r\n * @alias Matrix\r\n * @requires module:numerical/neumair_sum\r\n */\n\n_Symbol$iterator = Symbol.iterator;\nclass Matrix {\n  /**\r\n   * creates a new Matrix. Entries are stored in a Float64Array. \r\n   * @constructor\r\n   * @memberof module:matrix\r\n   * @alias Matrix\r\n   * @param {number} rows - The amount of rows of the matrix.\r\n   * @param {number} cols - The amount of columns of the matrix.\r\n   * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or \"zeros\", \"identity\" or \"I\", or \"center\".\r\n   *  - **function**: for each entry the function gets called with the parameters for the actual row and column.\r\n   *  - **string**: allowed are\r\n   *      - \"zero\", creates a zero matrix.\r\n   *      - \"identity\" or \"I\", creates an identity matrix.\r\n   *      - \"center\", creates an center matrix.\r\n   *  - **number**: create a matrix filled with the given value.\r\n   * @example\r\n   * \r\n   * let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random matrix.\r\n   * let B = new Matrix(3, 3, \"I\"); // creates a 3 times 3 identity matrix.\r\n   * @returns {Matrix} returns a {@link rows} times {@link cols} Matrix filled with {@link value}.\r\n   */\n  constructor(rows = null, cols = null, value = null) {\n    _defineProperty(this, _Symbol$iterator, this.iterate_rows);\n\n    this._rows = rows;\n    this._cols = cols;\n    this._data = null;\n\n    if (rows && cols) {\n      if (!value) {\n        this._data = new Float64Array(rows * cols);\n        return this;\n      }\n\n      if (typeof value === \"function\") {\n        this._data = new Float64Array(rows * cols);\n\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            this._data[row * cols + col] = value(row, col);\n          }\n        }\n\n        return this;\n      }\n\n      if (typeof value === \"string\") {\n        if (value === \"zeros\") {\n          return new Matrix(rows, cols, 0);\n        }\n\n        if (value === \"identity\" || value === \"I\") {\n          this._data = new Float64Array(rows * cols);\n\n          for (let row = 0; row < rows; ++row) {\n            this._data[row * cols + row] = 1;\n          }\n\n          return this;\n        }\n\n        if (value === \"center\" && rows == cols) {\n          this._data = new Float64Array(rows * cols);\n\n          value = (i, j) => (i === j ? 1 : 0) - 1 / rows;\n\n          for (let row = 0; row < rows; ++row) {\n            for (let col = 0; col < cols; ++col) {\n              this._data[row * cols + col] = value(row, col);\n            }\n          }\n\n          return this;\n        }\n      }\n\n      if (typeof value === \"number\") {\n        this._data = new Float64Array(rows * cols);\n\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            this._data[row * cols + col] = value;\n          }\n        }\n\n        return this;\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * Creates a Matrix out of {@link A}.\r\n   * @param {(Matrix|Array|Float64Array|number)} A - The matrix, array, or number, which should converted to a Matrix.\r\n   * @param {\"row\"|\"col\"|\"diag\"} [type = \"row\"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector. \r\n   * @returns {Matrix}\r\n   * \r\n   * @example\r\n   * let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.\r\n   * let S = Matrix.from([1, 2, 3], \"diag\"); // creates a three by three matrix with 1, 2, 3 on its diagonal.\r\n   */\n\n\n  static from(A, type = \"row\") {\n    if (A instanceof Matrix) {\n      return A.clone();\n    } else if (Array.isArray(A) || A instanceof Float64Array) {\n      let m = A.length;\n      if (m === 0) throw \"Array is empty\"; // 1d\n\n      if (!Array.isArray(A[0]) && !(A[0] instanceof Float64Array)) {\n        if (type === \"row\") {\n          return new Matrix(1, m, (_, j) => A[j]);\n        } else if (type === \"col\") {\n          return new Matrix(m, 1, i => A[i]);\n        } else if (type === \"diag\") {\n          return new Matrix(m, m, (i, j) => i == j ? A[i] : 0);\n        } else {\n          throw \"1d array has NaN entries\";\n        } // 2d\n\n      } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {\n        let n = A[0].length;\n\n        for (let row = 0; row < m; ++row) {\n          if (A[row].length !== n) {\n            throw \"various array lengths\";\n          }\n        }\n\n        return new Matrix(m, n, (i, j) => A[i][j]);\n      }\n    } else if (typeof A === \"number\") {\n      return new Matrix(1, 1, A);\n    } else {\n      throw \"error\";\n    }\n  }\n  /**\r\n   * Returns the {@link row}th row from the Matrix.\r\n   * @param {int} row \r\n   * @returns {Array}\r\n   */\n\n\n  row(row) {\n    /* let result_row = new Array(this._cols);\r\n    for (let col = 0; col < this._cols; ++col) {\r\n        result_row[col] = this._data[row * this._cols + col];\r\n    }\r\n    return result_row; */\n    const data = this._data;\n    const cols = this._cols;\n    return data.subarray(row * cols, (row + 1) * cols);\n  }\n  /**\r\n   * Returns an generator yielding each row of the Matrix.\r\n   */\n\n\n  *iterate_rows() {\n    const cols = this._cols;\n    const rows = this._rows;\n    const data = this._data;\n\n    for (let row = 0; row < rows; ++row) {\n      yield data.subarray(row * cols, (row + 1) * cols);\n    }\n  }\n  /**\r\n   * Makes a {@link Matrix} object an iterable object.\r\n   */\n\n\n  /**\r\n   * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.\r\n   * @param {int} row \r\n   * @param {Array} values \r\n   * @returns {Matrix}\r\n   */\n  set_row(row, values) {\n    let cols = this._cols;\n\n    if (Array.isArray(values) && values.length === cols) {\n      let offset = row * cols;\n\n      for (let col = 0; col < cols; ++col) {\n        this._data[offset + col] = values[col];\n      }\n    } else if (values instanceof Matrix && values.shape[1] === cols && values.shape[0] === 1) {\n      let offset = row * cols;\n\n      for (let col = 0; col < cols; ++col) {\n        this._data[offset + col] = values._data[col];\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * Returns the {@link col}th column from the Matrix.\r\n   * @param {int} col \r\n   * @returns {Array}\r\n   */\n\n\n  col(col) {\n    let result_col = new Float64Array(this._rows);\n\n    for (let row = 0; row < this._rows; ++row) {\n      result_col[row] = this._data[row * this._cols + col];\n    }\n\n    return result_col;\n  }\n  /**\r\n   * Returns the {@link col}th entry from the {@link row}th row of the Matrix.\r\n   * @param {int} row \r\n   * @param {int} col \r\n   * @returns {float64}\r\n   */\n\n\n  entry(row, col) {\n    return this._data[row * this._cols + col];\n  }\n  /**\r\n   * Sets the {@link col}th entry from the {@link row}th row of the Matrix to the given {@link value}.\r\n   * @param {int} row \r\n   * @param {int} col \r\n   * @param {float64} value\r\n   * @returns {Matrix}\r\n   */\n\n\n  set_entry(row, col, value) {\n    this._data[row * this._cols + col] = value;\n    return this;\n  }\n  /**\r\n   * Returns a new transposed Matrix.\r\n   * @returns {Matrix}\r\n   */\n\n\n  transpose() {\n    let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));\n    return B;\n  }\n  /**\r\n   * Returns a new transposed Matrix. Short-form of {@function transpose}.\r\n   * @returns {Matrix}\r\n   */\n\n\n  get T() {\n    return this.transpose();\n  }\n  /**\r\n   * Returns the inverse of the Matrix.\r\n   * @returns {Matrix}\r\n   */\n\n\n  inverse() {\n    const rows = this._rows;\n    const cols = this._cols;\n    let B = new Matrix(rows, 2 * cols, (i, j) => {\n      if (j >= cols) {\n        return i === j - cols ? 1 : 0;\n      } else {\n        return this.entry(i, j);\n      }\n    });\n    let h = 0;\n    let k = 0;\n\n    while (h < rows && k < cols) {\n      var i_max = 0;\n      let max_val = -Infinity;\n\n      for (let i = h; i < rows; ++i) {\n        let val = Math.abs(B.entry(i, k));\n\n        if (max_val < val) {\n          i_max = i;\n          max_val = val;\n        }\n      }\n\n      if (B.entry(i_max, k) == 0) {\n        k++;\n      } else {\n        // swap rows\n        for (let j = 0; j < 2 * cols; ++j) {\n          let h_val = B.entry(h, j);\n          let i_val = B.entry(i_max, j);\n          B.set_entry(h, j, h_val);\n          B.set_entry(i_max, j, i_val);\n        }\n\n        for (let i = h + 1; i < rows; ++i) {\n          let f = B.entry(i, k) / B.entry(h, k);\n          B.set_entry(i, k, 0);\n\n          for (let j = k + 1; j < 2 * cols; ++j) {\n            B.set_entry(i, j, B.entry(i, j) - B.entry(h, j) * f);\n          }\n        }\n\n        h++;\n        k++;\n      }\n    }\n\n    for (let row = 0; row < rows; ++row) {\n      let f = B.entry(row, row);\n\n      for (let col = row; col < 2 * cols; ++col) {\n        B.set_entry(row, col, B.entry(row, col) / f);\n      }\n    }\n\n    for (let row = rows - 1; row >= 0; --row) {\n      let B_row_row = B.entry(row, row);\n\n      for (let i = 0; i < row; i++) {\n        let B_i_row = B.entry(i, row);\n        let f = B_i_row / B_row_row;\n\n        for (let j = i; j < 2 * cols; ++j) {\n          let B_i_j = B.entry(i, j);\n          let B_row_j = B.entry(row, j);\n          B_i_j = B_i_j - B_row_j * f;\n          B.set_entry(i, j, B_i_j);\n        }\n      }\n    }\n\n    return new Matrix(rows, cols, (i, j) => B.entry(i, j + cols));\n  }\n  /**\r\n   * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.\r\n   * @param {(Matrix|Array|Float64Array)} B the right side\r\n   * @returns {(Matrix|Array)}\r\n   */\n\n\n  dot(B) {\n    if (B instanceof Matrix) {\n      let A = this;\n\n      if (A.shape[1] !== B.shape[0]) {\n        throw `A.dot(B): A is a ${A.shape.join(\" x \")}-Matrix, B is a ${B.shape.join(\" x \")}-Matrix: \n                A has ${A.shape[1]} cols and B ${B.shape[0]} rows. \n                Must be equal!`;\n      }\n\n      let I = A.shape[1];\n      let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {\n        const A_i = A.row(row);\n        const B_i = B.col(col);\n        let sum = 0;\n\n        for (let i = 0; i < I; ++i) {\n          sum += A_i[i] * B_i[i];\n        }\n\n        return sum;\n      });\n      return C;\n    } else if (Array.isArray(B) || B instanceof Float64Array) {\n      let rows = this._rows;\n\n      if (B.length !== rows) {\n        throw `A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`;\n      }\n\n      let C = new Array(rows);\n\n      for (let row = 0; row < rows; ++row) {\n        C[row] = (0,_numerical_index__WEBPACK_IMPORTED_MODULE_0__.neumair_sum)(this.row(row).map(e => e * B[row]));\n      }\n\n      return C;\n    } else {\n      throw `B must be Matrix or Array`;\n    }\n  }\n  /**\r\n   * Computes the outer product from {@link this} and {@link B}.\r\n   * @param {Matrix} B \r\n   * @returns {Matrix}\r\n   */\n\n\n  outer(B) {\n    let A = this;\n    let l = A._data.length;\n    let r = B._data.length;\n    if (l != r) return undefined;\n    let C = new Matrix();\n    C.shape = [l, l, (i, j) => {\n      if (i <= j) {\n        return A._data[i] * B._data[j];\n      } else {\n        return C.entry(j, i);\n      }\n    }];\n    return C;\n  }\n  /**\r\n   * Appends matrix {@link B} to the matrix.\r\n   * @param {Matrix} B - matrix to append.\r\n   * @param {\"horizontal\"|\"vertical\"|\"diag\"} [type = \"horizontal\"] - type of concatenation.\r\n   * @returns {Matrix}\r\n   * @example\r\n   * \r\n   * let A = Matrix.from([[1, 1], [1, 1]]); // 2 by 2 matrix filled with ones.\r\n   * let B = Matrix.from([[2, 2], [2, 2]]); // 2 by 2 matrix filled with twos.\r\n   * \r\n   * A.concat(B, \"horizontal\"); // 2 by 4 matrix. [[1, 1, 2, 2], [1, 1, 2, 2]]\r\n   * A.concat(B, \"vertical\"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]\r\n   * A.concat(B, \"diag\"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]\r\n   */\n\n\n  concat(B, type = \"horizontal\") {\n    const A = this;\n    const [rows_A, cols_A] = A.shape;\n    const [rows_B, cols_B] = B.shape;\n\n    if (type == \"horizontal\") {\n      if (rows_A != rows_B) throw `A.concat(B, \"horizontal\"): A and B need same number of rows, A has ${rows_A} rows, B has ${rows_B} rows.`;\n      const X = new Matrix(rows_A, cols_A + cols_B, \"zeros\");\n      X.set_block(0, 0, A);\n      X.set_block(0, cols_A, B);\n      return X;\n    } else if (type == \"vertical\") {\n      if (cols_A != cols_B) throw `A.concat(B, \"vertical\"): A and B need same number of columns, A has ${cols_A} columns, B has ${cols_B} columns.`;\n      const X = new Matrix(rows_A + rows_B, cols_A, \"zeros\");\n      X.set_block(0, 0, A);\n      X.set_block(rows_A, 0, B);\n      return X;\n    } else if (type == \"diag\") {\n      const X = new Matrix(rows_A + rows_B, cols_A + cols_B, \"zeros\");\n      X.set_block(0, 0, A);\n      X.set_block(rows_A, cols_A, B);\n      return X;\n    } else {\n      throw `type must be \"horizontal\" or \"vertical\", but type is ${type}!`;\n    }\n  }\n  /**\r\n   * Writes the entries of B in A at an offset position given by {@link offset_row} and {@link offset_col}.\r\n   * @param {int} offset_row \r\n   * @param {int} offset_col \r\n   * @param {Matrix} B \r\n   * @returns {Matrix}\r\n   */\n\n\n  set_block(offset_row, offset_col, B) {\n    let [rows, cols] = B.shape;\n\n    for (let row = 0; row < rows; ++row) {\n      if (row > this._rows) continue;\n\n      for (let col = 0; col < cols; ++col) {\n        if (col > this._cols) continue;\n        this.set_entry(row + offset_row, col + offset_col, B.entry(row, col));\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * Extracts the entries from the {@link start_row}th row to the {@link end_row}th row, the {@link start_col}th column to the {@link end_col}th column of the matrix.\r\n   * If {@link end_row} or {@link end_col} is empty, the respective value is set to {@link this.rows} or {@link this.cols}.\r\n   * @param {Number} start_row \r\n   * @param {Number} start_col\r\n   * @param {Number} [end_row = null]\r\n   * @param {Number} [end_col = null] \r\n   * @returns {Matrix} Returns a end_row - start_row times end_col - start_col matrix, with respective entries from the matrix.\r\n   * @example\r\n   * \r\n   * let A = Matrix.from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // a 3 by 3 matrix.\r\n   * \r\n   * A.get_block(1, 1).to2dArray; // [[5, 6], [8, 9]]\r\n   * A.get_block(0, 0, 1, 1).to2dArray; // [[1]]\r\n   * A.get_block(1, 1, 2, 2).to2dArray; // [[5]]\r\n   * A.get_block(0, 0, 2, 2).to2dArray; // [[1, 2], [4, 5]]\r\n   */\n\n\n  get_block(start_row, start_col, end_row = null, end_col = null) {\n    const [rows, cols] = this.shape;\n    /*if (!end_row)) {\r\n        end_row = rows;\r\n    }\r\n        end_col = cols;\r\n    }*/\n\n    end_row = end_row ?? rows;\n    end_col = end_col ?? cols;\n\n    if (end_row <= start_row || end_col <= start_col) {\n      throw `\n                end_row must be greater than start_row, and \n                end_col must be greater than start_col, but\n                end_row = ${end_row}, start_row = ${start_row}, end_col = ${end_col}, and start_col = ${start_col}!`;\n    }\n\n    const X = new Matrix(end_row - start_row, end_col - start_col, \"zeros\");\n\n    for (let row = start_row, new_row = 0; row < end_row; ++row, ++new_row) {\n      for (let col = start_col, new_col = 0; col < end_col; ++col, ++new_col) {\n        X.set_entry(new_row, new_col, this.entry(row, col));\n      }\n    }\n\n    return X; //return new Matrix(end_row - start_row, end_col - start_col, (i, j) => this.entry(i + start_row, j + start_col));\n  }\n  /**\r\n   * Returns a new array gathering entries defined by the indices given by argument.\r\n   * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix \r\n   * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix \r\n   * @returns {Matrix}\r\n   */\n\n\n  gather(row_indices, col_indices) {\n    const N = row_indices.length;\n    const D = col_indices.length;\n    const R = new Matrix(N, D);\n\n    for (let i = 0; i < N; ++i) {\n      const row_index = row_indices[i];\n\n      for (let j = 0; j < N; ++j) {\n        const col_index = col_indices[j];\n        R.set_entry(i, j, this.entry(row_index, col_index));\n      }\n    }\n\n    return R;\n  }\n  /**\r\n   * Applies a function to each entry of the matrix.\r\n   * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.\r\n   * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.\r\n   */\n\n\n  _apply_array(f, v) {\n    const data = this._data;\n    const [rows, cols] = this.shape;\n\n    for (let row = 0; row < rows; ++row) {\n      const offset = row * cols;\n\n      for (let col = 0; col < cols; ++col) {\n        const i = offset + col;\n        data[i] = f(data[i], v(row, col));\n      }\n    }\n\n    return this;\n  }\n\n  _apply_rowwise_array(values, f) {\n    return this._apply_array(f, (_, j) => values[j]);\n  }\n\n  _apply_colwise_array(values, f) {\n    const data = this._data;\n    const [rows, cols] = this.shape;\n\n    for (let row = 0; row < rows; ++row) {\n      const offset = row * cols;\n\n      for (let col = 0; col < cols; ++col) {\n        const i = offset + col;\n        data[i] = f(data[i], values[row]);\n      }\n    }\n\n    return this;\n  }\n\n  _apply(value, f) {\n    let data = this._data;\n\n    if (value instanceof Matrix) {\n      let [value_rows, value_cols] = value.shape;\n      let [rows, cols] = this.shape;\n\n      if (value_rows === 1) {\n        if (cols !== value_cols) {\n          throw `cols !== value_cols`;\n        }\n\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            data[row * cols + col] = f(data[row * cols + col], value.entry(0, col));\n          }\n        }\n      } else if (value_cols === 1) {\n        if (rows !== value_rows) {\n          throw `rows !== value_rows`;\n        }\n\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            data[row * cols + col] = f(data[row * cols + col], value.entry(row, 0));\n          }\n        }\n      } else if (rows == value_rows && cols == value_cols) {\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            data[row * cols + col] = f(data[row * cols + col], value.entry(row, col));\n          }\n        }\n      } else {\n        throw `error`;\n      }\n    } else if (Array.isArray(value)) {\n      let rows = this._rows;\n      let cols = this._cols;\n\n      if (value.length === rows) {\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            data[row * cols + col] = f(data[row * cols + col], value[row]);\n          }\n        }\n      } else if (value.length === cols) {\n        for (let row = 0; row < rows; ++row) {\n          for (let col = 0; col < cols; ++col) {\n            data[row * cols + col] = f(data[row * cols + col], value[col]);\n          }\n        }\n      } else {\n        throw `error`;\n      }\n    } else {\n      for (let i = 0, n = this._rows * this._cols; i < n; ++i) {\n        data[i] = f(data[i], value);\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * Clones the Matrix.\r\n   * @returns {Matrix}\r\n   */\n\n\n  clone() {\n    let B = new Matrix();\n    B._rows = this._rows;\n    B._cols = this._cols;\n    B._data = this._data.slice(0);\n    return B;\n  }\n\n  mult(value) {\n    return this.clone()._apply(value, (a, b) => a * b);\n  }\n\n  divide(value) {\n    return this.clone()._apply(value, (a, b) => a / b);\n  }\n\n  add(value) {\n    return this.clone()._apply(value, (a, b) => a + b);\n  }\n\n  sub(value) {\n    return this.clone()._apply(value, (a, b) => a - b);\n  }\n  /**\r\n   * Returns the number of rows and columns of the Matrix.\r\n   * @returns {Array} An Array in the form [rows, columns].\r\n   */\n\n\n  get shape() {\n    return [this._rows, this._cols];\n  }\n  /**\r\n   * Returns the matrix in the given shape with the given function which returns values for the entries of the matrix.\r\n   * @param {Array} parameter - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.\r\n   * @returns {Matrix}\r\n   */\n\n\n  set shape([rows, cols, value = () => 0]) {\n    this._rows = rows;\n    this._cols = cols;\n    this._data = new Float64Array(rows * cols);\n\n    for (let row = 0; row < rows; ++row) {\n      for (let col = 0; col < cols; ++col) {\n        this._data[row * cols + col] = value(row, col);\n      }\n    }\n\n    return this;\n  }\n  /**\r\n   * Returns the Matrix as a two-dimensional Array.\r\n   * @returns {Array}\r\n   */\n\n\n  get to2dArray() {\n    /* const rows = this._rows;\r\n    const cols = this._cols;\r\n    let result = new Array(rows)\r\n    for (let row = 0; row < rows; ++row) {\r\n        let result_col = new Array(cols)\r\n        for (let col = 0; col < cols; ++col) {\r\n            result_col[col] = this.entry(row, col);\r\n        }\r\n        result[row] = result_col;\r\n    }\r\n    return result; */\n    return [...this.iterate_rows()];\n  }\n  /**\r\n   * Returns the diagonal of the Matrix.\r\n   * @returns {Array}\r\n   */\n\n\n  get diag() {\n    const rows = this._rows;\n    const cols = this._cols;\n    const min_row_col = Math.min(rows, cols);\n    let result = new Float64Array(min_row_col);\n\n    for (let i = 0; i < min_row_col; ++i) {\n      result[i] = this.entry(i, i);\n    }\n\n    return result;\n  }\n  /**\r\n   * Returns the mean of all entries of the Matrix.\r\n   * @returns {float64}\r\n   */\n\n\n  get mean() {\n    const sum = this.sum;\n    const n = this._rows * this._cols;\n    return sum / n;\n  }\n  /**\r\n   * Returns the sum oof all entries of the Matrix.\r\n   * @returns {number}\r\n   */\n\n\n  get sum() {\n    const data = this._data;\n    return (0,_numerical_index__WEBPACK_IMPORTED_MODULE_0__.neumair_sum)(data);\n  }\n  /**\r\n   * Returns the mean of each row of the matrix.\r\n   * @returns {Array}\r\n   */\n\n\n  get meanRows() {\n    const data = this._data;\n    const rows = this._rows;\n    const cols = this._cols;\n    let result = [];\n\n    for (let row = 0; row < rows; ++row) {\n      result[row] = 0;\n\n      for (let col = 0; col < cols; ++col) {\n        result[row] += data[row * cols + col];\n      }\n\n      result[row] /= cols;\n    }\n\n    return result;\n  }\n  /** Returns the mean of each column of the matrix.\r\n   * @returns {Array}\r\n   */\n\n\n  get meanCols() {\n    const data = this._data;\n    const rows = this._rows;\n    const cols = this._cols;\n    let result = [];\n\n    for (let col = 0; col < cols; ++col) {\n      result[col] = 0;\n\n      for (let row = 0; row < rows; ++row) {\n        result[col] += data[row * cols + col];\n      }\n\n      result[col] /= rows;\n    }\n\n    return result;\n  }\n\n  static solve_CG(A, b, randomizer, tol = 1e-3) {\n    const rows = A.shape[0];\n    const cols = b.shape[1];\n    let result = new Matrix(rows, 0);\n\n    for (let i = 0; i < cols; ++i) {\n      const b_i = Matrix.from(b.col(i)).T;\n      let x = new Matrix(rows, 1, () => randomizer.random);\n      let r = b_i.sub(A.dot(x));\n      let d = r.clone();\n\n      do {\n        const z = A.dot(d);\n        const alpha = r.T.dot(r).entry(0, 0) / d.T.dot(z).entry(0, 0);\n        x = x.add(d.mult(alpha));\n        const r_next = r.sub(z.mult(alpha));\n        const beta = r_next.T.dot(r_next).entry(0, 0) / r.T.dot(r).entry(0, 0);\n        d = r_next.add(d.mult(beta));\n        r = r_next;\n      } while (Math.abs(r.mean) > tol);\n\n      result = result.concat(x, \"horizontal\");\n    }\n\n    return result;\n  }\n  /**\r\n   * Solves the equation {@link A}x = {@link b}. Returns the result x.\r\n   * @param {Matrix} A - Matrix or LU Decomposition\r\n   * @param {Matrix} b - Matrix\r\n   * @returns {Matrix}\r\n   */\n\n\n  static solve(A, b) {\n    let {\n      L: L,\n      U: U\n    } = \"L\" in A && \"U\" in A ? A : Matrix.LU(A);\n    let rows = L.shape[0];\n    let x = b.clone(); // forward\n\n    for (let row = 0; row < rows; ++row) {\n      for (let col = 0; col < row - 1; ++col) {\n        x.set_entry(0, row, x.entry(0, row) - L.entry(row, col) * x.entry(1, col));\n      }\n\n      x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));\n    } // backward\n\n\n    for (let row = rows - 1; row >= 0; --row) {\n      for (let col = rows - 1; col > row; --col) {\n        x.set_entry(0, row, x.entry(0, row) - U.entry(row, col) * x.entry(0, col));\n      }\n\n      x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));\n    }\n\n    return x;\n  }\n  /**\r\n   * {@link L}{@link U} decomposition of the Matrix {@link A}. Creates two matrices, so that the dot product LU equals A.\r\n   * @param {Matrix} A \r\n   * @returns {{L: Matrix, U: Matrix}} result - Returns the left triangle matrix {@link L} and the upper triangle matrix {@link U}.\r\n   */\n\n\n  static LU(A) {\n    const rows = A.shape[0];\n    const L = new Matrix(rows, rows, \"zeros\");\n    const U = new Matrix(rows, rows, \"identity\");\n\n    for (let j = 0; j < rows; ++j) {\n      for (let i = j; i < rows; ++i) {\n        let sum = 0;\n\n        for (let k = 0; k < j; ++k) {\n          sum += L.entry(i, k) * U.entry(k, j);\n        }\n\n        L.set_entry(i, j, A.entry(i, j) - sum);\n      }\n\n      for (let i = j; i < rows; ++i) {\n        if (L.entry(j, j) === 0) {\n          return undefined;\n        }\n\n        let sum = 0;\n\n        for (let k = 0; k < j; ++k) {\n          sum += L.entry(j, k) * U.entry(k, i);\n        }\n\n        U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));\n      }\n    }\n\n    return {\n      L: L,\n      U: U\n    };\n  }\n  /**\r\n   * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}\r\n   * @param {Matrix} M \r\n   * @param {int} [k=2] \r\n   * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}\r\n   */\n\n\n  static SVD(M, k = 2) {\n    const MT = M.T;\n    let MtM = MT.dot(M);\n    let MMt = M.dot(MT);\n    let {\n      eigenvectors: V,\n      eigenvalues: Sigma\n    } = simultaneous_poweriteration(MtM, k);\n    let {\n      eigenvectors: U\n    } = simultaneous_poweriteration(MMt, k);\n    return {\n      U: U,\n      Sigma: Sigma.map(sigma => Math.sqrt(sigma)),\n      V: V\n    }; //Algorithm 1a: Householder reduction to bidiagonal form:\n\n    /* const [m, n] = A.shape;\r\n    let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);\r\n    console.log(U.to2dArray)\r\n    let V = new Matrix(n, m, (i, j) => i == j ? 1 : 0);\r\n    console.log(V.to2dArray)\r\n    let B = Matrix.bidiagonal(A.clone(), U, V);\r\n    console.log(U,V,B)\r\n    return { U: U, \"Sigma\": B, V: V }; */\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9NYXRyaXguanM/NTA1ZSJdLCJuYW1lcyI6WyJTeW1ib2wiLCJpdGVyYXRvciIsIk1hdHJpeCIsImNvbnN0cnVjdG9yIiwicm93cyIsImNvbHMiLCJ2YWx1ZSIsIml0ZXJhdGVfcm93cyIsIl9yb3dzIiwiX2NvbHMiLCJfZGF0YSIsIkZsb2F0NjRBcnJheSIsInJvdyIsImNvbCIsImkiLCJqIiwiZnJvbSIsIkEiLCJ0eXBlIiwiY2xvbmUiLCJBcnJheSIsImlzQXJyYXkiLCJtIiwibGVuZ3RoIiwiXyIsIm4iLCJkYXRhIiwic3ViYXJyYXkiLCJzZXRfcm93IiwidmFsdWVzIiwib2Zmc2V0Iiwic2hhcGUiLCJyZXN1bHRfY29sIiwiZW50cnkiLCJzZXRfZW50cnkiLCJ0cmFuc3Bvc2UiLCJCIiwiVCIsImludmVyc2UiLCJoIiwiayIsImlfbWF4IiwibWF4X3ZhbCIsIkluZmluaXR5IiwidmFsIiwiTWF0aCIsImFicyIsImhfdmFsIiwiaV92YWwiLCJmIiwiQl9yb3dfcm93IiwiQl9pX3JvdyIsIkJfaV9qIiwiQl9yb3dfaiIsImRvdCIsImpvaW4iLCJJIiwiQyIsIkFfaSIsIkJfaSIsInN1bSIsIm5ldW1haXJfc3VtIiwibWFwIiwiZSIsIm91dGVyIiwibCIsInIiLCJ1bmRlZmluZWQiLCJjb25jYXQiLCJyb3dzX0EiLCJjb2xzX0EiLCJyb3dzX0IiLCJjb2xzX0IiLCJYIiwic2V0X2Jsb2NrIiwib2Zmc2V0X3JvdyIsIm9mZnNldF9jb2wiLCJnZXRfYmxvY2siLCJzdGFydF9yb3ciLCJzdGFydF9jb2wiLCJlbmRfcm93IiwiZW5kX2NvbCIsIm5ld19yb3ciLCJuZXdfY29sIiwiZ2F0aGVyIiwicm93X2luZGljZXMiLCJjb2xfaW5kaWNlcyIsIk4iLCJEIiwiUiIsInJvd19pbmRleCIsImNvbF9pbmRleCIsIl9hcHBseV9hcnJheSIsInYiLCJfYXBwbHlfcm93d2lzZV9hcnJheSIsIl9hcHBseV9jb2x3aXNlX2FycmF5IiwiX2FwcGx5IiwidmFsdWVfcm93cyIsInZhbHVlX2NvbHMiLCJzbGljZSIsIm11bHQiLCJhIiwiYiIsImRpdmlkZSIsImFkZCIsInN1YiIsInRvMmRBcnJheSIsImRpYWciLCJtaW5fcm93X2NvbCIsIm1pbiIsInJlc3VsdCIsIm1lYW4iLCJtZWFuUm93cyIsIm1lYW5Db2xzIiwic29sdmVfQ0ciLCJyYW5kb21pemVyIiwidG9sIiwiYl9pIiwieCIsInJhbmRvbSIsImQiLCJ6IiwiYWxwaGEiLCJyX25leHQiLCJiZXRhIiwic29sdmUiLCJMIiwiVSIsIkxVIiwiU1ZEIiwiTSIsIk1UIiwiTXRNIiwiTU10IiwiZWlnZW52ZWN0b3JzIiwiViIsImVpZ2VudmFsdWVzIiwiU2lnbWEiLCJzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb24iLCJzaWdtYSIsInNxcnQiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBO0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7bUJBdUpLQSxNQUFNLENBQUNDLFE7QUF0SkwsTUFBTUMsTUFBTixDQUFZO0FBQ2Y7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJQyxhQUFXLENBQUNDLElBQUksR0FBQyxJQUFOLEVBQVlDLElBQUksR0FBQyxJQUFqQixFQUF1QkMsS0FBSyxHQUFDLElBQTdCLEVBQW1DO0FBQUEsNENBaUkxQixLQUFLQyxZQWpJcUI7O0FBQzFDLFNBQUtDLEtBQUwsR0FBYUosSUFBYjtBQUNBLFNBQUtLLEtBQUwsR0FBYUosSUFBYjtBQUNBLFNBQUtLLEtBQUwsR0FBYSxJQUFiOztBQUNBLFFBQUlOLElBQUksSUFBSUMsSUFBWixFQUFrQjtBQUNkLFVBQUksQ0FBQ0MsS0FBTCxFQUFZO0FBQ1IsYUFBS0ksS0FBTCxHQUFhLElBQUlDLFlBQUosQ0FBaUJQLElBQUksR0FBR0MsSUFBeEIsQ0FBYjtBQUNBLGVBQU8sSUFBUDtB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LEVBQU03RixDQUFOLENBQXJEO0FBQ0EsV0FBTztBQUFFdUYsT0FBQyxFQUFFQSxDQUFMO0FBQVFVLFdBQUssRUFBRUEsS0FBSyxDQUFDM0UsR0FBTixDQUFVNkUsS0FBSyxJQUFJOUYsSUFBSSxDQUFDK0YsSUFBTCxDQUFVRCxLQUFWLENBQW5CLENBQWY7QUFBcURKLE9BQUMsRUFBRUE7QUFBeEQsS0FBUCxDQU5lLENBUWY7O0FBQ0E7QUFDUjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNLOztBQTF6QmMiLCJmaWxlIjoiLi9tYXRyaXgvTWF0cml4LmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgbmV1bWFpcl9zdW0gfSBmcm9tIFwiLi4vbnVtZXJpY2FsL2luZGV4XCI7XHJcblxyXG4vKipcclxuICogQGNsYXNzXHJcbiAqIEBhbGlhcyBNYXRyaXhcclxuICogQHJlcXVpcmVzIG1vZHVsZTpudW1lcmljYWwvbmV1bWFpcl9zdW1cclxuICovXHJcbmV4cG9ydCBjbGFzcyBNYXRyaXh7XHJcbiAgICAvKipcclxuICAgICAqIGNyZWF0ZXMgYSBuZXcgTWF0cml4LiBFbnRyaWVzIGFyZSBzdG9yZWQgaW4gYSBGbG9hdDY0QXJyYXkuIFxyXG4gICAgICogQGNvbnN0cnVjdG9yXHJcbiAgICAgKiBAbWVtYmVyb2YgbW9kdWxlOm1hdHJpeFxyXG4gICAgICogQGFsaWFzIE1hdHJpeFxyXG4gICAgICogQHBhcmFtIHtudW1iZXJ9IHJvd3MgLSBUaGUgYW1vdW50IG9mIHJvd3Mgb2YgdGhlIG1hdHJpeC5cclxuICAgICAqIEBwYXJhbSB7bnVtYmVyfSBjb2xzIC0gVGhlIGFtb3VudCBvZiBjb2x1bW5zIG9mIHRoZSBtYXRyaXguXHJcbiAgICAgKiBAcGFyYW0geyhmdW5jdGlvbnxzdHJpbmd8bnVtYmVyKX0gdmFsdWU9MCAtIENhbiBiZSBhIGZ1bmN0aW9uIHdpdGggcm93IGFuZCBjb2wgYXMgcGFyYW1ldGVycywgYSBudW1iZXIsIG9yIFwiemVyb3NcIiwgXCJpZGVudGl0eVwiIG9yIFwiSVwiLCBvciBcImNlbnRlclwiLlxyXG4gICAgICogIC0gKipmdW5jdGlvbioqOiBmb3IgZWFjaCBlbnRyeSB0aGUgZnVuY3Rpb24gZ2V0cyBjYWxsZWQgd2l0aCB0aGUgcGFyYW1ldGVycyBmb3IgdGhlIGFjdHVhbCByb3cgYW5kIGNvbHVtbi5cclxuICAgICAqICAtICoqc3RyaW5nKio6IGFsbG93ZWQgYXJlXHJcbiAgICAgKiAgICAgIC0gXCJ6ZXJvXCIsIGNyZWF0ZXMgYSB6ZXJvIG1hdHJpeC5cclxuICAgICAqICAgICAgLSBcImlkZW50aXR5XCIgb3IgXCJJXCIsIGNyZWF0ZXMgYW4gaWRlbnRpdHkgbWF0cml4LlxyXG4gICAgICogICAgICAtIFwiY2VudGVyXCIsIGNyZWF0ZXMgYW4gY2VudGVyIG1hdHJpeC5cclxuICAgICAqICAtICoqbnVtYmVyKio6IGNyZWF0ZSBhIG1hdHJpeCBmaWxsZWQgd2l0aCB0aGUgZ2l2ZW4gdmFsdWUuXHJcbiAgICAgKiBAZXhhbXBsZVxyXG4gICAgICogXHJcbiAgICAgKiBsZXQgQSA9IG5ldyBNYXRyaXgoMTAsIDEwLCAoKSA9PiBNYXRoLnJhbmRvbSgpKTsgLy9jcmVhdGVzIGEgMTAgdGltZXMgMTAgcmFuZG9tIG1hdHJpeC5cclxuICAgICAqIGxldCBCID0gbmV3IE1hdHJpeCgzLCAzLCBcIklcIik7IC8vIGNyZWF0ZXMgYSAzIHRpbWVzIDMgaWRlbnRpdHkgbWF0cml4LlxyXG4gICAgICogQHJldHVybnMge01hdHJpeH0gcmV0dXJucyBhIHtAbGluayByb3dzfSB0aW1lcyB7QGxpbmsgY29sc30gTWF0cml4IGZpbGxlZCB3aXRoIHtAbGluayB2YWx1ZX0uXHJcbiAgICAgKi9cclxuICAgIGNvbnN0cnVjdG9yKHJvd3M9bnVsbCwgY29scz1udWxsLCB2YWx1ZT1udWxsKSB7XHJcbiAgICAgICAgdGhpcy5fcm93cyA9IHJvd3M7XHJcbiAgICAgICAgdGhpcy5fY29scyA9IGNvbHM7XHJcbiAgICAgICAgdGhpcy5fZGF0YSA9IG51bGw7XHJcbiAgICAgICAgaWYgKHJvd3MgJiYgY29scykge1xyXG4gICAgICAgICAgICBpZiAoIXZhbHVlKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9kYXRhID0gbmV3IEZsb2F0NjRBcnJheShyb3dzICogY29scyk7XHJcbiAgICAgICAgICAgICAgICByZXR1cm4gdGhpcztcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBpZiAodHlwZW9mKHZhbHVlKSA9PT0gXCJmdW5jdGlvblwiKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9kYXRhID0gbmV3IEZsb2F0NjRBcnJheShyb3dzICogY29scyk7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICAgICAgICAgIGZvciAobGV0IGNvbCA9IDA7IGNvbCA8IGNvbHM7ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIHRoaXMuX2RhdGFbcm93ICogY29scyArIGNvbF0gPSB2YWx1ZShyb3csIGNvbCk7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgaWYgKHR5cGVvZih2YWx1ZSkgPT09IFwic3RyaW5nXCIpIHtcclxuICAgICAgICAgICAgICAgIGlmICh2YWx1ZSA9PT0gXCJ6ZXJvc1wiKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIG5ldyBNYXRyaXgocm93cywgY29scywgMCk7IFxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgaWYgKHZhbHVlID09PSBcImlkZW50aXR5XCIgfHwgdmFsdWUgPT09IFwiSVwiKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgdGhpcy5fZGF0YSA9IG5ldyBGbG9hdDY0QXJyYXkocm93cyAqIGNvbHMpO1xyXG4gICAgICAgICAgICAgICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIHRoaXMuX2RhdGFbcm93ICogY29scyArIHJvd10gPSAxO1xyXG4gICAgICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgICAgICByZXR1cm4gdGhpcztcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGlmICh2YWx1ZSA9PT0gXCJjZW50ZXJcIiAmJiByb3dzID09IGNvbHMpIHtcclxuICAgICAgICAgICAgICAgICAgICB0aGlzLl9kYXRhID0gbmV3IEZsb2F0NjRBcnJheShyb3dzICogY29scyk7XHJcbiAgICAgICAgICAgICAgICAgICAgdmFsdWUgPSAoaSwgaikgPT4gKGkgPT09IGogPyAxIDogMCkgLSAoMSAvIHJvd3MpO1xyXG4gICAgICAgICAgICAgICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIGZvciAobGV0IGNvbCA9IDA7IGNvbCA8IGNvbHM7ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICB0aGlzLl9kYXRhW3JvdyAqIGNvbHMgKyBjb2xdID0gdmFsdWUocm93LCBjb2wpO1xyXG4gICAgICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGlmICh0eXBlb2YodmFsdWUpID09PSBcIm51bWJlclwiKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9kYXRhID0gbmV3IEZsb2F0NjRBcnJheShyb3dzICogY29scyk7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICAgICAgICAgIGZvciAobGV0IGNvbCA9IDA7IGNvbCA8IGNvbHM7ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIHRoaXMuX2RhdGFbcm93ICogY29scyArIGNvbF0gPSB2YWx1ZTtcclxuICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICByZXR1cm4gdGhpcztcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpcztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENyZWF0ZXMgYSBNYXRyaXggb3V0IG9mIHtAbGluayBBfS5cclxuICAgICAqIEBwYXJhbSB7KE1hdHJpeHxBcnJheXxGbG9hdDY0QXJyYXl8bnVtYmVyKX0gQSAtIFRoZSBtYXRyaXgsIGFycmF5LCBvciBudW1iZXIsIHdoaWNoIHNob3VsZCBjb252ZXJ0ZWQgdG8gYSBNYXRyaXguXHJcbiAgICAgKiBAcGFyYW0ge1wicm93XCJ8XCJjb2xcInxcImRpYWdcIn0gW3R5cGUgPSBcInJvd1wiXSAtIElmIHtAbGluayBBfSBpcyBhIEFycmF5IG9yIEZsb2F0NjRBcnJheSwgdGhlbiB0eXBlIGRlZmluZXMgaWYgaXQgaXMgYSByb3ctIG9yIGEgY29sdW1uIHZlY3Rvci4gXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fVxyXG4gICAgICogXHJcbiAgICAgKiBAZXhhbXBsZVxyXG4gICAgICogbGV0IEEgPSBNYXRyaXguZnJvbShbWzEsIDBdLCBbMCwgMV1dKTsgLy9jcmVhdGVzIGEgdHdvIGJ5IHR3byBpZGVudGl0eSBtYXRyaXguXHJcbiAgICAgKiBsZXQgUyA9IE1hdHJpeC5mcm9tKFsxLCAyLCAzXSwgXCJkaWFnXCIpOyAvLyBjcmVhdGVzIGEgdGhyZWUgYnkgdGhyZWUgbWF0cml4IHdpdGggMSwgMiwgMyBvbiBpdHMgZGlhZ29uYWwuXHJcbiAgICAgKi9cclxuICAgIHN0YXRpYyBmcm9tKEEsIHR5cGU9XCJyb3dcIikge1xyXG4gICAgICAgIGlmIChBIGluc3RhbmNlb2YgTWF0cml4KSB7XHJcbiAgICAgICAgICAgIHJldHVybiBBLmNsb25lKCk7XHJcbiAgICAgICAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KEEpIHx8IEEgaW5zdGFuY2VvZiBGbG9hdDY0QXJyYXkpIHtcclxuICAgICAgICAgICAgbGV0IG0gPSBBLmxlbmd0aFxyXG4gICAgICAgICAgICBpZiAobSA9PT0gMCkgdGhyb3cgXCJBcnJheSBpcyBlbXB0eVwiO1xyXG4gICAgICAgICAgICAvLyAxZFxyXG4gICAgICAgICAgICBpZiAoIUFycmF5LmlzQXJyYXkoQVswXSkgJiYgIShBWzBdIGluc3RhbmNlb2YgRmxvYXQ2NEFycmF5KSkge1xyXG4gICAgICAgICAgICAgICAgaWYgKHR5cGUgPT09IFwicm93XCIpIHsgIFxyXG4gICAgICAgICAgICAgICAgICAgIHJldHVybiBuZXcgTWF0cml4KDEsIG0sIChfLCBqKSA9PiBBW2pdKTtcclxuICAgICAgICAgICAgICAgIH0gZWxzZSBpZiAodHlwZSA9PT0gXCJjb2xcIikge1xyXG4gICAgICAgICAgICAgICAgICAgIHJldHVybiBuZXcgTWF0cml4KG0sIDEsIChpKSA9PiBBW2ldKTtcclxuICAgICAgICAgICAgICAgIH0gZWxzZSBpZiAodHlwZSA9PT0gXCJkaWFnXCIpIHtcclxuICAgICAgICAgICAgICAgICAgICByZXR1cm4gbmV3IE1hdHJpeChtLCBtLCAoaSwgaikgPT4gKGkgPT0gaikgPyBBW2ldIDogMCk7XHJcbiAgICAgICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgICAgIHRocm93IFwiMWQgYXJyYXkgaGFzIE5hTiBlbnRyaWVzXCJcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgLy8gMmRcclxuICAgICAgICAgICAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KEFbMF0pIHx8IEFbMF0gaW5zdGFuY2VvZiBGbG9hdDY0QXJyYXkpIHtcclxuICAgICAgICAgICAgICAgIGxldCBuID0gQVswXS5sZW5ndGg7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCBtOyArK3Jvdykge1xyXG4gICAgICAgICAgICAgICAgICAgIGlmIChBW3Jvd10ubGVuZ3RoICE9PSBuKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgICAgIHRocm93IFwidmFyaW91cyBhcnJheSBsZW5ndGhzXCI7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgcmV0dXJuIG5ldyBNYXRyaXgobSwgbiwgKGksIGopID0+IEFbaV1bal0pXHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9IGVsc2UgaWYgKHR5cGVvZihBKSA9PT0gXCJudW1iZXJcIikge1xyXG4gICAgICAgICAgICByZXR1cm4gbmV3IE1hdHJpeCgxLCAxLCBBKTtcclxuICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICB0aHJvdyBcImVycm9yXCJcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIHRoZSB7QGxpbmsgcm93fXRoIHJvdyBmcm9tIHRoZSBNYXRyaXguXHJcbiAgICAgKiBAcGFyYW0ge2ludH0gcm93IFxyXG4gICAgICogQHJldHVybnMge0FycmF5fVxyXG4gICAgICovXHJcbiAgICByb3cocm93KSB7XHJcbiAgICAgICAgLyogbGV0IHJlc3VsdF9yb3cgPSBuZXcgQXJyYXkodGhpcy5fY29scyk7XHJcbiAgICAgICAgZm9yIChsZXQgY29sID0gMDsgY29sIDwgdGhpcy5fY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgcmVzdWx0X3Jvd1tjb2xdID0gdGhpcy5fZGF0YVtyb3cgKiB0aGlzLl9jb2xzICsgY29sXTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHJlc3VsdF9yb3c7ICovXHJcbiAgICAgICAgY29uc3QgZGF0YSA9IHRoaXMuX2RhdGE7XHJcbiAgICAgICAgY29uc3QgY29scyA9IHRoaXMuX2NvbHM7XHJcbiAgICAgICAgcmV0dXJuIGRhdGEuc3ViYXJyYXkocm93ICogY29scywgKHJvdyArIDEpICogY29scylcclxuICAgIH1cclxuICAgIFxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIGFuIGdlbmVyYXRvciB5aWVsZGluZyBlYWNoIHJvdyBvZiB0aGUgTWF0cml4LlxyXG4gICAgICovXHJcbiAgICAqaXRlcmF0ZV9yb3dzKCkge1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG5cclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICB5aWVsZCBkYXRhLnN1YmFycmF5KHJvdyAqIGNvbHMsIChyb3cgKyAxKSAqIGNvbHMpXHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogTWFrZXMgYSB7QGxpbmsgTWF0cml4fSBvYmplY3QgYW4gaXRlcmFibGUgb2JqZWN0LlxyXG4gICAgICovXHJcbiAgICBbU3ltYm9sLml0ZXJhdG9yXSA9IHRoaXMuaXRlcmF0ZV9yb3dzO1xyXG5cclxuICAgIC8qKlxyXG4gICAgICogU2V0cyB0aGUgZW50cmllcyBvZiB7QGxpbmsgcm93fXRoIHJvdyBmcm9tIHRoZSBNYXRyaXggdG8gdGhlIGVudHJpZXMgZnJvbSB7QGxpbmsgdmFsdWVzfS5cclxuICAgICAqIEBwYXJhbSB7aW50fSByb3cgXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSB2YWx1ZXMgXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fVxyXG4gICAgICovXHJcbiAgICBzZXRfcm93KHJvdywgdmFsdWVzKSB7XHJcbiAgICAgICAgbGV0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGlmIChBcnJheS5pc0FycmF5KHZhbHVlcykgJiYgdmFsdWVzLmxlbmd0aCA9PT0gY29scykge1xyXG4gICAgICAgICAgICBsZXQgb2Zmc2V0ID0gcm93ICogY29scztcclxuICAgICAgICAgICAgZm9yIChsZXQgY29sID0gMDsgY29sIDwgY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgICAgIHRoaXMuX2RhdGFbb2Zmc2V0ICsgY29sXSA9IHZhbHVlc1tjb2xdO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfSBlbHNlIGlmICh2YWx1ZXMgaW5zdGFuY2VvZiBNYXRyaXggJiYgdmFsdWVzLnNoYXBlWzFdID09PSBjb2xzICYmIHZhbHVlcy5zaGFwZVswXSA9PT0gMSkge1xyXG4gICAgICAgICAgICBsZXQgb2Zmc2V0ID0gcm93ICogY29scztcclxuICAgICAgICAgICAgZm9yIChsZXQgY29sID0gMDsgY29sIDwgY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgICAgIHRoaXMuX2RhdGFbb2Zmc2V0ICsgY29sXSA9IHZhbHVlcy5fZGF0YVtjb2xdO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyB0aGUge0BsaW5rIGNvbH10aCBjb2x1bW4gZnJvbSB0aGUgTWF0cml4LlxyXG4gICAgICogQHBhcmFtIHtpbnR9IGNvbCBcclxuICAgICAqIEByZXR1cm5zIHtBcnJheX1cclxuICAgICAqL1xyXG4gICAgY29sKGNvbCkge1xyXG4gICAgICAgIGxldCByZXN1bHRfY29sID0gbmV3IEZsb2F0NjRBcnJheSh0aGlzLl9yb3dzKTtcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCB0aGlzLl9yb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICByZXN1bHRfY29sW3Jvd10gPSB0aGlzLl9kYXRhW3JvdyAqIHRoaXMuX2NvbHMgKyBjb2xdO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gcmVzdWx0X2NvbDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIHtAbGluayBjb2x9dGggZW50cnkgZnJvbSB0aGUge0BsaW5rIHJvd310aCByb3cgb2YgdGhlIE1hdHJpeC5cclxuICAgICAqIEBwYXJhbSB7aW50fSByb3cgXHJcbiAgICAgKiBAcGFyYW0ge2ludH0gY29sIFxyXG4gICAgICogQHJldHVybnMge2Zsb2F0NjR9XHJcbiAgICAgKi9cclxuICAgIGVudHJ5KHJvdywgY29sKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX2RhdGFbcm93ICogdGhpcy5fY29scyArIGNvbF07XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBTZXRzIHRoZSB7QGxpbmsgY29sfXRoIGVudHJ5IGZyb20gdGhlIHtAbGluayByb3d9dGggcm93IG9mIHRoZSBNYXRyaXggdG8gdGhlIGdpdmVuIHtAbGluayB2YWx1ZX0uXHJcbiAgICAgKiBAcGFyYW0ge2ludH0gcm93IFxyXG4gICAgICogQHBhcmFtIHtpbnR9IGNvbCBcclxuICAgICAqIEBwYXJhbSB7ZmxvYXQ2NH0gdmFsdWVcclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9XHJcbiAgICAgKi9cclxuICAgIHNldF9lbnRyeShyb3csIGNvbCwgdmFsdWUpIHtcclxuICAgICAgICB0aGlzLl9kYXRhW3JvdyAqIHRoaXMuX2NvbHMgKyBjb2xdID0gdmFsdWU7XHJcbiAgICAgICAgcmV0dXJuIHRoaXM7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIGEgbmV3IHRyYW5zcG9zZWQgTWF0cml4LlxyXG4gICAgICogQHJldHVybnMge01hdHJpeH1cclxuICAgICAqL1xyXG4gICAgdHJhbnNwb3NlKCkge1xyXG4gICAgICAgIGxldCBCID0gbmV3IE1hdHJpeCh0aGlzLl9jb2xzLCB0aGlzLl9yb3dzLCAocm93LCBjb2wpID0+IHRoaXMuZW50cnkoY29sLCByb3cpKVxyXG4gICAgICAgIHJldHVybiBCO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyBhIG5ldyB0cmFuc3Bvc2VkIE1hdHJpeC4gU2hvcnQtZm9ybSBvZiB7QGZ1bmN0aW9uIHRyYW5zcG9zZX0uXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fVxyXG4gICAgICovXHJcbiAgICBnZXQgVCgpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy50cmFuc3Bvc2UoKTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIGludmVyc2Ugb2YgdGhlIE1hdHJpeC5cclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9XHJcbiAgICAgKi9cclxuICAgIGludmVyc2UoKSB7XHJcbiAgICAgICAgY29uc3Qgcm93cyA9IHRoaXMuX3Jvd3M7XHJcbiAgICAgICAgY29uc3QgY29scyA9IHRoaXMuX2NvbHM7XHJcbiAgICAgICAgbGV0IEIgPSBuZXcgTWF0cml4KHJvd3MsIDIgKiBjb2xzLCAoaSxqKSA9PiB7XHJcbiAgICAgICAgICAgIGlmIChqID49IGNvbHMpIHtcclxuICAgICAgICAgICAgICAgIHJldHVybiAoaSA9PT0gKGogLSBjb2xzKSkgPyAxIDogMDtcclxuICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgICAgIHJldHVybiB0aGlzLmVudHJ5KGksIGopO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfSk7XHJcbiAgICAgICAgbGV0IGggPSAwOyBcclxuICAgICAgICBsZXQgayA9IDA7XHJcbiAgICAgICAgd2hpbGUgKGggPCByb3dzICYmIGsgPCBjb2xzKSB7XHJcbiAgICAgICAgICAgIHZhciBpX21heCA9IDA7XHJcbiAgICAgICAgICAgIGxldCBtYXhfdmFsID0gLUluZmluaXR5O1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gaDsgaSA8IHJvd3M7ICsraSkge1xyXG4gICAgICAgICAgICAgICAgbGV0IHZhbCA9IE1hdGguYWJzKEIuZW50cnkoaSxrKSk7XHJcbiAgICAgICAgICAgICAgICBpZiAobWF4X3ZhbCA8IHZhbCkge1xyXG4gICAgICAgICAgICAgICAgICAgIGlfbWF4ID0gaTtcclxuICAgICAgICAgICAgICAgICAgICBtYXhfdmFsID0gdmFsO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGlmIChCLmVudHJ5KGlfbWF4LCBrKSA9PSAwKSB7XHJcbiAgICAgICAgICAgICAgICBrKys7XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICAvLyBzd2FwIHJvd3NcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgMiAqIGNvbHM7ICsraikge1xyXG4gICAgICAgICAgICAgICAgICAgIGxldCBoX3ZhbCA9IEIuZW50cnkoaCwgaik7XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IGlfdmFsID0gQi5lbnRyeShpX21heCwgaik7XHJcbiAgICAgICAgICAgICAgICAgICAgQi5zZXRfZW50cnkoaCwgaiwgaF92YWwpO1xyXG4gICAgICAgICAgICAgICAgICAgIEIuc2V0X2VudHJ5KGlfbWF4LCBqLCBpX3ZhbCk7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBpID0gaCArIDE7IGkgPCByb3dzOyArK2kpIHtcclxuICAgICAgICAgICAgICAgICAgICBsZXQgZiA9IEIuZW50cnkoaSwgaykgLyBCLmVudHJ5KGgsIGspO1xyXG4gICAgICAgICAgICAgICAgICAgIEIuc2V0X2VudHJ5KGksIGssIDApXHJcbiAgICAgICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IGsgKyAxOyBqIDwgMiAqIGNvbHM7ICsraikge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBCLnNldF9lbnRyeShpLCBqLCBCLmVudHJ5KGksIGopIC0gQi5lbnRyeShoLCBqKSAqIGYpO1xyXG4gICAgICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGgrKztcclxuICAgICAgICAgICAgICAgIGsrKztcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgbGV0IGYgPSBCLmVudHJ5KHJvdywgcm93KTtcclxuICAgICAgICAgICAgZm9yIChsZXQgY29sID0gcm93OyBjb2wgPCAyICogY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgICAgIEIuc2V0X2VudHJ5KHJvdywgY29sLCBCLmVudHJ5KHJvdywgY29sKSAvIGYpXHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgXHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gcm93cyAtIDE7IHJvdyA+PSAwOyAtLXJvdykge1xyXG4gICAgICAgICAgICBsZXQgQl9yb3dfcm93ID0gQi5lbnRyeShyb3csIHJvdyk7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgcm93OyBpKyspIHtcclxuICAgICAgICAgICAgICAgIGxldCBCX2lfcm93ID0gQi5lbnRyeShpLCByb3cpO1xyXG4gICAgICAgICAgICAgICAgbGV0IGYgPSBCX2lfcm93IC8gQl9yb3dfcm93O1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgaiA9IGk7IGogPCAyICogY29sczsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgbGV0IEJfaV9qID0gQi5lbnRyeShpLGopO1xyXG4gICAgICAgICAgICAgICAgICAgIGxldCBCX3Jvd19qID0gQi5lbnRyeShyb3csIGopO1xyXG4gICAgICAgICAgICAgICAgICAgIEJfaV9qID0gQl9pX2ogLSBCX3Jvd19qICogZjtcclxuICAgICAgICAgICAgICAgICAgICBCLnNldF9lbnRyeShpLCBqLCBCX2lfailcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgcmV0dXJuIG5ldyBNYXRyaXgocm93cywgY29scywgKGksaikgPT4gQi5lbnRyeShpLCBqICsgY29scykpO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyB0aGUgZG90IHByb2R1Y3QuIElmIHtAbGluayBCfSBpcyBhbiBBcnJheSBvciBGbG9hdDY0QXJyYXkgdGhlbiBhbiBBcnJheSBnZXRzIHJldHVybmVkLiBJZiB7QGxpbmsgQn0gaXMgYSBNYXRyaXggdGhlbiBhIE1hdHJpeCBnZXRzIHJldHVybmVkLlxyXG4gICAgICogQHBhcmFtIHsoTWF0cml4fEFycmF5fEZsb2F0NjRBcnJheSl9IEIgdGhlIHJpZ2h0IHNpZGVcclxuICAgICAqIEByZXR1cm5zIHsoTWF0cml4fEFycmF5KX1cclxuICAgICAqL1xyXG4gICAgZG90KEIpIHtcclxuICAgICAgICBpZiAoQiBpbnN0YW5jZW9mIE1hdHJpeCkge1xyXG4gICAgICAgICAgICBsZXQgQSA9IHRoaXM7XHJcbiAgICAgICAgICAgIGlmIChBLnNoYXBlWzFdICE9PSBCLnNoYXBlWzBdKSB7XHJcbiAgICAgICAgICAgICAgICB0aHJvdyBgQS5kb3QoQik6IEEgaXMgYSAke0Euc2hhcGUuam9pbihcIiB4IFwiKX0tTWF0cml4LCBCIGlzIGEgJHtCLnNoYXBlLmpvaW4oXCIgeCBcIil9LU1hdHJpeDogXHJcbiAgICAgICAgICAgICAgICBBIGhhcyAke0Euc2hhcGVbMV19IGNvbHMgYW5kIEIgJHtCLnNoYXBlWzBdfSByb3dzLiBcclxuICAgICAgICAgICAgICAgIE11c3QgYmUgZXF1YWwhYDtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBsZXQgSSA9IEEuc2hhcGVbMV07XHJcbiAgICAgICAgICAgIGxldCBDID0gbmV3IE1hdHJpeChBLnNoYXBlWzBdLCBCLnNoYXBlWzFdLCAocm93LCBjb2wpID0+IHtcclxuICAgICAgICAgICAgICAgIGNvbnN0IEFfaSA9IEEucm93KHJvdyk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBCX2kgPSBCLmNvbChjb2wpO1xyXG4gICAgICAgICAgICAgICAgbGV0IHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IEk7ICsraSkge1xyXG4gICAgICAgICAgICAgICAgICAgIHN1bSArPSBBX2lbaV0gKiBCX2lbaV07XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICByZXR1cm4gc3VtO1xyXG4gICAgICAgICAgICB9KTtcclxuICAgICAgICAgICAgcmV0dXJuIEM7XHJcbiAgICAgICAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KEIpIHx8IChCIGluc3RhbmNlb2YgRmxvYXQ2NEFycmF5KSkge1xyXG4gICAgICAgICAgICBsZXQgcm93cyA9IHRoaXMuX3Jvd3M7XHJcbiAgICAgICAgICAgIGlmIChCLmxlbmd0aCAhPT0gcm93cykgIHtcclxuICAgICAgICAgICAgICAgIHRocm93IGBBLmRvdChCKTogQSBoYXMgJHtyb3dzfSBjb2xzIGFuZCBCIGhhcyAke0IubGVuZ3RofSByb3dzLiBNdXN0IGJlIGVxdWFsIWBcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBsZXQgQyA9IG5ldyBBcnJheShyb3dzKVxyXG4gICAgICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICAgICAgQ1tyb3ddID0gbmV1bWFpcl9zdW0odGhpcy5yb3cocm93KS5tYXAoZSA9PiBlICogQltyb3ddKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgcmV0dXJuIEM7XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgdGhyb3cgYEIgbXVzdCBiZSBNYXRyaXggb3IgQXJyYXlgO1xyXG4gICAgICAgIH1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENvbXB1dGVzIHRoZSBvdXRlciBwcm9kdWN0IGZyb20ge0BsaW5rIHRoaXN9IGFuZCB7QGxpbmsgQn0uXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gQiBcclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9XHJcbiAgICAgKi9cclxuICAgIG91dGVyKEIpIHtcclxuICAgICAgICBsZXQgQSA9IHRoaXM7XHJcbiAgICAgICAgbGV0IGwgPSBBLl9kYXRhLmxlbmd0aDtcclxuICAgICAgICBsZXQgciA9IEIuX2RhdGEubGVuZ3RoO1xyXG4gICAgICAgIGlmIChsICE9IHIpIHJldHVybiB1bmRlZmluZWQ7XHJcbiAgICAgICAgbGV0IEMgPSBuZXcgTWF0cml4KClcclxuICAgICAgICBDLnNoYXBlID0gW2wsIGwsIChpLCBqKSA9PiB7XHJcbiAgICAgICAgICAgIGlmIChpIDw9IGopIHtcclxuICAgICAgICAgICAgICAgIHJldHVybiBBLl9kYXRhW2ldICogQi5fZGF0YVtqXTtcclxuICAgICAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgICAgIHJldHVybiBDLmVudHJ5KGosIGkpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfV1cclxuICAgICAgICByZXR1cm4gQztcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEFwcGVuZHMgbWF0cml4IHtAbGluayBCfSB0byB0aGUgbWF0cml4LlxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IEIgLSBtYXRyaXggdG8gYXBwZW5kLlxyXG4gICAgICogQHBhcmFtIHtcImhvcml6b250YWxcInxcInZlcnRpY2FsXCJ8XCJkaWFnXCJ9IFt0eXBlID0gXCJob3Jpem9udGFsXCJdIC0gdHlwZSBvZiBjb25jYXRlbmF0aW9uLlxyXG4gICAgICogQHJldHVybnMge01hdHJpeH1cclxuICAgICAqIEBleGFtcGxlXHJcbiAgICAgKiBcclxuICAgICAqIGxldCBBID0gTWF0cml4LmZyb20oW1sxLCAxXSwgWzEsIDFdXSk7IC8vIDIgYnkgMiBtYXRyaXggZmlsbGVkIHdpdGggb25lcy5cclxuICAgICAqIGxldCBCID0gTWF0cml4LmZyb20oW1syLCAyXSwgWzIsIDJdXSk7IC8vIDIgYnkgMiBtYXRyaXggZmlsbGVkIHdpdGggdHdvcy5cclxuICAgICAqIFxyXG4gICAgICogQS5jb25jYXQoQiwgXCJob3Jpem9udGFsXCIpOyAvLyAyIGJ5IDQgbWF0cml4LiBbWzEsIDEsIDIsIDJdLCBbMSwgMSwgMiwgMl1dXHJcbiAgICAgKiBBLmNvbmNhdChCLCBcInZlcnRpY2FsXCIpOyAvLyA0IGJ5IDIgbWF0cml4LiBbWzEsIDFdLCBbMSwgMV0sIFsyLCAyXSwgWzIsIDJdXVxyXG4gICAgICogQS5jb25jYXQoQiwgXCJkaWFnXCIpOyAvLyA0IGJ5IDQgbWF0cml4LiBbWzEsIDEsIDAsIDBdLCBbMSwgMSwgMCwgMF0sIFswLCAwLCAyLCAyXSwgWzAsIDAsIDIsIDJdXVxyXG4gICAgICovXHJcbiAgICBjb25jYXQoQiwgdHlwZT1cImhvcml6b250YWxcIikge1xyXG4gICAgICAgIGNvbnN0IEEgPSB0aGlzO1xyXG4gICAgICAgIGNvbnN0IFtyb3dzX0EsIGNvbHNfQV0gPSBBLnNoYXBlO1xyXG4gICAgICAgIGNvbnN0IFtyb3dzX0IsIGNvbHNfQl0gPSBCLnNoYXBlO1xyXG4gICAgICAgIGlmICh0eXBlID09IFwiaG9yaXpvbnRhbFwiKSB7XHJcbiAgICAgICAgICAgIGlmIChyb3dzX0EgIT0gcm93c19CKSB0aHJvdyBgQS5jb25jYXQoQiwgXCJob3Jpem9udGFsXCIpOiBBIGFuZCBCIG5lZWQgc2FtZSBudW1iZXIgb2Ygcm93cywgQSBoYXMgJHtyb3dzX0F9IHJvd3MsIEIgaGFzICR7cm93c19CfSByb3dzLmA7XHJcbiAgICAgICAgICAgIGNvbnN0IFggPSBuZXcgTWF0cml4KHJvd3NfQSwgY29sc19BICsgY29sc19CLCBcInplcm9zXCIpO1xyXG4gICAgICAgICAgICBYLnNldF9ibG9jaygwLCAwLCBBKTtcclxuICAgICAgICAgICAgWC5zZXRfYmxvY2soMCwgY29sc19BLCBCKTtcclxuICAgICAgICAgICAgcmV0dXJuIFg7XHJcbiAgICAgICAgfSBlbHNlIGlmICh0eXBlID09IFwidmVydGljYWxcIikge1xyXG4gICAgICAgICAgICBpZiAoY29sc19BICE9IGNvbHNfQikgdGhyb3cgYEEuY29uY2F0KEIsIFwidmVydGljYWxcIik6IEEgYW5kIEIgbmVlZCBzYW1lIG51bWJlciBvZiBjb2x1bW5zLCBBIGhhcyAke2NvbHNfQX0gY29sdW1ucywgQiBoYXMgJHtjb2xzX0J9IGNvbHVtbnMuYDtcclxuICAgICAgICAgICAgY29uc3QgWCA9IG5ldyBNYXRyaXgocm93c19BICsgcm93c19CLCBjb2xzX0EsIFwiemVyb3NcIik7XHJcbiAgICAgICAgICAgIFguc2V0X2Jsb2NrKDAsIDAsIEEpO1xyXG4gICAgICAgICAgICBYLnNldF9ibG9jayhyb3dzX0EsIDAsIEIpO1xyXG4gICAgICAgICAgICByZXR1cm4gWDtcclxuICAgICAgICB9IGVsc2UgaWYgKHR5cGUgPT0gXCJkaWFnXCIpIHtcclxuICAgICAgICAgICAgY29uc3QgWCA9IG5ldyBNYXRyaXgocm93c19BICsgcm93c19CLCBjb2xzX0EgKyBjb2xzX0IsIFwiemVyb3NcIik7XHJcbiAgICAgICAgICAgIFguc2V0X2Jsb2NrKDAsIDAsIEEpO1xyXG4gICAgICAgICAgICBYLnNldF9ibG9jayhyb3dzX0EsIGNvbHNfQSwgQik7XHJcbiAgICAgICAgICAgIHJldHVybiBYO1xyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIHRocm93IGB0eXBlIG11c3QgYmUgXCJob3Jpem9udGFsXCIgb3IgXCJ2ZXJ0aWNhbFwiLCBidXQgdHlwZSBpcyAke3R5cGV9IWA7XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogV3JpdGVzIHRoZSBlbnRyaWVzIG9mIEIgaW4gQSBhdCBhbiBvZmZzZXQgcG9zaXRpb24gZ2l2ZW4gYnkge0BsaW5rIG9mZnNldF9yb3d9IGFuZCB7QGxpbmsgb2Zmc2V0X2NvbH0uXHJcbiAgICAgKiBAcGFyYW0ge2ludH0gb2Zmc2V0X3JvdyBcclxuICAgICAqIEBwYXJhbSB7aW50fSBvZmZzZXRfY29sIFxyXG4gICAgICogQHBhcmFtIHtNYXRyaXh9IEIgXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fVxyXG4gICAgICovXHJcbiAgICBzZXRfYmxvY2sob2Zmc2V0X3Jvdywgb2Zmc2V0X2NvbCwgQikge1xyXG4gICAgICAgIGxldCBbIHJvd3MsIGNvbHMgXSA9IEIuc2hhcGU7XHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgaWYgKHJvdyA+IHRoaXMuX3Jvd3MpIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgaWYgKGNvbCA+IHRoaXMuX2NvbHMpIGNvbnRpbnVlO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5zZXRfZW50cnkocm93ICsgb2Zmc2V0X3JvdywgY29sICsgb2Zmc2V0X2NvbCwgQi5lbnRyeShyb3csIGNvbCkpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogRXh0cmFjdHMgdGhlIGVudHJpZXMgZnJvbSB0aGUge0BsaW5rIHN0YXJ0X3Jvd310aCByb3cgdG8gdGhlIHtAbGluayBlbmRfcm93fXRoIHJvdywgdGhlIHtAbGluayBzdGFydF9jb2x9dGggY29sdW1uIHRvIHRoZSB7QGxpbmsgZW5kX2NvbH10aCBjb2x1bW4gb2YgdGhlIG1hdHJpeC5cclxuICAgICAqIElmIHtAbGluayBlbmRfcm93fSBvciB7QGxpbmsgZW5kX2NvbH0gaXMgZW1wdHksIHRoZSByZXNwZWN0aXZlIHZhbHVlIGlzIHNldCB0byB7QGxpbmsgdGhpcy5yb3dzfSBvciB7QGxpbmsgdGhpcy5jb2xzfS5cclxuICAgICAqIEBwYXJhbSB7TnVtYmVyfSBzdGFydF9yb3cgXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gc3RhcnRfY29sXHJcbiAgICAgKiBAcGFyYW0ge051bWJlcn0gW2VuZF9yb3cgPSBudWxsXVxyXG4gICAgICogQHBhcmFtIHtOdW1iZXJ9IFtlbmRfY29sID0gbnVsbF0gXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fSBSZXR1cm5zIGEgZW5kX3JvdyAtIHN0YXJ0X3JvdyB0aW1lcyBlbmRfY29sIC0gc3RhcnRfY29sIG1hdHJpeCwgd2l0aCByZXNwZWN0aXZlIGVudHJpZXMgZnJvbSB0aGUgbWF0cml4LlxyXG4gICAgICogQGV4YW1wbGVcclxuICAgICAqIFxyXG4gICAgICogbGV0IEEgPSBNYXRyaXguZnJvbShbWzEsIDIsIDNdLCBbNCwgNSwgNl0sIFs3LCA4LCA5XV0pOyAvLyBhIDMgYnkgMyBtYXRyaXguXHJcbiAgICAgKiBcclxuICAgICAqIEEuZ2V0X2Jsb2NrKDEsIDEpLnRvMmRBcnJheTsgLy8gW1s1LCA2XSwgWzgsIDldXVxyXG4gICAgICogQS5nZXRfYmxvY2soMCwgMCwgMSwgMSkudG8yZEFycmF5OyAvLyBbWzFdXVxyXG4gICAgICogQS5nZXRfYmxvY2soMSwgMSwgMiwgMikudG8yZEFycmF5OyAvLyBbWzVdXVxyXG4gICAgICogQS5nZXRfYmxvY2soMCwgMCwgMiwgMikudG8yZEFycmF5OyAvLyBbWzEsIDJdLCBbNCwgNV1dXHJcbiAgICAgKi9cclxuICAgIGdldF9ibG9jayhzdGFydF9yb3csIHN0YXJ0X2NvbCwgZW5kX3JvdyA9IG51bGwsIGVuZF9jb2wgPSBudWxsKSB7XHJcbiAgICAgICAgY29uc3QgWyByb3dzLCBjb2xzIF0gPSB0aGlzLnNoYXBlO1xyXG4gICAgICAgIC8qaWYgKCFlbmRfcm93KSkge1xyXG4gICAgICAgICAgICBlbmRfcm93ID0gcm93cztcclxuICAgICAgICB9XHJcbiAgICAgICAgICAgIGVuZF9jb2wgPSBjb2xzO1xyXG4gICAgICAgIH0qL1xyXG4gICAgICAgIGVuZF9yb3cgPSBlbmRfcm93ID8/IHJvd3M7XHJcbiAgICAgICAgZW5kX2NvbCA9IGVuZF9jb2wgPz8gY29scztcclxuICAgICAgICBpZiAoZW5kX3JvdyA8PSBzdGFydF9yb3cgfHwgZW5kX2NvbCA8PSBzdGFydF9jb2wpIHtcclxuICAgICAgICAgICAgdGhyb3cgYFxyXG4gICAgICAgICAgICAgICAgZW5kX3JvdyBtdXN0IGJlIGdyZWF0ZXIgdGhhbiBzdGFydF9yb3csIGFuZCBcclxuICAgICAgICAgICAgICAgIGVuZF9jb2wgbXVzdCBiZSBncmVhdGVyIHRoYW4gc3RhcnRfY29sLCBidXRcclxuICAgICAgICAgICAgICAgIGVuZF9yb3cgPSAke2VuZF9yb3d9LCBzdGFydF9yb3cgPSAke3N0YXJ0X3Jvd30sIGVuZF9jb2wgPSAke2VuZF9jb2x9LCBhbmQgc3RhcnRfY29sID0gJHtzdGFydF9jb2x9IWA7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIGNvbnN0IFggPSBuZXcgTWF0cml4KGVuZF9yb3cgLSBzdGFydF9yb3csIGVuZF9jb2wgLSBzdGFydF9jb2wsIFwiemVyb3NcIik7XHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gc3RhcnRfcm93LCBuZXdfcm93ID0gMDsgcm93IDwgZW5kX3JvdzsgKytyb3csICsrbmV3X3Jvdykge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSBzdGFydF9jb2wsIG5ld19jb2wgPSAwOyBjb2wgPCBlbmRfY29sOyArK2NvbCwgKytuZXdfY29sKSB7XHJcbiAgICAgICAgICAgICAgICBYLnNldF9lbnRyeShuZXdfcm93LCBuZXdfY29sLCB0aGlzLmVudHJ5KHJvdywgY29sKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIFg7XHJcbiAgICAgICAgLy9yZXR1cm4gbmV3IE1hdHJpeChlbmRfcm93IC0gc3RhcnRfcm93LCBlbmRfY29sIC0gc3RhcnRfY29sLCAoaSwgaikgPT4gdGhpcy5lbnRyeShpICsgc3RhcnRfcm93LCBqICsgc3RhcnRfY29sKSk7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIGEgbmV3IGFycmF5IGdhdGhlcmluZyBlbnRyaWVzIGRlZmluZWQgYnkgdGhlIGluZGljZXMgZ2l2ZW4gYnkgYXJndW1lbnQuXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5PE51bWJlcj59IHJvd19pbmRpY2VzIC0gQXJyYXkgY29uc2lzdHMgb2YgaW5kaWNlcyBvZiByb3dzIGZvciBnYXRoZXJpbmcgZW50cmllcyBvZiB0aGlzIG1hdHJpeCBcclxuICAgICAqIEBwYXJhbSB7QXJyYXk8TnVtYmVyPn0gY29sX2luZGljZXMgIC0gQXJyYXkgY29uc2lzdHMgb2YgaW5kaWNlcyBvZiBjb2xzIGZvciBnYXRoZXJpbmcgZW50cmllcyBvZiB0aGlzIG1hdHJpeCBcclxuICAgICAqIEByZXR1cm5zIHtNYXRyaXh9XHJcbiAgICAgKi9cclxuICAgIGdhdGhlcihyb3dfaW5kaWNlcywgY29sX2luZGljZXMpIHtcclxuICAgICAgICBjb25zdCBOID0gcm93X2luZGljZXMubGVuZ3RoO1xyXG4gICAgICAgIGNvbnN0IEQgPSBjb2xfaW5kaWNlcy5sZW5ndGg7XHJcbiAgICAgICAgXHJcbiAgICAgICAgY29uc3QgUiA9IG5ldyBNYXRyaXgoTiwgRCk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBOOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3Qgcm93X2luZGV4ID0gcm93X2luZGljZXNbaV07XHJcbiAgICAgICAgICAgIGZvciAobGV0IGogPSAwOyBqIDwgTjsgKytqKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBjb2xfaW5kZXggPSBjb2xfaW5kaWNlc1tqXTtcclxuICAgICAgICAgICAgICAgIFIuc2V0X2VudHJ5KGksIGosIHRoaXMuZW50cnkocm93X2luZGV4LCBjb2xfaW5kZXgpKVxyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICByZXR1cm4gUjtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIEFwcGxpZXMgYSBmdW5jdGlvbiB0byBlYWNoIGVudHJ5IG9mIHRoZSBtYXRyaXguXHJcbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBmIGZ1bmN0aW9uIHRha2VzIDIgcGFyYW1ldGVycywgdGhlIHZhbHVlIG9mIHRoZSBhY3R1YWwgZW50cnkgYW5kIGEgdmFsdWUgZ2l2ZW4gYnkgdGhlIGZ1bmN0aW9uIHtAbGluayB2fS4gVGhlIHJlc3VsdCBvZiB7QGxpbmsgZn0gZ2V0cyB3cml0ZW4gdG8gdGhlIE1hdHJpeC5cclxuICAgICAqIEBwYXJhbSB7ZnVuY3Rpb259IHYgZnVuY3Rpb24gdGFrZXMgMiBwYXJhbWV0ZXJzIGZvciByb3cgYW5kIGNvbCwgYW5kIHJldHVybnMgYSB2YWx1ZSB3aXRjaCBzaG91bGQgYmUgYXBwbGllZCB0byB0aGUgY29sdGggZW50cnkgb2YgdGhlIHJvd3RoIHJvdyBvZiB0aGUgbWF0cml4LlxyXG4gICAgICovXHJcbiAgICBfYXBwbHlfYXJyYXkoZiwgdikge1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIGNvbnN0IFsgcm93cywgY29scyBdID0gdGhpcy5zaGFwZTtcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICBjb25zdCBvZmZzZXQgPSByb3cgKiBjb2xzO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgaSA9IG9mZnNldCArIGNvbDtcclxuICAgICAgICAgICAgICAgIGRhdGFbaV0gPSBmKGRhdGFbaV0sIHYocm93LCBjb2wpKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpczsgXHJcbiAgICB9XHJcblxyXG4gICAgX2FwcGx5X3Jvd3dpc2VfYXJyYXkodmFsdWVzLCBmKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuX2FwcGx5X2FycmF5KGYsIChfLCBqKSA9PiB2YWx1ZXNbal0pO1xyXG4gICAgfVxyXG5cclxuICAgIF9hcHBseV9jb2x3aXNlX2FycmF5KHZhbHVlcywgZikge1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIGNvbnN0IFsgcm93cywgY29scyBdID0gdGhpcy5zaGFwZTtcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICBjb25zdCBvZmZzZXQgPSByb3cgKiBjb2xzO1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgY29uc3QgaSA9IG9mZnNldCArIGNvbDtcclxuICAgICAgICAgICAgICAgIGRhdGFbaV0gPSBmKGRhdGFbaV0sIHZhbHVlc1tyb3ddKTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gdGhpczsgXHJcbiAgICB9XHJcblxyXG4gICAgX2FwcGx5KHZhbHVlLCBmKSB7XHJcbiAgICAgICAgbGV0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIGlmICh2YWx1ZSBpbnN0YW5jZW9mIE1hdHJpeCkge1xyXG4gICAgICAgICAgICBsZXQgWyB2YWx1ZV9yb3dzLCB2YWx1ZV9jb2xzIF0gPSB2YWx1ZS5zaGFwZTtcclxuICAgICAgICAgICAgbGV0IFsgcm93cywgY29scyBdID0gdGhpcy5zaGFwZTtcclxuICAgICAgICAgICAgaWYgKHZhbHVlX3Jvd3MgPT09IDEpIHtcclxuICAgICAgICAgICAgICAgIGlmIChjb2xzICE9PSB2YWx1ZV9jb2xzKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgdGhyb3cgYGNvbHMgIT09IHZhbHVlX2NvbHNgO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBkYXRhW3JvdyAqIGNvbHMgKyBjb2xdID0gZihkYXRhW3JvdyAqIGNvbHMgKyBjb2xdLCB2YWx1ZS5lbnRyeSgwLCBjb2wpKVxyXG4gICAgICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgfSBlbHNlIGlmICh2YWx1ZV9jb2xzID09PSAxKSB7XHJcbiAgICAgICAgICAgICAgICBpZiAocm93cyAhPT0gdmFsdWVfcm93cykge1xyXG4gICAgICAgICAgICAgICAgICAgIHRocm93IGByb3dzICE9PSB2YWx1ZV9yb3dzYDtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgZm9yIChsZXQgY29sID0gMDsgY29sIDwgY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgZGF0YVtyb3cgKiBjb2xzICsgY29sXSA9IGYoZGF0YVtyb3cgKiBjb2xzICsgY29sXSwgdmFsdWUuZW50cnkocm93LCAwKSlcclxuICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0gZWxzZSBpZiAocm93cyA9PSB2YWx1ZV9yb3dzICYmIGNvbHMgPT0gdmFsdWVfY29scykge1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBkYXRhW3JvdyAqIGNvbHMgKyBjb2xdID0gZihkYXRhW3JvdyAqIGNvbHMgKyBjb2xdLCB2YWx1ZS5lbnRyeShyb3csIGNvbCkpXHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICAgICAgdGhyb3cgYGVycm9yYDtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH0gZWxzZSBpZiAoQXJyYXkuaXNBcnJheSh2YWx1ZSkpIHtcclxuICAgICAgICAgICAgbGV0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgICAgICBsZXQgY29scyA9IHRoaXMuX2NvbHM7XHJcbiAgICAgICAgICAgIGlmICh2YWx1ZS5sZW5ndGggPT09IHJvd3MpIHtcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgICAgICAgICAgZm9yIChsZXQgY29sID0gMDsgY29sIDwgY29sczsgKytjb2wpIHtcclxuICAgICAgICAgICAgICAgICAgICAgICAgZGF0YVtyb3cgKiBjb2xzICsgY29sXSA9IGYoZGF0YVtyb3cgKiBjb2xzICsgY29sXSwgdmFsdWVbcm93XSk7XHJcbiAgICAgICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICB9IGVsc2UgaWYgKHZhbHVlLmxlbmd0aCA9PT0gY29scykge1xyXG4gICAgICAgICAgICAgICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICAgICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgICAgICAgICBkYXRhW3JvdyAqIGNvbHMgKyBjb2xdID0gZihkYXRhW3JvdyAqIGNvbHMgKyBjb2xdLCB2YWx1ZVtjb2xdKTtcclxuICAgICAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgICAgICB0aHJvdyBgZXJyb3JgO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfSBlbHNlIHtcclxuICAgICAgICAgICAgZm9yIChsZXQgaSA9IDAsIG4gPSB0aGlzLl9yb3dzICogdGhpcy5fY29sczsgaSA8IG47ICsraSkge1xyXG4gICAgICAgICAgICAgICAgZGF0YVtpXSA9IGYoZGF0YVtpXSwgdmFsdWUpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogQ2xvbmVzIHRoZSBNYXRyaXguXHJcbiAgICAgKiBAcmV0dXJucyB7TWF0cml4fVxyXG4gICAgICovXHJcbiAgICBjbG9uZSgpIHtcclxuICAgICAgICBsZXQgQiA9IG5ldyBNYXRyaXgoKVxyXG4gICAgICAgIEIuX3Jvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIEIuX2NvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIEIuX2RhdGEgPSB0aGlzLl9kYXRhLnNsaWNlKDApO1xyXG4gICAgICAgIHJldHVybiBCO1xyXG4gICAgfVxyXG5cclxuICAgIG11bHQodmFsdWUpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5jbG9uZSgpLl9hcHBseSh2YWx1ZSwgKGEsYikgPT4gYSAqIGIpO1xyXG4gICAgfVxyXG5cclxuICAgIGRpdmlkZSh2YWx1ZSkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLmNsb25lKCkuX2FwcGx5KHZhbHVlLCAoYSxiKSA9PiBhIC8gYik7XHJcbiAgICB9XHJcblxyXG4gICAgYWRkKHZhbHVlKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMuY2xvbmUoKS5fYXBwbHkodmFsdWUsIChhLGIpID0+IGEgKyBiKTtcclxuICAgIH1cclxuXHJcbiAgICBzdWIodmFsdWUpIHtcclxuICAgICAgICByZXR1cm4gdGhpcy5jbG9uZSgpLl9hcHBseSh2YWx1ZSwgKGEsYikgPT4gYSAtIGIpO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyB0aGUgbnVtYmVyIG9mIHJvd3MgYW5kIGNvbHVtbnMgb2YgdGhlIE1hdHJpeC5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheX0gQW4gQXJyYXkgaW4gdGhlIGZvcm0gW3Jvd3MsIGNvbHVtbnNdLlxyXG4gICAgICovXHJcbiAgICBnZXQgc2hhcGUoKSB7XHJcbiAgICAgICAgcmV0dXJuIFt0aGlzLl9yb3dzLCB0aGlzLl9jb2xzXTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIG1hdHJpeCBpbiB0aGUgZ2l2ZW4gc2hhcGUgd2l0aCB0aGUgZ2l2ZW4gZnVuY3Rpb24gd2hpY2ggcmV0dXJucyB2YWx1ZXMgZm9yIHRoZSBlbnRyaWVzIG9mIHRoZSBtYXRyaXguXHJcbiAgICAgKiBAcGFyYW0ge0FycmF5fSBwYXJhbWV0ZXIgLSB0YWtlcyBhbiBBcnJheSBpbiB0aGUgZm9ybSBbcm93cywgY29scywgdmFsdWVdLCB3aGVyZSByb3dzIGFuZCBjb2xzIGFyZSB0aGUgbnVtYmVyIG9mIHJvd3MgYW5kIGNvbHVtbnMgb2YgdGhlIG1hdHJpeCwgYW5kIHZhbHVlIGlzIGEgZnVuY3Rpb24gd2hpY2ggdGFrZXMgdHdvIHBhcmFtZXRlcnMgKHJvdyBhbmQgY29sKSB3aGljaCBoYXMgdG8gcmV0dXJuIGEgdmFsdWUgZm9yIHRoZSBjb2x0aCBlbnRyeSBvZiB0aGUgcm93dGggcm93LlxyXG4gICAgICogQHJldHVybnMge01hdHJpeH1cclxuICAgICAqL1xyXG4gICAgc2V0IHNoYXBlKFtyb3dzLCBjb2xzLCB2YWx1ZSA9ICgpID0+IDBdKSB7XHJcbiAgICAgICAgdGhpcy5fcm93cyA9IHJvd3M7XHJcbiAgICAgICAgdGhpcy5fY29scyA9IGNvbHM7XHJcbiAgICAgICAgdGhpcy5fZGF0YSA9IG5ldyBGbG9hdDY0QXJyYXkocm93cyAqIGNvbHMpO1xyXG4gICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGNvbCA9IDA7IGNvbCA8IGNvbHM7ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9kYXRhW3JvdyAqIGNvbHMgKyBjb2xdID0gdmFsdWUocm93LCBjb2wpO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIC8qKlxyXG4gICAgICogUmV0dXJucyB0aGUgTWF0cml4IGFzIGEgdHdvLWRpbWVuc2lvbmFsIEFycmF5LlxyXG4gICAgICogQHJldHVybnMge0FycmF5fVxyXG4gICAgICovXHJcbiAgICBnZXQgdG8yZEFycmF5KCkge1xyXG4gICAgICAgIC8qIGNvbnN0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGxldCByZXN1bHQgPSBuZXcgQXJyYXkocm93cylcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICBsZXQgcmVzdWx0X2NvbCA9IG5ldyBBcnJheShjb2xzKVxyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgcmVzdWx0X2NvbFtjb2xdID0gdGhpcy5lbnRyeShyb3csIGNvbCk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgcmVzdWx0W3Jvd10gPSByZXN1bHRfY29sO1xyXG4gICAgICAgIH1cclxuICAgICAgICByZXR1cm4gcmVzdWx0OyAqL1xyXG4gICAgICAgIHJldHVybiBbLi4udGhpcy5pdGVyYXRlX3Jvd3MoKV1cclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIGRpYWdvbmFsIG9mIHRoZSBNYXRyaXguXHJcbiAgICAgKiBAcmV0dXJucyB7QXJyYXl9XHJcbiAgICAgKi9cclxuICAgIGdldCBkaWFnKCkge1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGNvbnN0IG1pbl9yb3dfY29sID0gTWF0aC5taW4ocm93cywgY29scyk7XHJcbiAgICAgICAgbGV0IHJlc3VsdCA9IG5ldyBGbG9hdDY0QXJyYXkobWluX3Jvd19jb2wpXHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBtaW5fcm93X2NvbDsgKytpKSB7XHJcbiAgICAgICAgICAgIHJlc3VsdFtpXSA9IHRoaXMuZW50cnkoaSxpKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHJlc3VsdDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIG1lYW4gb2YgYWxsIGVudHJpZXMgb2YgdGhlIE1hdHJpeC5cclxuICAgICAqIEByZXR1cm5zIHtmbG9hdDY0fVxyXG4gICAgICovXHJcbiAgICBnZXQgbWVhbigpIHtcclxuICAgICAgICBjb25zdCBzdW0gPSB0aGlzLnN1bTtcclxuICAgICAgICBjb25zdCBuID0gdGhpcy5fcm93cyAqIHRoaXMuX2NvbHM7XHJcbiAgICAgICAgcmV0dXJuIHN1bSAvIG47XHJcbiAgICB9XHJcblxyXG4gICAgLyoqXHJcbiAgICAgKiBSZXR1cm5zIHRoZSBzdW0gb29mIGFsbCBlbnRyaWVzIG9mIHRoZSBNYXRyaXguXHJcbiAgICAgKiBAcmV0dXJucyB7bnVtYmVyfVxyXG4gICAgICovXHJcbiAgICBnZXQgc3VtKCkge1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIHJldHVybiBuZXVtYWlyX3N1bShkYXRhKTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFJldHVybnMgdGhlIG1lYW4gb2YgZWFjaCByb3cgb2YgdGhlIG1hdHJpeC5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheX1cclxuICAgICAqL1xyXG4gICAgZ2V0IG1lYW5Sb3dzKCkge1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGxldCByZXN1bHQgPSBbXTtcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICByZXN1bHRbcm93XSA9IDA7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGNvbCA9IDA7IGNvbCA8IGNvbHM7ICsrY29sKSB7XHJcbiAgICAgICAgICAgICAgICByZXN1bHRbcm93XSArPSBkYXRhW3JvdyAqIGNvbHMgKyBjb2xdO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHJlc3VsdFtyb3ddIC89IGNvbHM7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiByZXN1bHQ7XHJcbiAgICB9XHJcblxyXG4gICAgLyoqIFJldHVybnMgdGhlIG1lYW4gb2YgZWFjaCBjb2x1bW4gb2YgdGhlIG1hdHJpeC5cclxuICAgICAqIEByZXR1cm5zIHtBcnJheX1cclxuICAgICAqL1xyXG4gICAgZ2V0IG1lYW5Db2xzKCkge1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSB0aGlzLl9kYXRhO1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSB0aGlzLl9yb3dzO1xyXG4gICAgICAgIGNvbnN0IGNvbHMgPSB0aGlzLl9jb2xzO1xyXG4gICAgICAgIGxldCByZXN1bHQgPSBbXTtcclxuICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCBjb2xzOyArK2NvbCkge1xyXG4gICAgICAgICAgICByZXN1bHRbY29sXSA9IDA7XHJcbiAgICAgICAgICAgIGZvciAobGV0IHJvdyA9IDA7IHJvdyA8IHJvd3M7ICsrcm93KSB7XHJcbiAgICAgICAgICAgICAgICByZXN1bHRbY29sXSArPSBkYXRhW3JvdyAqIGNvbHMgKyBjb2xdO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHJlc3VsdFtjb2xdIC89IHJvd3M7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIHJldHVybiByZXN1bHQ7XHJcbiAgICB9XHJcblxyXG4gICAgc3RhdGljIHNvbHZlX0NHKEEsIGIsIHJhbmRvbWl6ZXIsIHRvbD0xZS0zKSB7XHJcbiAgICAgICAgY29uc3Qgcm93cyA9IEEuc2hhcGVbMF07XHJcbiAgICAgICAgY29uc3QgY29scyA9IGIuc2hhcGVbMV07XHJcbiAgICAgICAgbGV0IHJlc3VsdCA9IG5ldyBNYXRyaXgocm93cywgMCk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBjb2xzOyArK2kpIHtcclxuICAgICAgICAgICAgY29uc3QgYl9pID0gTWF0cml4LmZyb20oYi5jb2woaSkpLlQ7XHJcbiAgICAgICAgICAgIGxldCB4ID0gbmV3IE1hdHJpeChyb3dzLCAxLCAoKSA9PiByYW5kb21pemVyLnJhbmRvbSk7XHJcbiAgICAgICAgICAgIGxldCByID0gYl9pLnN1YihBLmRvdCh4KSk7XHJcbiAgICAgICAgICAgIGxldCBkID0gci5jbG9uZSgpO1xyXG4gICAgICAgICAgICBkbyB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCB6ID0gQS5kb3QoZCk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBhbHBoYSA9IHIuVC5kb3QocikuZW50cnkoMCwgMCkgLyBkLlQuZG90KHopLmVudHJ5KDAsIDApO1xyXG4gICAgICAgICAgICAgICAgeCA9IHguYWRkKGQubXVsdChhbHBoYSkpO1xyXG4gICAgICAgICAgICAgICAgY29uc3Qgcl9uZXh0ID0gci5zdWIoei5tdWx0KGFscGhhKSk7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBiZXRhID0gcl9uZXh0LlQuZG90KHJfbmV4dCkuZW50cnkoMCwgMCkgLyByLlQuZG90KHIpLmVudHJ5KDAsIDApO1xyXG4gICAgICAgICAgICAgICAgZCA9IHJfbmV4dC5hZGQoZC5tdWx0KGJldGEpKTtcclxuICAgICAgICAgICAgICAgIHIgPSByX25leHQ7XHJcbiAgICAgICAgICAgIH0gd2hpbGUgKE1hdGguYWJzKHIubWVhbikgPiB0b2wpO1xyXG4gICAgICAgICAgICByZXN1bHQgPSByZXN1bHQuY29uY2F0KHgsIFwiaG9yaXpvbnRhbFwiKTtcclxuICAgICAgICB9XHJcbiAgICAgICAgcmV0dXJuIHJlc3VsdDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIFNvbHZlcyB0aGUgZXF1YXRpb24ge0BsaW5rIEF9eCA9IHtAbGluayBifS4gUmV0dXJucyB0aGUgcmVzdWx0IHguXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gQSAtIE1hdHJpeCBvciBMVSBEZWNvbXBvc2l0aW9uXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gYiAtIE1hdHJpeFxyXG4gICAgICogQHJldHVybnMge01hdHJpeH1cclxuICAgICAqL1xyXG4gICAgc3RhdGljIHNvbHZlKEEsIGIpIHtcclxuICAgICAgICBsZXQgeyBMOiBMLCBVOiBVIH0gPSAoXCJMXCIgaW4gQSAmJiBcIlVcIiBpbiBBKSA/IEEgOiBNYXRyaXguTFUoQSk7XHJcbiAgICAgICAgbGV0IHJvd3MgPSBMLnNoYXBlWzBdO1xyXG4gICAgICAgIGxldCB4ID0gYi5jbG9uZSgpO1xyXG4gICAgICAgIFxyXG4gICAgICAgIC8vIGZvcndhcmRcclxuICAgICAgICBmb3IgKGxldCByb3cgPSAwOyByb3cgPCByb3dzOyArK3Jvdykge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSAwOyBjb2wgPCByb3cgLSAxOyArK2NvbCkge1xyXG4gICAgICAgICAgICAgICAgeC5zZXRfZW50cnkoMCwgcm93LCB4LmVudHJ5KDAsIHJvdykgLSBMLmVudHJ5KHJvdywgY29sKSAqIHguZW50cnkoMSwgY29sKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgeC5zZXRfZW50cnkoMCwgcm93LCB4LmVudHJ5KDAsIHJvdykgLyBMLmVudHJ5KHJvdywgcm93KSk7XHJcbiAgICAgICAgfVxyXG4gICAgICAgIFxyXG4gICAgICAgIC8vIGJhY2t3YXJkXHJcbiAgICAgICAgZm9yIChsZXQgcm93ID0gcm93cyAtIDE7IHJvdyA+PSAwOyAtLXJvdykge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBjb2wgPSByb3dzIC0gMTsgY29sID4gcm93OyAtLWNvbCkge1xyXG4gICAgICAgICAgICAgICAgeC5zZXRfZW50cnkoMCwgcm93LCB4LmVudHJ5KDAsIHJvdykgLSBVLmVudHJ5KHJvdywgY29sKSAqIHguZW50cnkoMCwgY29sKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgeC5zZXRfZW50cnkoMCwgcm93LCB4LmVudHJ5KDAsIHJvdykgLyBVLmVudHJ5KHJvdywgcm93KSk7XHJcbiAgICAgICAgfVxyXG5cclxuICAgICAgICByZXR1cm4geDtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIHtAbGluayBMfXtAbGluayBVfSBkZWNvbXBvc2l0aW9uIG9mIHRoZSBNYXRyaXgge0BsaW5rIEF9LiBDcmVhdGVzIHR3byBtYXRyaWNlcywgc28gdGhhdCB0aGUgZG90IHByb2R1Y3QgTFUgZXF1YWxzIEEuXHJcbiAgICAgKiBAcGFyYW0ge01hdHJpeH0gQSBcclxuICAgICAqIEByZXR1cm5zIHt7TDogTWF0cml4LCBVOiBNYXRyaXh9fSByZXN1bHQgLSBSZXR1cm5zIHRoZSBsZWZ0IHRyaWFuZ2xlIG1hdHJpeCB7QGxpbmsgTH0gYW5kIHRoZSB1cHBlciB0cmlhbmdsZSBtYXRyaXgge0BsaW5rIFV9LlxyXG4gICAgICovXHJcbiAgICBzdGF0aWMgTFUoQSkge1xyXG4gICAgICAgIGNvbnN0IHJvd3MgPSBBLnNoYXBlWzBdO1xyXG4gICAgICAgIGNvbnN0IEwgPSBuZXcgTWF0cml4KHJvd3MsIHJvd3MsIFwiemVyb3NcIik7XHJcbiAgICAgICAgY29uc3QgVSA9IG5ldyBNYXRyaXgocm93cywgcm93cywgXCJpZGVudGl0eVwiKTtcclxuICAgICAgICBcclxuICAgICAgICBmb3IgKGxldCBqID0gMDsgaiA8IHJvd3M7ICsraikge1xyXG4gICAgICAgICAgICBmb3IgKGxldCBpID0gajsgaSA8IHJvd3M7ICsraSkge1xyXG4gICAgICAgICAgICAgICAgbGV0IHN1bSA9IDA7XHJcbiAgICAgICAgICAgICAgICBmb3IgKGxldCBrID0gMDsgayA8IGo7ICsraykge1xyXG4gICAgICAgICAgICAgICAgICAgIHN1bSArPSBMLmVudHJ5KGksIGspICogVS5lbnRyeShrLCBqKTtcclxuICAgICAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgICAgIEwuc2V0X2VudHJ5KGksIGosIEEuZW50cnkoaSwgaikgLSBzdW0pO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSBqOyBpIDwgcm93czsgKytpKSB7XHJcbiAgICAgICAgICAgICAgICBpZiAoTC5lbnRyeShqLCBqKSA9PT0gMCkge1xyXG4gICAgICAgICAgICAgICAgICAgIHJldHVybiB1bmRlZmluZWQ7XHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgICAgICBsZXQgc3VtID0gMDtcclxuICAgICAgICAgICAgICAgIGZvciAobGV0IGsgPSAwOyBrIDwgajsgKytrKSB7XHJcbiAgICAgICAgICAgICAgICAgICAgc3VtICs9IEwuZW50cnkoaiwgaykgKiBVLmVudHJ5KGssIGkpO1xyXG4gICAgICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICAgICAgVS5zZXRfZW50cnkoaiwgaSwgKEEuZW50cnkoaiwgaSkgLSBzdW0pIC8gTC5lbnRyeShqLCBqKSk7XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIHJldHVybiB7IEw6IEwsIFU6IFUgfTtcclxuICAgIH1cclxuXHJcbiAgICAvKipcclxuICAgICAqIENvbXB1dGVzIHRoZSB7QGxpbmsga30gY29tcG9uZW50cyBvZiB0aGUgU1ZEIGRlY29tcG9zaXRpb24gb2YgdGhlIG1hdHJpeCB7QGxpbmsgTX1cclxuICAgICAqIEBwYXJhbSB7TWF0cml4fSBNIFxyXG4gICAgICogQHBhcmFtIHtpbnR9IFtrPTJdIFxyXG4gICAgICogQHJldHVybnMge3tVOiBNYXRyaXgsIFNpZ21hOiBNYXRyaXgsIFY6IE1hdHJpeH19XHJcbiAgICAgKi9cclxuICAgIHN0YXRpYyBTVkQoTSwgaz0yKSB7XHJcbiAgICAgICAgY29uc3QgTVQgPSBNLlQ7XHJcbiAgICAgICAgbGV0IE10TSA9IE1ULmRvdChNKTtcclxuICAgICAgICBsZXQgTU10ID0gTS5kb3QoTVQpO1xyXG4gICAgICAgIGxldCB7IGVpZ2VudmVjdG9yczogViwgZWlnZW52YWx1ZXM6IFNpZ21hIH0gPSBzaW11bHRhbmVvdXNfcG93ZXJpdGVyYXRpb24oTXRNLCBrKTtcclxuICAgICAgICBsZXQgeyBlaWdlbnZlY3RvcnM6IFUgfSA9IHNpbXVsdGFuZW91c19wb3dlcml0ZXJhdGlvbihNTXQsIGspO1xyXG4gICAgICAgIHJldHVybiB7IFU6IFUsIFNpZ21hOiBTaWdtYS5tYXAoc2lnbWEgPT4gTWF0aC5zcXJ0KHNpZ21hKSksIFY6IFYgfTtcclxuICAgICAgICBcclxuICAgICAgICAvL0FsZ29yaXRobSAxYTogSG91c2Vob2xkZXIgcmVkdWN0aW9uIHRvIGJpZGlhZ29uYWwgZm9ybTpcclxuICAgICAgICAvKiBjb25zdCBbbSwgbl0gPSBBLnNoYXBlO1xyXG4gICAgICAgIGxldCBVID0gbmV3IE1hdHJpeChtLCBuLCAoaSwgaikgPT4gaSA9PSBqID8gMSA6IDApO1xyXG4gICAgICAgIGNvbnNvbGUubG9nKFUudG8yZEFycmF5KVxyXG4gICAgICAgIGxldCBWID0gbmV3IE1hdHJpeChuLCBtLCAoaSwgaikgPT4gaSA9PSBqID8gMSA6IDApO1xyXG4gICAgICAgIGNvbnNvbGUubG9nKFYudG8yZEFycmF5KVxyXG4gICAgICAgIGxldCBCID0gTWF0cml4LmJpZGlhZ29uYWwoQS5jbG9uZSgpLCBVLCBWKTtcclxuICAgICAgICBjb25zb2xlLmxvZyhVLFYsQilcclxuICAgICAgICByZXR1cm4geyBVOiBVLCBcIlNpZ21hXCI6IEIsIFY6IFYgfTsgKi9cclxuICAgIH1cclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./matrix/Matrix.js\n");
+
+/***/ }),
+
+/***/ "./matrix/distance_matrix.js":
+/*!***********************************!*\
+  !*** ./matrix/distance_matrix.js ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _Matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Matrix */ \"./matrix/Matrix.js\");\n\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(A, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean) {\n  let n = A.shape[0];\n  /* let D = new Array(n);\r\n  for (let i = 0; i < n; ++i) {\r\n      D[i] = new Float64Array(n);\r\n  }\r\n  for (let i = 0; i < n; ++i) {\r\n      for (let j = i + 1; j < n; ++j) {\r\n          D[i][j] = D[j][i] = metric(A[i], A[j]);\r\n      }\r\n  } */\n\n  const D = new _Matrix__WEBPACK_IMPORTED_MODULE_1__.Matrix(n, n);\n\n  for (let i = 0; i < n; ++i) {\n    const A_i = A.row(i);\n\n    for (let j = i + 1; j < n; ++j) {\n      const dist = metric(A_i, A.row(j));\n      D.set_entry(i, j, dist);\n      D.set_entry(j, i, dist);\n    }\n  }\n\n  return D;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9kaXN0YW5jZV9tYXRyaXguanM/MzIyNiJdLCJuYW1lcyI6WyJBIiwibWV0cmljIiwiZXVjbGlkZWFuIiwibiIsInNoYXBlIiwiRCIsIk1hdHJpeCIsImkiLCJBX2kiLCJyb3ciLCJqIiwiZGlzdCIsInNldF9lbnRyeSJdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUE7QUFDQTtBQUVBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLE1BQU0sR0FBR0MscURBQXJCLEVBQWdDO0FBQzNDLE1BQUlDLENBQUMsR0FBR0gsQ0FBQyxDQUFDSSxLQUFGLENBQVEsQ0FBUixDQUFSO0FBQ0E7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUNJLFFBQU1DLENBQUMsR0FBRyxJQUFJQywyQ0FBSixDQUFXSCxDQUFYLEVBQWNBLENBQWQsQ0FBVjs7QUFDQSxPQUFLLElBQUlJLENBQUMsR0FBRyxDQUFiLEVBQWdCQSxDQUFDLEdBQUdKLENBQXBCLEVBQXVCLEVBQUVJLENBQXpCLEVBQTRCO0FBQ3hCLFVBQU1DLEdBQUcsR0FBR1IsQ0FBQyxDQUFDUyxHQUFGLENBQU1GLENBQU4sQ0FBWjs7QUFDQSxTQUFLLElBQUlHLENBQUMsR0FBR0gsQ0FBQyxHQUFHLENBQWpCLEVBQW9CRyxDQUFDLEdBQUdQLENBQXhCLEVBQTJCLEVBQUVPLENBQTdCLEVBQWdDO0FBQzVCLFlBQU1DLElBQUksR0FBR1YsTUFBTSxDQUFDTyxHQUFELEVBQU1SLENBQUMsQ0FBQ1MsR0FBRixDQUFNQyxDQUFOLENBQU4sQ0FBbkI7QUFDQUwsT0FBQyxDQUFDTyxTQUFGLENBQVlMLENBQVosRUFBZUcsQ0FBZixFQUFrQkMsSUFBbEI7QUFDQU4sT0FBQyxDQUFDTyxTQUFGLENBQVlGLENBQVosRUFBZUgsQ0FBZixFQUFrQkksSUFBbEI7QUFDSDtBQUNKOztBQUNELFNBQU9OLENBQVA7QUFDSCIsImZpbGUiOiIuL21hdHJpeC9kaXN0YW5jZV9tYXRyaXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiXHJcbmltcG9ydCB7IE1hdHJpeCB9IGZyb20gXCIuL01hdHJpeFwiO1xyXG5cclxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oQSwgbWV0cmljID0gZXVjbGlkZWFuKSB7XHJcbiAgICBsZXQgbiA9IEEuc2hhcGVbMF07XHJcbiAgICAvKiBsZXQgRCA9IG5ldyBBcnJheShuKTtcclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgRFtpXSA9IG5ldyBGbG9hdDY0QXJyYXkobik7XHJcbiAgICB9XHJcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgIGZvciAobGV0IGogPSBpICsgMTsgaiA8IG47ICsraikge1xyXG4gICAgICAgICAgICBEW2ldW2pdID0gRFtqXVtpXSA9IG1ldHJpYyhBW2ldLCBBW2pdKTtcclxuICAgICAgICB9XHJcbiAgICB9ICovXHJcbiAgICBjb25zdCBEID0gbmV3IE1hdHJpeChuLCBuKTtcclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgY29uc3QgQV9pID0gQS5yb3coaSk7XHJcbiAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgbjsgKytqKSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGRpc3QgPSBtZXRyaWMoQV9pLCBBLnJvdyhqKSk7XHJcbiAgICAgICAgICAgIEQuc2V0X2VudHJ5KGksIGosIGRpc3QpO1xyXG4gICAgICAgICAgICBELnNldF9lbnRyeShqLCBpLCBkaXN0KTtcclxuICAgICAgICB9XHJcbiAgICB9XHJcbiAgICByZXR1cm4gRDtcclxufVxyXG4iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./matrix/distance_matrix.js\n");
+
+/***/ }),
+
+/***/ "./matrix/index.js":
+/*!*************************!*\
+  !*** ./matrix/index.js ***!
+  \*************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"k_nearest_neighbors\": () => (/* reexport safe */ _k_nearest_neighbors__WEBPACK_IMPORTED_MODULE_0__.default),\n/* harmony export */   \"distance_matrix\": () => (/* reexport safe */ _distance_matrix__WEBPACK_IMPORTED_MODULE_1__.default),\n/* harmony export */   \"linspace\": () => (/* reexport safe */ _linspace__WEBPACK_IMPORTED_MODULE_2__.default),\n/* harmony export */   \"norm\": () => (/* reexport safe */ _norm__WEBPACK_IMPORTED_MODULE_3__.default),\n/* harmony export */   \"Matrix\": () => (/* reexport safe */ _Matrix__WEBPACK_IMPORTED_MODULE_4__.Matrix)\n/* harmony export */ });\n/* harmony import */ var _k_nearest_neighbors__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./k_nearest_neighbors */ \"./matrix/k_nearest_neighbors.js\");\n/* harmony import */ var _distance_matrix__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./distance_matrix */ \"./matrix/distance_matrix.js\");\n/* harmony import */ var _linspace__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./linspace */ \"./matrix/linspace.js\");\n/* harmony import */ var _norm__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./norm */ \"./matrix/norm.js\");\n/* harmony import */ var _Matrix__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Matrix */ \"./matrix/Matrix.js\");\n/**\r\n * @module matrix\r\n */\n\n\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9pbmRleC5qcz9mMGFhIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQSIsImZpbGUiOiIuL21hdHJpeC9pbmRleC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBAbW9kdWxlIG1hdHJpeFxyXG4gKi9cclxuZXhwb3J0IHtkZWZhdWx0IGFzIGtfbmVhcmVzdF9uZWlnaGJvcnN9IGZyb20gXCIuL2tfbmVhcmVzdF9uZWlnaGJvcnNcIjtcclxuZXhwb3J0IHtkZWZhdWx0IGFzIGRpc3RhbmNlX21hdHJpeH0gZnJvbSBcIi4vZGlzdGFuY2VfbWF0cml4XCI7XHJcbmV4cG9ydCB7ZGVmYXVsdCBhcyBsaW5zcGFjZX0gZnJvbSBcIi4vbGluc3BhY2VcIjtcclxuZXhwb3J0IHtkZWZhdWx0IGFzIG5vcm19IGZyb20gXCIuL25vcm1cIjtcclxuZXhwb3J0IHsgTWF0cml4IH0gZnJvbSBcIi4vTWF0cml4XCI7Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./matrix/index.js\n");
+
+/***/ }),
+
+/***/ "./matrix/k_nearest_neighbors.js":
+/*!***************************************!*\
+  !*** ./matrix/k_nearest_neighbors.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n\n\n/**\r\n * \r\n * @param {*} A \r\n * @param {*} k \r\n * @param {*} distance_matrix \r\n * @param {*} metric \r\n */\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(A, k, distance_matrix = null, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_1__.euclidean) {\n  const rows = A.shape[0];\n  let D = distance_matrix ?? (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.distance_matrix)(A, metric);\n  /* for (let i = 0; i < n; ++i) {\r\n      D[i] = Array.from(D[i]).map((_,j) => {\r\n              return {\r\n                  i: i, j: j, distance: D[i][j]\r\n              }\r\n          })\r\n          .sort((a, b) => a.distance - b.distance)\r\n          .slice(1, k + 1)\r\n  } */\n\n  let nN = new Array(rows);\n\n  for (let row = 0; row < rows; ++row) {\n    nN[row] = Array.from(D.row(row)).map((distance, col) => {\n      return {\n        \"i\": row,\n        \"j\": col,\n        \"distance\": distance\n      };\n    }).sort((a, b) => a.distance - b.distance).slice(1, k + 1);\n  }\n\n  return nN;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9rX25lYXJlc3RfbmVpZ2hib3JzLmpzP2FiM2UiXSwibmFtZXMiOlsiQSIsImsiLCJkaXN0YW5jZV9tYXRyaXgiLCJtZXRyaWMiLCJldWNsaWRlYW4iLCJyb3dzIiwic2hhcGUiLCJEIiwiZG1hdHJpeCIsIm5OIiwiQXJyYXkiLCJyb3ciLCJmcm9tIiwibWFwIiwiZGlzdGFuY2UiLCJjb2wiLCJzb3J0IiwiYSIsImIiLCJzbGljZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUE7QUFDQTtBQUVBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLENBQVosRUFBZUMsZUFBZSxHQUFHLElBQWpDLEVBQXVDQyxNQUFNLEdBQUdDLHFEQUFoRCxFQUEyRDtBQUN0RSxRQUFNQyxJQUFJLEdBQUdMLENBQUMsQ0FBQ00sS0FBRixDQUFRLENBQVIsQ0FBYjtBQUNBLE1BQUlDLENBQUMsR0FBR0wsZUFBZSxJQUFJTSw4REFBTyxDQUFDUixDQUFELEVBQUlHLE1BQUosQ0FBbEM7QUFDQTtBQUNKO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBQ0ksTUFBSU0sRUFBRSxHQUFHLElBQUlDLEtBQUosQ0FBVUwsSUFBVixDQUFUOztBQUNBLE9BQUssSUFBSU0sR0FBRyxHQUFHLENBQWYsRUFBa0JBLEdBQUcsR0FBR04sSUFBeEIsRUFBOEIsRUFBRU0sR0FBaEMsRUFBcUM7QUFDakNGLE1BQUUsQ0FBQ0UsR0FBRCxDQUFGLEdBQVVELEtBQUssQ0FBQ0UsSUFBTixDQUFXTCxDQUFDLENBQUNJLEdBQUYsQ0FBTUEsR0FBTixDQUFYLEVBQXVCRSxHQUF2QixDQUEyQixDQUFDQyxRQUFELEVBQVdDLEdBQVgsS0FBbUI7QUFDaEQsYUFBTztBQUNILGFBQUtKLEdBREY7QUFFSCxhQUFLSSxHQUZGO0FBR0gsb0JBQVlEO0FBSFQsT0FBUDtBQUtILEtBTkssRUFPTEUsSUFQSyxDQU9BLENBQUNDLENBQUQsRUFBSUMsQ0FBSixLQUFVRCxDQUFDLENBQUNILFFBQUYsR0FBYUksQ0FBQyxDQUFDSixRQVB6QixFQVFMSyxLQVJLLENBUUMsQ0FSRCxFQVFJbEIsQ0FBQyxHQUFHLENBUlIsQ0FBVjtBQVNIOztBQUNELFNBQU9RLEVBQVA7QUFDSCIsImZpbGUiOiIuL21hdHJpeC9rX25lYXJlc3RfbmVpZ2hib3JzLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgZGlzdGFuY2VfbWF0cml4IGFzIGRtYXRyaXh9IGZyb20gXCIuLi9tYXRyaXgvaW5kZXhcIjtcclxuaW1wb3J0IHsgZXVjbGlkZWFuIH0gZnJvbSAnLi4vbWV0cmljcy9pbmRleCc7XHJcblxyXG4vKipcclxuICogXHJcbiAqIEBwYXJhbSB7Kn0gQSBcclxuICogQHBhcmFtIHsqfSBrIFxyXG4gKiBAcGFyYW0geyp9IGRpc3RhbmNlX21hdHJpeCBcclxuICogQHBhcmFtIHsqfSBtZXRyaWMgXHJcbiAqL1xyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihBLCBrLCBkaXN0YW5jZV9tYXRyaXggPSBudWxsLCBtZXRyaWMgPSBldWNsaWRlYW4pIHtcclxuICAgIGNvbnN0IHJvd3MgPSBBLnNoYXBlWzBdO1xyXG4gICAgbGV0IEQgPSBkaXN0YW5jZV9tYXRyaXggPz8gZG1hdHJpeChBLCBtZXRyaWMpXHJcbiAgICAvKiBmb3IgKGxldCBpID0gMDsgaSA8IG47ICsraSkge1xyXG4gICAgICAgIERbaV0gPSBBcnJheS5mcm9tKERbaV0pLm1hcCgoXyxqKSA9PiB7XHJcbiAgICAgICAgICAgICAgICByZXR1cm4ge1xyXG4gICAgICAgICAgICAgICAgICAgIGk6IGksIGo6IGosIGRpc3RhbmNlOiBEW2ldW2pdXHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0pXHJcbiAgICAgICAgICAgIC5zb3J0KChhLCBiKSA9PiBhLmRpc3RhbmNlIC0gYi5kaXN0YW5jZSlcclxuICAgICAgICAgICAgLnNsaWNlKDEsIGsgKyAxKVxyXG4gICAgfSAqL1xyXG4gICAgbGV0IG5OID0gbmV3IEFycmF5KHJvd3MpO1xyXG4gICAgZm9yIChsZXQgcm93ID0gMDsgcm93IDwgcm93czsgKytyb3cpIHtcclxuICAgICAgICBuTltyb3ddID0gQXJyYXkuZnJvbShELnJvdyhyb3cpKS5tYXAoKGRpc3RhbmNlLCBjb2wpID0+IHtcclxuICAgICAgICAgICAgICAgIHJldHVybiB7XHJcbiAgICAgICAgICAgICAgICAgICAgXCJpXCI6IHJvdyxcclxuICAgICAgICAgICAgICAgICAgICBcImpcIjogY29sLFxyXG4gICAgICAgICAgICAgICAgICAgIFwiZGlzdGFuY2VcIjogZGlzdGFuY2UsXHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH0pXHJcbiAgICAgICAgICAgIC5zb3J0KChhLCBiKSA9PiBhLmRpc3RhbmNlIC0gYi5kaXN0YW5jZSlcclxuICAgICAgICAgICAgLnNsaWNlKDEsIGsgKyAxKTtcclxuICAgIH1cclxuICAgIHJldHVybiBuTjtcclxufSBcclxuIl0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./matrix/k_nearest_neighbors.js\n");
+
+/***/ }),
+
+/***/ "./matrix/linspace.js":
+/*!****************************!*\
+  !*** ./matrix/linspace.js ***!
+  \****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(start, end, number = null) {\n  if (!number) {\n    number = Math.max(Math.round(end - start) + 1, 1);\n  }\n\n  if (number < 2) {\n    return number === 1 ? [start] : [];\n  }\n\n  let result = new Array(number);\n  number -= 1;\n\n  for (let i = number; i >= 0; --i) {\n    result[i] = (i * end + (number - i) * start) / number;\n  }\n\n  return result;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9saW5zcGFjZS5qcz8zN2JiIl0sIm5hbWVzIjpbInN0YXJ0IiwiZW5kIiwibnVtYmVyIiwiTWF0aCIsIm1heCIsInJvdW5kIiwicmVzdWx0IiwiQXJyYXkiLCJpIl0sIm1hcHBpbmdzIjoiOzs7O0FBQUEsNkJBQWUsb0NBQVNBLEtBQVQsRUFBZ0JDLEdBQWhCLEVBQXFCQyxNQUFNLEdBQUcsSUFBOUIsRUFBb0M7QUFDL0MsTUFBSSxDQUFDQSxNQUFMLEVBQWE7QUFDVEEsVUFBTSxHQUFHQyxJQUFJLENBQUNDLEdBQUwsQ0FBU0QsSUFBSSxDQUFDRSxLQUFMLENBQVdKLEdBQUcsR0FBR0QsS0FBakIsSUFBMEIsQ0FBbkMsRUFBc0MsQ0FBdEMsQ0FBVDtBQUNIOztBQUNELE1BQUlFLE1BQU0sR0FBRyxDQUFiLEVBQWdCO0FBQ1osV0FBT0EsTUFBTSxLQUFLLENBQVgsR0FBZSxDQUFDRixLQUFELENBQWYsR0FBeUIsRUFBaEM7QUFDSDs7QUFDRCxNQUFJTSxNQUFNLEdBQUcsSUFBSUMsS0FBSixDQUFVTCxNQUFWLENBQWI7QUFDQUEsUUFBTSxJQUFJLENBQVY7O0FBQ0EsT0FBSyxJQUFJTSxDQUFDLEdBQUdOLE1BQWIsRUFBcUJNLENBQUMsSUFBSSxDQUExQixFQUE2QixFQUFFQSxDQUEvQixFQUFrQztBQUM5QkYsVUFBTSxDQUFDRSxDQUFELENBQU4sR0FBWSxDQUFDQSxDQUFDLEdBQUdQLEdBQUosR0FBVSxDQUFDQyxNQUFNLEdBQUdNLENBQVYsSUFBZVIsS0FBMUIsSUFBbUNFLE1BQS9DO0FBQ0g7O0FBQ0QsU0FBT0ksTUFBUDtBQUNIIiwiZmlsZSI6Ii4vbWF0cml4L2xpbnNwYWNlLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oc3RhcnQsIGVuZCwgbnVtYmVyID0gbnVsbCkge1xyXG4gICAgaWYgKCFudW1iZXIpIHtcclxuICAgICAgICBudW1iZXIgPSBNYXRoLm1heChNYXRoLnJvdW5kKGVuZCAtIHN0YXJ0KSArIDEsIDEpO1xyXG4gICAgfVxyXG4gICAgaWYgKG51bWJlciA8IDIpIHtcclxuICAgICAgICByZXR1cm4gbnVtYmVyID09PSAxID8gW3N0YXJ0XSA6IFtdO1xyXG4gICAgfVxyXG4gICAgbGV0IHJlc3VsdCA9IG5ldyBBcnJheShudW1iZXIpXHJcbiAgICBudW1iZXIgLT0gMVxyXG4gICAgZm9yIChsZXQgaSA9IG51bWJlcjsgaSA+PSAwOyAtLWkpIHtcclxuICAgICAgICByZXN1bHRbaV0gPSAoaSAqIGVuZCArIChudW1iZXIgLSBpKSAqIHN0YXJ0KSAvIG51bWJlcjtcclxuICAgIH1cclxuICAgIHJldHVybiByZXN1bHRcclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./matrix/linspace.js\n");
+
+/***/ }),
+
+/***/ "./matrix/norm.js":
+/*!************************!*\
+  !*** ./matrix/norm.js ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _metrics_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index */ \"./metrics/index.js\");\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n\n //import { neumair_sum } from \"../numerical/index\";\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(v, metric = _metrics_index__WEBPACK_IMPORTED_MODULE_0__.euclidean) {\n  //export default function(vector, p=2, metric = euclidean) {\n  let vector = null;\n\n  if (v instanceof _matrix_index__WEBPACK_IMPORTED_MODULE_1__.Matrix) {\n    let [rows, cols] = v.shape;\n    if (rows === 1) vector = v.row(0);else if (cols === 1) vector = v.col(0);else throw \"matrix must be 1d!\";\n  } else {\n    vector = v;\n  }\n\n  let n = vector.length;\n  let z = new Array(n);\n  z.fill(0);\n  return metric(vector, z);\n  /*let v;\r\n  if (vector instanceof Matrix) {\r\n      let [ rows, cols ] = v.shape;\r\n      if (rows === 1) {\r\n          v = vector.row(0);\r\n      } else if (cols === 1) {\r\n          v = vector.col(0);\r\n      } else {\r\n          throw \"matrix must be 1d\"\r\n      }\r\n  } else {\r\n      v = vector;\r\n  }\r\n  return Math.pow(neumair_sum(v.map(e => Math.pow(e, p))), 1 / p)*/\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21hdHJpeC9ub3JtLmpzP2I4ZjUiXSwibmFtZXMiOlsidiIsIm1ldHJpYyIsImV1Y2xpZGVhbiIsInZlY3RvciIsIk1hdHJpeCIsInJvd3MiLCJjb2xzIiwic2hhcGUiLCJyb3ciLCJjb2wiLCJuIiwibGVuZ3RoIiwieiIsIkFycmF5IiwiZmlsbCJdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBQUE7Q0FFQTs7QUFFQSw2QkFBZSxvQ0FBU0EsQ0FBVCxFQUFZQyxNQUFNLEdBQUdDLHFEQUFyQixFQUFnQztBQUMvQztBQUNJLE1BQUlDLE1BQU0sR0FBRyxJQUFiOztBQUNBLE1BQUlILENBQUMsWUFBWUksaURBQWpCLEVBQXlCO0FBQ3JCLFFBQUksQ0FBQ0MsSUFBRCxFQUFPQyxJQUFQLElBQWVOLENBQUMsQ0FBQ08sS0FBckI7QUFDQSxRQUFJRixJQUFJLEtBQUssQ0FBYixFQUFnQkYsTUFBTSxHQUFHSCxDQUFDLENBQUNRLEdBQUYsQ0FBTSxDQUFOLENBQVQsQ0FBaEIsS0FDSyxJQUFJRixJQUFJLEtBQUssQ0FBYixFQUFnQkgsTUFBTSxHQUFHSCxDQUFDLENBQUNTLEdBQUYsQ0FBTSxDQUFOLENBQVQsQ0FBaEIsS0FDQSxNQUFNLG9CQUFOO0FBQ1IsR0FMRCxNQUtPO0FBQ0hOLFVBQU0sR0FBR0gsQ0FBVDtBQUNIOztBQUNELE1BQUlVLENBQUMsR0FBR1AsTUFBTSxDQUFDUSxNQUFmO0FBQ0EsTUFBSUMsQ0FBQyxHQUFHLElBQUlDLEtBQUosQ0FBVUgsQ0FBVixDQUFSO0FBQ0FFLEdBQUMsQ0FBQ0UsSUFBRixDQUFPLENBQVA7QUFDQSxTQUFPYixNQUFNLENBQUNFLE1BQUQsRUFBU1MsQ0FBVCxDQUFiO0FBR0E7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNDIiwiZmlsZSI6Ii4vbWF0cml4L25vcm0uanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBldWNsaWRlYW4gfSBmcm9tIFwiLi4vbWV0cmljcy9pbmRleFwiO1xyXG5pbXBvcnQgeyBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcbi8vaW1wb3J0IHsgbmV1bWFpcl9zdW0gfSBmcm9tIFwiLi4vbnVtZXJpY2FsL2luZGV4XCI7XHJcblxyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbih2LCBtZXRyaWMgPSBldWNsaWRlYW4pIHtcclxuLy9leHBvcnQgZGVmYXVsdCBmdW5jdGlvbih2ZWN0b3IsIHA9MiwgbWV0cmljID0gZXVjbGlkZWFuKSB7XHJcbiAgICBsZXQgdmVjdG9yID0gbnVsbDtcclxuICAgIGlmICh2IGluc3RhbmNlb2YgTWF0cml4KSB7XHJcbiAgICAgICAgbGV0IFtyb3dzLCBjb2xzXSA9IHYuc2hhcGU7XHJcbiAgICAgICAgaWYgKHJvd3MgPT09IDEpIHZlY3RvciA9IHYucm93KDApO1xyXG4gICAgICAgIGVsc2UgaWYgKGNvbHMgPT09IDEpIHZlY3RvciA9IHYuY29sKDApO1xyXG4gICAgICAgIGVsc2UgdGhyb3cgXCJtYXRyaXggbXVzdCBiZSAxZCFcIlxyXG4gICAgfSBlbHNlIHtcclxuICAgICAgICB2ZWN0b3IgPSB2O1xyXG4gICAgfVxyXG4gICAgbGV0IG4gPSB2ZWN0b3IubGVuZ3RoO1xyXG4gICAgbGV0IHogPSBuZXcgQXJyYXkobilcclxuICAgIHouZmlsbCgwKTtcclxuICAgIHJldHVybiBtZXRyaWModmVjdG9yLCB6KTtcclxuICAgIFxyXG4gICAgXHJcbiAgICAvKmxldCB2O1xyXG4gICAgaWYgKHZlY3RvciBpbnN0YW5jZW9mIE1hdHJpeCkge1xyXG4gICAgICAgIGxldCBbIHJvd3MsIGNvbHMgXSA9IHYuc2hhcGU7XHJcbiAgICAgICAgaWYgKHJvd3MgPT09IDEpIHtcclxuICAgICAgICAgICAgdiA9IHZlY3Rvci5yb3coMCk7XHJcbiAgICAgICAgfSBlbHNlIGlmIChjb2xzID09PSAxKSB7XHJcbiAgICAgICAgICAgIHYgPSB2ZWN0b3IuY29sKDApO1xyXG4gICAgICAgIH0gZWxzZSB7XHJcbiAgICAgICAgICAgIHRocm93IFwibWF0cml4IG11c3QgYmUgMWRcIlxyXG4gICAgICAgIH1cclxuICAgIH0gZWxzZSB7XHJcbiAgICAgICAgdiA9IHZlY3RvcjtcclxuICAgIH1cclxuICAgIHJldHVybiBNYXRoLnBvdyhuZXVtYWlyX3N1bSh2Lm1hcChlID0+IE1hdGgucG93KGUsIHApKSksIDEgLyBwKSovXHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./matrix/norm.js\n");
+
+/***/ }),
+
+/***/ "./metrics/canberra.js":
+/*!*****************************!*\
+  !*** ./metrics/canberra.js ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Computes the canberra distance between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias canberra\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @returns {Number} The canberra distance between {@link a} and {@link b}.\r\n * @see {@link https://en.wikipedia.org/wiki/Canberra_distance}\r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  if (a.length !== b.length) return undefined;\n  let n = a.length;\n  let sum = 0;\n\n  for (let i = 0; i < n; ++i) {\n    sum += Math.abs(a[i] - b[i]) / (Math.abs(a[i]) + Math.abs(b[i]));\n  }\n\n  return sum;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvY2FuYmVycmEuanM/YzViMiJdLCJuYW1lcyI6WyJhIiwiYiIsImxlbmd0aCIsInVuZGVmaW5lZCIsIm4iLCJzdW0iLCJpIiwiTWF0aCIsImFicyJdLCJtYXBwaW5ncyI6Ijs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLENBQVosRUFBZTtBQUMxQixNQUFJRCxDQUFDLENBQUNFLE1BQUYsS0FBYUQsQ0FBQyxDQUFDQyxNQUFuQixFQUEyQixPQUFPQyxTQUFQO0FBQzNCLE1BQUlDLENBQUMsR0FBR0osQ0FBQyxDQUFDRSxNQUFWO0FBQ0EsTUFBSUcsR0FBRyxHQUFHLENBQVY7O0FBQ0EsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHRixDQUFwQixFQUF1QixFQUFFRSxDQUF6QixFQUE0QjtBQUN4QkQsT0FBRyxJQUFLRSxJQUFJLENBQUNDLEdBQUwsQ0FBU1IsQ0FBQyxDQUFDTSxDQUFELENBQUQsR0FBT0wsQ0FBQyxDQUFDSyxDQUFELENBQWpCLEtBQXlCQyxJQUFJLENBQUNDLEdBQUwsQ0FBU1IsQ0FBQyxDQUFDTSxDQUFELENBQVYsSUFBaUJDLElBQUksQ0FBQ0MsR0FBTCxDQUFTUCxDQUFDLENBQUNLLENBQUQsQ0FBVixDQUExQyxDQUFSO0FBQ0g7O0FBQ0QsU0FBT0QsR0FBUDtBQUNIIiwiZmlsZSI6Ii4vbWV0cmljcy9jYW5iZXJyYS5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBDb21wdXRlcyB0aGUgY2FuYmVycmEgZGlzdGFuY2UgYmV0d2VlbiB7QGxpbmsgYX0gYW5kIHtAbGluayBifS5cclxuICogQG1lbWJlcm9mIG1vZHVsZTptZXRyaWNzXHJcbiAqIEBhbGlhcyBjYW5iZXJyYVxyXG4gKiBAcGFyYW0ge0FycmF5PE51bWJlcj59IGEgXHJcbiAqIEBwYXJhbSB7QXJyYXk8TnVtYmVyPn0gYiBcclxuICogQHJldHVybnMge051bWJlcn0gVGhlIGNhbmJlcnJhIGRpc3RhbmNlIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uXHJcbiAqIEBzZWUge0BsaW5rIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL0NhbmJlcnJhX2Rpc3RhbmNlfVxyXG4gKi9cclxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oYSwgYikge1xyXG4gICAgaWYgKGEubGVuZ3RoICE9PSBiLmxlbmd0aCkgcmV0dXJuIHVuZGVmaW5lZDtcclxuICAgIGxldCBuID0gYS5sZW5ndGg7XHJcbiAgICBsZXQgc3VtID0gMDtcclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgc3VtICs9IChNYXRoLmFicyhhW2ldIC0gYltpXSkgLyAoTWF0aC5hYnMoYVtpXSkgKyBNYXRoLmFicyhiW2ldKSkpXHJcbiAgICB9XHJcbiAgICByZXR1cm4gc3VtO1xyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./metrics/canberra.js\n");
+
+/***/ }),
+
+/***/ "./metrics/chebyshev.js":
+/*!******************************!*\
+  !*** ./metrics/chebyshev.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Computes the chebyshev distance (l_∞) between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias chebyshev\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @returns {Number} the chebyshev distance between {@link a} and {@link b}.  \r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  if (a.length != b.length) return undefined;\n  let n = a.length;\n  let res = [];\n\n  for (let i = 0; i < n; ++i) {\n    res.push(Math.abs(a[i] - b[i]));\n  }\n\n  return Math.max(...res);\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvY2hlYnlzaGV2LmpzPzZjOTciXSwibmFtZXMiOlsiYSIsImIiLCJsZW5ndGgiLCJ1bmRlZmluZWQiLCJuIiwicmVzIiwiaSIsInB1c2giLCJNYXRoIiwiYWJzIiwibWF4Il0sIm1hcHBpbmdzIjoiOzs7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLENBQVosRUFBZTtBQUMxQixNQUFJRCxDQUFDLENBQUNFLE1BQUYsSUFBWUQsQ0FBQyxDQUFDQyxNQUFsQixFQUEwQixPQUFPQyxTQUFQO0FBQzFCLE1BQUlDLENBQUMsR0FBR0osQ0FBQyxDQUFDRSxNQUFWO0FBQ0EsTUFBSUcsR0FBRyxHQUFHLEVBQVY7O0FBQ0EsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHRixDQUFwQixFQUF1QixFQUFFRSxDQUF6QixFQUE0QjtBQUN4QkQsT0FBRyxDQUFDRSxJQUFKLENBQVNDLElBQUksQ0FBQ0MsR0FBTCxDQUFTVCxDQUFDLENBQUNNLENBQUQsQ0FBRCxHQUFPTCxDQUFDLENBQUNLLENBQUQsQ0FBakIsQ0FBVDtBQUNIOztBQUNELFNBQU9FLElBQUksQ0FBQ0UsR0FBTCxDQUFTLEdBQUdMLEdBQVosQ0FBUDtBQUNIIiwiZmlsZSI6Ii4vbWV0cmljcy9jaGVieXNoZXYuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogQ29tcHV0ZXMgdGhlIGNoZWJ5c2hldiBkaXN0YW5jZSAobF/iiJ4pIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uXHJcbiAqIEBtZW1iZXJvZiBtb2R1bGU6bWV0cmljc1xyXG4gKiBAYWxpYXMgY2hlYnlzaGV2XHJcbiAqIEBwYXJhbSB7QXJyYXk8TnVtYmVyPn0gYSBcclxuICogQHBhcmFtIHtBcnJheTxOdW1iZXI+fSBiIFxyXG4gKiBAcmV0dXJucyB7TnVtYmVyfSB0aGUgY2hlYnlzaGV2IGRpc3RhbmNlIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uICBcclxuICovXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGEsIGIpIHtcclxuICAgIGlmIChhLmxlbmd0aCAhPSBiLmxlbmd0aCkgcmV0dXJuIHVuZGVmaW5lZFxyXG4gICAgbGV0IG4gPSBhLmxlbmd0aFxyXG4gICAgbGV0IHJlcyA9IFtdO1xyXG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICByZXMucHVzaChNYXRoLmFicyhhW2ldIC0gYltpXSkpXHJcbiAgICB9XHJcbiAgICByZXR1cm4gTWF0aC5tYXgoLi4ucmVzKVxyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./metrics/chebyshev.js\n");
+
+/***/ }),
+
+/***/ "./metrics/cosine.js":
+/*!***************************!*\
+  !*** ./metrics/cosine.js ***!
+  \***************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Computes the cosine distance (not similarity) between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias cosine\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @example\r\n * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4\r\n * @returns {Number} The cosine distance between {@link a} and {@link b}.\r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  if (a.length !== b.length) return undefined;\n  let n = a.length;\n  let sum = 0;\n  let sum_a = 0;\n  let sum_b = 0;\n\n  for (let i = 0; i < n; ++i) {\n    sum += a[i] * b[i];\n    sum_a += a[i] * a[i];\n    sum_b += b[i] * b[i];\n  }\n\n  return Math.acos(sum / (Math.sqrt(sum_a) * Math.sqrt(sum_b)));\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvY29zaW5lLmpzPzc2ZTciXSwibmFtZXMiOlsiYSIsImIiLCJsZW5ndGgiLCJ1bmRlZmluZWQiLCJuIiwic3VtIiwic3VtX2EiLCJzdW1fYiIsImkiLCJNYXRoIiwiYWNvcyIsInNxcnQiXSwibWFwcGluZ3MiOiI7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLDZCQUFlLG9DQUFTQSxDQUFULEVBQVlDLENBQVosRUFBZTtBQUMxQixNQUFJRCxDQUFDLENBQUNFLE1BQUYsS0FBYUQsQ0FBQyxDQUFDQyxNQUFuQixFQUEyQixPQUFPQyxTQUFQO0FBQzNCLE1BQUlDLENBQUMsR0FBR0osQ0FBQyxDQUFDRSxNQUFWO0FBQ0EsTUFBSUcsR0FBRyxHQUFHLENBQVY7QUFDQSxNQUFJQyxLQUFLLEdBQUcsQ0FBWjtBQUNBLE1BQUlDLEtBQUssR0FBRyxDQUFaOztBQUNBLE9BQUssSUFBSUMsQ0FBQyxHQUFHLENBQWIsRUFBZ0JBLENBQUMsR0FBR0osQ0FBcEIsRUFBdUIsRUFBRUksQ0FBekIsRUFBNEI7QUFDeEJILE9BQUcsSUFBS0wsQ0FBQyxDQUFDUSxDQUFELENBQUQsR0FBT1AsQ0FBQyxDQUFDTyxDQUFELENBQWhCO0FBQ0FGLFNBQUssSUFBS04sQ0FBQyxDQUFDUSxDQUFELENBQUQsR0FBT1IsQ0FBQyxDQUFDUSxDQUFELENBQWxCO0FBQ0FELFNBQUssSUFBS04sQ0FBQyxDQUFDTyxDQUFELENBQUQsR0FBT1AsQ0FBQyxDQUFDTyxDQUFELENBQWxCO0FBQ0g7O0FBQ0QsU0FBT0MsSUFBSSxDQUFDQyxJQUFMLENBQVVMLEdBQUcsSUFBS0ksSUFBSSxDQUFDRSxJQUFMLENBQVVMLEtBQVYsSUFBbUJHLElBQUksQ0FBQ0UsSUFBTCxDQUFVSixLQUFWLENBQXhCLENBQWIsQ0FBUDtBQUNIIiwiZmlsZSI6Ii4vbWV0cmljcy9jb3NpbmUuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogQ29tcHV0ZXMgdGhlIGNvc2luZSBkaXN0YW5jZSAobm90IHNpbWlsYXJpdHkpIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uXHJcbiAqIEBtZW1iZXJvZiBtb2R1bGU6bWV0cmljc1xyXG4gKiBAYWxpYXMgY29zaW5lXHJcbiAqIEBwYXJhbSB7QXJyYXk8TnVtYmVyPn0gYSBcclxuICogQHBhcmFtIHtBcnJheTxOdW1iZXI+fSBiIFxyXG4gKiBAZXhhbXBsZVxyXG4gKiBkcnVpZC5jb3NpbmUoWzEsMF0sWzEsMV0pID09IDAuNzg1Mzk4MTYzMzk3NDQ4NCA9PSDPgC80XHJcbiAqIEByZXR1cm5zIHtOdW1iZXJ9IFRoZSBjb3NpbmUgZGlzdGFuY2UgYmV0d2VlbiB7QGxpbmsgYX0gYW5kIHtAbGluayBifS5cclxuICovXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGEsIGIpIHtcclxuICAgIGlmIChhLmxlbmd0aCAhPT0gYi5sZW5ndGgpIHJldHVybiB1bmRlZmluZWQ7XHJcbiAgICBsZXQgbiA9IGEubGVuZ3RoO1xyXG4gICAgbGV0IHN1bSA9IDA7XHJcbiAgICBsZXQgc3VtX2EgPSAwO1xyXG4gICAgbGV0IHN1bV9iID0gMDtcclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgc3VtICs9IChhW2ldICogYltpXSlcclxuICAgICAgICBzdW1fYSArPSAoYVtpXSAqIGFbaV0pXHJcbiAgICAgICAgc3VtX2IgKz0gKGJbaV0gKiBiW2ldKVxyXG4gICAgfVxyXG4gICAgcmV0dXJuIE1hdGguYWNvcyhzdW0gLyAoKE1hdGguc3FydChzdW1fYSkgKiBNYXRoLnNxcnQoc3VtX2IpKSkpO1xyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./metrics/cosine.js\n");
+
+/***/ }),
+
+/***/ "./metrics/euclidean.js":
+/*!******************************!*\
+  !*** ./metrics/euclidean.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _metrics_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../metrics/index.js */ \"./metrics/index.js\");\n\n/**\r\n * Computes the euclidean distance (l_2) between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias euclidean\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @returns {Number} the euclidean distance between {@link a} and {@link b}.  \r\n */\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  return Math.sqrt((0,_metrics_index_js__WEBPACK_IMPORTED_MODULE_0__.euclidean_squared)(a, b));\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvZXVjbGlkZWFuLmpzPzk0NTUiXSwibmFtZXMiOlsiYSIsImIiLCJNYXRoIiwic3FydCIsImV1Y2xpZGVhbl9zcXVhcmVkIl0sIm1hcHBpbmdzIjoiOzs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFDQSw2QkFBZSxvQ0FBU0EsQ0FBVCxFQUFZQyxDQUFaLEVBQWU7QUFDMUIsU0FBT0MsSUFBSSxDQUFDQyxJQUFMLENBQVVDLG9FQUFpQixDQUFDSixDQUFELEVBQUlDLENBQUosQ0FBM0IsQ0FBUDtBQUNIIiwiZmlsZSI6Ii4vbWV0cmljcy9ldWNsaWRlYW4uanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBldWNsaWRlYW5fc3F1YXJlZCB9IGZyb20gXCIuLi9tZXRyaWNzL2luZGV4LmpzXCI7XHJcbi8qKlxyXG4gKiBDb21wdXRlcyB0aGUgZXVjbGlkZWFuIGRpc3RhbmNlIChsXzIpIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uXHJcbiAqIEBtZW1iZXJvZiBtb2R1bGU6bWV0cmljc1xyXG4gKiBAYWxpYXMgZXVjbGlkZWFuXHJcbiAqIEBwYXJhbSB7QXJyYXk8TnVtYmVyPn0gYSBcclxuICogQHBhcmFtIHtBcnJheTxOdW1iZXI+fSBiIFxyXG4gKiBAcmV0dXJucyB7TnVtYmVyfSB0aGUgZXVjbGlkZWFuIGRpc3RhbmNlIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uICBcclxuICovXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGEsIGIpIHtcclxuICAgIHJldHVybiBNYXRoLnNxcnQoZXVjbGlkZWFuX3NxdWFyZWQoYSwgYikpO1xyXG59Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./metrics/euclidean.js\n");
+
+/***/ }),
+
+/***/ "./metrics/euclidean_squared.js":
+/*!**************************************!*\
+  !*** ./metrics/euclidean_squared.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _numerical_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../numerical/index */ \"./numerical/index.js\");\n\n/**\r\n * Computes the squared euclidean distance (l_2^2) between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias euclidean_squared\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @returns {Number} the squared euclidean distance between {@link a} and {@link b}.  \r\n */\n\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  if (a.length != b.length) return undefined;\n  let n = a.length;\n  let s = new Array(n);\n\n  for (let i = 0; i < n; ++i) {\n    let x = a[i];\n    let y = b[i];\n    s[i] = (x - y) * (x - y);\n  }\n\n  return (0,_numerical_index__WEBPACK_IMPORTED_MODULE_0__.neumair_sum)(s);\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvZXVjbGlkZWFuX3NxdWFyZWQuanM/YjJjMyJdLCJuYW1lcyI6WyJhIiwiYiIsImxlbmd0aCIsInVuZGVmaW5lZCIsIm4iLCJzIiwiQXJyYXkiLCJpIiwieCIsInkiLCJuZXVtYWlyX3N1bSJdLCJtYXBwaW5ncyI6Ijs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBQ0EsNkJBQWUsb0NBQVNBLENBQVQsRUFBWUMsQ0FBWixFQUFlO0FBQzFCLE1BQUlELENBQUMsQ0FBQ0UsTUFBRixJQUFZRCxDQUFDLENBQUNDLE1BQWxCLEVBQTBCLE9BQU9DLFNBQVA7QUFDMUIsTUFBSUMsQ0FBQyxHQUFHSixDQUFDLENBQUNFLE1BQVY7QUFDQSxNQUFJRyxDQUFDLEdBQUcsSUFBSUMsS0FBSixDQUFVRixDQUFWLENBQVI7O0FBQ0EsT0FBSyxJQUFJRyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSCxDQUFwQixFQUF1QixFQUFFRyxDQUF6QixFQUE0QjtBQUN4QixRQUFJQyxDQUFDLEdBQUdSLENBQUMsQ0FBQ08sQ0FBRCxDQUFUO0FBQ0EsUUFBSUUsQ0FBQyxHQUFHUixDQUFDLENBQUNNLENBQUQsQ0FBVDtBQUNBRixLQUFDLENBQUNFLENBQUQsQ0FBRCxHQUFRLENBQUNDLENBQUMsR0FBR0MsQ0FBTCxLQUFXRCxDQUFDLEdBQUdDLENBQWYsQ0FBUjtBQUNIOztBQUNELFNBQU9DLDZEQUFXLENBQUNMLENBQUQsQ0FBbEI7QUFDSCIsImZpbGUiOiIuL21ldHJpY3MvZXVjbGlkZWFuX3NxdWFyZWQuanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBuZXVtYWlyX3N1bSB9IGZyb20gXCIuLi9udW1lcmljYWwvaW5kZXhcIjtcclxuLyoqXHJcbiAqIENvbXB1dGVzIHRoZSBzcXVhcmVkIGV1Y2xpZGVhbiBkaXN0YW5jZSAobF8yXjIpIGJldHdlZW4ge0BsaW5rIGF9IGFuZCB7QGxpbmsgYn0uXHJcbiAqIEBtZW1iZXJvZiBtb2R1bGU6bWV0cmljc1xyXG4gKiBAYWxpYXMgZXVjbGlkZWFuX3NxdWFyZWRcclxuICogQHBhcmFtIHtBcnJheTxOdW1iZXI+fSBhIFxyXG4gKiBAcGFyYW0ge0FycmF5PE51bWJlcj59IGIgXHJcbiAqIEByZXR1cm5zIHtOdW1iZXJ9IHRoZSBzcXVhcmVkIGV1Y2xpZGVhbiBkaXN0YW5jZSBiZXR3ZWVuIHtAbGluayBhfSBhbmQge0BsaW5rIGJ9LiAgXHJcbiAqL1xyXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihhLCBiKSB7XHJcbiAgICBpZiAoYS5sZW5ndGggIT0gYi5sZW5ndGgpIHJldHVybiB1bmRlZmluZWRcclxuICAgIGxldCBuID0gYS5sZW5ndGhcclxuICAgIGxldCBzID0gbmV3IEFycmF5KG4pO1xyXG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICBsZXQgeCA9IGFbaV07XHJcbiAgICAgICAgbGV0IHkgPSBiW2ldXHJcbiAgICAgICAgc1tpXSA9ICgoeCAtIHkpICogKHggLSB5KSlcclxuICAgIH1cclxuICAgIHJldHVybiBuZXVtYWlyX3N1bShzKTtcclxufSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./metrics/euclidean_squared.js\n");
+
+/***/ }),
+
+/***/ "./metrics/index.js":
+/*!**************************!*\
+  !*** ./metrics/index.js ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"euclidean\": () => (/* reexport safe */ _euclidean__WEBPACK_IMPORTED_MODULE_0__.default),\n/* harmony export */   \"euclidean_squared\": () => (/* reexport safe */ _euclidean_squared__WEBPACK_IMPORTED_MODULE_1__.default),\n/* harmony export */   \"cosine\": () => (/* reexport safe */ _cosine__WEBPACK_IMPORTED_MODULE_2__.default),\n/* harmony export */   \"manhattan\": () => (/* reexport safe */ _manhattan__WEBPACK_IMPORTED_MODULE_3__.default),\n/* harmony export */   \"chebyshev\": () => (/* reexport safe */ _chebyshev__WEBPACK_IMPORTED_MODULE_4__.default),\n/* harmony export */   \"canberra\": () => (/* reexport safe */ _canberra__WEBPACK_IMPORTED_MODULE_5__.default)\n/* harmony export */ });\n/* harmony import */ var _euclidean__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./euclidean */ \"./metrics/euclidean.js\");\n/* harmony import */ var _euclidean_squared__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./euclidean_squared */ \"./metrics/euclidean_squared.js\");\n/* harmony import */ var _cosine__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cosine */ \"./metrics/cosine.js\");\n/* harmony import */ var _manhattan__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./manhattan */ \"./metrics/manhattan.js\");\n/* harmony import */ var _chebyshev__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./chebyshev */ \"./metrics/chebyshev.js\");\n/* harmony import */ var _canberra__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./canberra */ \"./metrics/canberra.js\");\n/**\r\n * @module metrics\r\n */\n\n\n\n\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvaW5kZXguanM/YjQ3YSJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBIiwiZmlsZSI6Ii4vbWV0cmljcy9pbmRleC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBAbW9kdWxlIG1ldHJpY3NcclxuICovXHJcbmV4cG9ydCB7IGRlZmF1bHQgYXMgZXVjbGlkZWFuIH0gZnJvbSBcIi4vZXVjbGlkZWFuXCI7XHJcbmV4cG9ydCB7IGRlZmF1bHQgYXMgZXVjbGlkZWFuX3NxdWFyZWQgfSBmcm9tIFwiLi9ldWNsaWRlYW5fc3F1YXJlZFwiO1xyXG5leHBvcnQgeyBkZWZhdWx0IGFzIGNvc2luZSB9IGZyb20gJy4vY29zaW5lJztcclxuZXhwb3J0IHsgZGVmYXVsdCBhcyBtYW5oYXR0YW4gfSBmcm9tICcuL21hbmhhdHRhbic7XHJcbmV4cG9ydCB7IGRlZmF1bHQgYXMgY2hlYnlzaGV2IH0gZnJvbSAnLi9jaGVieXNoZXYnO1xyXG5leHBvcnQgeyBkZWZhdWx0IGFzIGNhbmJlcnJhIH0gZnJvbSBcIi4vY2FuYmVycmFcIjsiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./metrics/index.js\n");
+
+/***/ }),
+
+/***/ "./metrics/manhattan.js":
+/*!******************************!*\
+  !*** ./metrics/manhattan.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Computes the manhattan distance (l_1) between {@link a} and {@link b}.\r\n * @memberof module:metrics\r\n * @alias manhattan\r\n * @param {Array<Number>} a \r\n * @param {Array<Number>} b \r\n * @returns {Number} the manhattan distance between {@link a} and {@link b}.  \r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {\n  if (a.length != b.length) return undefined;\n  let n = a.length;\n  let sum = 0;\n\n  for (let i = 0; i < n; ++i) {\n    sum += Math.abs(a[i] - b[i]);\n  }\n\n  return sum;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL21ldHJpY3MvbWFuaGF0dGFuLmpzPzNkMWIiXSwibmFtZXMiOlsiYSIsImIiLCJsZW5ndGgiLCJ1bmRlZmluZWQiLCJuIiwic3VtIiwiaSIsIk1hdGgiLCJhYnMiXSwibWFwcGluZ3MiOiI7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQUcsNkJBQWUsb0NBQVNBLENBQVQsRUFBWUMsQ0FBWixFQUFlO0FBQzdCLE1BQUlELENBQUMsQ0FBQ0UsTUFBRixJQUFZRCxDQUFDLENBQUNDLE1BQWxCLEVBQTBCLE9BQU9DLFNBQVA7QUFDMUIsTUFBSUMsQ0FBQyxHQUFHSixDQUFDLENBQUNFLE1BQVY7QUFDQSxNQUFJRyxHQUFHLEdBQUcsQ0FBVjs7QUFDQSxPQUFLLElBQUlDLENBQUMsR0FBRyxDQUFiLEVBQWdCQSxDQUFDLEdBQUdGLENBQXBCLEVBQXVCLEVBQUVFLENBQXpCLEVBQTRCO0FBQ3hCRCxPQUFHLElBQUlFLElBQUksQ0FBQ0MsR0FBTCxDQUFTUixDQUFDLENBQUNNLENBQUQsQ0FBRCxHQUFPTCxDQUFDLENBQUNLLENBQUQsQ0FBakIsQ0FBUDtBQUNIOztBQUNELFNBQU9ELEdBQVA7QUFDSCIsImZpbGUiOiIuL21ldHJpY3MvbWFuaGF0dGFuLmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiLyoqXHJcbiAqIENvbXB1dGVzIHRoZSBtYW5oYXR0YW4gZGlzdGFuY2UgKGxfMSkgYmV0d2VlbiB7QGxpbmsgYX0gYW5kIHtAbGluayBifS5cclxuICogQG1lbWJlcm9mIG1vZHVsZTptZXRyaWNzXHJcbiAqIEBhbGlhcyBtYW5oYXR0YW5cclxuICogQHBhcmFtIHtBcnJheTxOdW1iZXI+fSBhIFxyXG4gKiBAcGFyYW0ge0FycmF5PE51bWJlcj59IGIgXHJcbiAqIEByZXR1cm5zIHtOdW1iZXJ9IHRoZSBtYW5oYXR0YW4gZGlzdGFuY2UgYmV0d2VlbiB7QGxpbmsgYX0gYW5kIHtAbGluayBifS4gIFxyXG4gKi9leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihhLCBiKSB7XHJcbiAgICBpZiAoYS5sZW5ndGggIT0gYi5sZW5ndGgpIHJldHVybiB1bmRlZmluZWRcclxuICAgIGxldCBuID0gYS5sZW5ndGhcclxuICAgIGxldCBzdW0gPSAwO1xyXG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCBuOyArK2kpIHtcclxuICAgICAgICBzdW0gKz0gTWF0aC5hYnMoYVtpXSAtIGJbaV0pXHJcbiAgICB9XHJcbiAgICByZXR1cm4gc3VtXHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./metrics/manhattan.js\n");
+
+/***/ }),
+
+/***/ "./numerical/index.js":
+/*!****************************!*\
+  !*** ./numerical/index.js ***!
+  \****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"kahan_sum\": () => (/* reexport safe */ _kahan_sum__WEBPACK_IMPORTED_MODULE_0__.default),\n/* harmony export */   \"neumair_sum\": () => (/* reexport safe */ _neumair_sum__WEBPACK_IMPORTED_MODULE_1__.default)\n/* harmony export */ });\n/* harmony import */ var _kahan_sum__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./kahan_sum */ \"./numerical/kahan_sum.js\");\n/* harmony import */ var _neumair_sum__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./neumair_sum */ \"./numerical/neumair_sum.js\");\n/**\r\n * @module numerical\r\n */\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL251bWVyaWNhbC9pbmRleC5qcz9iMmJhIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQSIsImZpbGUiOiIuL251bWVyaWNhbC9pbmRleC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBAbW9kdWxlIG51bWVyaWNhbFxyXG4gKi9cclxuZXhwb3J0IHsgZGVmYXVsdCBhcyBrYWhhbl9zdW0gfSBmcm9tIFwiLi9rYWhhbl9zdW1cIjtcclxuZXhwb3J0IHsgZGVmYXVsdCBhcyBuZXVtYWlyX3N1bSB9IGZyb20gXCIuL25ldW1haXJfc3VtXCI7Il0sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./numerical/index.js\n");
+
+/***/ }),
+
+/***/ "./numerical/kahan_sum.js":
+/*!********************************!*\
+  !*** ./numerical/kahan_sum.js ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Numerical stable summation with the Kahan summation algorithm.\r\n * @memberof module:numerical\r\n * @alias kahan_sum\r\n * @param {Array} summands - Array of values to sum up.\r\n * @returns {number} The sum.\r\n * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}\r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(summands) {\n  let n = summands.length;\n  let sum = 0;\n  let compensation = 0;\n  let y, t;\n\n  for (let i = 0; i < n; ++i) {\n    y = summands[i] - compensation;\n    t = sum + y;\n    compensation = t - sum - y;\n    sum = t;\n  }\n\n  return sum;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL251bWVyaWNhbC9rYWhhbl9zdW0uanM/YjM2ZCJdLCJuYW1lcyI6WyJzdW1tYW5kcyIsIm4iLCJsZW5ndGgiLCJzdW0iLCJjb21wZW5zYXRpb24iLCJ5IiwidCIsImkiXSwibWFwcGluZ3MiOiI7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsNkJBQWUsb0NBQVNBLFFBQVQsRUFBbUI7QUFDOUIsTUFBSUMsQ0FBQyxHQUFHRCxRQUFRLENBQUNFLE1BQWpCO0FBQ0EsTUFBSUMsR0FBRyxHQUFHLENBQVY7QUFDQSxNQUFJQyxZQUFZLEdBQUcsQ0FBbkI7QUFDQSxNQUFJQyxDQUFKLEVBQU9DLENBQVA7O0FBRUEsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHTixDQUFwQixFQUF1QixFQUFFTSxDQUF6QixFQUE0QjtBQUN4QkYsS0FBQyxHQUFHTCxRQUFRLENBQUNPLENBQUQsQ0FBUixHQUFjSCxZQUFsQjtBQUNBRSxLQUFDLEdBQUdILEdBQUcsR0FBR0UsQ0FBVjtBQUNBRCxnQkFBWSxHQUFJRSxDQUFDLEdBQUdILEdBQUwsR0FBWUUsQ0FBM0I7QUFDQUYsT0FBRyxHQUFHRyxDQUFOO0FBQ0g7O0FBQ0QsU0FBT0gsR0FBUDtBQUNIIiwiZmlsZSI6Ii4vbnVtZXJpY2FsL2thaGFuX3N1bS5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8qKlxyXG4gKiBOdW1lcmljYWwgc3RhYmxlIHN1bW1hdGlvbiB3aXRoIHRoZSBLYWhhbiBzdW1tYXRpb24gYWxnb3JpdGhtLlxyXG4gKiBAbWVtYmVyb2YgbW9kdWxlOm51bWVyaWNhbFxyXG4gKiBAYWxpYXMga2FoYW5fc3VtXHJcbiAqIEBwYXJhbSB7QXJyYXl9IHN1bW1hbmRzIC0gQXJyYXkgb2YgdmFsdWVzIHRvIHN1bSB1cC5cclxuICogQHJldHVybnMge251bWJlcn0gVGhlIHN1bS5cclxuICogQHNlZSB7QGxpbmsgaHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvS2FoYW5fc3VtbWF0aW9uX2FsZ29yaXRobX1cclxuICovXHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKHN1bW1hbmRzKSB7XHJcbiAgICBsZXQgbiA9IHN1bW1hbmRzLmxlbmd0aFxyXG4gICAgbGV0IHN1bSA9IDA7XHJcbiAgICBsZXQgY29tcGVuc2F0aW9uID0gMDtcclxuICAgIGxldCB5LCB0O1xyXG5cclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgeSA9IHN1bW1hbmRzW2ldIC0gY29tcGVuc2F0aW9uO1xyXG4gICAgICAgIHQgPSBzdW0gKyB5O1xyXG4gICAgICAgIGNvbXBlbnNhdGlvbiA9ICh0IC0gc3VtKSAtIHk7XHJcbiAgICAgICAgc3VtID0gdDtcclxuICAgIH1cclxuICAgIHJldHVybiBzdW07XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./numerical/kahan_sum.js\n");
+
+/***/ }),
+
+/***/ "./numerical/neumair_sum.js":
+/*!**********************************!*\
+  !*** ./numerical/neumair_sum.js ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/**\r\n * Numerical stable summation with the Neumair summation algorithm.\r\n * @memberof module:numerical\r\n * @alias neumair_sum\r\n * @param {Array} summands - Array of values to sum up.\r\n * @returns {number} The sum.\r\n * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}\r\n */\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(summands) {\n  let n = summands.length;\n  let sum = 0;\n  let compensation = 0;\n\n  for (let i = 0; i < n; ++i) {\n    let summand = summands[i];\n    let t = sum + summand;\n\n    if (Math.abs(sum) >= Math.abs(summand)) {\n      compensation += sum - t + summand;\n    } else {\n      compensation += summand - t + sum;\n    }\n\n    sum = t;\n  }\n\n  return sum + compensation;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL251bWVyaWNhbC9uZXVtYWlyX3N1bS5qcz8yZmMzIl0sIm5hbWVzIjpbInN1bW1hbmRzIiwibiIsImxlbmd0aCIsInN1bSIsImNvbXBlbnNhdGlvbiIsImkiLCJzdW1tYW5kIiwidCIsIk1hdGgiLCJhYnMiXSwibWFwcGluZ3MiOiI7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsNkJBQWUsb0NBQVNBLFFBQVQsRUFBbUI7QUFDOUIsTUFBSUMsQ0FBQyxHQUFHRCxRQUFRLENBQUNFLE1BQWpCO0FBQ0EsTUFBSUMsR0FBRyxHQUFHLENBQVY7QUFDQSxNQUFJQyxZQUFZLEdBQUcsQ0FBbkI7O0FBRUEsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSixDQUFwQixFQUF1QixFQUFFSSxDQUF6QixFQUE0QjtBQUN4QixRQUFJQyxPQUFPLEdBQUdOLFFBQVEsQ0FBQ0ssQ0FBRCxDQUF0QjtBQUNBLFFBQUlFLENBQUMsR0FBR0osR0FBRyxHQUFHRyxPQUFkOztBQUNBLFFBQUlFLElBQUksQ0FBQ0MsR0FBTCxDQUFTTixHQUFULEtBQWlCSyxJQUFJLENBQUNDLEdBQUwsQ0FBU0gsT0FBVCxDQUFyQixFQUF3QztBQUNwQ0Ysa0JBQVksSUFBS0QsR0FBRyxHQUFHSSxDQUFQLEdBQVlELE9BQTVCO0FBQ0gsS0FGRCxNQUVPO0FBQ0hGLGtCQUFZLElBQUtFLE9BQU8sR0FBR0MsQ0FBWCxHQUFnQkosR0FBaEM7QUFDSDs7QUFDREEsT0FBRyxHQUFHSSxDQUFOO0FBQ0g7O0FBQ0QsU0FBT0osR0FBRyxHQUFHQyxZQUFiO0FBQ0giLCJmaWxlIjoiLi9udW1lcmljYWwvbmV1bWFpcl9zdW0uanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvKipcclxuICogTnVtZXJpY2FsIHN0YWJsZSBzdW1tYXRpb24gd2l0aCB0aGUgTmV1bWFpciBzdW1tYXRpb24gYWxnb3JpdGhtLlxyXG4gKiBAbWVtYmVyb2YgbW9kdWxlOm51bWVyaWNhbFxyXG4gKiBAYWxpYXMgbmV1bWFpcl9zdW1cclxuICogQHBhcmFtIHtBcnJheX0gc3VtbWFuZHMgLSBBcnJheSBvZiB2YWx1ZXMgdG8gc3VtIHVwLlxyXG4gKiBAcmV0dXJucyB7bnVtYmVyfSBUaGUgc3VtLlxyXG4gKiBAc2VlIHtAbGluayBodHRwczovL2VuLndpa2lwZWRpYS5vcmcvd2lraS9LYWhhbl9zdW1tYXRpb25fYWxnb3JpdGhtI0Z1cnRoZXJfZW5oYW5jZW1lbnRzfVxyXG4gKi9cclxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oc3VtbWFuZHMpIHtcclxuICAgIGxldCBuID0gc3VtbWFuZHMubGVuZ3RoXHJcbiAgICBsZXQgc3VtID0gMDtcclxuICAgIGxldCBjb21wZW5zYXRpb24gPSAwO1xyXG5cclxuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgbGV0IHN1bW1hbmQgPSBzdW1tYW5kc1tpXVxyXG4gICAgICAgIGxldCB0ID0gc3VtICsgc3VtbWFuZDtcclxuICAgICAgICBpZiAoTWF0aC5hYnMoc3VtKSA+PSBNYXRoLmFicyhzdW1tYW5kKSkge1xyXG4gICAgICAgICAgICBjb21wZW5zYXRpb24gKz0gKHN1bSAtIHQpICsgc3VtbWFuZDtcclxuICAgICAgICB9IGVsc2Uge1xyXG4gICAgICAgICAgICBjb21wZW5zYXRpb24gKz0gKHN1bW1hbmQgLSB0KSArIHN1bTtcclxuICAgICAgICB9XHJcbiAgICAgICAgc3VtID0gdDtcclxuICAgIH1cclxuICAgIHJldHVybiBzdW0gKyBjb21wZW5zYXRpb247XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./numerical/neumair_sum.js\n");
+
+/***/ }),
+
+/***/ "./optimization/index.js":
+/*!*******************************!*\
+  !*** ./optimization/index.js ***!
+  \*******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "powell": () => (/* reexport safe */ _powell__WEBPACK_IMPORTED_MODULE_0__.default)
+/* harmony export */ });
+/* harmony import */ var _powell__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./powell */ "./optimization/powell.js");
+
+
+/***/ }),
+
+/***/ "./optimization/powell.js":
+/*!********************************!*\
+  !*** ./optimization/powell.js ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n// http://optimization-js.github.io/optimization-js/optimization.js.html#line438\n/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(f, x0, max_iter = 300) {\n  const epsilon = 1e-2;\n  const n = x0.length;\n  let alpha = 1e-3;\n  let pfx = 10000;\n  let x = x0.slice();\n  let fx = f(x);\n  let convergence = false;\n\n  while (max_iter-- >= 0 && !convergence) {\n    convergence = true;\n\n    for (let i = 0; i < n; ++i) {\n      x[i] += 1e-6;\n      let fxi = f(x);\n      x[i] -= 1e-6;\n      let dx = (fxi - fx) / 1e-6;\n\n      if (Math.abs(dx) > epsilon) {\n        convergence = false;\n      }\n\n      x[i] -= alpha * dx;\n      fx = f(x);\n    }\n\n    alpha *= pfx >= fx ? 1.05 : 0.4;\n    pfx = fx;\n  }\n\n  return x;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL29wdGltaXphdGlvbi9wb3dlbGwuanM/NGVlMSJdLCJuYW1lcyI6WyJmIiwieDAiLCJtYXhfaXRlciIsImVwc2lsb24iLCJuIiwibGVuZ3RoIiwiYWxwaGEiLCJwZngiLCJ4Iiwic2xpY2UiLCJmeCIsImNvbnZlcmdlbmNlIiwiaSIsImZ4aSIsImR4IiwiTWF0aCIsImFicyJdLCJtYXBwaW5ncyI6Ijs7OztBQUFBO0FBQ0EsNkJBQWUsb0NBQVNBLENBQVQsRUFBWUMsRUFBWixFQUFnQkMsUUFBUSxHQUFDLEdBQXpCLEVBQThCO0FBQ3pDLFFBQU1DLE9BQU8sR0FBRyxJQUFoQjtBQUNBLFFBQU1DLENBQUMsR0FBR0gsRUFBRSxDQUFDSSxNQUFiO0FBQ0EsTUFBSUMsS0FBSyxHQUFHLElBQVo7QUFDQSxNQUFJQyxHQUFHLEdBQUcsS0FBVjtBQUNBLE1BQUlDLENBQUMsR0FBR1AsRUFBRSxDQUFDUSxLQUFILEVBQVI7QUFDQSxNQUFJQyxFQUFFLEdBQUdWLENBQUMsQ0FBQ1EsQ0FBRCxDQUFWO0FBQ0EsTUFBSUcsV0FBVyxHQUFHLEtBQWxCOztBQUVBLFNBQU9ULFFBQVEsTUFBTSxDQUFkLElBQW1CLENBQUNTLFdBQTNCLEVBQXdDO0FBQ3BDQSxlQUFXLEdBQUcsSUFBZDs7QUFDQSxTQUFLLElBQUlDLENBQUMsR0FBRyxDQUFiLEVBQWdCQSxDQUFDLEdBQUdSLENBQXBCLEVBQXVCLEVBQUVRLENBQXpCLEVBQTRCO0FBQ3hCSixPQUFDLENBQUNJLENBQUQsQ0FBRCxJQUFRLElBQVI7QUFDQSxVQUFJQyxHQUFHLEdBQUdiLENBQUMsQ0FBQ1EsQ0FBRCxDQUFYO0FBQ0FBLE9BQUMsQ0FBQ0ksQ0FBRCxDQUFELElBQVEsSUFBUjtBQUNBLFVBQUlFLEVBQUUsR0FBRyxDQUFDRCxHQUFHLEdBQUdILEVBQVAsSUFBYSxJQUF0Qjs7QUFDQSxVQUFJSyxJQUFJLENBQUNDLEdBQUwsQ0FBU0YsRUFBVCxJQUFlWCxPQUFuQixFQUE0QjtBQUN4QlEsbUJBQVcsR0FBRyxLQUFkO0FBQ0g7O0FBQ0RILE9BQUMsQ0FBQ0ksQ0FBRCxDQUFELElBQVFOLEtBQUssR0FBR1EsRUFBaEI7QUFDQUosUUFBRSxHQUFHVixDQUFDLENBQUNRLENBQUQsQ0FBTjtBQUNIOztBQUNERixTQUFLLElBQUtDLEdBQUcsSUFBSUcsRUFBUCxHQUFZLElBQVosR0FBbUIsR0FBN0I7QUFDQUgsT0FBRyxHQUFHRyxFQUFOO0FBQ0g7O0FBQ0QsU0FBT0YsQ0FBUDtBQUNIIiwiZmlsZSI6Ii4vb3B0aW1pemF0aW9uL3Bvd2VsbC5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbIi8vIGh0dHA6Ly9vcHRpbWl6YXRpb24tanMuZ2l0aHViLmlvL29wdGltaXphdGlvbi1qcy9vcHRpbWl6YXRpb24uanMuaHRtbCNsaW5lNDM4XHJcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGYsIHgwLCBtYXhfaXRlcj0zMDApIHtcclxuICAgIGNvbnN0IGVwc2lsb24gPSAxZS0yO1xyXG4gICAgY29uc3QgbiA9IHgwLmxlbmd0aDtcclxuICAgIGxldCBhbHBoYSA9IDFlLTM7XHJcbiAgICBsZXQgcGZ4ID0gMTAwMDA7XHJcbiAgICBsZXQgeCA9IHgwLnNsaWNlKCk7XHJcbiAgICBsZXQgZnggPSBmKHgpO1xyXG4gICAgbGV0IGNvbnZlcmdlbmNlID0gZmFsc2U7XHJcbiAgICBcclxuICAgIHdoaWxlIChtYXhfaXRlci0tID49IDAgJiYgIWNvbnZlcmdlbmNlKSB7XHJcbiAgICAgICAgY29udmVyZ2VuY2UgPSB0cnVlO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbjsgKytpKSB7XHJcbiAgICAgICAgICAgIHhbaV0gKz0gMWUtNjtcclxuICAgICAgICAgICAgbGV0IGZ4aSA9IGYoeCk7XHJcbiAgICAgICAgICAgIHhbaV0gLT0gMWUtNjtcclxuICAgICAgICAgICAgbGV0IGR4ID0gKGZ4aSAtIGZ4KSAvIDFlLTY7XHJcbiAgICAgICAgICAgIGlmIChNYXRoLmFicyhkeCkgPiBlcHNpbG9uKSB7XHJcbiAgICAgICAgICAgICAgICBjb252ZXJnZW5jZSA9IGZhbHNlO1xyXG4gICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIHhbaV0gLT0gYWxwaGEgKiBkeDtcclxuICAgICAgICAgICAgZnggPSBmKHgpO1xyXG4gICAgICAgIH1cclxuICAgICAgICBhbHBoYSAqPSAocGZ4ID49IGZ4ID8gMS4wNSA6IDAuNCk7XHJcbiAgICAgICAgcGZ4ID0gZng7XHJcbiAgICB9XHJcbiAgICByZXR1cm4geDtcclxufVxyXG4iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./optimization/powell.js\n");
+
+/***/ }),
+
+/***/ "./util/index.js":
+/*!***********************!*\
+  !*** ./util/index.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Randomizer\": () => (/* reexport safe */ _randomizer__WEBPACK_IMPORTED_MODULE_0__.Randomizer),\n/* harmony export */   \"max\": () => (/* reexport safe */ _max__WEBPACK_IMPORTED_MODULE_1__.max)\n/* harmony export */ });\n/* harmony import */ var _randomizer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./randomizer */ \"./util/randomizer.js\");\n/* harmony import */ var _max__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./max */ \"./util/max.js\");\n\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL3V0aWwvaW5kZXguanM/ZTE2NCJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7O0FBQUEiLCJmaWxlIjoiLi91dGlsL2luZGV4LmpzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IHsgUmFuZG9taXplciB9IGZyb20gXCIuL3JhbmRvbWl6ZXJcIjtcclxuZXhwb3J0IHsgbWF4IH0gZnJvbSBcIi4vbWF4XCI7XHJcbiJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./util/index.js\n");
+
+/***/ }),
+
+/***/ "./util/max.js":
+/*!*********************!*\
+  !*** ./util/max.js ***!
+  \*********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"max\": () => (/* binding */ max)\n/* harmony export */ });\nfunction max(values) {\n  let max;\n\n  for (const value of values) {\n    if (value != null && (max < value || max === undefined && value >= value)) {\n      max = value;\n    }\n  }\n\n  return max;\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL3V0aWwvbWF4LmpzPzE0NzAiXSwibmFtZXMiOlsibWF4IiwidmFsdWVzIiwidmFsdWUiLCJ1bmRlZmluZWQiXSwibWFwcGluZ3MiOiI7Ozs7QUFBTyxTQUFTQSxHQUFULENBQWFDLE1BQWIsRUFBcUI7QUFDMUIsTUFBSUQsR0FBSjs7QUFDQSxPQUFLLE1BQU1FLEtBQVgsSUFBb0JELE1BQXBCLEVBQTRCO0FBQzFCLFFBQUlDLEtBQUssSUFBSSxJQUFULEtBQ0lGLEdBQUcsR0FBR0UsS0FBTixJQUFnQkYsR0FBRyxLQUFLRyxTQUFSLElBQXFCRCxLQUFLLElBQUlBLEtBRGxELENBQUosRUFDK0Q7QUFDN0RGLFNBQUcsR0FBR0UsS0FBTjtBQUNEO0FBQ0Y7O0FBQ0QsU0FBT0YsR0FBUDtBQUNEIiwiZmlsZSI6Ii4vdXRpbC9tYXguanMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gbWF4KHZhbHVlcykge1xyXG4gIGxldCBtYXg7XHJcbiAgZm9yIChjb25zdCB2YWx1ZSBvZiB2YWx1ZXMpIHtcclxuICAgIGlmICh2YWx1ZSAhPSBudWxsXHJcbiAgICAgICAgJiYgKG1heCA8IHZhbHVlIHx8IChtYXggPT09IHVuZGVmaW5lZCAmJiB2YWx1ZSA+PSB2YWx1ZSkpKSB7XHJcbiAgICAgIG1heCA9IHZhbHVlO1xyXG4gICAgfVxyXG4gIH1cclxuICByZXR1cm4gbWF4O1xyXG59XHJcbiJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./util/max.js\n");
+
+/***/ }),
+
+/***/ "./util/randomizer.js":
+/*!****************************!*\
+  !*** ./util/randomizer.js ***!
+  \****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"Randomizer\": () => (/* binding */ Randomizer)\n/* harmony export */ });\n/* harmony import */ var _matrix_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../matrix/index */ \"./matrix/index.js\");\n\nclass Randomizer {\n  // https://github.com/bmurray7/mersenne-twister-examples/blob/master/javascript-mersenne-twister.js\n\n  /**\r\n   * Mersenne Twister\r\n   * @param {*} _seed \r\n   */\n  constructor(_seed) {\n    this._N = 624;\n    this._M = 397;\n    this._MATRIX_A = 0x9908b0df;\n    this._UPPER_MASK = 0x80000000;\n    this._LOWER_MASK = 0x7fffffff;\n    this._mt = new Array(this._N);\n    this._mti = this.N + 1;\n    this.seed = _seed || new Date().getTime();\n    return this;\n  }\n\n  set seed(_seed) {\n    this._seed = _seed;\n    let mt = this._mt;\n    mt[0] = _seed >>> 0;\n\n    for (this._mti = 1; this._mti < this._N; this._mti += 1) {\n      let mti = this._mti;\n      let s = mt[mti - 1] ^ mt[mti - 1] >>> 30;\n      mt[mti] = (((s & 0xffff0000) >>> 16) * 1812433253 << 16) + (s & 0x0000ffff) * 1812433253 + mti;\n      mt[mti] >>>= 0;\n    }\n  }\n\n  get seed() {\n    return this._seed;\n  }\n\n  get random() {\n    return this.random_int * (1.0 / 4294967296.0);\n  }\n\n  get random_int() {\n    let y,\n        mag01 = new Array(0x0, this._MATRIX_A);\n\n    if (this._mti >= this._N) {\n      let kk;\n\n      if (this._mti == this._N + 1) {\n        this.seed = 5489;\n      }\n\n      let N_M = this._N - this._M;\n      let M_N = this._M - this._N;\n\n      for (kk = 0; kk < N_M; ++kk) {\n        y = this._mt[kk] & this._UPPER_MASK | this._mt[kk + 1] & this._LOWER_MASK;\n        this._mt[kk] = this._mt[kk + this._M] ^ y >>> 1 ^ mag01[y & 0x1];\n      }\n\n      for (; kk < this._N - 1; ++kk) {\n        y = this._mt[kk] & this._UPPER_MASK | this._mt[kk + 1] & this._LOWER_MASK;\n        this._mt[kk] = this._mt[kk + M_N] ^ y >>> 1 ^ mag01[y & 0x1];\n      }\n\n      y = this._mt[this._N - 1] & this._UPPER_MASK | this._mt[0] & this._LOWER_MASK;\n      this._mt[this._N - 1] = this._mt[this._M - 1] ^ y >>> 1 ^ mag01[y & 0x1];\n      this._mti = 0;\n    }\n\n    y = this._mt[this._mti += 1];\n    y ^= y >>> 11;\n    y ^= y << 7 & 0x9d2c5680;\n    y ^= y << 15 & 0xefc60000;\n    y ^= y >>> 18;\n    return y >>> 0;\n  }\n\n  choice(A, n) {\n    if (A instanceof _matrix_index__WEBPACK_IMPORTED_MODULE_0__.Matrix) {\n      let [rows, cols] = A.shape;\n      if (n > rows) throw \"n bigger than A!\";\n      let sample = new Array(n);\n      let index_list = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, rows - 1);\n\n      for (let i = 0, l = index_list.length; i < n; ++i, --l) {\n        let random_index = this.random_int % l;\n        sample[i] = index_list.splice(random_index, 1)[0];\n      }\n\n      return sample.map(d => A.row(d));\n    } else if (Array.isArray(A) || A instanceof Float64Array) {\n      let rows = A.length;\n\n      if (n > rows) {\n        throw \"n bigger than A!\";\n      }\n\n      let sample = new Array(n);\n      let index_list = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, rows - 1);\n\n      for (let i = 0, l = index_list.length; i < n; ++i, --l) {\n        let random_index = this.random_int % l;\n        sample[i] = index_list.splice(random_index, 1)[0];\n      }\n\n      return sample.map(d => A[d]);\n    }\n  }\n\n  static choice(A, n, seed = 19870307) {\n    let [rows, cols] = A.shape;\n    if (n > rows) throw \"n bigger than A!\";\n    let rand = new Randomizer(seed);\n    let sample = new Array(n);\n    let index_list = (0,_matrix_index__WEBPACK_IMPORTED_MODULE_0__.linspace)(0, rows - 1);\n    /*let index_list = new Array(rows);\r\n    for (let i = 0; i < rows; ++i) {\r\n        index_list[i] = i;\r\n    }*/\n    //let result = new Matrix(n, cols);\n\n    for (let i = 0, l = index_list.length; i < n; ++i, --l) {\n      let random_index = rand.random_int % l;\n      sample[i] = index_list.splice(random_index, 1)[0]; //random_index = index_list.splice(random_index, 1)[0];\n      //result.set_row(i, A.row(random_index))\n    } //return result;\n    //return new Matrix(n, cols, (row, col) => A.entry(sample[row], col))\n\n\n    return sample.map(d => A.row(d));\n  }\n\n}//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9kcnVpZC8uL3V0aWwvcmFuZG9taXplci5qcz80YjZmIl0sIm5hbWVzIjpbIlJhbmRvbWl6ZXIiLCJjb25zdHJ1Y3RvciIsIl9zZWVkIiwiX04iLCJfTSIsIl9NQVRSSVhfQSIsIl9VUFBFUl9NQVNLIiwiX0xPV0VSX01BU0siLCJfbXQiLCJBcnJheSIsIl9tdGkiLCJOIiwic2VlZCIsIkRhdGUiLCJnZXRUaW1lIiwibXQiLCJtdGkiLCJzIiwicmFuZG9tIiwicmFuZG9tX2ludCIsInkiLCJtYWcwMSIsImtrIiwiTl9NIiwiTV9OIiwiY2hvaWNlIiwiQSIsIm4iLCJNYXRyaXgiLCJyb3dzIiwiY29scyIsInNoYXBlIiwic2FtcGxlIiwiaW5kZXhfbGlzdCIsImxpbnNwYWNlIiwiaSIsImwiLCJsZW5ndGgiLCJyYW5kb21faW5kZXgiLCJzcGxpY2UiLCJtYXAiLCJkIiwicm93IiwiaXNBcnJheSIsIkZsb2F0NjRBcnJheSIsInJhbmQiXSwibWFwcGluZ3MiOiI7Ozs7O0FBQUE7QUFFTyxNQUFNQSxVQUFOLENBQWlCO0FBQ3BCOztBQUNBO0FBQ0o7QUFDQTtBQUNBO0FBQ0lDLGFBQVcsQ0FBQ0MsS0FBRCxFQUFRO0FBQ2YsU0FBS0MsRUFBTCxHQUFVLEdBQVY7QUFDQSxTQUFLQyxFQUFMLEdBQVUsR0FBVjtBQUNBLFNBQUtDLFNBQUwsR0FBaUIsVUFBakI7QUFDQSxTQUFLQyxXQUFMLEdBQW1CLFVBQW5CO0FBQ0EsU0FBS0MsV0FBTCxHQUFtQixVQUFuQjtBQUNBLFNBQUtDLEdBQUwsR0FBVyxJQUFJQyxLQUFKLENBQVUsS0FBS04sRUFBZixDQUFYO0FBQ0EsU0FBS08sSUFBTCxHQUFZLEtBQUtDLENBQUwsR0FBUyxDQUFyQjtBQUVBLFNBQUtDLElBQUwsR0FBWVYsS0FBSyxJQUFJLElBQUlXLElBQUosR0FBV0MsT0FBWCxFQUFyQjtBQUNBLFdBQU8sSUFBUDtBQUNIOztBQUVPLE1BQUpGLElBQUksQ0FBQ1YsS0FBRCxFQUFRO0FBQ1osU0FB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QUFyQjtBQUNBLFFBQUlKLENBQUMsR0FBR0UsSUFBUixFQUFjLE1BQU0sa0JBQU47QUFDZCxRQUFJZ0IsSUFBSSxHQUFHLElBQUk3QyxVQUFKLENBQWVZLElBQWYsQ0FBWDtBQUNBLFFBQUlvQixNQUFNLEdBQUcsSUFBSXZCLEtBQUosQ0FBVWtCLENBQVYsQ0FBYjtBQUNBLFFBQUlNLFVBQVUsR0FBR0MsdURBQVEsQ0FBQyxDQUFELEVBQUlMLElBQUksR0FBRyxDQUFYLENBQXpCO0FBQ0E7QUFDUjtBQUNBO0FBQ0E7QUFDUTs7QUFDQSxTQUFLLElBQUlNLENBQUMsR0FBRyxDQUFSLEVBQVdDLENBQUMsR0FBR0gsVUFBVSxDQUFDSSxNQUEvQixFQUF1Q0YsQ0FBQyxHQUFHUixDQUEzQyxFQUE4QyxFQUFFUSxDQUFGLEVBQUssRUFBRUMsQ0FBckQsRUFBd0Q7QUFDcEQsVUFBSUUsWUFBWSxHQUFHTyxJQUFJLENBQUMxQixVQUFMLEdBQWtCaUIsQ0FBckM7QUFDQUosWUFBTSxDQUFDRyxDQUFELENBQU4sR0FBWUYsVUFBVSxDQUFDTSxNQUFYLENBQWtCRCxZQUFsQixFQUFnQyxDQUFoQyxFQUFtQyxDQUFuQyxDQUFaLENBRm9ELENBR3BEO0FBQ0E7QUFDSCxLQWhCOEIsQ0FpQi9CO0FBQ0E7OztBQUNBLFdBQU9OLE1BQU0sQ0FBQ1EsR0FBUCxDQUFXQyxDQUFDLElBQUlmLENBQUMsQ0FBQ2dCLEdBQUYsQ0FBTUQsQ0FBTixDQUFoQixDQUFQO0FBQ0g7O0FBMUhtQiIsImZpbGUiOiIuL3V0aWwvcmFuZG9taXplci5qcy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGxpbnNwYWNlLCBNYXRyaXggfSBmcm9tIFwiLi4vbWF0cml4L2luZGV4XCI7XHJcblxyXG5leHBvcnQgY2xhc3MgUmFuZG9taXplciB7XHJcbiAgICAvLyBodHRwczovL2dpdGh1Yi5jb20vYm11cnJheTcvbWVyc2VubmUtdHdpc3Rlci1leGFtcGxlcy9ibG9iL21hc3Rlci9qYXZhc2NyaXB0LW1lcnNlbm5lLXR3aXN0ZXIuanNcclxuICAgIC8qKlxyXG4gICAgICogTWVyc2VubmUgVHdpc3RlclxyXG4gICAgICogQHBhcmFtIHsqfSBfc2VlZCBcclxuICAgICAqL1xyXG4gICAgY29uc3RydWN0b3IoX3NlZWQpIHtcclxuICAgICAgICB0aGlzLl9OID0gNjI0O1xyXG4gICAgICAgIHRoaXMuX00gPSAzOTc7XHJcbiAgICAgICAgdGhpcy5fTUFUUklYX0EgPSAweDk5MDhiMGRmO1xyXG4gICAgICAgIHRoaXMuX1VQUEVSX01BU0sgPSAweDgwMDAwMDAwO1xyXG4gICAgICAgIHRoaXMuX0xPV0VSX01BU0sgPSAweDdmZmZmZmZmO1xyXG4gICAgICAgIHRoaXMuX210ID0gbmV3IEFycmF5KHRoaXMuX04pO1xyXG4gICAgICAgIHRoaXMuX210aSA9IHRoaXMuTiArIDE7XHJcblxyXG4gICAgICAgIHRoaXMuc2VlZCA9IF9zZWVkIHx8IG5ldyBEYXRlKCkuZ2V0VGltZSgpO1xyXG4gICAgICAgIHJldHVybiB0aGlzO1xyXG4gICAgfVxyXG5cclxuICAgIHNldCBzZWVkKF9zZWVkKSB7XHJcbiAgICAgICAgdGhpcy5fc2VlZCA9IF9zZWVkO1xyXG4gICAgICAgIGxldCBtdCA9IHRoaXMuX210O1xyXG5cclxuICAgICAgICBtdFswXSA9IF9zZWVkID4+PiAwO1xyXG4gICAgICAgIGZvciAodGhpcy5fbXRpID0gMTsgdGhpcy5fbXRpIDwgdGhpcy5fTjsgdGhpcy5fbXRpICs9IDEpIHtcclxuICAgICAgICAgICAgbGV0IG10aSA9IHRoaXMuX210aTtcclxuICAgICAgICAgICAgbGV0IHMgPSBtdFttdGkgLSAxXSBeIChtdFttdGkgLSAxXSA+Pj4gMzApO1xyXG4gICAgICAgICAgICBtdFttdGldID0gKCgoKChzICYgMHhmZmZmMDAwMCkgPj4+IDE2KSAqIDE4MTI0MzMyNTMpIDw8IDE2KSArIChzICYgMHgwMDAwZmZmZikgKiAxODEyNDMzMjUzKSArIG10aTtcclxuICAgICAgICAgICAgbXRbbXRpXSA+Pj49IDA7XHJcbiAgICAgICAgfVxyXG4gICAgfVxyXG5cclxuICAgIGdldCBzZWVkKCkge1xyXG4gICAgICAgIHJldHVybiB0aGlzLl9zZWVkO1xyXG4gICAgfVxyXG5cclxuICAgIGdldCByYW5kb20oKSB7XHJcbiAgICAgICAgcmV0dXJuIHRoaXMucmFuZG9tX2ludCAqICgxLjAgLyA0Mjk0OTY3Mjk2LjApXHJcbiAgICB9XHJcblxyXG4gICAgZ2V0IHJhbmRvbV9pbnQoKSB7XHJcbiAgICAgICAgbGV0IHksIG1hZzAxID0gbmV3IEFycmF5KDB4MCwgdGhpcy5fTUFUUklYX0EpO1xyXG4gICAgICAgIGlmICh0aGlzLl9tdGkgPj0gdGhpcy5fTikge1xyXG4gICAgICAgICAgICBsZXQga2s7XHJcblxyXG4gICAgICAgICAgICBpZiAodGhpcy5fbXRpID09IHRoaXMuX04gKyAxKSB7XHJcbiAgICAgICAgICAgICAgICB0aGlzLnNlZWQgPSA1NDg5O1xyXG4gICAgICAgICAgICB9XHJcblxyXG4gICAgICAgICAgICBsZXQgTl9NID0gdGhpcy5fTiAtIHRoaXMuX007XHJcbiAgICAgICAgICAgIGxldCBNX04gPSB0aGlzLl9NIC0gdGhpcy5fTjtcclxuXHJcbiAgICAgICAgICAgIGZvciAoa2sgPSAwOyBrayA8IE5fTTsgKytraykge1xyXG4gICAgICAgICAgICAgICAgeSA9ICh0aGlzLl9tdFtra10gJiB0aGlzLl9VUFBFUl9NQVNLKSB8ICh0aGlzLl9tdFtrayArIDFdICYgdGhpcy5fTE9XRVJfTUFTSyk7XHJcbiAgICAgICAgICAgICAgICB0aGlzLl9tdFtra10gPSB0aGlzLl9tdFtrayArIHRoaXMuX01dIF4gKHkgPj4+IDEpIF4gbWFnMDFbeSAmIDB4MV07XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgZm9yICg7IGtrIDwgdGhpcy5fTiAtIDE7ICsra2spIHtcclxuICAgICAgICAgICAgICAgIHkgPSAodGhpcy5fbXRba2tdICYgdGhpcy5fVVBQRVJfTUFTSykgfCAodGhpcy5fbXRba2sgKyAxXSAmIHRoaXMuX0xPV0VSX01BU0spO1xyXG4gICAgICAgICAgICAgICAgdGhpcy5fbXRba2tdID0gdGhpcy5fbXRba2sgKyBNX05dIF4gKHkgPj4+IDEpIF4gbWFnMDFbeSAmIDB4MV07XHJcbiAgICAgICAgICAgIH1cclxuXHJcbiAgICAgICAgICAgIHkgPSAodGhpcy5fbXRbdGhpcy5fTiAtIDFdICYgdGhpcy5fVVBQRVJfTUFTSykgfCAodGhpcy5fbXRbMF0gJiB0aGlzLl9MT1dFUl9NQVNLKTtcclxuICAgICAgICAgICAgdGhpcy5fbXRbdGhpcy5fTiAtIDFdID0gdGhpcy5fbXRbdGhpcy5fTSAtIDFdIF4gKHkgPj4+IDEpIF4gbWFnMDFbeSAmIDB4MV07XHJcblxyXG4gICAgICAgICAgICB0aGlzLl9tdGkgPSAwO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgeSA9IHRoaXMuX210W3RoaXMuX210aSArPSAxXTtcclxuICAgICAgICB5IF49ICh5ID4+PiAxMSk7XHJcbiAgICAgICAgeSBePSAoeSA8PCA3KSAmIDB4OWQyYzU2ODA7XHJcbiAgICAgICAgeSBePSAoeSA8PCAxNSkgJiAweGVmYzYwMDAwO1xyXG4gICAgICAgIHkgXj0gKHkgPj4+IDE4KTtcclxuXHJcbiAgICAgICAgcmV0dXJuIHkgPj4+IDA7XHJcbiAgICB9XHJcblxyXG4gICAgY2hvaWNlKEEsIG4pIHtcclxuICAgICAgICBpZiAoQSBpbnN0YW5jZW9mIE1hdHJpeCkge1xyXG4gICAgICAgICAgICBsZXQgW3Jvd3MsIGNvbHNdID0gQS5zaGFwZTtcclxuICAgICAgICAgICAgaWYgKG4gPiByb3dzKSB0aHJvdyBcIm4gYmlnZ2VyIHRoYW4gQSFcIjtcclxuICAgICAgICAgICAgbGV0IHNhbXBsZSA9IG5ldyBBcnJheShuKTtcclxuICAgICAgICAgICAgbGV0IGluZGV4X2xpc3QgPSBsaW5zcGFjZSgwLCByb3dzIC0gMSk7XHJcbiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwLCBsID0gaW5kZXhfbGlzdC5sZW5ndGg7IGkgPCBuOyArK2ksIC0tbCkge1xyXG4gICAgICAgICAgICAgICAgbGV0IHJhbmRvbV9pbmRleCA9IHRoaXMucmFuZG9tX2ludCAlIGw7XHJcbiAgICAgICAgICAgICAgICBzYW1wbGVbaV0gPSBpbmRleF9saXN0LnNwbGljZShyYW5kb21faW5kZXgsIDEpWzBdXHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgcmV0dXJuIHNhbXBsZS5tYXAoZCA9PiBBLnJvdyhkKSk7XHJcbiAgICAgICAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KEEpIHx8IEEgaW5zdGFuY2VvZiBGbG9hdDY0QXJyYXkpIHtcclxuICAgICAgICAgICAgbGV0IHJvd3MgPSBBLmxlbmd0aDtcclxuICAgICAgICAgICAgaWYgKG4gPiByb3dzKSB7XHJcbiAgICAgICAgICAgICAgICB0aHJvdyBcIm4gYmlnZ2VyIHRoYW4gQSFcIjtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgICAgICBsZXQgc2FtcGxlID0gbmV3IEFycmF5KG4pO1xyXG4gICAgICAgICAgICBsZXQgaW5kZXhfbGlzdCA9IGxpbnNwYWNlKDAsIHJvd3MgLSAxKTtcclxuICAgICAgICAgICAgZm9yIChsZXQgaSA9IDAsIGwgPSBpbmRleF9saXN0Lmxlbmd0aDsgaSA8IG47ICsraSwgLS1sKSB7XHJcbiAgICAgICAgICAgICAgICBsZXQgcmFuZG9tX2luZGV4ID0gdGhpcy5yYW5kb21faW50ICUgbDtcclxuICAgICAgICAgICAgICAgIHNhbXBsZVtpXSA9IGluZGV4X2xpc3Quc3BsaWNlKHJhbmRvbV9pbmRleCwgMSlbMF07XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICAgICAgcmV0dXJuIHNhbXBsZS5tYXAoZCA9PiBBW2RdKTtcclxuICAgICAgICB9XHJcbiAgICB9XHJcblxyXG4gICAgc3RhdGljIGNob2ljZShBLCBuLCBzZWVkPTE5ODcwMzA3KSB7XHJcbiAgICAgICAgbGV0IFtyb3dzLCBjb2xzXSA9IEEuc2hhcGU7XHJcbiAgICAgICAgaWYgKG4gPiByb3dzKSB0aHJvdyBcIm4gYmlnZ2VyIHRoYW4gQSFcIlxyXG4gICAgICAgIGxldCByYW5kID0gbmV3IFJhbmRvbWl6ZXIoc2VlZCk7XHJcbiAgICAgICAgbGV0IHNhbXBsZSA9IG5ldyBBcnJheShuKTtcclxuICAgICAgICBsZXQgaW5kZXhfbGlzdCA9IGxpbnNwYWNlKDAsIHJvd3MgLSAxKTtcclxuICAgICAgICAvKmxldCBpbmRleF9saXN0ID0gbmV3IEFycmF5KHJvd3MpO1xyXG4gICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgcm93czsgKytpKSB7XHJcbiAgICAgICAgICAgIGluZGV4X2xpc3RbaV0gPSBpO1xyXG4gICAgICAgIH0qL1xyXG4gICAgICAgIC8vbGV0IHJlc3VsdCA9IG5ldyBNYXRyaXgobiwgY29scyk7XHJcbiAgICAgICAgZm9yIChsZXQgaSA9IDAsIGwgPSBpbmRleF9saXN0Lmxlbmd0aDsgaSA8IG47ICsraSwgLS1sKSB7XHJcbiAgICAgICAgICAgIGxldCByYW5kb21faW5kZXggPSByYW5kLnJhbmRvbV9pbnQgJSBsO1xyXG4gICAgICAgICAgICBzYW1wbGVbaV0gPSBpbmRleF9saXN0LnNwbGljZShyYW5kb21faW5kZXgsIDEpWzBdXHJcbiAgICAgICAgICAgIC8vcmFuZG9tX2luZGV4ID0gaW5kZXhfbGlzdC5zcGxpY2UocmFuZG9tX2luZGV4LCAxKVswXTtcclxuICAgICAgICAgICAgLy9yZXN1bHQuc2V0X3JvdyhpLCBBLnJvdyhyYW5kb21faW5kZXgpKVxyXG4gICAgICAgIH1cclxuICAgICAgICAvL3JldHVybiByZXN1bHQ7XHJcbiAgICAgICAgLy9yZXR1cm4gbmV3IE1hdHJpeChuLCBjb2xzLCAocm93LCBjb2wpID0+IEEuZW50cnkoc2FtcGxlW3Jvd10sIGNvbCkpXHJcbiAgICAgICAgcmV0dXJuIHNhbXBsZS5tYXAoZCA9PiBBLnJvdyhkKSk7XHJcbiAgICB9XHJcbn0iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./util/randomizer.js\n");
+
+/***/ }),
+
+/***/ "./package.json":
+/*!**********************!*\
+  !*** ./package.json ***!
+  \**********************/
+/***/ ((module) => {
+
+module.exports = JSON.parse('{"name":"@saehrimnir/druidjs","version":"0.3.6","description":"A JavaScript Library for Dimensionality Reduction.","keywords":["dimensionality reduction","matrix","linear algebra"],"homepage":"https://renecutura.eu","license":"BSD-3-Clause","author":{"name":"Rene Cutura","url":"http://renecutura.eu"},"repository":{"type":"git","url":"https://github.com/saehm/druidjs.git"},"files":["dist/**/*.js"],"scripts":{"build":"rollup -c","build:dev":"webpack --config webpack.dev.js","build:prod":"webpack --config webpack.prod.js","build:all":"npm run build:dev && npm run build:prod"},"main":"dist/druid.js","unpkg":"dist/druid.min.js","jsdelivr":"dist/druid.min.js","module":"dist/druid.esm.js","devDependencies":{"@babel/core":"^7.13.10","@babel/plugin-proposal-class-properties":"^7.13.0","@babel/plugin-proposal-optional-chaining":"^7.13.8","@babel/preset-env":"^7.13.10","@rollup/plugin-json":"^4.1.0","@rollup/plugin-node-resolve":"^8.4.0","babel-loader":"^8.2.2","better-docs":"^2.3.2","json2module":"0.0","rimraf":"^2.7.1","rollup":"^2.29.0","rollup-plugin-jsdoc":"^0.1.2","rollup-plugin-node-resolve":"3","rollup-plugin-terser":"^7.0.2","source-map-loader":"^2.0.1","tape":"^4.13.3","webpack":"^5.26.3","webpack-cli":"^4.5.0"},"engines":{"node":">=14"}}');
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module can't be inlined because the eval-source-map devtool is used.
+/******/ 	var __webpack_exports__ = __webpack_require__("./index.js");
+/******/ 	
+/******/ 	return __webpack_exports__;
+/******/ })()
+;
+});
