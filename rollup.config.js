@@ -2,16 +2,18 @@ import resolve from "@rollup/plugin-node-resolve";
 import { terser } from "rollup-plugin-terser";
 import jsdoc from 'rollup-plugin-jsdoc';
 import json from '@rollup/plugin-json';
+import { babel } from '@rollup/plugin-babel';
 import meta from "./package.json";
 
-//const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).getFullYear()} ${meta.author.name}`;
+
+const copyright = `// ${meta.homepage} v${meta.version} Copyright ${(new Date).getFullYear()} ${meta.author.name}`;
 
 export default [
   {
     input: "index.js",
     output: {
       extend: true,
-      //banner: copyright,
+      banner: copyright,
       file: "dist/druid.js",
       format: "umd",
       indent: false,
@@ -38,7 +40,7 @@ export default [
         resolve(),
         terser({
             format: {
-                //preamble: copyright
+                preamble: copyright
             }
         })
     ],
@@ -59,7 +61,7 @@ export default [
         resolve(),
         terser({
             format: {
-                //preamble: copyright
+                preamble: copyright
             }
         })
     ],
@@ -67,6 +69,28 @@ export default [
       extend: true,
       file: "dist/druid.esm.js",
       format: "es",
+      indent: false,
+      name: "druid"
+    }
+  },
+  {
+    input: "index.js",
+    plugins: [
+        json({
+            compact: true
+        }),
+        resolve(),
+        terser({
+            format: {
+                preamble: copyright
+            }
+        }),
+        babel({ babelHelpers: 'bundled', plugins: [["@babel/plugin-proposal-class-properties", { "loose": true }]] })
+    ],
+    output: {
+      extend: true,
+      file: "dist/druid.es6.js",
+      format: "umd",
       indent: false,
       name: "druid"
     }
