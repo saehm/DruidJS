@@ -79,14 +79,21 @@ export default [
         json({
             compact: true
         }),
+        babel({ 
+            babelHelpers: 'runtime',
+            plugins: [
+                ["@babel/plugin-proposal-nullish-coalescing-operator"],
+                ["@babel/plugin-transform-runtime", {loose: true}]
+            ]
+        }),
         resolve(),
         terser({
             format: {
                 preamble: copyright
             }
-        }),
-        babel({ babelHelpers: 'bundled', plugins: [["@babel/plugin-proposal-class-properties", { "loose": true }]] })
+        })
     ],
+    external: [/@babel\/runtime/],
     output: {
       extend: true,
       file: "dist/druid.es6.js",

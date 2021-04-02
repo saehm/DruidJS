@@ -4,7 +4,7 @@ import { euclidean } from "../metrics/index";
  * @class
  * @alias Hierarchical_Clustering
  */
-export class Hierarchical_Clustering {
+ export class Hierarchical_Clustering {
     /**
      * @constructor
      * @memberof module:clustering
@@ -12,14 +12,18 @@ export class Hierarchical_Clustering {
      * @todo needs restructuring. 
      * @param {Matrix} matrix 
      * @param {("single"|"complete"|"average")} [linkage = "single"] 
-     * @param {Function} [metric = euclidean] 
+     * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */
-    constructor(matrix, linkage="single", metric=euclidean) {
+    constructor(matrix, linkage="complete", metric=euclidean, distance_matrix=null) {
         this._id = 0;
         this._matrix = matrix;
         this._metric = metric;
         this._linkage = linkage;
+        this._distance_matrix = distance_matrix;
+        if (metric === "precomputed" && distance_matrix === null) {
+            throw "if metric is precomputed provide distance matrix"
+        }
         this.init();
         this.root = this.do();
         return this;
@@ -44,7 +48,7 @@ export class Hierarchical_Clustering {
             default:
                 throw "invalid type";
         }
-        this._traverse(this.root, accessor, value, clusters)
+        this._traverse(this.root, accessor, value, clusters);
         return clusters
     }
 
@@ -57,7 +61,7 @@ export class Hierarchical_Clustering {
      */
     _traverse(node, f, value, result) {
         if (f(node) <= value) {
-            result.push(node.leaves())
+            result.push(node.leaves());
         } else {
             this._traverse(node.left, f, value, result);
             this._traverse(node.right, f, value, result);
@@ -72,14 +76,28 @@ export class Hierarchical_Clustering {
         const A = this._matrix;
         const n = this._n = A.shape[0];
         const d_min = this._d_min = new Float64Array(n);
-        const distance_matrix = this._distance_matrix = new Array(n);
-        for (let i = 0; i < n; ++i) {
-            d_min[i] = 0;
-            distance_matrix[i] = new Float64Array(n);
-            for (let j = 0; j < n; ++j) {
-                distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j))
-                if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
-                    d_min[i] = j;
+        let distance_matrix;
+        if (metric !== "precomputed") {
+            distance_matrix = new Array(n);
+            for (let i = 0; i < n; ++i) {
+                d_min[i] = 0;
+                distance_matrix[i] = new Float64Array(n);
+                for (let j = 0; j < n; ++j) {
+                    distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));
+                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                        d_min[i] = j;
+                    }
+                }
+            }
+            this._distance_matrix = distance_matrix;
+        } else {
+            distance_matrix = this._distance_matrix;
+            for (let i = 0; i < n; ++i) {
+                for (let j = 0; j < n; ++j) {
+                    if (i === j) distance_matrix[i][j] = Infinity;
+                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                        d_min[i] = j;
+                    }
                 }
             }
         }
@@ -114,7 +132,12 @@ export class Hierarchical_Clustering {
             let c2 = d_min[c1];
             let c1_cluster = clusters[c1][0];
             let c2_cluster = clusters[c2][0];
-            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2]);
+            let c1_cluster_indices = c1_cluster.isLeaf ? [c1_cluster.index] : c1_cluster.index;
+            let c2_cluster_indices = c2_cluster.isLeaf ? [c2_cluster.index] : c2_cluster.index;
+            let indices = c1_cluster_indices.concat(c2_cluster_indices);
+            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2], null, indices);
+            c1_cluster.parent = new_cluster;
+            c2_cluster.parent = new_cluster;
             clusters[c1].unshift(new_cluster);
             c_size[c1] += c_size[c2];
             for (let j = 0; j < n; ++j) {
@@ -146,7 +169,7 @@ export class Hierarchical_Clustering {
                     d_min[c1] = j;
                 }
             }
-            root = new_cluster
+            root = new_cluster;
         }
         return root;
     }
@@ -160,9 +183,10 @@ class Cluster {
         this.right = right;
         this.dist = dist;
         this.index = index;
-        this.size = size != null ? size : left.size + right.size;
-        this.depth = depth != null ? depth : 1 + Math.max(left.depth, right.depth);
-        this.centroid = centroid != null ? centroid : this._calculate_centroid(left, right);
+        this.size = size ?? left.size + right.size;
+        this.depth = depth ?? 1 + Math.max(left.depth, right.depth);
+        this.centroid = centroid ?? this._calculate_centroid(left, right);
+        this.parent = null;
         return this;
     }
 

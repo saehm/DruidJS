@@ -155,7 +155,11 @@ export class Matrix{
     /**
      * Makes a {@link Matrix} object an iterable object.
      */
-    [Symbol.iterator] = this.iterate_rows;
+    *[Symbol.iterator]() {
+        for (const row of this.iterate_rows()) {
+            yield(row)
+        }
+    } 
 
     /**
      * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.

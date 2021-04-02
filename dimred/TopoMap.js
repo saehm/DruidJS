@@ -233,7 +233,7 @@ export class TopoMap extends DR {
      * @param {Array} v - point v
      * @param {Number} w - edge weight w
      */
-    __align_components = (u, v, w)  => {
+    __align_components(u, v, w) {
         const points_u = [...u.__disjoint_set.children];
         const points_v = [...v.__disjoint_set.children];
         

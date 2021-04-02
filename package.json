@@ -1,6 +1,6 @@
 {
   "name": "@saehrimnir/druidjs",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
     "dimensionality reduction",
@@ -30,6 +30,8 @@
   "module": "dist/druid.esm.js",
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.13.8",
+    "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/preset-env": "^7.13.12",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-json": "^4.1.0",

@@ -267,7 +267,7 @@ export class UMAP extends DR {
                 const k = tail[i];
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
-                const dist = euclidean_squared(current, other)//this._metric(current, other);
+                const dist = this._metric === "precomputed" ? this._X.entry(j, k) : euclidean_squared(current, other);
                 let grad_coeff = 0;
                 if (dist > 0) {
                     grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
@@ -286,7 +286,7 @@ export class UMAP extends DR {
                 for (let p = 0; p < n_neg_samples; ++p) {
                     const k = Math.floor(this._randomizer.random * tail_length);
                     const other = tail_embedding.row(tail[k]);
-                    const dist = euclidean_squared(current, other)//this._metric(current, other);
+                    const dist = this._metric === "precomputed" ? this._X.entry(j, tail[k]) : euclidean_squared(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
                         grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));

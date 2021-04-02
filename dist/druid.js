@@ -353,7 +353,11 @@ class Matrix{
     /**
      * Makes a {@link Matrix} object an iterable object.
      */
-    [Symbol.iterator] = this.iterate_rows;
+    *[Symbol.iterator]() {
+        for (const row of this.iterate_rows()) {
+            yield(row);
+        }
+    } 
 
     /**
      * Sets the entries of {@link row}th row from the Matrix to the entries from {@link values}.
@@ -2806,7 +2810,7 @@ class UMAP extends DR {
                 const k = tail[i];
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
-                const dist = euclidean_squared(current, other);//this._metric(current, other);
+                const dist = this._metric === "precomputed" ? this._X.entry(j, k) : euclidean_squared(current, other);
                 let grad_coeff = 0;
                 if (dist > 0) {
                     grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
@@ -2825,7 +2829,7 @@ class UMAP extends DR {
                 for (let p = 0; p < n_neg_samples; ++p) {
                     const k = Math.floor(this._randomizer.random * tail_length);
                     const other = tail_embedding.row(tail[k]);
-                    const dist = euclidean_squared(current, other);//this._metric(current, other);
+                    const dist = this._metric === "precomputed" ? this._X.entry(j, tail[k]) : euclidean_squared(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
                         grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));
@@ -3259,7 +3263,7 @@ class TriMap extends DR{
  * @class
  * @alias Hierarchical_Clustering
  */
-class Hierarchical_Clustering {
+ class Hierarchical_Clustering {
     /**
      * @constructor
      * @memberof module:clustering
@@ -3267,14 +3271,18 @@ class Hierarchical_Clustering {
      * @todo needs restructuring. 
      * @param {Matrix} matrix 
      * @param {("single"|"complete"|"average")} [linkage = "single"] 
-     * @param {Function} [metric = euclidean] 
+     * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */
-    constructor(matrix, linkage="single", metric=euclidean) {
+    constructor(matrix, linkage="complete", metric=euclidean, distance_matrix=null) {
         this._id = 0;
         this._matrix = matrix;
         this._metric = metric;
         this._linkage = linkage;
+        this._distance_matrix = distance_matrix;
+        if (metric === "precomputed" && distance_matrix === null) {
+            throw "if metric is precomputed provide distance matrix"
+        }
         this.init();
         this.root = this.do();
         return this;
@@ -3327,14 +3335,28 @@ class Hierarchical_Clustering {
         const A = this._matrix;
         const n = this._n = A.shape[0];
         const d_min = this._d_min = new Float64Array(n);
-        const distance_matrix = this._distance_matrix = new Array(n);
-        for (let i = 0; i < n; ++i) {
-            d_min[i] = 0;
-            distance_matrix[i] = new Float64Array(n);
-            for (let j = 0; j < n; ++j) {
-                distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));
-                if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
-                    d_min[i] = j;
+        let distance_matrix;
+        if (metric !== "precomputed") {
+            distance_matrix = new Array(n);
+            for (let i = 0; i < n; ++i) {
+                d_min[i] = 0;
+                distance_matrix[i] = new Float64Array(n);
+                for (let j = 0; j < n; ++j) {
+                    distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));
+                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                        d_min[i] = j;
+                    }
+                }
+            }
+            this._distance_matrix = distance_matrix;
+        } else {
+            distance_matrix = this._distance_matrix;
+            for (let i = 0; i < n; ++i) {
+                for (let j = 0; j < n; ++j) {
+                    if (i === j) distance_matrix[i][j] = Infinity;
+                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                        d_min[i] = j;
+                    }
                 }
             }
         }
@@ -3369,7 +3391,12 @@ class Hierarchical_Clustering {
             let c2 = d_min[c1];
             let c1_cluster = clusters[c1][0];
             let c2_cluster = clusters[c2][0];
-            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2]);
+            let c1_cluster_indices = c1_cluster.isLeaf ? [c1_cluster.index] : c1_cluster.index;
+            let c2_cluster_indices = c2_cluster.isLeaf ? [c2_cluster.index] : c2_cluster.index;
+            let indices = c1_cluster_indices.concat(c2_cluster_indices);
+            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2], null, indices);
+            c1_cluster.parent = new_cluster;
+            c2_cluster.parent = new_cluster;
             clusters[c1].unshift(new_cluster);
             c_size[c1] += c_size[c2];
             for (let j = 0; j < n; ++j) {
@@ -3415,9 +3442,10 @@ class Cluster {
         this.right = right;
         this.dist = dist;
         this.index = index;
-        this.size = size != null ? size : left.size + right.size;
-        this.depth = depth != null ? depth : 1 + Math.max(left.depth, right.depth);
-        this.centroid = centroid != null ? centroid : this._calculate_centroid(left, right);
+        this.size = size ?? left.size + right.size;
+        this.depth = depth ?? 1 + Math.max(left.depth, right.depth);
+        this.centroid = centroid ?? this._calculate_centroid(left, right);
+        this.parent = null;
         return this;
     }
 
@@ -4434,7 +4462,7 @@ class TopoMap extends DR {
      * @param {Array} v - point v
      * @param {Number} w - edge weight w
      */
-    __align_components = (u, v, w)  => {
+    __align_components(u, v, w) {
         const points_u = [...u.__disjoint_set.children];
         const points_v = [...v.__disjoint_set.children];
         
