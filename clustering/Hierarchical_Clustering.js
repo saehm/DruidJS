@@ -1,5 +1,5 @@
 import { euclidean } from "../metrics/index";
-
+import { Matrix } from "../matrix/index";
 /**
  * @class
  * @alias Hierarchical_Clustering
@@ -10,19 +10,18 @@ import { euclidean } from "../metrics/index";
      * @memberof module:clustering
      * @alias Hierarchical_Clustering
      * @todo needs restructuring. 
-     * @param {Matrix} matrix 
+     * @param {Matrix} - Datapoints or Distancematrix if metric is 'precomputed'
      * @param {("single"|"complete"|"average")} [linkage = "single"] 
      * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */
-    constructor(matrix, linkage="complete", metric=euclidean, distance_matrix=null) {
+    constructor(matrix, linkage="complete", metric=euclidean) {
         this._id = 0;
-        this._matrix = matrix;
+        this._matrix = (matrix instanceof Matrix) ? matrix : Matrix.from(matrix);
         this._metric = metric;
         this._linkage = linkage;
-        this._distance_matrix = distance_matrix;
-        if (metric === "precomputed" && distance_matrix === null) {
-            throw "if metric is precomputed provide distance matrix"
+        if (metric === "precomputed" && matrix.shape[0] !== matrix.shape[1]) {
+            throw "If metric is 'precomputed', then matrix has to be square!";
         }
         this.init();
         this.root = this.do();
@@ -33,7 +32,7 @@ import { euclidean } from "../metrics/index";
      * 
      * @param {Number} value - value where to cut the tree.
      * @param {("distance"|"depth")} [type = "distance"] - type of value.
-     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}.
      */
     get_clusters(value, type="distance") {
         let clusters = [];
@@ -78,29 +77,30 @@ import { euclidean } from "../metrics/index";
         const d_min = this._d_min = new Float64Array(n);
         let distance_matrix;
         if (metric !== "precomputed") {
-            distance_matrix = new Array(n);
+            distance_matrix = new Matrix(n, n, 0);//new Array(n);
             for (let i = 0; i < n; ++i) {
                 d_min[i] = 0;
-                distance_matrix[i] = new Float64Array(n);
+                //distance_matrix[i] = new Float64Array(n);
                 for (let j = 0; j < n; ++j) {
-                    distance_matrix[i][j] = i === j ? Infinity : metric(A.row(i), A.row(j));
-                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                    distance_matrix.set_entry(i, j, i === j ? Infinity : metric(A.row(i), A.row(j)));
+                    if (distance_matrix.entry(i, d_min[i]) > distance_matrix.entry(i, j)) {
                         d_min[i] = j;
                     }
                 }
             }
-            this._distance_matrix = distance_matrix;
         } else {
-            distance_matrix = this._distance_matrix;
+            distance_matrix = this._matrix.clone();
             for (let i = 0; i < n; ++i) {
                 for (let j = 0; j < n; ++j) {
-                    if (i === j) distance_matrix[i][j] = Infinity;
-                    if (distance_matrix[i][d_min[i]] > distance_matrix[i][j]) {
+                    if (i === j) {
+                        distance_matrix.set_entry(i, j, Infinity);
+                    } else if (distance_matrix.entry(i, d_min[i]) > distance_matrix.entry(i, j)) {
                         d_min[i] = j;
                     }
                 }
             }
         }
+        this._distance_matrix = distance_matrix;
         const clusters = this._clusters = new Array(n);
         const c_size = this._c_size = new Uint16Array(n);
         for (let i = 0; i < n; ++i) {
@@ -125,7 +125,7 @@ import { euclidean } from "../metrics/index";
         for (let p = 0, p_max = n - 1; p < p_max; ++p) {
             let c1 = 0;
             for (let i = 0; i < n; ++i) {
-                if (D[i][d_min[i]] < D[c1][d_min[c1]]) {
+                if (D.entry(i, d_min[i]) < D.entry(c1, d_min[c1])) {
                     c1 = i;
                 }
             }
@@ -135,7 +135,7 @@ import { euclidean } from "../metrics/index";
             let c1_cluster_indices = c1_cluster.isLeaf ? [c1_cluster.index] : c1_cluster.index;
             let c2_cluster_indices = c2_cluster.isLeaf ? [c2_cluster.index] : c2_cluster.index;
             let indices = c1_cluster_indices.concat(c2_cluster_indices);
-            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D[c1][c2], null, indices);
+            let new_cluster = new Cluster(this._id++, c1_cluster, c2_cluster, D.entry(c1, c2), null, indices);
             c1_cluster.parent = new_cluster;
             c2_cluster.parent = new_cluster;
             clusters[c1].unshift(new_cluster);
@@ -143,29 +143,34 @@ import { euclidean } from "../metrics/index";
             for (let j = 0; j < n; ++j) {
                 switch(linkage) {
                     case "single":
-                        if (D[c1][j] > D[c2][j]) {
-                            D[j][c1] = D[c1][j] = D[c2][j];
+                        if (D.entry(c1, j) > D.entry(c2, j)) {
+                            D.set_entry(j, c1, D.entry(c2, j));
+                            D.set_entry(c1, j, D.entry(c2, j));
                         }
                         break;
                     case "complete":
-                        if (D[c1][j] < D[c2][j]) {
-                            D[j][c1] = D[c1][j] = D[c2][j];
+                        if (D.entry(c1, j) < D.entry(c2, j)) {
+                            D.set_entry(j, c1, D.entry(c2, j));
+                            D.set_entry(c1, j, D.entry(c2, j));
                         }
                         break;
                     case "average":
-                        D[j][c1] = D[c1][j] = (c_size[c1] * D[c1][j] + c_size[c2] * D[c2][j]) / (c_size[c1] + c_size[j]);
+                        const value = (c_size[c1] * D.entry(c1, j) + c_size[c2] * D.entry(c2, j)) / (c_size[c1] + c_size[j]);
+                        D.set_entry(j, c1, value);
+                        D.set_entry(c1, j, value);
                         break;
                 }
             }
-            D[c1][c1] = Infinity;
+            D.set_entry(c1, c1, Infinity);
             for (let i = 0; i < n; ++i) {
-                D[i][c2] = D[c2][i] = Infinity;
+                D.set_entry(i, c2, Infinity);
+                D.set_entry(c2, i, Infinity);
             }
             for (let j = 0; j < n; ++j) {
                 if (d_min[j] === c2) {
                     d_min[j] = c1;
                 }
-                if (D[c1][j] < D[c1][d_min[c1]]) {
+                if (D.entry(c1, j) < D.entry(c1, d_min[c1])) {
                     d_min[c1] = j;
                 }
             }
@@ -173,7 +178,6 @@ import { euclidean } from "../metrics/index";
         }
         return root;
     }
-    
 }
 
 class Cluster {
@@ -209,10 +213,19 @@ class Cluster {
     }
 
     leaves() {
-        if (this.isLeaf) return [this.index];
+        if (this.isLeaf) return [this];
         const left = this.left;
         const right = this.right;
-        return (left.isLeaf ? [left.index] : left.leaves())
-            .concat(right.isLeaf ? [right.index] : right.leaves())
+        return (left.isLeaf ? [left] : left.leaves())
+            .concat(right.isLeaf ? [right] : right.leaves())
+    }
+
+    descendants() {
+        if (this.isLeaf) return [this];
+        const left_descendants = this.left.descendants();
+        const right_descendants = this.right.descendants();
+        return left_descendants
+            .concat(right_descendants)
+            .concat([this]);
     }
 }
