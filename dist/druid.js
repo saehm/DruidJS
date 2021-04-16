@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.11 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.3.12 Copyright 2021 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -171,9 +171,9 @@ function canberra(a, b) {
  * @param {*} distance_matrix 
  * @param {*} metric 
  */
-function k_nearest_neighbors(A, k, distance_matrix = null, metric = euclidean) {
+function k_nearest_neighbors(A, k, distance_matrix$1 = null, metric = euclidean) {
     const rows = A.shape[0];
-    let D = distance_matrix ?? dmatrix(A, metric);
+    let D = distance_matrix$1 ?? distance_matrix(A, metric);
     /* for (let i = 0; i < n; ++i) {
         D[i] = Array.from(D[i]).map((_,j) => {
                 return {
@@ -895,7 +895,7 @@ class Matrix{
         const data = this._data;
         const rows = this._rows;
         const cols = this._cols;
-        let result = [];
+        let result = Float64Array.from({length: rows});
         for (let row = 0; row < rows; ++row) {
             result[row] = 0;
             for (let col = 0; col < cols; ++col) {
@@ -913,7 +913,7 @@ class Matrix{
         const data = this._data;
         const rows = this._rows;
         const cols = this._cols;
-        let result = [];
+        let result = Float64Array.from({length: cols});
         for (let col = 0; col < cols; ++col) {
             result[col] = 0;
             for (let row = 0; row < rows; ++row) {
@@ -1036,7 +1036,7 @@ class Matrix{
     }
 }
 
-function dmatrix(A, metric = euclidean) {
+function distance_matrix(A, metric = euclidean) {
     let n = A.shape[0];
     /* let D = new Array(n);
     for (let i = 0; i < n; ++i) {
@@ -1448,6 +1448,72 @@ class Heap {
 
 /**
  * @class
+ * @alias DisjointSet
+ * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}
+ */
+class DisjointSet {
+    /**
+     * @constructor
+     * @alias DisjointSet
+     * @memberof module:datastructure
+     * @param {Array=} elements 
+     * @returns {DisjointSet}
+     */
+    constructor(elements = null) {
+        this._list = new Set();
+        if (elements) {
+            for (const e of elements) {
+                this.make_set(e);
+            }
+        }
+        return this;
+    }
+
+    make_set(x) {
+        const list = this._list;
+        if (!list.has(x)) {
+            list.add(x);
+            x.__disjoint_set = {};
+            x.__disjoint_set.parent = x;
+            x.__disjoint_set.children = new Set([x]);
+            x.__disjoint_set.size = 1;
+        }
+        return this;
+    }
+
+    find(x) {
+        const list = this._list;
+        if (list.has(x)) {
+            if (x.__disjoint_set.parent !== x) {
+                x.__disjoint_set.children.add(...x);
+                x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);
+                return x.__disjoint_set.parent;
+            } else {
+                return x;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    union(x, y) {
+        let node_x = this.find(x);
+        let node_y = this.find(y);
+
+        if (node_x === node_y) return this;
+        if (node_x.__disjoint_set.size < node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];
+
+        node_y.__disjoint_set.parent = node_x;
+        // keep track of children?
+        node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);
+        node_x.__disjoint_set.size += node_y.__disjoint_set.size;
+
+        return this;
+    }
+}
+
+/**
+ * @class
  * @alias BallTree
  */
 class BallTree {
@@ -1832,43 +1898,29 @@ class MDS extends DR{
      * @memberof module:dimensionality_reduction
      * @alias MDS
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
      * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Function|"precomputed"} [metric = euclidean] - the metric which defines the distance between two points.  
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      */
-    
     constructor(X, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         return this;
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     * Transforms the inputdata {@link X} to dimensionality {@link d}.
      */
     transform() {
         const X = this.X;
         const rows = X.shape[0];
         const metric = this._metric;
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
+        const A = metric === "precomputed" ? X : distance_matrix(X, metric); 
+        const ai_ = A.meanCols;
+        const a_j = A.meanRows;
+        const a__ = A.mean;
 
-        const A = new Matrix();
-        A.shape = [rows, rows, (i,j) => {
-            if (i === j) return 0;
-            const val = (i < j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        }];
         this._d_X = A;
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
         const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
-        //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
                 
         const { eigenvectors: V } = simultaneous_poweriteration$1(B, this._d);
         this.Y = Matrix.from(V).transpose();
@@ -3269,8 +3321,8 @@ class TriMap extends DR{
      * @memberof module:clustering
      * @alias Hierarchical_Clustering
      * @todo needs restructuring. 
-     * @param {Matrix} matrix 
-     * @param {("single"|"complete"|"average")} [linkage = "single"] 
+     * @param {Matrix} - Data or distance matrix if metric is 'precomputed'
+     * @param {("single"|"complete"|"average")} [linkage = "complete"] 
      * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */
@@ -3291,7 +3343,7 @@ class TriMap extends DR{
      * 
      * @param {Number} value - value where to cut the tree.
      * @param {("distance"|"depth")} [type = "distance"] - type of value.
-     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}.
      */
     get_clusters(value, type="distance") {
         let clusters = [];
@@ -4490,7 +4542,7 @@ class TopoMap extends DR {
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality 2.
+     * Transforms the inputdata {@link X} to dimensionality 2.
      */
     transform() {
         if (!this._is_initialized) this.init();
@@ -4535,63 +4587,6 @@ class TopoMap extends DR {
             yield this.projection;
         }
         return this.projection;
-    }
-} 
-
-/**
- * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}
- */
-class DisjointSet {
-    constructor(elements = null) {
-        this._list = new Set();
-        if (elements) {
-            for (const e of elements) {
-                this.make_set(e);
-            }
-        }
-        return this;
-    }
-
-    make_set(x) {
-        const list = this._list;
-        if (!list.has(x)) {
-            list.add(x);
-            x.__disjoint_set = {};
-            x.__disjoint_set.parent = x;
-            x.__disjoint_set.children = new Set([x]);
-            x.__disjoint_set.size = 1;
-        }
-        return this;
-    }
-
-    find(x) {
-        const list = this._list;
-        if (list.has(x)) {
-            if (x.__disjoint_set.parent !== x) {
-                x.__disjoint_set.children.add(...x);
-                x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);
-                return x.__disjoint_set.parent;
-            } else {
-                return x;
-            }
-        } else {
-            return null;
-        }
-    }
-
-    union(x, y) {
-        let node_x = this.find(x);
-        let node_y = this.find(y);
-
-        if (node_x === node_y) return this;
-        if (node_x.__disjoint_set.size < node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];
-
-        node_y.__disjoint_set.parent = node_x;
-        // keep track of children?
-        node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);
-        node_x.__disjoint_set.size += node_y.__disjoint_set.size;
-
-        return this;
     }
 }
 
@@ -4753,9 +4748,10 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.3.11";
+var version="0.3.12";
 
 exports.BallTree = BallTree;
+exports.DisjointSet = DisjointSet;
 exports.FASTMAP = FASTMAP;
 exports.Heap = Heap;
 exports.Hierarchical_Clustering = Hierarchical_Clustering;
@@ -4779,7 +4775,7 @@ exports.UMAP = UMAP;
 exports.canberra = canberra;
 exports.chebyshev = chebyshev;
 exports.cosine = cosine;
-exports.distance_matrix = dmatrix;
+exports.distance_matrix = distance_matrix;
 exports.euclidean = euclidean;
 exports.euclidean_squared = euclidean_squared;
 exports.k_nearest_neighbors = k_nearest_neighbors;

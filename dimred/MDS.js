@@ -1,5 +1,5 @@
 import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
+import { distance_matrix, Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
 import { DR } from "./DR.js";
 
@@ -14,43 +14,29 @@ export class MDS extends DR{
      * @memberof module:dimensionality_reduction
      * @alias MDS
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} neighbors - the label / class of each data point.
      * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Function|"precomputed"} [metric = euclidean] - the metric which defines the distance between two points.  
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      */
-    
     constructor(X, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         return this;
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     * Transforms the inputdata {@link X} to dimensionality {@link d}.
      */
     transform() {
         const X = this.X;
         const rows = X.shape[0];
         const metric = this._metric;
-        let ai_ = new Float64Array(rows);
-        let a_j = new Float64Array(rows);
-        let a__ = 0;
+        const A = metric === "precomputed" ? X : distance_matrix(X, metric); 
+        const ai_ = A.meanCols;
+        const a_j = A.meanRows;
+        const a__ = A.mean;
 
-        const A = new Matrix();
-        A.shape = [rows, rows, (i,j) => {
-            if (i === j) return 0;
-            const val = (i < j) ? metric(X.row(i), X.row(j)) : A.entry(j,i);
-            ai_[i] += val;
-            a_j[j] += val;
-            a__ += val;
-            return val;
-        }];
         this._d_X = A;
-        ai_ = ai_.map(v => v / rows);
-        a_j = a_j.map(v => v / rows);
-        a__ /= (rows ** 2);
         const B = new Matrix(rows, rows, (i, j) => (A.entry(i, j) - ai_[i] - a_j[j] + a__));
-        //B.shape = [rows, rows, (i,j) => (A.entry(i,j) - (A.row(i).reduce(sum_reduce) / rows) - (A.col(j).reduce(sum_reduce) / rows) + a__)]
                 
         const { eigenvectors: V } = simultaneous_poweriteration(B, this._d);
         this.Y = Matrix.from(V).transpose()

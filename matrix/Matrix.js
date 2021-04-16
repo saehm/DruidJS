@@ -697,7 +697,7 @@ export class Matrix{
         const data = this._data;
         const rows = this._rows;
         const cols = this._cols;
-        let result = [];
+        let result = Float64Array.from({length: rows});
         for (let row = 0; row < rows; ++row) {
             result[row] = 0;
             for (let col = 0; col < cols; ++col) {
@@ -715,7 +715,7 @@ export class Matrix{
         const data = this._data;
         const rows = this._rows;
         const cols = this._cols;
-        let result = [];
+        let result = Float64Array.from({length: cols});
         for (let col = 0; col < cols; ++col) {
             result[col] = 0;
             for (let row = 0; row < rows; ++row) {
