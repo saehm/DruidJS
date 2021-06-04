@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> metrics/manhattan.js</title>
+  <title> datastructure/DisjointSet.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>metrics/manhattan.js</h1>
+                    <h1>datastructure/DisjointSet.js</h1>
                 </header>
                 
 
@@ -86,20 +86,69 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * Computes the manhattan distance (l_1) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias manhattan
- * @param {Array&lt;Number>} a 
- * @param {Array&lt;Number>} b 
- * @returns {Number} the manhattan distance between {@link a} and {@link b}.  
- */export default function(a, b) {
-    if (a.length != b.length) return undefined
-    let n = a.length
-    let sum = 0;
-    for (let i = 0; i &lt; n; ++i) {
-        sum += Math.abs(a[i] - b[i])
+ * @class
+ * @alias DisjointSet
+ * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}
+ */
+export class DisjointSet {
+    /**
+     * @constructor
+     * @alias DisjointSet
+     * @memberof module:datastructure
+     * @param {Array=} elements 
+     * @returns {DisjointSet}
+     */
+    constructor(elements = null) {
+        this._list = new Set();
+        if (elements) {
+            for (const e of elements) {
+                this.make_set(e);
+            }
+        }
+        return this;
     }
-    return sum
+
+    make_set(x) {
+        const list = this._list;
+        if (!list.has(x)) {
+            list.add(x);
+            x.__disjoint_set = {};
+            x.__disjoint_set.parent = x;
+            x.__disjoint_set.children = new Set([x]);
+            x.__disjoint_set.size = 1;
+        }
+        return this;
+    }
+
+    find(x) {
+        const list = this._list;
+        if (list.has(x)) {
+            if (x.__disjoint_set.parent !== x) {
+                x.__disjoint_set.children.add(...x);
+                x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);
+                return x.__disjoint_set.parent;
+            } else {
+                return x;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    union(x, y) {
+        let node_x = this.find(x);
+        let node_y = this.find(y);
+
+        if (node_x === node_y) return this;
+        if (node_x.__disjoint_set.size &lt; node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];
+
+        node_y.__disjoint_set.parent = node_x;
+        // keep track of children?
+        node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);
+        node_x.__disjoint_set.size += node_y.__disjoint_set.size;
+
+        return this;
+    }
 }</code></pre>
         </article>
     </section>

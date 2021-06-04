@@ -61,8 +61,12 @@ export default [
         resolve(),
         terser({
             format: {
+                comments: "all",
                 preamble: copyright
-            }
+            },
+            keep_classnames: true,
+            keep_fnames: true,
+            compress: true,
         })
     ],
     output: {
@@ -90,7 +94,10 @@ export default [
         terser({
             format: {
                 preamble: copyright
-            }
+            },
+            keep_classnames: true,
+            keep_fnames: true,
+            compress: true,
         })
     ],
     external: [/@babel\/runtime/],

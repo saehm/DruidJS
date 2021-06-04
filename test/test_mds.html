@@ -37,7 +37,10 @@
 
     let k = 32;
     let type = `MDS: `;
-    DR = (X) => new druid.MDS(X);
+    DR = (X) => {
+        let D = druid.distance_matrix(X, druid.euclidean)
+        return new druid.MDS(D, 2, "precomputed")
+    };
 
     let DEBUG = false;
 

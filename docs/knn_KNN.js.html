@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> metrics/manhattan.js</title>
+  <title> knn/KNN.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>metrics/manhattan.js</h1>
+                    <h1>knn/KNN.js</h1>
                 </header>
                 
 
@@ -85,22 +85,73 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Computes the manhattan distance (l_1) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias manhattan
- * @param {Array&lt;Number>} a 
- * @param {Array&lt;Number>} b 
- * @returns {Number} the manhattan distance between {@link a} and {@link b}.  
- */export default function(a, b) {
-    if (a.length != b.length) return undefined
-    let n = a.length
-    let sum = 0;
-    for (let i = 0; i &lt; n; ++i) {
-        sum += Math.abs(a[i] - b[i])
+            <pre class="prettyprint source linenums"><code>import { euclidean } from "../metrics/index";
+import { Heap } from "../datastructure/index";
+import { distance_matrix, Matrix } from "../matrix/index";
+
+/**
+ * @class
+ * @alias KNN
+ */
+export class KNN {
+    /**
+     * Generates a KNN list with given {@link elements}.
+     * @constructor
+     * @memberof module:knn
+     * @alias KNN
+     * @param {Array=} elements - Elements which should be added to the KNN list
+     * @param {Function|"precomputed"} [metric = euclidean] metric is either precomputed or a function to use: (a, b) => distance
+     * @returns {KNN}
+     */
+    constructor(elements=null, metric=euclidean) {
+        this._metric = metric;
+        this._elements = elements instanceof Matrix ? elements : Matrix.from(elements);
+        const N = this._elements.shape[0];
+        if (metric === "precomputed") {
+            this._D = elements.clone();
+        } else {
+            this._D = distance_matrix(element, metric);
+        }
+        this.KNN = [];
+        for (let row = 0; row &lt; N; ++row) {
+            const distances = this._D.row(row);
+            const H = new Heap(null, d => d.value, "min");
+            for (let j = 0; j &lt; N; ++j) {
+                H.push({
+                    value: distances[j],
+                    index: j,
+                });
+            }
+            this.KNN.push(H);
+        }
     }
-    return sum
-}</code></pre>
+
+    /**
+     * 
+     * @param {Array&lt;*>} elements - new elements.
+     * @returns {KNN}
+     */
+    add(elements) {
+        elements = elements.map((element, index) => {
+            return {index: index, element: element}
+        })
+        this._root = this._construct(elements)
+        return this;
+    }
+
+    /**
+     * 
+     * @param {*} t - query element.
+     * @param {Number} [k = 5] - number of nearest neighbors to return.
+     * @returns {Heap} - Heap consists of the {@link k} nearest neighbors.
+     */
+    search(t, k = 5) {
+        return this._search(t, k, new Heap(null, d => this._metric(d.element, t), "max"), this._root);
+    }
+
+    
+}
+</code></pre>
         </article>
     </section>
 

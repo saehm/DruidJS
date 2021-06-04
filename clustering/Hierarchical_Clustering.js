@@ -10,8 +10,8 @@ import { Matrix } from "../matrix/index";
      * @memberof module:clustering
      * @alias Hierarchical_Clustering
      * @todo needs restructuring. 
-     * @param {Matrix} - Datapoints or Distancematrix if metric is 'precomputed'
-     * @param {("single"|"complete"|"average")} [linkage = "single"] 
+     * @param {Matrix} - Data or distance matrix if metric is 'precomputed'
+     * @param {("single"|"complete"|"average")} [linkage = "complete"] 
      * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */

@@ -1,6 +1,7 @@
 import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
 import { DR } from "./DR.js";
+import { DisjointSet } from "../datastructure/index";
 
 export class TopoMap extends DR {
     /**
@@ -248,7 +249,7 @@ export class TopoMap extends DR {
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality 2.
+     * Transforms the inputdata {@link X} to dimensionality 2.
      */
     transform() {
         if (!this._is_initialized) this.init();
@@ -295,60 +296,3 @@ export class TopoMap extends DR {
         return this.projection;
     }
 } 
-
-/**
- * @see {@link https://en.wikipedia.org/wiki/Disjoint-set_data_structure}
- */
-class DisjointSet {
-    constructor(elements = null) {
-        this._list = new Set();
-        if (elements) {
-            for (const e of elements) {
-                this.make_set(e);
-            }
-        }
-        return this;
-    }
-
-    make_set(x) {
-        const list = this._list;
-        if (!list.has(x)) {
-            list.add(x);
-            x.__disjoint_set = {};
-            x.__disjoint_set.parent = x;
-            x.__disjoint_set.children = new Set([x]);
-            x.__disjoint_set.size = 1;
-        }
-        return this;
-    }
-
-    find(x) {
-        const list = this._list;
-        if (list.has(x)) {
-            if (x.__disjoint_set.parent !== x) {
-                x.__disjoint_set.children.add(...x);
-                x.__disjoint_set.parent = this.find(x.__disjoint_set.parent);
-                return x.__disjoint_set.parent;
-            } else {
-                return x;
-            }
-        } else {
-            return null;
-        }
-    }
-
-    union(x, y) {
-        let node_x = this.find(x);
-        let node_y = this.find(y);
-
-        if (node_x === node_y) return this;
-        if (node_x.__disjoint_set.size < node_y.__disjoint_set.size) [node_x, node_y] = [node_y, node_x];
-
-        node_y.__disjoint_set.parent = node_x;
-        // keep track of children?
-        node_y.__disjoint_set.children.forEach(node_x.__disjoint_set.children.add, node_x.__disjoint_set.children);
-        node_x.__disjoint_set.size += node_y.__disjoint_set.size;
-
-        return this;
-    }
-}

@@ -66,7 +66,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="KNN.html">KNN</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
                 
             </nav>
         </div>
@@ -86,7 +86,7 @@
 <header>
     
         <h2><span class="attribs"><span class="type-signature"></span></span>
-            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>MDS<span class="signature">(X, neighbors, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h2>
+            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>MDS<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -110,7 +110,7 @@
         
         <span class="code-name">
             
-                new MDS<span class="signature">(X, neighbors, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+                new MDS<span class="signature">(X, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
             
         </span>
     </h4>
@@ -194,43 +194,6 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>neighbors</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">Number</span>
-
-
-  
-  </td>
-
-  
-      <td class="attributes">
-      
-
-      
-
-      
-      </td>
-  
-
-  
-      <td class="default">
-      
-      </td>
-  
-
-  <td class="description last"><p>the label / class of each data point.</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
       <td class="name"><code>d</code></td>
   
 
@@ -279,6 +242,9 @@
   
       
 <span class="param-type">function</span>
+|
+
+<span class="param-type">"precomputed"</span>
 
 
   
@@ -393,7 +359,7 @@
         <p class="tag-source">
             <a href="dimred_MDS.js.html" class="button">View Source</a>
             <span>
-                <a href="dimred_MDS.js.html">dimred/MDS.js</a>, <a href="dimred_MDS.js.html#line23">line 23</a>
+                <a href="dimred_MDS.js.html">dimred/MDS.js</a>, <a href="dimred_MDS.js.html#line21">line 21</a>
             </span>
         </p>
     
@@ -464,7 +430,7 @@
     
     
     <div class="description">
-        <p>Transforms the inputdata <code>X</code> to dimenionality <code>d</code>.</p>
+        <p>Transforms the inputdata <code>X</code> to dimensionality <code>d</code>.</p>
     </div>
     
 
@@ -515,7 +481,7 @@
         <p class="tag-source">
             <a href="dimred_MDS.js.html" class="button">View Source</a>
             <span>
-                <a href="dimred_MDS.js.html">dimred/MDS.js</a>, <a href="dimred_MDS.js.html#line31">line 31</a>
+                <a href="dimred_MDS.js.html">dimred/MDS.js</a>, <a href="dimred_MDS.js.html#line29">line 29</a>
             </span>
         </p>
     
