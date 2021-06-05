@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.13 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.3.14 Copyright 2021 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -4708,7 +4708,7 @@ class SAMMON extends DR {
                 }
             }
             for (let k = 0; k < d; ++k) {
-                const val = Y.entry(i, k) + MAGIC * e1[k] / Math.abs(e2[k]);
+                const val = Y.entry(i, k) + (MAGIC * e1[k] / Math.abs(e2[k]) || 0);
                 G.set_entry(i, k, val);
                 sum[k] += val;
             }
@@ -4726,7 +4726,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.3.13";
+var version="0.3.14";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;

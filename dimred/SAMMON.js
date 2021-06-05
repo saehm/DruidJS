@@ -121,7 +121,7 @@ export class SAMMON extends DR {
                 }
             }
             for (let k = 0; k < d; ++k) {
-                const val = Y.entry(i, k) + MAGIC * e1[k] / Math.abs(e2[k]);
+                const val = Y.entry(i, k) + (MAGIC * e1[k] / Math.abs(e2[k]) || 0);
                 G.set_entry(i, k, val);
                 sum[k] += val;
             }
