@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> metrics/index.js</title>
+  <title> metrics/yule.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>metrics/index.js</h1>
+                    <h1>metrics/yule.js</h1>
                 </header>
                 
 
@@ -86,18 +86,32 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * @module metrics
+ * Computes the yule distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias yule
+ * @param {Array&lt;Number>} a 
+ * @param {Array&lt;Number>} b 
+ * @returns {Number} the yule distance between {@link a} and {@link b}.  
  */
-export { default as euclidean } from "./euclidean";
-export { default as euclidean_squared } from "./euclidean_squared";
-export { default as cosine } from './cosine';
-export { default as manhattan } from './manhattan';
-export { default as chebyshev } from './chebyshev';
-export { default as canberra } from "./canberra";
-export { default as jaccard } from './jaccard';
-export { default as hamming } from "./hamming";
-export { default as sokal_michener } from './sokal_michener';
-export { default as yule } from "./yule";</code></pre>
+ export default function(a, b) {
+    if (a.length != b.length) return undefined;
+    const n = a.length;
+    let num_true_true = 0;
+    let num_true_false = 0;
+    let num_false_true = 0;
+    for (let i = 0; i &lt; n; ++i) {
+        const x = a[i] != 0;
+        const y = b[i] != 0;
+        num_true_true += x &amp;&amp; y;
+        num_true_false += x &amp;&amp; !y;
+        num_false_true += !x &amp;&amp; x;
+    }
+    const num_false_false = n - num_true_true - num_true_false - num_false_true;
+    return (num_true_false == 0 || num_false_true == 0) 
+        ? 0 
+        : ((2 * num_true_false * num_false_true) 
+            / (num_true_true * num_false_false + num_true_false * num_false_true));
+}</code></pre>
         </article>
     </section>
 

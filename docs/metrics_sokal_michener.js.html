@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> metrics/index.js</title>
+  <title> metrics/sokal_michener.js</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -76,7 +76,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>metrics/index.js</h1>
+                    <h1>metrics/sokal_michener.js</h1>
                 </header>
                 
 
@@ -86,18 +86,24 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
- * @module metrics
+ * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias sokal_michener
+ * @param {Array&lt;Number>} a 
+ * @param {Array&lt;Number>} b 
+ * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
  */
-export { default as euclidean } from "./euclidean";
-export { default as euclidean_squared } from "./euclidean_squared";
-export { default as cosine } from './cosine';
-export { default as manhattan } from './manhattan';
-export { default as chebyshev } from './chebyshev';
-export { default as canberra } from "./canberra";
-export { default as jaccard } from './jaccard';
-export { default as hamming } from "./hamming";
-export { default as sokal_michener } from './sokal_michener';
-export { default as yule } from "./yule";</code></pre>
+ export default function(a, b) {
+    if (a.length != b.length) return undefined
+    const n = a.length;
+    let num_not_equal = 0;
+    for (let i = 0; i &lt; n; ++i) {
+        const x = a[i] != 0;
+        const y = b[i] != 0;
+        num_not_equal += x != y;
+    }
+    return (2 * num_not_equal) / (n + num_not_equal);
+}</code></pre>
         </article>
     </section>
 

@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.14 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.3.15 Copyright 2021 Rene Cutura
 /**
  * Computes the euclidean distance (l_2) between {@link a} and {@link b}.
  * @memberof module:metrics
@@ -67,6 +67,38 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * @returns {Number} The canberra distance between {@link a} and {@link b}.
  * @see {@link https://en.wikipedia.org/wiki/Canberra_distance}
  */function canberra(t,e){if(t.length!==e.length)return;let r=t.length,s=0;for(let i=0;i<r;++i)s+=Math.abs(t[i]-e[i])/(Math.abs(t[i])+Math.abs(e[i]));return s}
+/**
+ * Computes the jaccard distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias jaccard
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the jaccard distance between {@link a} and {@link b}.  
+ */function jaccard(t,e){if(t.length!=e.length)return;const r=t.length;let s=0,i=0;for(let n=0;n<r;++n){const r=0!=t[n],o=0!=e[n];s+=r||o,i+=r&&o}return(s-i)/s}
+/**
+ * Computes the hamming distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias hamming
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the hamming distance between {@link a} and {@link b}.  
+ */function hamming(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i){s+=t[i]!=e[i]}return s/r}
+/**
+ * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias sokal_michener
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
+ */function sokal_michener(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i){s+=0!=t[i]!=(0!=e[i])}return 2*s/(r+s)}
+/**
+ * Computes the yule distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias yule
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the yule distance between {@link a} and {@link b}.  
+ */function yule(t,e){if(t.length!=e.length)return;const r=t.length;let s=0,i=0,n=0;for(let o=0;o<r;++o){const r=0!=t[o],a=0!=e[o];s+=r&&a,i+=r&&!a,n+=!r&&r}return 0==i||0==n?0:2*i*n/(s*(r-s-i-n)+i*n)}
 /**
  * 
  * @param {*} A 
@@ -1277,4 +1309,4 @@ constructor(t,e=.1,r=2,s=euclidean,i=1212){return super(t,r,s,i),super.parameter
      */__distance_matrix(t){const e=this._metric,r=t.shape[0],s=new Matrix(r,r);for(let i=0;i<r;++i){const n=t.row(i);for(let o=i;o<r;++o){let r=i===o?0:e(n,t.row(o));s.set_entry(i,o,r),s.set_entry(o,i,r)}}return s}
 /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     */transform(t=100){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.3.14";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,t as version};
+     */transform(t=100){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.3.15";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,sokal_michener,t as version,yule};

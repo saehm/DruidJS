@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.14 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.3.15 Copyright 2021 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -162,6 +162,96 @@ function canberra(a, b) {
         sum += (Math.abs(a[i] - b[i]) / (Math.abs(a[i]) + Math.abs(b[i])));
     }
     return sum;
+}
+
+/**
+ * Computes the jaccard distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias jaccard
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the jaccard distance between {@link a} and {@link b}.  
+ */
+function jaccard(a, b) {
+    if (a.length != b.length) return undefined
+    const n = a.length;
+    let num_non_zero = 0;
+    let num_equal = 0;
+    for (let i = 0; i < n; ++i) {
+        const x = a[i] != 0;
+        const y = b[i] != 0;
+        num_non_zero += x || y;
+        num_equal += x && y;
+    }
+    return (num_non_zero - num_equal) / num_non_zero;
+}
+
+/**
+ * Computes the hamming distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias hamming
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the hamming distance between {@link a} and {@link b}.  
+ */
+ function hamming(a, b) {
+    if (a.length != b.length) return undefined
+    const n = a.length;
+    let disagree = 0;
+    for (let i = 0; i < n; ++i) {
+        const x = a[i];
+        const y = b[i];
+        disagree += x != y;
+    }
+    return disagree / n;
+}
+
+/**
+ * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias sokal_michener
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
+ */
+ function sokal_michener(a, b) {
+    if (a.length != b.length) return undefined
+    const n = a.length;
+    let num_not_equal = 0;
+    for (let i = 0; i < n; ++i) {
+        const x = a[i] != 0;
+        const y = b[i] != 0;
+        num_not_equal += x != y;
+    }
+    return (2 * num_not_equal) / (n + num_not_equal);
+}
+
+/**
+ * Computes the yule distance between {@link a} and {@link b}.
+ * @memberof module:metrics
+ * @alias yule
+ * @param {Array<Number>} a 
+ * @param {Array<Number>} b 
+ * @returns {Number} the yule distance between {@link a} and {@link b}.  
+ */
+ function yule(a, b) {
+    if (a.length != b.length) return undefined;
+    const n = a.length;
+    let num_true_true = 0;
+    let num_true_false = 0;
+    let num_false_true = 0;
+    for (let i = 0; i < n; ++i) {
+        const x = a[i] != 0;
+        const y = b[i] != 0;
+        num_true_true += x && y;
+        num_true_false += x && !y;
+        num_false_true += !x && x;
+    }
+    const num_false_false = n - num_true_true - num_true_false - num_false_true;
+    return (num_true_false == 0 || num_false_true == 0) 
+        ? 0 
+        : ((2 * num_true_false * num_false_true) 
+            / (num_true_true * num_false_false + num_true_false * num_false_true));
 }
 
 /**
@@ -4726,7 +4816,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.3.14";
+var version="0.3.15";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
@@ -4756,6 +4846,8 @@ exports.cosine = cosine;
 exports.distance_matrix = distance_matrix;
 exports.euclidean = euclidean;
 exports.euclidean_squared = euclidean_squared;
+exports.hamming = hamming;
+exports.jaccard = jaccard;
 exports.k_nearest_neighbors = k_nearest_neighbors;
 exports.kahan_sum = kahan_sum;
 exports.linspace = linspace;
@@ -4766,7 +4858,9 @@ exports.norm = norm;
 exports.powell = powell;
 exports.qr = qr;
 exports.simultaneous_poweriteration = simultaneous_poweriteration$1;
+exports.sokal_michener = sokal_michener;
 exports.version = version;
+exports.yule = yule;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
