@@ -46,7 +46,7 @@ export class BallTree {
         elements = elements.map((element, index) => {
             return {index: index, element: element}
         })
-        this._root = this._construct(elements)
+        this._root = this._construct(elements);
         return this;
     }
 
@@ -60,7 +60,7 @@ export class BallTree {
             return new this._Leaf(elements);
         } else {
             let c = this._greatest_spread(elements);
-            let sorted_elements = elements.sort((a, b) => a.element[c] - b.element[c])
+            let sorted_elements = elements.sort((a, b) => a.element[c] - b.element[c]);
             let n = sorted_elements.length;
             let p_index = Math.floor(n / 2);
             let p = elements[p_index];
@@ -71,7 +71,7 @@ export class BallTree {
             if (L.length > 0 && R.length > 0) {         
                 B = new this._Node(p, this._construct(L), this._construct(R), radius);
             } else {
-                B = new this._Leaf(elements)
+                B = new this._Leaf(elements);
             }
             return B;
         }
@@ -96,14 +96,14 @@ export class BallTree {
                 acc[i][1] = Math.max(acc[i][1], current.element[i]);
             }
             return acc;
-        }, start)
+        }, start);
         spread = spread.map(d => d[1] - d[0]);
         
         let c = 0;
         for (let i = 0; i < d; ++i) {
             c = spread[i] > spread[c] ? i : c;
         }
-        return c
+        return c;
     }
 
     /**
@@ -145,6 +145,4 @@ export class BallTree {
         }
         return Q;
     }
-
-
 }

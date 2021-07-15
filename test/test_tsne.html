@@ -38,7 +38,7 @@
     let perp = 50;
     let eps = 10;
     let type = `perp = ${perp} | eps = ${eps} | t-SNE: `;
-    DR = (X, K) => new druid.TSNE(X, perp, eps);
+    DR = (X, K) => new druid.TSNE(X, perp, eps, 2, druid.euclidean, 1212);
 
     let DEBUG = false;
 
@@ -55,8 +55,8 @@
         data = druid.Matrix.from(values)
         labels = content.map(d => {
             return {
-                "name": d.songname,
-                "class": d.subgenre
+                "name": d.name,
+                "class": d.class,
             }
         })
         let svg = d3.select("body").append("svg")
@@ -170,9 +170,7 @@
         let iter = 0
         let r = result.next()
         let f = () => {
-            
-            //console.log(r)
-            _draw(r.value.projection.to2dArray, labels, svg, label + "| " + iter++)
+            _draw(r.value.to2dArray, labels, svg, label + "| " + iter++)
             
             if (!r.done && run) {//iter < 1000) {
                 r = result.next();

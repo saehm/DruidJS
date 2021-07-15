@@ -6,6 +6,7 @@ import { linspace } from "../matrix/index";
 import { powell } from "../optimization/index";
 import { DR } from "./DR.js";
 import { max } from "../util/index";
+import { KNN } from "../knn/KNN";
 
 export class UMAP extends DR {
     constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
@@ -61,13 +62,24 @@ export class UMAP extends DR {
         const n_iter = 64;
         const local_connectivity = this._local_connectivity;
         const target = Math.log2(k);
-        const rhos = []
-        const sigmas = []
-        const X = this.X
+        const rhos = [];
+        const sigmas = [];
+        const X = this.X;
+        const N = X.shape[0];
+        //const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
 
-        const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
+        const distances = [];
+        if (this._metric === "precomputed") {
+            for (let i = 0; i < N; ++i) {
+                distances.push(knn.search(i, k).reverse())
+            }
+        } else {
+           for (const x_i of X) {
+                distances.push(knn.search(x_i, k).raw_data().reverse())
+            }
+        }
 
-        for (let i = 0, n = X.shape[0]; i < n; ++i) {
+        for (let i = 0; i < N; ++i) {
             let lo = 0;
             let hi = Infinity;
             let mid = 1;
@@ -133,7 +145,8 @@ export class UMAP extends DR {
 
     _fuzzy_simplicial_set(X, n_neighbors) {
         const N = X.shape[0];
-        const knn = new BallTree(X.to2dArray, euclidean);
+        const metric = this._metric;
+        const knn = metric === "precomputed" ? new KNN(X, "precomputed") : new BallTree(X.to2dArray, metric);
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
         const result = new Matrix(N, N, "zeros");
@@ -267,7 +280,7 @@ export class UMAP extends DR {
                 const k = tail[i];
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
-                const dist = this._metric === "precomputed" ? this._X.entry(j, k) : euclidean_squared(current, other);
+                const dist = euclidean_squared(current, other);
                 let grad_coeff = 0;
                 if (dist > 0) {
                     grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
@@ -286,7 +299,7 @@ export class UMAP extends DR {
                 for (let p = 0; p < n_neg_samples; ++p) {
                     const k = Math.floor(this._randomizer.random * tail_length);
                     const other = tail_embedding.row(tail[k]);
-                    const dist = this._metric === "precomputed" ? this._X.entry(j, tail[k]) : euclidean_squared(current, other);
+                    const dist = euclidean_squared(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
                         grad_coeff = (2 * repulsion_strength * b) / ((.01 + dist) * (a * Math.pow(dist, b) + 1));

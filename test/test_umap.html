@@ -37,7 +37,10 @@
     let local_conn = 4.5;
     let min_dist = 1;
     let type = `k=${k} | conn = ${local_conn} | min_dist = ${min_dist} | UMAP: `;
-    DR = (X, K) => new druid.UMAP(X, k, local_conn, min_dist, 2, druid.euclidean);
+    DR = (X, K) => {
+        const D = new druid.Matrix(X.shape[0], X.shape[0], (i, j) => druid.euclidean(X.row(i), X.row(j)))
+        return new druid.UMAP(D, k, local_conn, min_dist, 2, "precomputed", 1212)
+    };
 
     let DEBUG = false;
 
