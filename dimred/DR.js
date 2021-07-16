@@ -90,7 +90,7 @@ export class DR{
         return this.Y;
     }
 
-    generator() {
+    * generator() {
         return this.transform();
     }
 

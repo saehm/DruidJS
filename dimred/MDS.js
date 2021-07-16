@@ -9,7 +9,7 @@ import { DR } from "./DR.js";
  */
 export class MDS extends DR{
     /**
-     * 
+     * Classical MDS.
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias MDS
@@ -25,6 +25,7 @@ export class MDS extends DR{
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}.
+     * @returns {Matrix|Array}
      */
     transform() {
         const X = this.X;
@@ -44,7 +45,10 @@ export class MDS extends DR{
         return this.projection;
     }
 
-    get stress() {
+    /**
+     * @returns {Number} - the stress of the projection.
+     */
+    stress() {
         const N = this.X.shape[0];
         const Y = this.Y;
         const d_X = this._d_X; /*new Matrix();

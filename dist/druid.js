@@ -1892,7 +1892,7 @@ function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) 
  * @class
  * @alias DR
  */
-class DR{
+class DR$1{
     //static parameter_list = [];
     get parameter_list() {
         return this._parameter_list;
@@ -1976,7 +1976,7 @@ class DR{
         return this.Y;
     }
 
-    generator() {
+    * generator() {
         return this.transform();
     }
 
@@ -2021,7 +2021,7 @@ class DR{
  * @alias PCA
  * @augments DR
  */
-class PCA extends DR{
+class PCA extends DR$1{
     /**
      * @constructor
      * @memberof module:dimensionality_reduction
@@ -2056,9 +2056,9 @@ class PCA extends DR{
  * @class
  * @alias MDS
  */
-class MDS extends DR{
+class MDS extends DR$1{
     /**
-     * 
+     * Classical MDS.
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias MDS
@@ -2074,6 +2074,7 @@ class MDS extends DR{
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}.
+     * @returns {Matrix|Array}
      */
     transform() {
         const X = this.X;
@@ -2093,7 +2094,10 @@ class MDS extends DR{
         return this.projection;
     }
 
-    get stress() {
+    /**
+     * @returns {Number} - the stress of the projection.
+     */
+    stress() {
         const N = this.X.shape[0];
         const Y = this.Y;
         const d_X = this._d_X; /*new Matrix();
@@ -2120,7 +2124,7 @@ class MDS extends DR{
  * @class
  * @alias ISOMAP
  */
-class ISOMAP extends DR {
+class ISOMAP extends DR$1 {
     /**
      * 
      * @constructor
@@ -2212,7 +2216,7 @@ class ISOMAP extends DR {
  * @class
  * @alias FASTMAP
  */
-class FASTMAP extends DR{
+class FASTMAP extends DR$1{
     /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
@@ -2310,7 +2314,7 @@ class FASTMAP extends DR{
  * @class
  * @alias LDA
  */
-class LDA extends DR {
+class LDA extends DR$1 {
     /**
      * 
      * @constructor
@@ -2395,7 +2399,7 @@ class LDA extends DR {
  * @class
  * @alias LLE
  */
-class LLE extends DR {
+class LLE extends DR$1 {
     /**
      * 
      * @constructor
@@ -2460,7 +2464,7 @@ class LLE extends DR {
  * @class
  * @alias LTSA
  */
-class LTSA extends DR {
+class LTSA extends DR$1 {
     /**
      * 
      * @constructor
@@ -2528,7 +2532,7 @@ class LTSA extends DR {
  * @class
  * @alias TSNE
  */
-class TSNE extends DR {
+class TSNE extends DR$1 {
     /**
      * 
      * @constructor
@@ -2542,7 +2546,6 @@ class TSNE extends DR {
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      * @returns {TSNE}
      */
-    
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ["perplexity", "epsilon"];
@@ -2554,6 +2557,11 @@ class TSNE extends DR {
         return this;
     }
 
+    /**
+     * 
+     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
+     * @returns {TSNE}
+     */
     init(distance_matrix=null) {
         // init
         const Htarget = Math.log(this._perplexity);
@@ -2640,6 +2648,11 @@ class TSNE extends DR {
         return this;
     }
 
+    /**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */
     transform(iterations=500) {
         this.check_init();
         for (let i = 0; i < iterations; ++i) {
@@ -2648,15 +2661,25 @@ class TSNE extends DR {
         return this.projection;
     }
 
-    * generator() {
+    /**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */
+    * generator(iterations=500) {
         this.check_init();
-        while (true) {
+        for (let i = 0; i < iterations; ++i) {
             this.next();
             yield this.projection;
         }
+        return this.projection;
     }
 
-    // perform optimization
+    /**
+     * performs a optimization step
+     * @private
+     * @returns {Matrix}
+     */
     next() {
         const iter = ++this._iter;
         const P = this._P;
@@ -2767,7 +2790,26 @@ function powell(f, x0, max_iter=300) {
     return x;
 }
 
-class UMAP extends DR {
+/**
+ * @class
+ * @alias UMAP
+ */
+class UMAP extends DR$1 {
+
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias UMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {Number} [n_neighbors = 15] - size of the local neighborhood.
+     * @param {Number} [local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
+     * @param {Number} [min_dist = 1] - controls how tightly points get packed together.
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @returns {UMAP}
+     */
     constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ["n_neighbors", "local_connectivity", "min_dist"];
@@ -2787,6 +2829,12 @@ class UMAP extends DR {
         return this;
     }
 
+    /**
+     * @private
+     * @param {Number} spread 
+     * @param {Number} min_dist 
+     * @returns {Array}
+     */
     _find_ab_params(spread, min_dist) {
         const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
         const xv = linspace(0, spread * 3, 300);
@@ -2805,6 +2853,13 @@ class UMAP extends DR {
         return powell(err, [1, 1]);
     }
 
+    /**
+     * @private
+     * @param {Array<Array>} distances 
+     * @param {Array<Number>} sigmas 
+     * @param {Array<Number>} rhos 
+     * @returns {Array}
+     */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
             for (let j = 0, m = distances[i].length; j < m; ++j) {
@@ -2815,6 +2870,12 @@ class UMAP extends DR {
         return distances;
     }
 
+    /**
+     * @private
+     * @param {KNN|BallTree} knn 
+     * @param {Number} k 
+     * @returns {Object}
+     */
     _smooth_knn_dist(knn, k) {
         const SMOOTH_K_TOLERANCE = 1e-5;
         const MIN_K_DIST_SCALE = 1e-3;
@@ -2902,6 +2963,12 @@ class UMAP extends DR {
         }
     }
 
+    /**
+     * @private
+     * @param {Matrix} X 
+     * @param {Number} n_neighbors 
+     * @returns {Matrix}
+     */
     _fuzzy_simplicial_set(X, n_neighbors) {
         const N = X.shape[0];
         const metric = this._metric;
@@ -2924,6 +2991,11 @@ class UMAP extends DR {
             .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
     }
 
+    /**
+     * @private
+     * @param {Number} n_epochs 
+     * @returns {Array}
+     */
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
@@ -2934,6 +3006,11 @@ class UMAP extends DR {
         return result;
     }
 
+    /**
+     * @private
+     * @param {Matrix} graph 
+     * @returns {Object}
+     */
     _tocoo(graph) {
         const rows = [];
         const cols = [];
@@ -2956,6 +3033,10 @@ class UMAP extends DR {
         };
     }
 
+    /**
+     * Computes all necessary 
+     * @returns {UMAP}
+     */
     init() {
         const [ a, b ] = this._find_ab_params(this._spread, this._min_dist);
         this._a = a;
@@ -2993,31 +3074,62 @@ class UMAP extends DR {
         return { cols: this._head, rows: this._tail, weights: this._weights };
     }
 
-    transform(iterations) {
+    /**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */
+    transform(iterations=350) {
+        if (this._n_epochs != iterations) {
+            this._n_epochs = iterations;
+            this.init();
+        }
         this.check_init();
-        iterations = iterations || this._n_epochs;
         for (let i = 0; i < iterations; ++i) {
             this.next();
         }
         return this.projection;
     }
 
-    * generator() {
+
+    /**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */
+    * generator(iterations=350) {
+        if (this._n_epochs != iterations) {
+            this._n_epochs = iterations;
+            this.init();
+        }
         this.check_init();
-        this._iter = 0;
-        while (this._iter < this._n_epochs) {
+        for (let i = 0; i < iterations; ++i) {
             this.next();
             yield this.projection;
         }
         return this.projection;
     }
 
+    /**
+     * @private
+     * @param {Number} x 
+     * @returns {Number}
+     */
     _clip(x) {
         if (x > 4) return 4;
         if (x < -4) return -4;
         return x;
     }
 
+    /**
+     * performs the optimization step.
+     * @private
+     * @param {Matrix} head_embedding 
+     * @param {Matrix} tail_embedding 
+     * @param {Matrix} head 
+     * @param {Matrix} tail 
+     * @returns {Matrix}
+     */
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
         const { 
             _d: dim, 
@@ -3081,6 +3193,10 @@ class UMAP extends DR {
         return head_embedding;
     }
 
+    /**
+     * @private
+     * @returns {Matrix}
+     */
     next() {
         let iter = ++this._iter;
         let Y = this.Y;
@@ -3096,7 +3212,7 @@ class UMAP extends DR {
  * @class
  * @alias TriMap
  */
-class TriMap extends DR{
+class TriMap extends DR$1{
     /**
      * 
      * @constructor
@@ -4391,7 +4507,7 @@ class OPTICS {
  * @class
  * @alias LSP
  */
-class LSP extends DR {
+class LSP extends DR$1 {
     /**
      * 
      * @constructor
@@ -4473,7 +4589,7 @@ class LSP extends DR {
     }
 }
 
-class TopoMap extends DR {
+class TopoMap extends DR$1 {
     /**
      * 
      * @constructor
@@ -4767,6 +4883,10 @@ class TopoMap extends DR {
     }
 }
 
+/**
+ * @class
+ * @alias SAMMON
+ */
 class SAMMON extends DR {
     /**
      * 
@@ -4798,14 +4918,10 @@ class SAMMON extends DR {
         if (DR === "random") {
             const randomizer = this._randomizer;
             this.Y = new Matrix(N, d, () => randomizer.random);
-        } else {
+        } else if (DR instanceof DR$1) {
             this.Y = DR.transform(this.X);
         }
-        this.Y;
-
-        this._metric;
         this.distance_matrix = distance_matrix || this.__distance_matrix(this.X);
-
         return this;
     }
 
@@ -4832,13 +4948,11 @@ class SAMMON extends DR {
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
      */
-    transform(max_iter=100) {
+    transform(max_iter=200) {
         if (!this._is_initialized) this.init();
-
         for (let j = 0; j < max_iter; ++j) {
             this._step();
         }
-
         return this.projection;
     }
 

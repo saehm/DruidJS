@@ -66,7 +66,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="KNN.html">KNN</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="KNN.html">KNN</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="UMAP.html">UMAP</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3></div>
                 
             </nav>
         </div>
@@ -438,7 +438,7 @@
         <p class="tag-source">
             <a href="dimred_TSNE.js.html" class="button">View Source</a>
             <span>
-                <a href="dimred_TSNE.js.html">dimred/TSNE.js</a>, <a href="dimred_TSNE.js.html#line24">line 24</a>
+                <a href="dimred_TSNE.js.html">dimred/TSNE.js</a>, <a href="dimred_TSNE.js.html#line23">line 23</a>
             </span>
         </p>
     
@@ -509,6 +509,576 @@
 
     
 
+    
+        <div class='vertical-section'>
+            <h1>Methods</h1>
+            <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="generator">
+        <a class="href-link" href="#generator">#</a>
+        
+            
+                <span class='tag'>generator</span>
+            
+        
+        <span class="code-name">
+            
+                generator<span class="signature">(iterations<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>|Array.&lt;Array>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>iterations</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          500
+      
+      </td>
+  
+
+  <td class="description last"><p>number of iterations.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="dimred_TSNE.js.html" class="button">View Source</a>
+            <span>
+                <a href="dimred_TSNE.js.html">dimred/TSNE.js</a>, <a href="dimred_TSNE.js.html#line143">line 143</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Yields:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>- the projection.</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+|
+
+<span class="param-type">Array.&lt;Array></span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="init">
+        <a class="href-link" href="#init">#</a>
+        
+        <span class="code-name">
+            
+                init<span class="signature">(distance_matrix)</span><span class="type-signature"> &rarr; {<a href="TSNE.html">TSNE</a>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>distance_matrix</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+
+
+  
+  </td>
+
+  
+
+  
+      <td class="default">
+      
+          null
+      
+      </td>
+  
+
+  <td class="description last"><p>accepts a precomputed distance matrix</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="dimred_TSNE.js.html" class="button">View Source</a>
+            <span>
+                <a href="dimred_TSNE.js.html">dimred/TSNE.js</a>, <a href="dimred_TSNE.js.html#line39">line 39</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type"><a href="TSNE.html">TSNE</a></span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="transform">
+        <a class="href-link" href="#transform">#</a>
+        
+        <span class="code-name">
+            
+                transform<span class="signature">(iterations<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>|Array.&lt;Array>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>iterations</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          500
+      
+      </td>
+  
+
+  <td class="description last"><p>number of iterations.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="dimred_TSNE.js.html" class="button">View Source</a>
+            <span>
+                <a href="dimred_TSNE.js.html">dimred/TSNE.js</a>, <a href="dimred_TSNE.js.html#line130">line 130</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Yields:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'>- the projection.</div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+|
+
+<span class="param-type">Array.&lt;Array></span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+</div>
+            
+            </div>
+        </div>
     
 
     

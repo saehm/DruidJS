@@ -5,7 +5,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> linear_algebra</title>
+  <title> UMAP</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -73,8 +73,8 @@
         <div class="core" id="main-content-wrapper">
             <div class="content">
                 <header class="page-title">
-                    <p>Module</p>
-                    <h1>linear_algebra</h1>
+                    <p>Class</p>
+                    <h1>UMAP</h1>
                 </header>
                 
 
@@ -85,6 +85,8 @@
 
 <header>
     
+        <h2><span class="attribs"><span class="type-signature"></span></span>
+            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>UMAP<span class="signature">(X, n_neighbors<span class="signature-attributes">opt</span>, local_connectivity<span class="signature-attributes">opt</span>, min_dist<span class="signature-attributes">opt</span>, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="UMAP.html">UMAP</a>}</span></h2>
         
     
 </header>
@@ -93,7 +95,443 @@
     <div class="container-overview">
     
         
+            <div class='vertical-section'>
+                <div class="members">
+                    <div class="member">
+                        <div class=name>
+                            <span class="tag">Constructor</span>
+                        </div>
+                        
 
+
+    
+    <h4 class="name" id="UMAP">
+        <a class="href-link" href="#UMAP">#</a>
+        
+        <span class="code-name">
+            
+                new UMAP<span class="signature">(X, n_neighbors<span class="signature-attributes">opt</span>, local_connectivity<span class="signature-attributes">opt</span>, min_dist<span class="signature-attributes">opt</span>, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="UMAP.html">UMAP</a>}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>X</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+      </td>
+  
+
+  <td class="description last"><p>the high-dimensional data.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>n_neighbors</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          15
+      
+      </td>
+  
+
+  <td class="description last"><p>size of the local neighborhood.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>local_connectivity</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          1
+      
+      </td>
+  
+
+  <td class="description last"><p>number of nearest neighbors connected in the local neighborhood.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>min_dist</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          1
+      
+      </td>
+  
+
+  <td class="description last"><p>controls how tightly points get packed together.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>d</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          2
+      
+      </td>
+  
+
+  <td class="description last"><p>the dimensionality of the projection.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>metric</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">function</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          euclidean
+      
+      </td>
+  
+
+  <td class="description last"><p>the metric which defines the distance between two points in the high-dimensional space.</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>seed</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
+
+      
+
+      
+      </td>
+  
+
+  
+      <td class="default">
+      
+          1212
+      
+      </td>
+  
+
+  <td class="description last"><p>the dimensionality of the projection.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="dimred_UMAP.js.html" class="button">View Source</a>
+            <span>
+                <a href="dimred_UMAP.js.html">dimred/UMAP.js</a>, <a href="dimred_UMAP.js.html#line31">line 31</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type"><a href="UMAP.html">UMAP</a></span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+
+                    </div>
+                </div>
+            </div>
         
     
     </div>
@@ -121,22 +559,22 @@
 
 
     
-    <h4 class="name" id="poweriteration_n">
-        <a class="href-link" href="#poweriteration_n">#</a>
+    <h4 class="name" id="generator">
+        <a class="href-link" href="#generator">#</a>
+        
+            
+                <span class='tag'>generator</span>
+            
         
         <span class="code-name">
             
-                poweriteration_n<span class="signature">(data, n, x, beta, max_iter, seed)</span><span class="type-signature"> &rarr; {<a href="global.html#Eigenpair">Eigenpair</a>}</span>
+                generator<span class="signature">(iterations<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>|Array}</span>
             
         </span>
     </h4>
     
 
     
-    
-    <div class="description">
-        <p>Computes the <code>n</code> biggest Eigenpair of the Matrix <code>data</code>.</p>
-    </div>
     
 
 
@@ -160,7 +598,11 @@
             <th>Type</th>
 
             
+            <th>Attributes</th>
+            
 
+            
+            <th>Default</th>
             
 
             <th class="last">Description</th>
@@ -173,148 +615,39 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>data</code></td>
+      <td class="name"><code>iterations</code></td>
   
 
   <td class="type">
   
       
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+<span class="param-type">Number</span>
 
 
   
   </td>
 
   
-
-  
-
-  <td class="description last"><p>the data matrix</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>n</code></td>
-  
-
-  <td class="type">
-  
+      <td class="attributes">
       
-<span class="param-type">int</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>Number of Eigenvalues / Eigenvectors</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>x</code></td>
-  
-
-  <td class="type">
-  
+          &lt;optional><br>
       
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
 
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>Initial Point as 1 times cols Matrix</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>beta</code></td>
-  
-
-  <td class="type">
-  
       
-<span class="param-type">number</span>
 
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>momentum parameter</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>max_iter</code></td>
-  
-
-  <td class="type">
-  
       
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
+      </td>
   
 
   
-
-  <td class="description last"><p>maximum number of iterations</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>seed</code></td>
-  
-
-  <td class="type">
-  
+      <td class="default">
       
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
+          350
+      
+      </td>
   
 
-  
-
-  <td class="description last"><p>seed for the random number generator</p></td>
+  <td class="description last"><p>number of iterations.</p></td>
 </tr>
 
 
@@ -360,189 +693,9 @@
 
     
         <p class="tag-source">
-            <a href="linear_algebra_poweriteration_n.js.html" class="button">View Source</a>
+            <a href="dimred_UMAP.js.html" class="button">View Source</a>
             <span>
-                <a href="linear_algebra_poweriteration_n.js.html">linear_algebra/poweriteration_n.js</a>, <a href="linear_algebra_poweriteration_n.js.html#line23">line 23</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'><p>The <code>n</code> Eigenpairs.</p></div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<span class="param-type"><a href="global.html#Eigenpair">Eigenpair</a></span>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="qr">
-        <a class="href-link" href="#qr">#</a>
-        
-        <span class="code-name">
-            
-                qr<span class="signature">(A)</span><span class="type-signature"> &rarr; {Object}</span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Computes the QR Decomposition of the Matrix <code>A</code> using Gram-Schmidt process.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>A</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%25E2%2580%2593Schmidt_process">https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process</a></li>
-        </ul>
-    </dd>
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="linear_algebra_qr.js.html" class="button">View Source</a>
-            <span>
-                <a href="linear_algebra_qr.js.html">linear_algebra/qr.js</a>, <a href="linear_algebra_qr.js.html#line13">line 13</a>
+                <a href="dimred_UMAP.js.html">dimred/UMAP.js</a>, <a href="dimred_UMAP.js.html#line318">line 318</a>
             </span>
         </p>
     
@@ -577,7 +730,10 @@
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
         
-<span class="param-type">Object</span>
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+|
+
+<span class="param-type">Array</span>
 
 
     </div>
@@ -597,12 +753,12 @@
 
 
     
-    <h4 class="name" id="qr_givens">
-        <a class="href-link" href="#qr_givens">#</a>
+    <h4 class="name" id="init">
+        <a class="href-link" href="#init">#</a>
         
         <span class="code-name">
             
-                qr_givens<span class="signature">(A)</span><span class="type-signature"> &rarr; {Object}</span>
+                init<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="UMAP.html">UMAP</a>}</span>
             
         </span>
     </h4>
@@ -611,7 +767,7 @@
     
     
     <div class="description">
-        <p>Computes the QR Decomposition of the Matrix <code>A</code> with givens rotation.</p>
+        <p>Computes all necessary</p>
     </div>
     
 
@@ -622,57 +778,6 @@
 
 
 
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>A</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
 
 
 
@@ -706,21 +811,14 @@
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations">https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations</a></li>
-        </ul>
-    </dd>
-    
 
     
 
     
         <p class="tag-source">
-            <a href="linear_algebra_qr_givens.js.html" class="button">View Source</a>
+            <a href="dimred_UMAP.js.html" class="button">View Source</a>
             <span>
-                <a href="linear_algebra_qr_givens.js.html">linear_algebra/qr_givens.js</a>, <a href="linear_algebra_qr_givens.js.html#line11">line 11</a>
+                <a href="dimred_UMAP.js.html">dimred/UMAP.js</a>, <a href="dimred_UMAP.js.html#line258">line 258</a>
             </span>
         </p>
     
@@ -755,7 +853,7 @@
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
         
-<span class="param-type">Object</span>
+<span class="param-type"><a href="UMAP.html">UMAP</a></span>
 
 
     </div>
@@ -775,22 +873,18 @@
 
 
     
-    <h4 class="name" id="qr_householder">
-        <a class="href-link" href="#qr_householder">#</a>
+    <h4 class="name" id="transform">
+        <a class="href-link" href="#transform">#</a>
         
         <span class="code-name">
             
-                qr_householder<span class="signature">(A)</span><span class="type-signature"> &rarr; {Object}</span>
+                transform<span class="signature">(iterations<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>|Array}</span>
             
         </span>
     </h4>
     
 
     
-    
-    <div class="description">
-        <p>Computes the QR Decomposition of the Matrix <code>A</code> with householder transformations.</p>
-    </div>
     
 
 
@@ -814,7 +908,11 @@
             <th>Type</th>
 
             
+            <th>Attributes</th>
+            
 
+            
+            <th>Default</th>
             
 
             <th class="last">Description</th>
@@ -827,23 +925,39 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>A</code></td>
+      <td class="name"><code>iterations</code></td>
   
 
   <td class="type">
   
       
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+<span class="param-type">Number</span>
 
 
   
   </td>
 
   
+      <td class="attributes">
+      
+          &lt;optional><br>
+      
 
+      
+
+      
+      </td>
   
 
-  <td class="description last"></td>
+  
+      <td class="default">
+      
+          350
+      
+      </td>
+  
+
+  <td class="description last"><p>number of iterations.</p></td>
 </tr>
 
 
@@ -884,23 +998,14 @@
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections">https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections</a></li>
-        
-            <li><a href="http://mlwiki.org/index.php/Householder_Transformation">http://mlwiki.org/index.php/Householder_Transformation</a></li>
-        </ul>
-    </dd>
-    
 
     
 
     
         <p class="tag-source">
-            <a href="linear_algebra_qr_householder.js.html" class="button">View Source</a>
+            <a href="dimred_UMAP.js.html" class="button">View Source</a>
             <span>
-                <a href="linear_algebra_qr_householder.js.html">linear_algebra/qr_householder.js</a>, <a href="linear_algebra_qr_householder.js.html#line12">line 12</a>
+                <a href="dimred_UMAP.js.html">dimred/UMAP.js</a>, <a href="dimred_UMAP.js.html#line300">line 300</a>
             </span>
         </p>
     
@@ -935,7 +1040,10 @@
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
         
-<span class="param-type">Object</span>
+<span class="param-type"><a href="Matrix.html">Matrix</a></span>
+|
+
+<span class="param-type">Array</span>
 
 
     </div>
@@ -945,311 +1053,6 @@
                 
         </div>
     </div>
-
-
-
-
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="svrg">
-        <a class="href-link" href="#svrg">#</a>
-        
-        <span class="code-name">
-            
-                svrg<span class="signature">(data, x, beta, epoch, m, s, seed)</span><span class="type-signature"></span>
-            
-        </span>
-    </h4>
-    
-
-    
-    
-    <div class="description">
-        <p>Computes the eigenvector of <code>X</code> with an accelerated stochastic power iteration algorithm.</p>
-    </div>
-    
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>data</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>the data matrix</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>x</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>Initial Point as 1 times cols Matrix</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>beta</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>momentum parameter</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>epoch</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>number of epochs</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>m</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>epoch length</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>s</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>mini-batch size</p></td>
-</tr>
-
-
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>seed</code></td>
-  
-
-  <td class="type">
-  
-      
-<span class="param-type">number</span>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"><p>seed for the random number generator</p></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://arxiv.org/abs/1707.02670">https://arxiv.org/abs/1707.02670</a></li>
-        </ul>
-    </dd>
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="linear_algebra_svrg.js.html" class="button">View Source</a>
-            <span>
-                <a href="linear_algebra_svrg.js.html">linear_algebra/svrg.js</a>, <a href="linear_algebra_svrg.js.html#line17">line 17</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

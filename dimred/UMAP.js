@@ -8,7 +8,26 @@ import { DR } from "./DR.js";
 import { max } from "../util/index";
 import { KNN } from "../knn/KNN";
 
+/**
+ * @class
+ * @alias UMAP
+ */
 export class UMAP extends DR {
+
+    /**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias UMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {Number} [n_neighbors = 15] - size of the local neighborhood.
+     * @param {Number} [local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
+     * @param {Number} [min_dist = 1] - controls how tightly points get packed together.
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @returns {UMAP}
+     */
     constructor(X, n_neighbors=15, local_connectivity=1, min_dist=1, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed)
         super.parameter_list = ["n_neighbors", "local_connectivity", "min_dist"];
@@ -28,6 +47,12 @@ export class UMAP extends DR {
         return this;
     }
 
+    /**
+     * @private
+     * @param {Number} spread 
+     * @param {Number} min_dist 
+     * @returns {Array}
+     */
     _find_ab_params(spread, min_dist) {
         const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
         const xv = linspace(0, spread * 3, 300);
@@ -46,6 +71,13 @@ export class UMAP extends DR {
         return powell(err, [1, 1]);
     }
 
+    /**
+     * @private
+     * @param {Array<Array>} distances 
+     * @param {Array<Number>} sigmas 
+     * @param {Array<Number>} rhos 
+     * @returns {Array}
+     */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
             for (let j = 0, m = distances[i].length; j < m; ++j) {
@@ -56,6 +88,12 @@ export class UMAP extends DR {
         return distances;
     }
 
+    /**
+     * @private
+     * @param {KNN|BallTree} knn 
+     * @param {Number} k 
+     * @returns {Object}
+     */
     _smooth_knn_dist(knn, k) {
         const SMOOTH_K_TOLERANCE = 1e-5;
         const MIN_K_DIST_SCALE = 1e-3;
@@ -143,6 +181,12 @@ export class UMAP extends DR {
         }
     }
 
+    /**
+     * @private
+     * @param {Matrix} X 
+     * @param {Number} n_neighbors 
+     * @returns {Matrix}
+     */
     _fuzzy_simplicial_set(X, n_neighbors) {
         const N = X.shape[0];
         const metric = this._metric;
@@ -165,6 +209,11 @@ export class UMAP extends DR {
             .add(prod_matrix.mult(1 - this._set_op_mix_ratio));
     }
 
+    /**
+     * @private
+     * @param {Number} n_epochs 
+     * @returns {Array}
+     */
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
@@ -175,6 +224,11 @@ export class UMAP extends DR {
         return result;
     }
 
+    /**
+     * @private
+     * @param {Matrix} graph 
+     * @returns {Object}
+     */
     _tocoo(graph) {
         const rows = [];
         const cols = [];
@@ -197,6 +251,10 @@ export class UMAP extends DR {
         };
     }
 
+    /**
+     * Computes all necessary 
+     * @returns {UMAP}
+     */
     init() {
         const [ a, b ] = this._find_ab_params(this._spread, this._min_dist);
         this._a = a;
@@ -234,31 +292,62 @@ export class UMAP extends DR {
         return { cols: this._head, rows: this._tail, weights: this._weights };
     }
 
-    transform(iterations) {
+    /**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */
+    transform(iterations=350) {
+        if (this._n_epochs != iterations) {
+            this._n_epochs = iterations;
+            this.init();
+        }
         this.check_init();
-        iterations = iterations || this._n_epochs;
         for (let i = 0; i < iterations; ++i) {
             this.next();
         }
         return this.projection;
     }
 
-    * generator() {
+
+    /**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */
+    * generator(iterations=350) {
+        if (this._n_epochs != iterations) {
+            this._n_epochs = iterations;
+            this.init();
+        }
         this.check_init();
-        this._iter = 0
-        while (this._iter < this._n_epochs) {
+        for (let i = 0; i < iterations; ++i) {
             this.next();
             yield this.projection;
         }
         return this.projection;
     }
 
+    /**
+     * @private
+     * @param {Number} x 
+     * @returns {Number}
+     */
     _clip(x) {
         if (x > 4) return 4;
         if (x < -4) return -4;
         return x;
     }
 
+    /**
+     * performs the optimization step.
+     * @private
+     * @param {Matrix} head_embedding 
+     * @param {Matrix} tail_embedding 
+     * @param {Matrix} head 
+     * @param {Matrix} tail 
+     * @returns {Matrix}
+     */
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
         const { 
             _d: dim, 
@@ -322,6 +411,10 @@ export class UMAP extends DR {
         return head_embedding;
     }
 
+    /**
+     * @private
+     * @returns {Matrix}
+     */
     next() {
         let iter = ++this._iter;
         let Y = this.Y;

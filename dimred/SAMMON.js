@@ -1,8 +1,11 @@
-import { distance_matrix, Matrix } from "../matrix/index";
+import { Matrix } from "../matrix/index";
 import { euclidean } from "../metrics/index";
-import { DR } from "./DR.js";
-import { PCA } from "./index.js";
+import { DR as DimRed} from "./DR.js";
 
+/**
+ * @class
+ * @alias SAMMON
+ */
 export class SAMMON extends DR {
     /**
      * 
@@ -34,14 +37,10 @@ export class SAMMON extends DR {
         if (DR === "random") {
             const randomizer = this._randomizer;
             this.Y = new Matrix(N, d, () => randomizer.random);
-        } else {
+        } else if (DR instanceof DimRed) {
             this.Y = DR.transform(this.X);
         }
-        const Y = this.Y;
-
-        const metric = this._metric;
         this.distance_matrix = distance_matrix || this.__distance_matrix(this.X);
-
         return this;
     }
 
@@ -68,13 +67,11 @@ export class SAMMON extends DR {
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
      */
-    transform(max_iter=100) {
+    transform(max_iter=200) {
         if (!this._is_initialized) this.init();
-
         for (let j = 0; j < max_iter; ++j) {
             this._step()
         }
-
         return this.projection;
     }
 

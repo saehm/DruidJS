@@ -20,7 +20,6 @@ export class TSNE extends DR {
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      * @returns {TSNE}
      */
-    
     constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
         super(X, d, metric, seed);
         super.parameter_list = ["perplexity", "epsilon"];
@@ -32,6 +31,11 @@ export class TSNE extends DR {
         return this;
     }
 
+    /**
+     * 
+     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
+     * @returns {TSNE}
+     */
     init(distance_matrix=null) {
         // init
         const Htarget = Math.log(this._perplexity);
@@ -118,6 +122,11 @@ export class TSNE extends DR {
         return this;
     }
 
+    /**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */
     transform(iterations=500) {
         this.check_init();
         for (let i = 0; i < iterations; ++i) {
@@ -126,15 +135,25 @@ export class TSNE extends DR {
         return this.projection;
     }
 
-    * generator() {
+    /**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */
+    * generator(iterations=500) {
         this.check_init();
-        while (true) {
+        for (let i = 0; i < iterations; ++i) {
             this.next();
             yield this.projection;
         }
+        return this.projection;
     }
 
-    // perform optimization
+    /**
+     * performs a optimization step
+     * @private
+     * @returns {Matrix}
+     */
     next() {
         const iter = ++this._iter;
         const P = this._P;

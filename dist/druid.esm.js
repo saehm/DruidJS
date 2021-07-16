@@ -573,7 +573,7 @@ constructor(t=null,e=euclidean){this._metric=e,this._elements=t instanceof Matri
 /**
  * @class
  * @alias DR
- */class DR{
+ */class DR$1{
 //static parameter_list = [];
 get parameter_list(){return this._parameter_list}set parameter_list(t){return this._parameter_list=t,this}
 /**
@@ -605,7 +605,7 @@ get parameter_list(){return this._parameter_list}set parameter_list(t){return th
 /**
      * Computes the projection.
      * @returns {Matrix} Returns the projection.
-     */transform(){return this.check_init(),this.Y}generator(){return this.transform()}check_init(){this._is_initialized||"function"!=typeof this.init||(this.init(),this._is_initialized=!0)}
+     */transform(){return this.check_init(),this.Y}*generator(){return this.transform()}check_init(){this._is_initialized||"function"!=typeof this.init||(this.init(),this._is_initialized=!0)}
 /**
      * @returns {Matrix} Returns the projection.
      */get projection(){return"matrix"===this._type?this.Y:this.Y.to2dArray}async transform_async(){return this.transform()}static transform(...t){return new this(...t).transform()}static async transform_async(...t){return this.transform(...t)}static*generator(...t){const e=new this(...t).generator();for(const t of e)yield t}}
@@ -613,7 +613,7 @@ get parameter_list(){return this._parameter_list}set parameter_list(t){return th
  * @class
  * @alias PCA
  * @augments DR
- */class PCA extends DR{
+ */class PCA extends DR$1{
 /**
      * @constructor
      * @memberof module:dimensionality_reduction
@@ -629,9 +629,9 @@ constructor(t,e=2){return super(t,e),this}
 /**
  * @class
  * @alias MDS
- */class MDS extends DR{
+ */class MDS extends DR$1{
 /**
-     * 
+     * Classical MDS.
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias MDS
@@ -643,11 +643,15 @@ constructor(t,e=2){return super(t,e),this}
 constructor(t,e=2,r=euclidean,s=1212){return super(t,e,r,s),this}
 /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}.
-     */transform(){const t=this.X,e=t.shape[0],r=this._metric,s="precomputed"===r?t:distance_matrix(t,r),i=s.meanCols,n=s.meanRows,o=s.mean;this._d_X=s;const a=new Matrix(e,e,((t,e)=>s.entry(t,e)-i[t]-n[e]+o)),{eigenvectors:h}=simultaneous_poweriteration$1(a,this._d);return this.Y=Matrix.from(h).transpose(),this.projection}get stress(){const t=this.X.shape[0],e=this.Y,r=this._d_X,s=new Matrix;s.shape=[t,t,(t,r)=>t<r?euclidean(e.row(t),e.row(r)):s.entry(r,t)];let i=0,n=0;for(let e=0;e<t;++e)for(let o=e+1;o<t;++o)i+=Math.pow(r.entry(e,o)-s.entry(e,o),2),n+=Math.pow(r.entry(e,o),2);return Math.sqrt(i/n)}}
+     * @returns {Matrix|Array}
+     */transform(){const t=this.X,e=t.shape[0],r=this._metric,s="precomputed"===r?t:distance_matrix(t,r),i=s.meanCols,n=s.meanRows,o=s.mean;this._d_X=s;const a=new Matrix(e,e,((t,e)=>s.entry(t,e)-i[t]-n[e]+o)),{eigenvectors:h}=simultaneous_poweriteration$1(a,this._d);return this.Y=Matrix.from(h).transpose(),this.projection}
+/**
+     * @returns {Number} - the stress of the projection.
+     */stress(){const t=this.X.shape[0],e=this.Y,r=this._d_X,s=new Matrix;s.shape=[t,t,(t,r)=>t<r?euclidean(e.row(t),e.row(r)):s.entry(r,t)];let i=0,n=0;for(let e=0;e<t;++e)for(let o=e+1;o<t;++o)i+=Math.pow(r.entry(e,o)-s.entry(e,o),2),n+=Math.pow(r.entry(e,o),2);return Math.sqrt(i/n)}}
 /**
  * @class
  * @alias ISOMAP
- */class ISOMAP extends DR{
+ */class ISOMAP extends DR$1{
 /**
      * 
      * @constructor
@@ -674,7 +678,7 @@ return this.Y=Matrix.from(c).transpose(),this.projection}}
 /**
  * @class
  * @alias FASTMAP
- */class FASTMAP extends DR{
+ */class FASTMAP extends DR$1{
 /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
@@ -721,7 +725,7 @@ return this.Y=i,this.projection}}
 /**
  * @class
  * @alias LDA
- */class LDA extends DR{
+ */class LDA extends DR$1{
 /**
      * 
      * @constructor
@@ -748,7 +752,7 @@ return _=Matrix.from(_).transpose(),this.Y=t.dot(_),this.projection}}
 /**
  * @class
  * @alias LLE
- */class LLE extends DR{
+ */class LLE extends DR$1{
 /**
      * 
      * @constructor
@@ -773,7 +777,7 @@ return this.Y=Matrix.from(_.slice(1,1+e)).T,this.projection}}
 /**
  * @class
  * @alias LTSA
- */class LTSA extends DR{
+ */class LTSA extends DR$1{
 /**
      * 
      * @constructor
@@ -803,7 +807,7 @@ return this.Y=Matrix.from(h.slice(1)).transpose(),this.projection}}
 /**
  * @class
  * @alias TSNE
- */class TSNE extends DR{
+ */class TSNE extends DR$1{
 /**
      * 
      * @constructor
@@ -817,15 +821,33 @@ return this.Y=Matrix.from(h.slice(1)).transpose(),this.projection}}
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      * @returns {TSNE}
      */
-constructor(t,e=50,r=10,s=2,i=euclidean,n=1212){return super(t,s,i,n),super.parameter_list=["perplexity","epsilon"],[this._N,this._D]=this.X.shape,this.parameter("perplexity",Math.min(e,this._N-1)),this.parameter("epsilon",r),this._iter=0,this.Y=new Matrix(this._N,this._d,(()=>this._randomizer.random)),this}init(t=null){
+constructor(t,e=50,r=10,s=2,i=euclidean,n=1212){return super(t,s,i,n),super.parameter_list=["perplexity","epsilon"],[this._N,this._D]=this.X.shape,this.parameter("perplexity",Math.min(e,this._N-1)),this.parameter("epsilon",r),this._iter=0,this.Y=new Matrix(this._N,this._d,(()=>this._randomizer.random)),this}
+/**
+     * 
+     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
+     * @returns {TSNE}
+     */init(t=null){
 // init
 const e=Math.log(this._perplexity),r=this._N,s=this._D,i=this._metric,n=this.X;let o;if(t)o=t;else{o=new Matrix(r,r);for(let t=0;t<r;++t){const e=n.row(t);for(let s=t+1;s<r;++s){const r=i(e,n.row(s));o.set_entry(t,s,r),o.set_entry(s,t,r)}}}const a=new Matrix(r,r,"zeros");this._ystep=new Matrix(r,s,"zeros"),this._gains=new Matrix(r,s,1);
 // search for fitting sigma
 let h=new Array(r).fill(0);for(let t=0;t<r;++t){let s=-1/0,i=1/0,n=1,l=!1,_=0;for(;!l;){let a=0;for(let e=0;e<r;++e){let r=Math.exp(-o.entry(t,e)*n);t===e&&(r=0),h[e]=r,a+=r}let c=0;for(let t=0;t<r;++t){let e=0===a?0:h[t]/a;h[t]=e,e>1e-7&&(c-=e*Math.log(e))}c>e?(s=n,n=i===1/0?2*n:(n+i)/2):(i=n,n=s===-1/0?n/2:(n+s)/2),++_,Math.abs(c-e)<1e-4&&(l=!0),_>=50&&(l=!0)}for(let e=0;e<r;++e)a.set_entry(t,e,h[e])}
 //compute probabilities
-const l=new Matrix(r,r,"zeros"),_=2*r;for(let t=0;t<r;++t)for(let e=t;e<r;++e){const r=Math.max((a.entry(t,e)+a.entry(e,t))/_,1e-100);l.set_entry(t,e,r),l.set_entry(e,t,r)}return this._P=l,this}transform(t=500){this.check_init();for(let e=0;e<t;++e)this.next();return this.projection}*generator(){for(this.check_init();;)this.next(),yield this.projection}
-// perform optimization
-next(){const t=++this._iter,e=this._P,r=this._ystep,s=this._gains,i=this._N,n=this._epsilon,o=this._d;let a=this.Y;
+const l=new Matrix(r,r,"zeros"),_=2*r;for(let t=0;t<r;++t)for(let e=t;e<r;++e){const r=Math.max((a.entry(t,e)+a.entry(e,t))/_,1e-100);l.set_entry(t,e,r),l.set_entry(e,t,r)}return this._P=l,this}
+/**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */transform(t=500){this.check_init();for(let e=0;e<t;++e)this.next();return this.projection}
+/**
+     * 
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Array<Array>} - the projection.
+     */*generator(t=500){this.check_init();for(let e=0;e<t;++e)this.next(),yield this.projection;return this.projection}
+/**
+     * performs a optimization step
+     * @private
+     * @returns {Matrix}
+     */next(){const t=++this._iter,e=this._P,r=this._ystep,s=this._gains,i=this._N,n=this._epsilon,o=this._d;let a=this.Y;
 //calc cost gradient;
 const h=t<100?4:1,l=new Matrix(i,i,"zeros");
 // compute Q dist (unnormalized)
@@ -835,13 +857,99 @@ const c=new Matrix(i,i,0);for(let t=0;t<i;++t)for(let e=t+1;e<i;++e){const r=Mat
 // perform gradient step
 let d=new Float64Array(o);for(let e=0;e<i;++e)for(let i=0;i<o;++i){const o=u.entry(e,i),h=r.entry(e,i),l=s.entry(e,i);let _=Math.sign(o)===Math.sign(h)?.8*l:l+.2;_<.01&&(_=.01),s.set_entry(e,i,_);const c=(t<250?.5:.8)*h-n*_*o;r.set_entry(e,i,c),a.set_entry(e,i,a.entry(e,i)+c),d[i]+=a.entry(e,i)}for(let t=0;t<i;++t)for(let e=0;e<2;++e)a.set_entry(t,e,a.entry(t,e)-d[e]/i);return this.Y}}
 // http://optimization-js.github.io/optimization-js/optimization.js.html#line438
-function powell(t,e,r=300){const s=e.length;let i=.001,n=1e4,o=e.slice(),a=t(o),h=!1;for(;r-- >=0&&!h;){h=!0;for(let e=0;e<s;++e){o[e]+=1e-6;let r=t(o);o[e]-=1e-6;let s=(r-a)/1e-6;Math.abs(s)>.01&&(h=!1),o[e]-=i*s,a=t(o)}i*=n>=a?1.05:.4,n=a}return o}class UMAP extends DR{constructor(t,e=15,r=1,s=1,i=2,n=euclidean,o=1212){return super(t,i,n,o),super.parameter_list=["n_neighbors","local_connectivity","min_dist"],[this._N,this._D]=this.X.shape,e=Math.min(this._N-1,e),this.parameter("n_neighbors",e),this.parameter("local_connectivity",Math.min(r,e-1)),this.parameter("min_dist",s),this._iter=0,this._spread=1,this._set_op_mix_ratio=1,this._repulsion_strength=1,this._negative_sample_rate=5,this._n_epochs=350,this._initial_alpha=1,this.Y=new Matrix(this._N,this._d,(()=>this._randomizer.random)),this}_find_ab_params(t,e){const r=linspace(0,3*t,300),s=linspace(0,3*t,300);for(let i=0,n=r.length;i<n;++i){const n=r[i];s[i]=n<e?1:Math.exp(-(n-e)/t)}return powell((t=>{const e=linspace(1,300).map(((e,i)=>{return s[i]-(n=r[i],o=t[0],a=t[1],1/(1+o*Math.pow(n,2*a)));var n,o,a}));return Math.sqrt(neumair_sum(e.map((t=>t*t))))}),[1,1])}_compute_membership_strengths(t,e,r){for(let s=0,i=t.length;s<i;++s)for(let i=0,n=t[s].length;i<n;++i){const n=t[s][i].value-r[s];t[s][i].value=n>0?Math.exp(-n/e[s]):1}return t}_smooth_knn_dist(t,e){const r=1e-5,s=.001,i=this._local_connectivity,n=Math.log2(e),o=[],a=[],h=this.X,l=h.shape[0],_=[];if("precomputed"===this._metric)for(let r=0;r<l;++r)_.push(t.search(r,e).reverse());else for(const r of h)_.push(t.search(r,e).raw_data().reverse());for(let t=0;t<l;++t){let h=0,l=1/0,c=1;const u=_[t],d=u.filter((t=>t.value>0)),f=d.length;if(f>=i){const e=Math.floor(i),s=i-e;e>0?(o.push(d[e-1]),s>r&&(o[t].value+=s*(d[e].value-d[e-1]))):o[t].value=s*d[0].value}else f>0&&(o[t]=d[f-1].value);for(let s=0;s<64;++s){let s=0;for(let r=0;r<e;++r){const e=u[r].value-o[t];s+=e>0?Math.exp(-e/c):1}if(Math.abs(s-n)<r)break;s>n?[l,c]=[c,(h+l)/2]:[h,c]=l===1/0?[c,2*c]:[c,(h+l)/2]}a[t]=c;const p=u.reduce(((t,e)=>t+e.value),0)/u.length;
+function powell(t,e,r=300){const s=e.length;let i=.001,n=1e4,o=e.slice(),a=t(o),h=!1;for(;r-- >=0&&!h;){h=!0;for(let e=0;e<s;++e){o[e]+=1e-6;let r=t(o);o[e]-=1e-6;let s=(r-a)/1e-6;Math.abs(s)>.01&&(h=!1),o[e]-=i*s,a=t(o)}i*=n>=a?1.05:.4,n=a}return o}
+/**
+ * @class
+ * @alias UMAP
+ */class UMAP extends DR$1{
+/**
+     * 
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @alias UMAP
+     * @param {Matrix} X - the high-dimensional data. 
+     * @param {Number} [n_neighbors = 15] - size of the local neighborhood.
+     * @param {Number} [local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
+     * @param {Number} [min_dist = 1] - controls how tightly points get packed together.
+     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.  
+     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @returns {UMAP}
+     */
+constructor(t,e=15,r=1,s=1,i=2,n=euclidean,o=1212){return super(t,i,n,o),super.parameter_list=["n_neighbors","local_connectivity","min_dist"],[this._N,this._D]=this.X.shape,e=Math.min(this._N-1,e),this.parameter("n_neighbors",e),this.parameter("local_connectivity",Math.min(r,e-1)),this.parameter("min_dist",s),this._iter=0,this._spread=1,this._set_op_mix_ratio=1,this._repulsion_strength=1,this._negative_sample_rate=5,this._n_epochs=350,this._initial_alpha=1,this.Y=new Matrix(this._N,this._d,(()=>this._randomizer.random)),this}
+/**
+     * @private
+     * @param {Number} spread 
+     * @param {Number} min_dist 
+     * @returns {Array}
+     */_find_ab_params(t,e){const r=linspace(0,3*t,300),s=linspace(0,3*t,300);for(let i=0,n=r.length;i<n;++i){const n=r[i];s[i]=n<e?1:Math.exp(-(n-e)/t)}return powell((t=>{const e=linspace(1,300).map(((e,i)=>{return s[i]-(n=r[i],o=t[0],a=t[1],1/(1+o*Math.pow(n,2*a)));var n,o,a}));return Math.sqrt(neumair_sum(e.map((t=>t*t))))}),[1,1])}
+/**
+     * @private
+     * @param {Array<Array>} distances 
+     * @param {Array<Number>} sigmas 
+     * @param {Array<Number>} rhos 
+     * @returns {Array}
+     */_compute_membership_strengths(t,e,r){for(let s=0,i=t.length;s<i;++s)for(let i=0,n=t[s].length;i<n;++i){const n=t[s][i].value-r[s];t[s][i].value=n>0?Math.exp(-n/e[s]):1}return t}
+/**
+     * @private
+     * @param {KNN|BallTree} knn 
+     * @param {Number} k 
+     * @returns {Object}
+     */_smooth_knn_dist(t,e){const r=1e-5,s=.001,i=this._local_connectivity,n=Math.log2(e),o=[],a=[],h=this.X,l=h.shape[0],_=[];if("precomputed"===this._metric)for(let r=0;r<l;++r)_.push(t.search(r,e).reverse());else for(const r of h)_.push(t.search(r,e).raw_data().reverse());for(let t=0;t<l;++t){let h=0,l=1/0,c=1;const u=_[t],d=u.filter((t=>t.value>0)),f=d.length;if(f>=i){const e=Math.floor(i),s=i-e;e>0?(o.push(d[e-1]),s>r&&(o[t].value+=s*(d[e].value-d[e-1]))):o[t].value=s*d[0].value}else f>0&&(o[t]=d[f-1].value);for(let s=0;s<64;++s){let s=0;for(let r=0;r<e;++r){const e=u[r].value-o[t];s+=e>0?Math.exp(-e/c):1}if(Math.abs(s-n)<r)break;s>n?[l,c]=[c,(h+l)/2]:[h,c]=l===1/0?[c,2*c]:[c,(h+l)/2]}a[t]=c;const p=u.reduce(((t,e)=>t+e.value),0)/u.length;
 //let mean_d = null;
-if(o[t]>0)a[t]<s*p&&(a[t]=s*p);else{const e=_.reduce(((t,e)=>t+e.reduce(((t,e)=>t+e.value),0)/e.length));a[t]>s*e&&(a[t]=s*e)}}return{distances:_,sigmas:a,rhos:o}}_fuzzy_simplicial_set(t,e){const r=t.shape[0],s=this._metric,i="precomputed"===s?new KNN(t,"precomputed"):new BallTree(t.to2dArray,s);let{distances:n,sigmas:o,rhos:a}=this._smooth_knn_dist(i,e);n=this._compute_membership_strengths(n,o,a);const h=new Matrix(r,r,"zeros");for(let t=0;t<r;++t){const e=n[t];for(let r=0;r<e.length;++r)h.set_entry(t,e[r].element.index,e[r].value)}const l=h.T,_=h.mult(l);return h.add(l).sub(_).mult(this._set_op_mix_ratio).add(_.mult(1-this._set_op_mix_ratio))}_make_epochs_per_sample(t){const e=this._weights,r=new Float32Array(e.length).fill(-1),s=max(e),i=e.map((e=>t*(e/s)));for(let e=0;e<r.length;++e)i[e]>0&&(r[e]=Math.round(t/i[e]));return r}_tocoo(t){const e=[],r=[],s=[],[i,n]=t.shape;for(let o=0;o<i;++o)for(let i=0;i<n;++i){const n=t.entry(o,i);0!==n&&(e.push(o),r.push(i),s.push(n))}return{rows:e,cols:r,data:s}}init(){const[t,e]=this._find_ab_params(this._spread,this._min_dist);this._a=t,this._b=e,this._graph=this._fuzzy_simplicial_set(this.X,this._n_neighbors);const{rows:r,cols:s,data:i}=this._tocoo(this._graph);return this._head=r,this._tail=s,this._weights=i,this._epochs_per_sample=this._make_epochs_per_sample(this._n_epochs),this._epochs_per_negative_sample=this._epochs_per_sample.map((t=>t*this._negative_sample_rate)),this._epoch_of_next_sample=this._epochs_per_sample.slice(),this._epoch_of_next_negative_sample=this._epochs_per_negative_sample.slice(),this}set local_connectivity(t){this._local_connectivity=t}get local_connectivity(){return this._local_connectivity}set min_dist(t){this._min_dist=t}get min_dist(){return this._min_dist}graph(){return this.check_init(),{cols:this._head,rows:this._tail,weights:this._weights}}transform(t){this.check_init(),t=t||this._n_epochs;for(let e=0;e<t;++e)this.next();return this.projection}*generator(){for(this.check_init(),this._iter=0;this._iter<this._n_epochs;)this.next(),yield this.projection;return this.projection}_clip(t){return t>4?4:t<-4?-4:t}_optimize_layout(t,e,r,s){const{_d:i,_alpha:n,_repulsion_strength:o,_a:a,_b:h,_epochs_per_sample:l,_epochs_per_negative_sample:_,_epoch_of_next_negative_sample:c,_epoch_of_next_sample:u,_clip:d}=this,f=s.length;for(let p=0,m=l.length;p<m;++p)if(u[p]<=this._iter){const m=r[p],y=s[p],w=t.row(m),g=e.row(y),x=euclidean_squared(w,g);let M=0;x>0&&(M=-2*a*h*Math.pow(x,h-1)/(a*Math.pow(x,h)+1));for(let r=0;r<i;++r){const s=d(M*(w[r]-g[r]))*n,i=w[r]+s,o=g[r]-s;w[r]=i,g[r]=o,t.set_entry(m,r,i),e.set_entry(y,r,o)}u[p]+=l[p];const A=(this._iter-c[p])/_[p];for(let r=0;r<A;++r){const r=Math.floor(this._randomizer.random*f),l=e.row(s[r]),_=euclidean_squared(w,l);let c=0;if(_>0)c=2*o*h/((.01+_)*(a*Math.pow(_,h)+1));else if(m===r)continue;for(let o=0;o<i;++o){const i=d(c*(w[o]-l[o]))*n,a=w[o]+i,h=l[o]-i;w[o]=a,l[o]=h,t.set_entry(m,o,a),e.set_entry(s[r],o,h)}}c[p]+=A*_[p]}return t}next(){let t=++this._iter,e=this.Y;return this._alpha=this._initial_alpha*(1-t/this._n_epochs),this.Y=this._optimize_layout(e,e,this._head,this._tail),this.Y}}
+if(o[t]>0)a[t]<s*p&&(a[t]=s*p);else{const e=_.reduce(((t,e)=>t+e.reduce(((t,e)=>t+e.value),0)/e.length));a[t]>s*e&&(a[t]=s*e)}}return{distances:_,sigmas:a,rhos:o}}
+/**
+     * @private
+     * @param {Matrix} X 
+     * @param {Number} n_neighbors 
+     * @returns {Matrix}
+     */_fuzzy_simplicial_set(t,e){const r=t.shape[0],s=this._metric,i="precomputed"===s?new KNN(t,"precomputed"):new BallTree(t.to2dArray,s);let{distances:n,sigmas:o,rhos:a}=this._smooth_knn_dist(i,e);n=this._compute_membership_strengths(n,o,a);const h=new Matrix(r,r,"zeros");for(let t=0;t<r;++t){const e=n[t];for(let r=0;r<e.length;++r)h.set_entry(t,e[r].element.index,e[r].value)}const l=h.T,_=h.mult(l);return h.add(l).sub(_).mult(this._set_op_mix_ratio).add(_.mult(1-this._set_op_mix_ratio))}
+/**
+     * @private
+     * @param {Number} n_epochs 
+     * @returns {Array}
+     */_make_epochs_per_sample(t){const e=this._weights,r=new Float32Array(e.length).fill(-1),s=max(e),i=e.map((e=>t*(e/s)));for(let e=0;e<r.length;++e)i[e]>0&&(r[e]=Math.round(t/i[e]));return r}
+/**
+     * @private
+     * @param {Matrix} graph 
+     * @returns {Object}
+     */_tocoo(t){const e=[],r=[],s=[],[i,n]=t.shape;for(let o=0;o<i;++o)for(let i=0;i<n;++i){const n=t.entry(o,i);0!==n&&(e.push(o),r.push(i),s.push(n))}return{rows:e,cols:r,data:s}}
+/**
+     * Computes all necessary 
+     * @returns {UMAP}
+     */init(){const[t,e]=this._find_ab_params(this._spread,this._min_dist);this._a=t,this._b=e,this._graph=this._fuzzy_simplicial_set(this.X,this._n_neighbors);const{rows:r,cols:s,data:i}=this._tocoo(this._graph);return this._head=r,this._tail=s,this._weights=i,this._epochs_per_sample=this._make_epochs_per_sample(this._n_epochs),this._epochs_per_negative_sample=this._epochs_per_sample.map((t=>t*this._negative_sample_rate)),this._epoch_of_next_sample=this._epochs_per_sample.slice(),this._epoch_of_next_negative_sample=this._epochs_per_negative_sample.slice(),this}set local_connectivity(t){this._local_connectivity=t}get local_connectivity(){return this._local_connectivity}set min_dist(t){this._min_dist=t}get min_dist(){return this._min_dist}graph(){return this.check_init(),{cols:this._head,rows:this._tail,weights:this._weights}}
+/**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */transform(t=350){this._n_epochs!=t&&(this._n_epochs=t,this.init()),this.check_init();for(let e=0;e<t;++e)this.next();return this.projection}
+/**
+     * 
+     * @param {Number} [iterations=350] - number of iterations.
+     * @returns {Matrix|Array}
+     */*generator(t=350){this._n_epochs!=t&&(this._n_epochs=t,this.init()),this.check_init();for(let e=0;e<t;++e)this.next(),yield this.projection;return this.projection}
+/**
+     * @private
+     * @param {Number} x 
+     * @returns {Number}
+     */_clip(t){return t>4?4:t<-4?-4:t}
+/**
+     * performs the optimization step.
+     * @private
+     * @param {Matrix} head_embedding 
+     * @param {Matrix} tail_embedding 
+     * @param {Matrix} head 
+     * @param {Matrix} tail 
+     * @returns {Matrix}
+     */_optimize_layout(t,e,r,s){const{_d:i,_alpha:n,_repulsion_strength:o,_a:a,_b:h,_epochs_per_sample:l,_epochs_per_negative_sample:_,_epoch_of_next_negative_sample:c,_epoch_of_next_sample:u,_clip:d}=this,f=s.length;for(let p=0,m=l.length;p<m;++p)if(u[p]<=this._iter){const m=r[p],y=s[p],w=t.row(m),g=e.row(y),x=euclidean_squared(w,g);let M=0;x>0&&(M=-2*a*h*Math.pow(x,h-1)/(a*Math.pow(x,h)+1));for(let r=0;r<i;++r){const s=d(M*(w[r]-g[r]))*n,i=w[r]+s,o=g[r]-s;w[r]=i,g[r]=o,t.set_entry(m,r,i),e.set_entry(y,r,o)}u[p]+=l[p];const A=(this._iter-c[p])/_[p];for(let r=0;r<A;++r){const r=Math.floor(this._randomizer.random*f),l=e.row(s[r]),_=euclidean_squared(w,l);let c=0;if(_>0)c=2*o*h/((.01+_)*(a*Math.pow(_,h)+1));else if(m===r)continue;for(let o=0;o<i;++o){const i=d(c*(w[o]-l[o]))*n,a=w[o]+i,h=l[o]-i;w[o]=a,l[o]=h,t.set_entry(m,o,a),e.set_entry(s[r],o,h)}}c[p]+=A*_[p]}return t}
+/**
+     * @private
+     * @returns {Matrix}
+     */next(){let t=++this._iter,e=this.Y;return this._alpha=this._initial_alpha*(1-t/this._n_epochs),this.Y=this._optimize_layout(e,e,this._head,this._tail),this.Y}}
 /**
  * @class
  * @alias TriMap
- */class TriMap extends DR{
+ */class TriMap extends DR$1{
 /**
      * 
      * @constructor
@@ -1207,7 +1315,7 @@ i<n.reachability_distance&&(n.reachability_distance=i,e=Heap.heapify(e.data(),(t
 /**
  * @class
  * @alias LSP
- */class LSP extends DR{
+ */class LSP extends DR$1{
 /**
      * 
      * @constructor
@@ -1231,7 +1339,7 @@ constructor(t,e,r,s=2,i=euclidean,n=1212){return super(t,s,i,n),super.parameter_
 /**
      * Computes the projection.
      * @returns {Matrix} Returns the projection.
-     */transform(){this.check_init();const t=this._A,e=t.T,r=this._b,s=e.dot(t),i=e.dot(r);return this.Y=Matrix.solve_CG(s,i,this._randomizer),this.projection}}class TopoMap extends DR{
+     */transform(){this.check_init();const t=this._A,e=t.T,r=this._b,s=e.dot(t),i=e.dot(r);return this.Y=Matrix.solve_CG(s,i,this._randomizer),this.projection}}class TopoMap extends DR$1{
 /**
      * 
      * @constructor
@@ -1305,7 +1413,11 @@ constructor(t,e=2,r=euclidean,s=1212){return super(t,e,r,s),super.parameter_list
      */__align_components(t,e,r){const s=[...t.__disjoint_set.children],i=[...e.__disjoint_set.children],n=this.__hull(s),o=this.__hull(i),a=this.__align_hull(n,t,!1),h=this.__align_hull(o,e,!0);this.__transform_component(s,a,0),this.__transform_component(i,h,r)}
 /**
      * Transforms the inputdata {@link X} to dimensionality 2.
-     */transform(){this._is_initialized||this.init();const t=this._Emst,e=[...this.Y],r=new DisjointSet(e.map(((t,e)=>(t.i=e,t))));for(const[s,i,n]of t){const t=r.find(e[s]),o=r.find(e[i]);t!==o&&(this.__align_components(t,o,n),r.union(t,o))}return this.projection}*generator(){this._is_initialized||this.init();const t=this._Emst,e=[...this.Y],r=new DisjointSet(e.map(((t,e)=>(t.i=e,t))));for(const[s,i,n]of t){const t=r.find(e[s]),o=r.find(e[i]);t!==o&&(this.__align_components(t,o,n),r.union(t,o),yield this.projection)}return this.projection}}class SAMMON extends DR{
+     */transform(){this._is_initialized||this.init();const t=this._Emst,e=[...this.Y],r=new DisjointSet(e.map(((t,e)=>(t.i=e,t))));for(const[s,i,n]of t){const t=r.find(e[s]),o=r.find(e[i]);t!==o&&(this.__align_components(t,o,n),r.union(t,o))}return this.projection}*generator(){this._is_initialized||this.init();const t=this._Emst,e=[...this.Y],r=new DisjointSet(e.map(((t,e)=>(t.i=e,t))));for(const[s,i,n]of t){const t=r.find(e[s]),o=r.find(e[i]);t!==o&&(this.__align_components(t,o,n),r.union(t,o),yield this.projection)}return this.projection}}
+/**
+ * @class
+ * @alias SAMMON
+ */class SAMMON extends DR{
 /**
      * 
      * @constructor
@@ -1321,7 +1433,7 @@ constructor(t,e=2,r=euclidean,s=1212){return super(t,e,r,s),super.parameter_list
 constructor(t,e=.1,r=2,s=euclidean,i=1212){return super(t,r,s,i),super.parameter_list=["magic"],this.parameter("magic",e),[this._N,this._D]=this.X.shape,this}
 /**
      * initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.
-     */init(t="random",e=null){const r=this._N,s=this._d;if("random"===t){const t=this._randomizer;this.Y=new Matrix(r,s,(()=>t.random))}else this.Y=t.transform(this.X);return this.Y,this._metric,this.distance_matrix=e||this.__distance_matrix(this.X),this}
+     */init(t="random",e=null){const r=this._N,s=this._d;if("random"===t){const t=this._randomizer;this.Y=new Matrix(r,s,(()=>t.random))}else t instanceof DR$1&&(this.Y=t.transform(this.X));return this.distance_matrix=e||this.__distance_matrix(this.X),this}
 /**
      * @private
      * @param {Matrix} A
@@ -1329,4 +1441,4 @@ constructor(t,e=.1,r=2,s=euclidean,i=1212){return super(t,r,s,i),super.parameter
      */__distance_matrix(t){const e=this._metric,r=t.shape[0],s=new Matrix(r,r);for(let i=0;i<r;++i){const n=t.row(i);for(let o=i;o<r;++o){let r=i===o?0:e(n,t.row(o));s.set_entry(i,o,r),s.set_entry(o,i,r)}}return s}
 /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     */transform(t=100){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.3.16";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */transform(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.3.16";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,sokal_michener,t as version,yule};
