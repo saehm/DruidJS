@@ -35,9 +35,7 @@ export class PCA extends DR{
     project(data) {
         if (Array.isArray(data)) {
             data = Matrix.from(data);
-        } else if (!(data instanceof Matrix)) {
-            data = Matrix.from(data);
-        } else if (!(data instanceof Matrix)) {
+        else if (!(data instanceof Matrix)) {
             throw "no valid type for X";
         }
         return data.dot(this.principalCmp);
