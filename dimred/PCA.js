@@ -29,6 +29,18 @@ export class PCA extends DR{
     }
 
     /**
+     * projects the data if the principal components have already been calculated
+     * @param {Matrix|Array<Array<Number>>} data - the data to be projected
+     */
+    project(data) {
+        if (Array.isArray(data)) {
+            data = Matrix.from(data);
+        } else if (!(data instanceof Matrix)) {
+            throw "no valid type for X";
+        }
+        return data.dot(this.principalCmp);
+    }
+    /**
      * Transforms the inputdata {@link X} to dimenionality {@link d}.
      */
     transform() {
