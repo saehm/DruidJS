@@ -22,6 +22,13 @@ export class PCA extends DR{
     }
 
     /**
+     * Returns the principal components of the projection
+     */
+    get principalCmp() {
+        return this.V;
+    }
+
+    /**
      * Transforms the inputdata {@link X} to dimenionality {@link d}.
      */
     transform() {
@@ -32,7 +39,7 @@ export class PCA extends DR{
 
         let C = X_cent.transpose().dot(X_cent)
         let { eigenvectors: V } = simultaneous_poweriteration(C, this._d)
-        V = Matrix.from(V).transpose()
+        this.V = Matrix.from(V).transpose();
         this.Y = X.dot(V)
         return this.projection;
     }
