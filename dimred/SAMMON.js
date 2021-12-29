@@ -6,7 +6,7 @@ import { DR as DimRed} from "./DR.js";
  * @class
  * @alias SAMMON
  */
-export class SAMMON extends DR {
+export class SAMMON extends DimRed {
     /**
      * 
      * @constructor

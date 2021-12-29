@@ -20,7 +20,7 @@ import { Matrix } from "../matrix/index";
         this._matrix = (matrix instanceof Matrix) ? matrix : Matrix.from(matrix);
         this._metric = metric;
         this._linkage = linkage;
-        if (metric === "precomputed" && matrix.shape[0] !== matrix.shape[1]) {
+        if (metric === "precomputed" && this._matrix.shape[0] !== this._matrix.shape[1]) {
             throw "If metric is 'precomputed', then matrix has to be square!";
         }
         this.init();
@@ -125,6 +125,15 @@ import { Matrix } from "../matrix/index";
         for (let p = 0, p_max = n - 1; p < p_max; ++p) {
             let c1 = 0;
             for (let i = 0; i < n; ++i) {
+                let D_i_min = D.entry(i, d_min[i]);
+                for (let j = i + 1; j < n; ++j) {
+                    if (D_i_min > D.entry(i, j)) {
+                        d_min[i] = j;
+                        D_i_min = D.entry(i, d_min[i]);
+                    }
+                }
+            }
+            for (let i = 0; i < n; ++i) {
                 if (D.entry(i, d_min[i]) < D.entry(c1, d_min[c1])) {
                     c1 = i;
                 }
@@ -141,18 +150,19 @@ import { Matrix } from "../matrix/index";
             clusters[c1].unshift(new_cluster);
             c_size[c1] += c_size[c2];
             for (let j = 0; j < n; ++j) {
+                const D_c1_j = D.entry(c1, j);
+                const D_c2_j = D.entry(c2, j);
+
                 switch(linkage) {
                     case "single":
-                        if (D.entry(c1, j) > D.entry(c2, j)) {
-                            D.set_entry(j, c1, D.entry(c2, j));
-                            D.set_entry(c1, j, D.entry(c2, j));
-                        }
+                        const min = Math.min(D_c1_j, D_c2_j);
+                        D.set_entry(j, c1, min);
+                        D.set_entry(c1, j, min);
                         break;
                     case "complete":
-                        if (D.entry(c1, j) < D.entry(c2, j)) {
-                            D.set_entry(j, c1, D.entry(c2, j));
-                            D.set_entry(c1, j, D.entry(c2, j));
-                        }
+                        const max = Math.max(D_c1_j, D_c2_j);
+                        D.set_entry(j, c1, max);
+                        D.set_entry(c1, j, max);
                         break;
                     case "average":
                         const value = (c_size[c1] * D.entry(c1, j) + c_size[c2] * D.entry(c2, j)) / (c_size[c1] + c_size[j]);

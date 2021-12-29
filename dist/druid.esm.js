@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.16 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.4.0 Copyright 2021 Rene Cutura
 /**
  * Computes the euclidean distance (l_2) between {@link a} and {@link b}.
  * @memberof module:metrics
@@ -395,7 +395,7 @@ constructor(t){return this._N=624,this._M=397,this._MATRIX_A=2567483615,this._UP
 for(let t=0,r=a.length;t<e;++t,--r){let e=n.random_int%r;o[t]=a.splice(e,1)[0]}
 //return result;
 //return new Matrix(n, cols, (row, col) => A.entry(sample[row], col))
-return o.map((e=>t.row(e)))}}function max(t){let e;for(const r of t)null!=r&&(e<r||void 0===e&&r>=r)&&(e=r);return e}
+return o.map((e=>t.row(e)))}}function max(t){let e;for(const r of t)null!=r&&(e<r||void 0===e&&r>=r)&&(e=r);return e}function min(t){let e;for(const r of t)null!=r&&(e>r||void 0===e&&r<=r)&&(e=r);return e}
 /**
  * @class
  * @alias Heap
@@ -573,7 +573,7 @@ constructor(t=null,e=euclidean){this._metric=e,this._elements=t instanceof Matri
 /**
  * @class
  * @alias DR
- */class DR$1{
+ */class DR{
 //static parameter_list = [];
 get parameter_list(){return this._parameter_list}set parameter_list(t){return this._parameter_list=t,this}
 /**
@@ -613,7 +613,7 @@ get parameter_list(){return this._parameter_list}set parameter_list(t){return th
  * @class
  * @alias PCA
  * @augments DR
- */class PCA extends DR$1{
+ */class PCA extends DR{
 /**
      * @constructor
      * @memberof module:dimensionality_reduction
@@ -629,7 +629,7 @@ constructor(t,e=2){return super(t,e),this}
 /**
  * @class
  * @alias MDS
- */class MDS extends DR$1{
+ */class MDS extends DR{
 /**
      * Classical MDS.
      * @constructor
@@ -651,7 +651,7 @@ constructor(t,e=2,r=euclidean,s=1212){return super(t,e,r,s),this}
 /**
  * @class
  * @alias ISOMAP
- */class ISOMAP extends DR$1{
+ */class ISOMAP extends DR{
 /**
      * 
      * @constructor
@@ -678,7 +678,7 @@ return this.Y=Matrix.from(c).transpose(),this.projection}}
 /**
  * @class
  * @alias FASTMAP
- */class FASTMAP extends DR$1{
+ */class FASTMAP extends DR{
 /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
@@ -725,7 +725,7 @@ return this.Y=i,this.projection}}
 /**
  * @class
  * @alias LDA
- */class LDA extends DR$1{
+ */class LDA extends DR{
 /**
      * 
      * @constructor
@@ -752,7 +752,7 @@ return _=Matrix.from(_).transpose(),this.Y=t.dot(_),this.projection}}
 /**
  * @class
  * @alias LLE
- */class LLE extends DR$1{
+ */class LLE extends DR{
 /**
      * 
      * @constructor
@@ -777,7 +777,7 @@ return this.Y=Matrix.from(_.slice(1,1+e)).T,this.projection}}
 /**
  * @class
  * @alias LTSA
- */class LTSA extends DR$1{
+ */class LTSA extends DR{
 /**
      * 
      * @constructor
@@ -807,7 +807,7 @@ return this.Y=Matrix.from(h.slice(1)).transpose(),this.projection}}
 /**
  * @class
  * @alias TSNE
- */class TSNE extends DR$1{
+ */class TSNE extends DR{
 /**
      * 
      * @constructor
@@ -861,7 +861,7 @@ function powell(t,e,r=300){const s=e.length;let i=.001,n=1e4,o=e.slice(),a=t(o),
 /**
  * @class
  * @alias UMAP
- */class UMAP extends DR$1{
+ */class UMAP extends DR{
 /**
      * 
      * @constructor
@@ -949,7 +949,7 @@ if(o[t]>0)a[t]<s*p&&(a[t]=s*p);else{const e=_.reduce(((t,e)=>t+e.reduce(((t,e)=>
 /**
  * @class
  * @alias TriMap
- */class TriMap extends DR$1{
+ */class TriMap extends DR{
 /**
      * 
      * @constructor
@@ -1067,7 +1067,7 @@ if(e%r==0||e>=p){c=1,u=1;for(let e=0;e<o;++e){const r=t.entry(n,e),s=t.entry(a,e
      * @param {Function|"precomputed"} [metric = euclidean] 
      * @returns {Hierarchical_Clustering}
      */
-constructor(t,e="complete",r=euclidean){if(this._id=0,this._matrix=t instanceof Matrix?t:Matrix.from(t),this._metric=r,this._linkage=e,"precomputed"===r&&t.shape[0]!==t.shape[1])throw"If metric is 'precomputed', then matrix has to be square!";return this.init(),this.root=this.do(),this}
+constructor(t,e="complete",r=euclidean){if(this._id=0,this._matrix=t instanceof Matrix?t:Matrix.from(t),this._metric=r,this._linkage=e,"precomputed"===r&&this._matrix.shape[0]!==this._matrix.shape[1])throw"If metric is 'precomputed', then matrix has to be square!";return this.init(),this.root=this.do(),this}
 /**
      * 
      * @param {Number} value - value where to cut the tree.
@@ -1089,7 +1089,7 @@ for(let n=0;n<r;++n){s[n]=0;
 for(let o=0;o<r;++o)i.set_entry(n,o,n===o?1/0:t(e.row(n),e.row(o))),i.entry(n,s[n])>i.entry(n,o)&&(s[n]=o)}}else{i=this._matrix.clone();for(let t=0;t<r;++t)for(let e=0;e<r;++e)t===e?i.set_entry(t,e,1/0):i.entry(t,s[t])>i.entry(t,e)&&(s[t]=e)}this._distance_matrix=i;const n=this._clusters=new Array(r),o=this._c_size=new Uint16Array(r);for(let t=0;t<r;++t)n[t]=[],n[t][0]=new Cluster(this._id++,null,null,0,e.row(t),t,1,0),o[t]=1;return this}
 /**
      * computes the tree.
-     */do(){const t=this._n,e=this._d_min,r=this._distance_matrix,s=this._clusters,i=this._c_size,n=this._linkage;let o=null;for(let a=0,h=t-1;a<h;++a){let a=0;for(let s=0;s<t;++s)r.entry(s,e[s])<r.entry(a,e[a])&&(a=s);let h=e[a],l=s[a][0],_=s[h][0],c=l.isLeaf?[l.index]:l.index,u=_.isLeaf?[_.index]:_.index,d=c.concat(u),f=new Cluster(this._id++,l,_,r.entry(a,h),null,d);l.parent=f,_.parent=f,s[a].unshift(f),i[a]+=i[h];for(let e=0;e<t;++e)switch(n){case"single":r.entry(a,e)>r.entry(h,e)&&(r.set_entry(e,a,r.entry(h,e)),r.set_entry(a,e,r.entry(h,e)));break;case"complete":r.entry(a,e)<r.entry(h,e)&&(r.set_entry(e,a,r.entry(h,e)),r.set_entry(a,e,r.entry(h,e)));break;case"average":const t=(i[a]*r.entry(a,e)+i[h]*r.entry(h,e))/(i[a]+i[e]);r.set_entry(e,a,t),r.set_entry(a,e,t)}r.set_entry(a,a,1/0);for(let e=0;e<t;++e)r.set_entry(e,h,1/0),r.set_entry(h,e,1/0);for(let s=0;s<t;++s)e[s]===h&&(e[s]=a),r.entry(a,s)<r.entry(a,e[a])&&(e[a]=s);o=f}return o}}class Cluster{constructor(t,e,r,s,i,n,o,a){return this.id=t,this.left=e,this.right=r,this.dist=s,this.index=n,this.size=o??e.size+r.size,this.depth=a??1+Math.max(e.depth,r.depth),this.centroid=i??this._calculate_centroid(e,r),this.parent=null,this}_calculate_centroid(t,e){const r=t.size,s=e.size,i=t.centroid,n=e.centroid,o=this.size,a=t.centroid.length,h=new Float64Array(a);for(let t=0;t<a;++t)h[t]=(r*i[t]+s*n[t])/o;return h}get isLeaf(){return 0===this.depth}leaves(){if(this.isLeaf)return[this];const t=this.left,e=this.right;return(t.isLeaf?[t]:t.leaves()).concat(e.isLeaf?[e]:e.leaves())}descendants(){if(this.isLeaf)return[this];const t=this.left.descendants(),e=this.right.descendants();return t.concat(e).concat([this])}}
+     */do(){const t=this._n,e=this._d_min,r=this._distance_matrix,s=this._clusters,i=this._c_size,n=this._linkage;let o=null;for(let a=0,h=t-1;a<h;++a){let a=0;for(let s=0;s<t;++s){let i=r.entry(s,e[s]);for(let n=s+1;n<t;++n)i>r.entry(s,n)&&(e[s]=n,i=r.entry(s,e[s]))}for(let s=0;s<t;++s)r.entry(s,e[s])<r.entry(a,e[a])&&(a=s);let h=e[a],l=s[a][0],_=s[h][0],c=l.isLeaf?[l.index]:l.index,u=_.isLeaf?[_.index]:_.index,d=c.concat(u),f=new Cluster(this._id++,l,_,r.entry(a,h),null,d);l.parent=f,_.parent=f,s[a].unshift(f),i[a]+=i[h];for(let e=0;e<t;++e){const t=r.entry(a,e),s=r.entry(h,e);switch(n){case"single":const n=Math.min(t,s);r.set_entry(e,a,n),r.set_entry(a,e,n);break;case"complete":const o=Math.max(t,s);r.set_entry(e,a,o),r.set_entry(a,e,o);break;case"average":const l=(i[a]*r.entry(a,e)+i[h]*r.entry(h,e))/(i[a]+i[e]);r.set_entry(e,a,l),r.set_entry(a,e,l)}}r.set_entry(a,a,1/0);for(let e=0;e<t;++e)r.set_entry(e,h,1/0),r.set_entry(h,e,1/0);for(let s=0;s<t;++s)e[s]===h&&(e[s]=a),r.entry(a,s)<r.entry(a,e[a])&&(e[a]=s);o=f}return o}}class Cluster{constructor(t,e,r,s,i,n,o,a){return this.id=t,this.left=e,this.right=r,this.dist=s,this.index=n,this.size=o??e.size+r.size,this.depth=a??1+Math.max(e.depth,r.depth),this.centroid=i??this._calculate_centroid(e,r),this.parent=null,this}_calculate_centroid(t,e){const r=t.size,s=e.size,i=t.centroid,n=e.centroid,o=this.size,a=t.centroid.length,h=new Float64Array(a);for(let t=0;t<a;++t)h[t]=(r*i[t]+s*n[t])/o;return h}get isLeaf(){return 0===this.depth}leaves(){if(this.isLeaf)return[this];const t=this.left,e=this.right;return(t.isLeaf?[t]:t.leaves()).concat(e.isLeaf?[e]:e.leaves())}descendants(){if(this.isLeaf)return[this];const t=this.left.descendants(),e=this.right.descendants();return t.concat(e).concat([this])}}
 /**
  * @class
  * @alias KMeans
@@ -1230,9 +1230,9 @@ h[n]+=Math.min(i,_)-l,i<l)
 // update loss change
 for(let t=0;t<e;++t)t!==n&&(h[t]+=i-l)})),
 // remember best swap for i;
-h.map(((t,e)=>[t,e])).filter((([t,e])=>t<i[e])).forEach((([t,e])=>{t<i[e]&&(i[e]=t,n[e]=a)}))}})),Math.min(...i)>=0)return!0;
+h.map(((t,e)=>[t,e])).filter((([t,e])=>t<i[e])).forEach((([t,e])=>{t<i[e]&&(i[e]=t,n[e]=a)}))}})),min(i)>=0)return!0;
 // execute all improvements
-for(;Math.min(...i)<0;){
+for(;min(i)<0;){
 // swap roles of medoid m_i and non_medoid xs_i
 const e=i.map(((t,e)=>[t,e])).sort((([t],[e])=>t-e))[0][1];0==r.filter((t=>t==n[e])).length&&(r[e]=n[e]),
 // disable the swap just performed
@@ -1252,7 +1252,7 @@ i.map(((t,e)=>[t,e])).filter((([t])=>t<0)).forEach((([n,o])=>{const a=t[o];let h
 let h=1/0,l=i.choice(s,n);for(let t=0;t<n;++t){const e=l[t],s=r[e];for(let e=0;e<n;++e){if(e===t)continue;const i=r[l[e]];o[t]+=this._get_distance(t,e,s,i)}o[t]<h&&(h=o[t],// smallest distance sum
 a.push(e))}
 // other medoids
-for(let e=1;e<t;++e){let t=1/0;l=i.choice(s.filter((t=>a.findIndex((e=>e===t))<0)),n);for(let e=0;e<n;++e){let s=0;const i=l[e],o=r[i];for(let t=0;t<n;++t){if(t===e)continue;const n=l[t],h=r[n];let _=this._get_distance(i,n,o,h)-Math.min(...a.map((t=>this._get_distance(n,t,h))));_<0&&(s+=_)}
+for(let e=1;e<t;++e){let t=1/0;l=i.choice(s.filter((t=>a.findIndex((e=>e===t))<0)),n);for(let e=0;e<n;++e){let s=0;const i=l[e],o=r[i];for(let t=0;t<n;++t){if(t===e)continue;const n=l[t],h=r[n];let _=this._get_distance(i,n,o,h)-min(a.map((t=>this._get_distance(n,t,h))));_<0&&(s+=_)}
 // best reduction
 s<t&&(t=s,a.push(i))}h+=t}return a.slice(0,t)}}
 /**
@@ -1315,7 +1315,7 @@ i<n.reachability_distance&&(n.reachability_distance=i,e=Heap.heapify(e.data(),(t
 /**
  * @class
  * @alias LSP
- */class LSP extends DR$1{
+ */class LSP extends DR{
 /**
      * 
      * @constructor
@@ -1339,7 +1339,7 @@ constructor(t,e,r,s=2,i=euclidean,n=1212){return super(t,s,i,n),super.parameter_
 /**
      * Computes the projection.
      * @returns {Matrix} Returns the projection.
-     */transform(){this.check_init();const t=this._A,e=t.T,r=this._b,s=e.dot(t),i=e.dot(r);return this.Y=Matrix.solve_CG(s,i,this._randomizer),this.projection}}class TopoMap extends DR$1{
+     */transform(){this.check_init();const t=this._A,e=t.T,r=this._b,s=e.dot(t),i=e.dot(r);return this.Y=Matrix.solve_CG(s,i,this._randomizer),this.projection}}class TopoMap extends DR{
 /**
      * 
      * @constructor
@@ -1433,7 +1433,7 @@ constructor(t,e=2,r=euclidean,s=1212){return super(t,e,r,s),super.parameter_list
 constructor(t,e=.1,r=2,s=euclidean,i=1212){return super(t,r,s,i),super.parameter_list=["magic"],this.parameter("magic",e),[this._N,this._D]=this.X.shape,this}
 /**
      * initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.
-     */init(t="random",e=null){const r=this._N,s=this._d;if("random"===t){const t=this._randomizer;this.Y=new Matrix(r,s,(()=>t.random))}else t instanceof DR$1&&(this.Y=t.transform(this.X));return this.distance_matrix=e||this.__distance_matrix(this.X),this}
+     */init(t="random",e=null){const r=this._N,s=this._d;if("random"===t){const t=this._randomizer;this.Y=new Matrix(r,s,(()=>t.random))}else t instanceof DR&&(this.Y=t.transform(this.X));return this.distance_matrix=e||this.__distance_matrix(this.X),this}
 /**
      * @private
      * @param {Matrix} A
@@ -1441,4 +1441,4 @@ constructor(t,e=.1,r=2,s=euclidean,i=1212){return super(t,r,s,i),super.parameter
      */__distance_matrix(t){const e=this._metric,r=t.shape[0],s=new Matrix(r,r);for(let i=0;i<r;++i){const n=t.row(i);for(let o=i;o<r;++o){let r=i===o?0:e(n,t.row(o));s.set_entry(i,o,r),s.set_entry(o,i,r)}}return s}
 /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     */transform(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.3.16";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */transform(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step();return this.projection}*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this._N,s=this._d,i=this._metric;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,f=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/f,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/f}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.4.0";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,powell,qr,simultaneous_poweriteration$1 as simultaneous_poweriteration,sokal_michener,t as version,yule};

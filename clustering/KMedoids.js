@@ -1,7 +1,7 @@
 import { euclidean } from "../metrics/index";
 import { Randomizer } from "../util/index";
 import { linspace, Matrix } from "../matrix/index";
-
+import { min } from "../util/index";
 /**
  * @class
  * @alias KMedoids
@@ -172,10 +172,10 @@ export class KMedoids {
             }
         })
         // stop if no improvements were found
-        if (Math.min(...DeltaTD) >= 0) return true; 
+        if (min(DeltaTD) >= 0) return true; 
 
         // execute all improvements
-        while (Math.min(...DeltaTD) < 0) {
+        while (min(DeltaTD) < 0) {
             // swap roles of medoid m_i and non_medoid xs_i
             const i = DeltaTD
                 .map((d, i) => [d, i])
@@ -297,7 +297,7 @@ export class KMedoids {
                     if (o === j) continue;
                     const S_o = S[o];
                     const x_o = A[S_o];
-                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - Math.min(...medoids.map(m => this._get_distance(S_o, m, x_o)));
+                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - min(medoids.map(m => this._get_distance(S_o, m, x_o)));
                     if (delta < 0) {
                         deltaTD = deltaTD + delta;
                     }

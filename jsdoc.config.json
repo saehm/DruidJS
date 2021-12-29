@@ -17,7 +17,6 @@
         "monospaceLinks": true
     },
     "opts": {
-        "template": "node_modules/better-docs",
         "encoding": "utf8",
         "private": true,
         "recurse": true,

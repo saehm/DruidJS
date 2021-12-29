@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.3.16 Copyright 2021 Rene Cutura
+// https://renecutura.eu v0.4.0 Copyright 2021 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -1335,6 +1335,16 @@ function max(values) {
   return max;
 }
 
+function min(values) {
+    let min;
+    for (const value of values) {
+        if (value != null && (min > value || (min === undefined && value <= value))) {
+            min = value;
+        }
+    }
+    return min;
+  }
+
 /**
  * @class
  * @alias Heap
@@ -1892,7 +1902,7 @@ function simultaneous_poweriteration$1(A, k = 2, max_iterations=100, seed=1212) 
  * @class
  * @alias DR
  */
-class DR$1{
+class DR{
     //static parameter_list = [];
     get parameter_list() {
         return this._parameter_list;
@@ -2021,7 +2031,7 @@ class DR$1{
  * @alias PCA
  * @augments DR
  */
-class PCA extends DR$1{
+class PCA extends DR{
     /**
      * @constructor
      * @memberof module:dimensionality_reduction
@@ -2056,7 +2066,7 @@ class PCA extends DR$1{
  * @class
  * @alias MDS
  */
-class MDS extends DR$1{
+class MDS extends DR{
     /**
      * Classical MDS.
      * @constructor
@@ -2124,7 +2134,7 @@ class MDS extends DR$1{
  * @class
  * @alias ISOMAP
  */
-class ISOMAP extends DR$1 {
+class ISOMAP extends DR {
     /**
      * 
      * @constructor
@@ -2216,7 +2226,7 @@ class ISOMAP extends DR$1 {
  * @class
  * @alias FASTMAP
  */
-class FASTMAP extends DR$1{
+class FASTMAP extends DR{
     /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
@@ -2314,7 +2324,7 @@ class FASTMAP extends DR$1{
  * @class
  * @alias LDA
  */
-class LDA extends DR$1 {
+class LDA extends DR {
     /**
      * 
      * @constructor
@@ -2399,7 +2409,7 @@ class LDA extends DR$1 {
  * @class
  * @alias LLE
  */
-class LLE extends DR$1 {
+class LLE extends DR {
     /**
      * 
      * @constructor
@@ -2464,7 +2474,7 @@ class LLE extends DR$1 {
  * @class
  * @alias LTSA
  */
-class LTSA extends DR$1 {
+class LTSA extends DR {
     /**
      * 
      * @constructor
@@ -2532,7 +2542,7 @@ class LTSA extends DR$1 {
  * @class
  * @alias TSNE
  */
-class TSNE extends DR$1 {
+class TSNE extends DR {
     /**
      * 
      * @constructor
@@ -2794,7 +2804,7 @@ function powell(f, x0, max_iter=300) {
  * @class
  * @alias UMAP
  */
-class UMAP extends DR$1 {
+class UMAP extends DR {
 
     /**
      * 
@@ -3212,7 +3222,7 @@ class UMAP extends DR$1 {
  * @class
  * @alias TriMap
  */
-class TriMap extends DR$1{
+class TriMap extends DR{
     /**
      * 
      * @constructor
@@ -3624,7 +3634,7 @@ class TriMap extends DR$1{
         this._matrix = (matrix instanceof Matrix) ? matrix : Matrix.from(matrix);
         this._metric = metric;
         this._linkage = linkage;
-        if (metric === "precomputed" && matrix.shape[0] !== matrix.shape[1]) {
+        if (metric === "precomputed" && this._matrix.shape[0] !== this._matrix.shape[1]) {
             throw "If metric is 'precomputed', then matrix has to be square!";
         }
         this.init();
@@ -3729,6 +3739,15 @@ class TriMap extends DR$1{
         for (let p = 0, p_max = n - 1; p < p_max; ++p) {
             let c1 = 0;
             for (let i = 0; i < n; ++i) {
+                let D_i_min = D.entry(i, d_min[i]);
+                for (let j = i + 1; j < n; ++j) {
+                    if (D_i_min > D.entry(i, j)) {
+                        d_min[i] = j;
+                        D_i_min = D.entry(i, d_min[i]);
+                    }
+                }
+            }
+            for (let i = 0; i < n; ++i) {
                 if (D.entry(i, d_min[i]) < D.entry(c1, d_min[c1])) {
                     c1 = i;
                 }
@@ -3745,18 +3764,19 @@ class TriMap extends DR$1{
             clusters[c1].unshift(new_cluster);
             c_size[c1] += c_size[c2];
             for (let j = 0; j < n; ++j) {
+                const D_c1_j = D.entry(c1, j);
+                const D_c2_j = D.entry(c2, j);
+
                 switch(linkage) {
                     case "single":
-                        if (D.entry(c1, j) > D.entry(c2, j)) {
-                            D.set_entry(j, c1, D.entry(c2, j));
-                            D.set_entry(c1, j, D.entry(c2, j));
-                        }
+                        const min = Math.min(D_c1_j, D_c2_j);
+                        D.set_entry(j, c1, min);
+                        D.set_entry(c1, j, min);
                         break;
                     case "complete":
-                        if (D.entry(c1, j) < D.entry(c2, j)) {
-                            D.set_entry(j, c1, D.entry(c2, j));
-                            D.set_entry(c1, j, D.entry(c2, j));
-                        }
+                        const max = Math.max(D_c1_j, D_c2_j);
+                        D.set_entry(j, c1, max);
+                        D.set_entry(c1, j, max);
                         break;
                     case "average":
                         const value = (c_size[c1] * D.entry(c1, j) + c_size[c2] * D.entry(c2, j)) / (c_size[c1] + c_size[j]);
@@ -4174,10 +4194,10 @@ class KMedoids {
             }
         });
         // stop if no improvements were found
-        if (Math.min(...DeltaTD) >= 0) return true; 
+        if (min(DeltaTD) >= 0) return true; 
 
         // execute all improvements
-        while (Math.min(...DeltaTD) < 0) {
+        while (min(DeltaTD) < 0) {
             // swap roles of medoid m_i and non_medoid xs_i
             const i = DeltaTD
                 .map((d, i) => [d, i])
@@ -4299,7 +4319,7 @@ class KMedoids {
                     if (o === j) continue;
                     const S_o = S[o];
                     const x_o = A[S_o];
-                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - Math.min(...medoids.map(m => this._get_distance(S_o, m, x_o)));
+                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - min(medoids.map(m => this._get_distance(S_o, m, x_o)));
                     if (delta < 0) {
                         deltaTD = deltaTD + delta;
                     }
@@ -4507,7 +4527,7 @@ class OPTICS {
  * @class
  * @alias LSP
  */
-class LSP extends DR$1 {
+class LSP extends DR {
     /**
      * 
      * @constructor
@@ -4589,7 +4609,7 @@ class LSP extends DR$1 {
     }
 }
 
-class TopoMap extends DR$1 {
+class TopoMap extends DR {
     /**
      * 
      * @constructor
@@ -4911,15 +4931,15 @@ class SAMMON extends DR {
     /**
      * initializes SAMMON. Sets all projcted points to zero, and computes a minimum spanning tree.
      */
-    init(DR="random", distance_matrix=null) {
+    init(DR$1="random", distance_matrix=null) {
         const N = this._N;
         const d = this._d;
 
-        if (DR === "random") {
+        if (DR$1 === "random") {
             const randomizer = this._randomizer;
             this.Y = new Matrix(N, d, () => randomizer.random);
-        } else if (DR instanceof DR$1) {
-            this.Y = DR.transform(this.X);
+        } else if (DR$1 instanceof DR) {
+            this.Y = DR$1.transform(this.X);
         }
         this.distance_matrix = distance_matrix || this.__distance_matrix(this.X);
         return this;
@@ -5017,7 +5037,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.3.16";
+var version="0.4.0";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
@@ -5055,6 +5075,7 @@ exports.kahan_sum = kahan_sum;
 exports.linspace = linspace;
 exports.manhattan = manhattan;
 exports.max = max;
+exports.min = min;
 exports.neumair_sum = neumair_sum;
 exports.norm = norm;
 exports.powell = powell;
