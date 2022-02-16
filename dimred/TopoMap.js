@@ -1,25 +1,31 @@
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
-import { DisjointSet } from "../datastructure/index";
+import { DisjointSet } from "../datastructure/index.js";
 
+/**
+ * @class
+ * @alias TopoMap
+ * @memberof module:dimensionality_reduction
+ * @extends DR
+ */
 export class TopoMap extends DR {
     /**
-     * 
+     *
      * @constructor
      * @memberof module:dimensionality_reduction
-     * @alias Topomap
-     * @param {Matrix} X - the high-dimensional data. 
+     * @alias TopoMap
+     * @param {Matrix} X - the high-dimensional data.
      * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
+     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [seed = 1212] - the dimensionality of the projection.
      * @returns {TopoMap}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed)
+    constructor(X, d = 2, metric = euclidean, seed = 1212) {
+        super(X, d, metric, seed);
         super.parameter_list = [];
-        [ this._N, this._D ] = this.X.shape;
+        [this._N, this._D] = this.X.shape;
         this._distance_matrix = new Matrix(this._N, this._N, 0);
         return this;
     }
@@ -43,7 +49,7 @@ export class TopoMap extends DR {
     /**
      * Computes the minimum spanning tree, using a given metric
      * @private
-     * @param {Function} metric 
+     * @param {Function} metric
      * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
      */
     _make_minimum_spanning_tree(metric = euclidean) {
@@ -55,7 +61,7 @@ export class TopoMap extends DR {
         let E = [];
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
-                E.push([i, j, this.__lazy_distance_matrix(i, j, metric)])
+                E.push([i, j, this.__lazy_distance_matrix(i, j, metric)]);
             }
         }
         E = E.sort((a, b) => a[2] - b[2]);
@@ -69,7 +75,7 @@ export class TopoMap extends DR {
             }
         }
 
-        return F.sort((a, b) => a[2] - b[2])
+        return F.sort((a, b) => a[2] - b[2]);
     }
 
     /**
@@ -91,7 +97,7 @@ export class TopoMap extends DR {
      * @returns {Boolean}
      */
     __hull_cross([ax, ay], [bx, by], [sx, sy]) {
-        return ((bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0)
+        return (bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0;
     }
 
     /**
@@ -108,14 +114,14 @@ export class TopoMap extends DR {
 
         const lower = [];
         for (let i = 0; i < N; ++i) {
-            while (lower.length >= 2 && this.__hull_cross(lower[lower.length - 2], lower[lower.length -1], points[i])) {
+            while (lower.length >= 2 && this.__hull_cross(lower[lower.length - 2], lower[lower.length - 1], points[i])) {
                 lower.pop();
             }
             lower.push(points[i]);
         }
         const upper = [];
         for (let i = N - 1; i >= 0; --i) {
-            while (upper.length >= 2 && this.__hull_cross(upper[upper.length - 2], upper[upper.length -1], points[i])) {
+            while (upper.length >= 2 && this.__hull_cross(upper[upper.length - 2], upper[upper.length - 1], points[i])) {
                 upper.pop();
             }
             upper.push(points[i]);
@@ -128,30 +134,31 @@ export class TopoMap extends DR {
     /**
      * Finds the angle to rotate Point A and B to lie on a line parallel to the x-axis.
      * @private
-     * @param {Array} PointA 
+     * @param {Array} PointA
      * @param {Array} PointB
-     * @return {Object} Object containing the sinus- and cosinus-values for a rotation.  
+     * @return {Object} Object containing the sinus- and cosinus-values for a rotation.
      */
     __findAngle([p1x, p1y], [p2x, p2y]) {
         const n = euclidean([p1x, p1y], [p2x, p2y]);
-        if (n === 0) return {
-            "sin": 0, 
-            "cos": 1
-        }
+        if (n === 0)
+            return {
+                sin: 0,
+                cos: 1,
+            };
         const vec = [(p2x - p1x) / n, (p2y - p1y) / n];
         const cos = vec[0];
-        let sin = Math.sqrt(1 - (cos * cos));
+        let sin = Math.sqrt(1 - cos * cos);
         sin = vec[1] >= 0 ? -sin : sin;
         return {
-            "sin": sin, 
-            "cos": cos
-        }
+            sin: sin,
+            cos: cos,
+        };
     }
 
     /**
      * @private
-     * @param {Array} hull 
-     * @param {Array} p 
+     * @param {Array} hull
+     * @param {Array} p
      * @param {Bool} topEdge
      */
     __align_hull(hull, p, topEdge) {
@@ -160,11 +167,11 @@ export class TopoMap extends DR {
         for (let i = 0; i < hull.length; ++i) {
             const d = euclidean(hull[i], p);
             if (v === -1) {
-                d2 = d; 
+                d2 = d;
                 v = i;
             } else {
                 if (d2 > d) {
-                    d2 = d; 
+                    d2 = d;
                     v = i;
                 }
             }
@@ -180,14 +187,14 @@ export class TopoMap extends DR {
             v1 = hull[v];
             v2 = hull[(v - 1) % hull.length];
         }
-        
+
         const transformation = {
-            "tx": -hull[v][0],
-            "ty": -hull[v][1],
+            tx: -hull[v][0],
+            ty: -hull[v][1],
         };
 
         if (hull.length >= 2) {
-            const {sin, cos} = this.__findAngle(v1, v2);
+            const { sin, cos } = this.__findAngle(v1, v2);
             transformation.sin = sin;
             transformation.cos = cos;
         } else {
@@ -203,7 +210,7 @@ export class TopoMap extends DR {
      * @param {Array} Point - The point which should get transformed.
      * @param {Object} Transformation - contains the values for translation and rotation.
      */
-    __transform([px, py], {tx, ty, sin, cos}) {
+    __transform([px, py], { tx, ty, sin, cos }) {
         let x = px + tx;
         let y = py + ty;
         let xx = x * cos - y * sin;
@@ -215,7 +222,7 @@ export class TopoMap extends DR {
      * Calls {@link __transform} for each point in Set C
      * @private
      * @param {Array} C - Set of points.
-     * @param {Object} t - Transform object. 
+     * @param {Object} t - Transform object.
      * @param {Number} yOffset - value to offset set C.
      */
     __transform_component(C, t, yOffset) {
@@ -223,7 +230,7 @@ export class TopoMap extends DR {
         for (let i = 0; i < N; ++i) {
             const c = C[i];
             const [cx, cy] = this.__transform(c, t);
-            c[0] = cx; 
+            c[0] = cx;
             c[1] = cy + yOffset;
         }
     }
@@ -237,9 +244,9 @@ export class TopoMap extends DR {
     __align_components(u, v, w) {
         const points_u = [...u.__disjoint_set.children];
         const points_v = [...v.__disjoint_set.children];
-        
+
         const hull_u = this.__hull(points_u);
-        const hull_v = this.__hull(points_v);        
+        const hull_v = this.__hull(points_v);
 
         const t_u = this.__align_hull(hull_u, u, false);
         const t_v = this.__align_hull(hull_v, v, true);
@@ -255,11 +262,13 @@ export class TopoMap extends DR {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;
         const Y = [...this.Y];
-        const components = new DisjointSet(Y.map((y, i) => {
-            y.i = i;
-            return y;
-        }));
-        
+        const components = new DisjointSet(
+            Y.map((y, i) => {
+                y.i = i;
+                return y;
+            })
+        );
+
         for (const [u, v, w] of Emst) {
             const component_u = components.find(Y[u]);
             const component_v = components.find(Y[v]);
@@ -270,15 +279,17 @@ export class TopoMap extends DR {
         return this.projection;
     }
 
-    * generator() {
+    *generator() {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;
         const Y = [...this.Y];
-        const components = new DisjointSet(Y.map((y, i) => {
-            y.i = i;
-            return y;
-        }));
-        
+        const components = new DisjointSet(
+            Y.map((y, i) => {
+                y.i = i;
+                return y;
+            })
+        );
+
         for (const [u, v, w] of Emst) {
             const component_u = components.find(Y[u]);
             const component_v = components.find(Y[v]);
@@ -295,4 +306,4 @@ export class TopoMap extends DR {
         }
         return this.projection;
     }
-} 
+}

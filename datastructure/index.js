@@ -1,5 +1,5 @@
 /**
  * @module datastructure
  */
-export { Heap } from './Heap';
-export { DisjointSet } from "./DisjointSet";
+export { Heap } from './Heap.js';
+export { DisjointSet } from "./DisjointSet.js";

@@ -1,19 +1,19 @@
-import { euclidean } from "../metrics/index"
-import { Matrix, norm } from "../matrix/index"
+import { euclidean } from "../metrics/index.js";
+import { Matrix, norm } from "../matrix/index.js";
 
 /**
- * Computes largest Eigenvalue / Eigenvector with 
+ * Computes largest Eigenvalue / Eigenvector with
  * Accelerated Stochastic Power Iteration
  * http://proceedings.mlr.press/v84/xu18a/xu18a-supp.pdf
  * @param {Matrix} A - The respective matrix
  * @param {Number} max_iterations - number of maximal iterations
  * @param {Number} batch_size - defines batchsize
  * @param {Number} beta - learning parameter
- * @param {Metric} metric - for computing the norm 
+ * @param {Metric} metric - for computing the norm
  */
-export default function(A, max_iterations = 100, batch_size = 10, beta = .05, metric = euclidean) {
+export default function (A, max_iterations = 100, batch_size = 10, beta = 0.05, metric = euclidean) {
     if (!(A instanceof Matrix)) A = Matrix.from(A);
-    let n = A.shape[0]
+    let n = A.shape[0];
     let r = new Matrix(n, 1, () => Math.random());
     let r_last = new Matrix(n, 1, 0);
 
@@ -26,13 +26,11 @@ export default function(A, max_iterations = 100, batch_size = 10, beta = .05, me
         r = r_next.divide(r_next_norm);
     }
 
-    let u = r.transpose().dot(A).dot(r)
-    let l = r.transpose().dot(r)
-    let lambda = u.divide(l).entry(0,0)
+    let u = r.transpose().dot(A).dot(r);
+    let l = r.transpose().dot(r);
+    let lambda = u.divide(l).entry(0, 0);
     return {
-        "eigenvector": r.transpose().to2dArray[0],
-        "eigenvalue": lambda
-    }
-
+        eigenvector: r.transpose().to2dArray[0],
+        eigenvalue: lambda,
+    };
 }
-

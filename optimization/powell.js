@@ -1,5 +1,14 @@
-// http://optimization-js.github.io/optimization-js/optimization.js.html#line438
-export default function(f, x0, max_iter=300) {
+/**
+ *
+ * @memberof module:optimization
+ * @alias powell
+ * @param {Function} f
+ * @param {Array} x0
+ * @param {Number} [max_iter = 300]
+ * @returns {Array}
+ * @see http://optimization-js.github.io/optimization-js/optimization.js.html#line438
+ */
+export default function (f, x0, max_iter = 300) {
     const epsilon = 1e-2;
     const n = x0.length;
     let alpha = 1e-3;
@@ -7,7 +16,7 @@ export default function(f, x0, max_iter=300) {
     let x = x0.slice();
     let fx = f(x);
     let convergence = false;
-    
+
     while (max_iter-- >= 0 && !convergence) {
         convergence = true;
         for (let i = 0; i < n; ++i) {
@@ -21,7 +30,7 @@ export default function(f, x0, max_iter=300) {
             x[i] -= alpha * dx;
             fx = f(x);
         }
-        alpha *= (pfx >= fx ? 1.05 : 0.4);
+        alpha *= pfx >= fx ? 1.05 : 0.4;
         pfx = fx;
     }
     return x;

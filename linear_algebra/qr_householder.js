@@ -1,4 +1,4 @@
-import { Matrix, norm } from "../matrix/index";
+import { Matrix, norm } from "../matrix/index.js";
 
 /**
  * Computes the QR Decomposition of the Matrix {@link A} with householder transformations.

@@ -1,38 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Class: TriMap</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Adding favicon -->
+    
+
+    <!-- Adding meta -->
+    
+
+    <!-- Adding external script-->
+    
+
+    <!-- Adding external style-->
+    
+
+    <!-- Adding scripts-->
+    
+
+    <!-- Adding style-->
+    
+
+    <!-- Adding overlay script-->
+    
+
+    <!-- Adding overlay style-->
+    
+
+
+    <title>
+      TriMap
+    </title>
+
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
-
-<body>
-
-<div id="main">
-
-    <h1 class="page-title">Class: TriMap</h1>
-
+    <link type="text/css" rel="stylesheet" href="styles/third-party/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/third-party/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/reset.css">
+    <link type="text/css" rel="stylesheet" href="styles/clean-jsdoc-theme-base.css">
+    <link type="text/css" rel="stylesheet" href="styles/clean-jsdoc-theme-dark.css">
     
+    <svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    style="display:none">
+    <defs>
+        <symbol id="copy-icon" viewbox="0 0 488.3 488.3">
+            <g>
+                <path
+                    d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z" />
+                <path
+                    d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z" />
+            </g>
+        </symbol>
+        <symbol id='search-icon' viewBox="0 0 512 512">
+            <g>
+                <g>
+                    <path
+                        d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z" />
+                </g>
+            </g>
+            <g>
+                <g>
+                    <path
+                        d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z" />
+                </g>
+            </g>
+        </symbol>
+        <symbol id="down-icon" viewBox="0 0 16 16">
+            <path 
+                fill-rule="evenodd" 
+                clip-rule="evenodd" 
+                d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"
+            >
+            </path>
+        </symbol>
+    </defs>
+</svg>
+  </head>
+
+  <body>
+
+    <nav class="navbar" id="navbar">
+      <div class="navbar-heading" id="navbar-heading"><a href="index.html"><h2 class="navbar-heading-text">Home</h2></a></div><div class="search-box" id="search-box"><div class="search-box-input-container"><input class="search-box-input" type="text" placeholder="Search..." id="search-box-input" /><svg class="search-icon" alt="search-icon"><use xlink:href="#search-icon"></use></svg></div><div class="search-item-container" id="search-item-container"><ul class="search-item-ul" id="search-item-ul"></ul></div></div><div class="sidebar-main-content" id="sidebar-main-content"><div class="accordion collapsed" id="2272059" > <h3 class="accordion-heading">Modules<svg><use xlink:href="#down-icon"></use></svg></h3><ul class="accordion-content"><li class="accordion-list" id=""><a href="module-clustering.html">clustering</a></li><li class="accordion-list" id=""><a href="module-datastructure.html">datastructure</a></li><li class="accordion-list" id=""><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li class="accordion-list" id=""><a href="module-knn.html">knn</a></li><li class="accordion collapsed child" id=793059><div class="accordion-heading child"><a href="module-linear_algebra.html">linear_algebra</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="module-linear_algebra.html">poweriteration_n</a></li><li data-type='method'><a href="module-linear_algebra.html">qr</a></li><li data-type='method'><a href="module-linear_algebra.html">qr_givens</a></li><li data-type='method'><a href="module-linear_algebra.html">qr_householder</a></li><li data-type='method'><a href="module-linear_algebra.html">svrg</a></li></ul></li><li class="accordion-list" id=""><a href="module-matrix.html">matrix</a></li><li class="accordion collapsed child" id=7527317><div class="accordion-heading child"><a href="module-metrics.html">metrics</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="module-metrics.html">canberra</a></li><li data-type='method'><a href="module-metrics.html">chebyshev</a></li><li data-type='method'><a href="module-metrics.html">cosine</a></li><li data-type='method'><a href="module-metrics.html">euclidean</a></li><li data-type='method'><a href="module-metrics.html">euclidean_squared</a></li><li data-type='method'><a href="module-metrics.html">hamming</a></li><li data-type='method'><a href="module-metrics.html">jaccard</a></li><li data-type='method'><a href="module-metrics.html">manhattan</a></li><li data-type='method'><a href="module-metrics.html">sokal_michener</a></li><li data-type='method'><a href="module-metrics.html">yule</a></li></ul></li><li class="accordion collapsed child" id=9989674><div class="accordion-heading child"><a href="module-numerical.html">numerical</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="module-numerical.html">kahan_sum</a></li><li data-type='method'><a href="module-numerical.html">neumair_sum</a></li></ul></li><li class="accordion collapsed child" id=2651006><div class="accordion-heading child"><a href="module-optimization.html">optimization</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="module-optimization.html">powell</a></li></ul></li><li class="accordion collapsed child" id=7930114><div class="accordion-heading child"><a href="module-utils.html">utils</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="module-utils.html">max</a></li><li data-type='method'><a href="module-utils.html">min</a></li></ul></li></ul> </div><div class="accordion collapsed" id="4454419" > <h3 class="accordion-heading">Classes<svg><use xlink:href="#down-icon"></use></svg></h3><ul class="accordion-content"><li class="accordion collapsed child" id=3348385><div class="accordion-heading child"><a href="BallTree.html">BallTree</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="BallTree.html#add">add</a></li><li data-type='method'><a href="BallTree.html#search">search</a></li></ul></li><li class="accordion-list" id=""><a href="DisjointSet.html">DisjointSet</a></li><li class="accordion collapsed child" id=4471321><div class="accordion-heading child"><a href="DR.html">DR</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="DR.html#p">p</a></li><li data-type='method'><a href="DR.html#p">p</a></li><li data-type='method'><a href="DR.html#para">para</a></li><li data-type='method'><a href="DR.html#para">para</a></li><li data-type='method'><a href="DR.html#parameter">parameter</a></li><li data-type='method'><a href="DR.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=4259434><div class="accordion-heading child"><a href="FASTMAP.html">FASTMAP</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="FASTMAP.html#parameter">parameter</a></li><li data-type='method'><a href="FASTMAP.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=264295><div class="accordion-heading child"><a href="Heap.html">Heap</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="Heap.html#.heapify">heapify</a></li><li data-type='method'><a href="Heap.html#data">data</a></li><li data-type='method'><a href="Heap.html#iterate">iterate</a></li><li data-type='method'><a href="Heap.html#pop">pop</a></li><li data-type='method'><a href="Heap.html#push">push</a></li><li data-type='method'><a href="Heap.html#raw_data">raw_data</a></li><li data-type='method'><a href="Heap.html#toArray">toArray</a></li></ul></li><li class="accordion collapsed child" id=2324543><div class="accordion-heading child"><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="Hierarchical_Clustering.html#do">do</a></li><li data-type='method'><a href="Hierarchical_Clustering.html#get_clusters">get_clusters</a></li><li data-type='method'><a href="Hierarchical_Clustering.html#init">init</a></li></ul></li><li class="accordion collapsed child" id=5293002><div class="accordion-heading child"><a href="HIPP.html">HIPP</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="HIPP.html#parameter">parameter</a></li><li data-type='method'><a href="HIPP.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=2458161><div class="accordion-heading child"><a href="HNSW.html">HNSW</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="HNSW.html#add">add</a></li><li data-type='method'><a href="HNSW.html#search">search</a></li><li data-type='method'><a href="HNSW.html#search_iter">search_iter</a></li></ul></li><li class="accordion collapsed child" id=8428912><div class="accordion-heading child"><a href="ISOMAP.html">ISOMAP</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="ISOMAP.html#parameter">parameter</a></li><li data-type='method'><a href="ISOMAP.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=6469488><div class="accordion-heading child"><a href="KMeans.html">KMeans</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="KMeans.html#get_clusters">get_clusters</a></li><li data-type='method'><a href="KMeans.html#init">init</a></li></ul></li><li class="accordion collapsed child" id=853890><div class="accordion-heading child"><a href="KMedoids.html">KMedoids</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="KMedoids.html#_get_random_medoids">_get_random_medoids</a></li><li data-type='method'><a href="KMedoids.html#_iteration">_iteration</a></li><li data-type='method'><a href="KMedoids.html#get_clusters">get_clusters</a></li><li data-type='method'><a href="KMedoids.html#init">init</a></li></ul></li><li class="accordion collapsed child" id=723986><div class="accordion-heading child"><a href="KNN.html">KNN</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="KNN.html#search">search</a></li></ul></li><li class="accordion collapsed child" id=6937911><div class="accordion-heading child"><a href="LDA.html">LDA</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="LDA.html#parameter">parameter</a></li><li data-type='method'><a href="LDA.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=1690163><div class="accordion-heading child"><a href="LLE.html">LLE</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="LLE.html#parameter">parameter</a></li><li data-type='method'><a href="LLE.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=9831891><div class="accordion-heading child"><a href="LSP.html">LSP</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="LSP.html#init">init</a></li><li data-type='method'><a href="LSP.html#parameter">parameter</a></li><li data-type='method'><a href="LSP.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=8109898><div class="accordion-heading child"><a href="LTSA.html">LTSA</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="LTSA.html#parameter">parameter</a></li><li data-type='method'><a href="LTSA.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=9172084><div class="accordion-heading child"><a href="Matrix.html">Matrix</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="Matrix.html#.det">det</a></li><li data-type='method'><a href="Matrix.html#.from">from</a></li><li data-type='method'><a href="Matrix.html#.LU">LU</a></li><li data-type='method'><a href="Matrix.html#.solve">solve</a></li><li data-type='method'><a href="Matrix.html#.solve_CG">solve_CG</a></li><li data-type='method'><a href="Matrix.html#.SVD">SVD</a></li><li data-type='method'><a href="Matrix.html#add">add</a></li><li data-type='method'><a href="Matrix.html#clone">clone</a></li><li data-type='method'><a href="Matrix.html#col">col</a></li><li data-type='method'><a href="Matrix.html#concat">concat</a></li><li data-type='method'><a href="Matrix.html#divide">divide</a></li><li data-type='method'><a href="Matrix.html#dot">dot</a></li><li data-type='method'><a href="Matrix.html#entry">entry</a></li><li data-type='method'><a href="Matrix.html#gather">gather</a></li><li data-type='method'><a href="Matrix.html#get_block">get_block</a></li><li data-type='method'><a href="Matrix.html#inverse">inverse</a></li><li data-type='method'><a href="Matrix.html#iterate_rows">iterate_rows</a></li><li data-type='method'><a href="Matrix.html#mult">mult</a></li><li data-type='method'><a href="Matrix.html#outer">outer</a></li><li data-type='method'><a href="Matrix.html#row">row</a></li><li data-type='method'><a href="Matrix.html#set_block">set_block</a></li><li data-type='method'><a href="Matrix.html#set_entry">set_entry</a></li><li data-type='method'><a href="Matrix.html#set_row">set_row</a></li><li data-type='method'><a href="Matrix.html#sub">sub</a></li><li data-type='method'><a href="Matrix.html#transpose">transpose</a></li></ul></li><li class="accordion collapsed child" id=4650315><div class="accordion-heading child"><a href="MDS.html">MDS</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="MDS.html#parameter">parameter</a></li><li data-type='method'><a href="MDS.html#stress">stress</a></li><li data-type='method'><a href="MDS.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=3457959><div class="accordion-heading child"><a href="NNDescent.html">NNDescent</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="NNDescent.html#add">add</a></li><li data-type='method'><a href="NNDescent.html#search">search</a></li></ul></li><li class="accordion-list" id=""><a href="OAP.html">OAP</a></li><li class="accordion collapsed child" id=2588530><div class="accordion-heading child"><a href="OPTICS.html">OPTICS</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="OPTICS.html#get_cluster_affirmation">get_cluster_affirmation</a></li><li data-type='method'><a href="OPTICS.html#get_clusters">get_clusters</a></li><li data-type='method'><a href="OPTICS.html#init">init</a></li></ul></li><li class="accordion collapsed child" id=1944525><div class="accordion-heading child"><a href="PCA.html">PCA</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="PCA.html#parameter">parameter</a></li><li data-type='method'><a href="PCA.html#principal_components">principal_components</a></li><li data-type='method'><a href="PCA.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=7225032><div class="accordion-heading child"><a href="Randomizer.html">Randomizer</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="Randomizer.html#.choice">choice</a></li><li data-type='method'><a href="Randomizer.html#choice">choice</a></li></ul></li><li class="accordion collapsed child" id=52816><div class="accordion-heading child"><a href="SAMMON.html">SAMMON</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="SAMMON.html#init">init</a></li><li data-type='method'><a href="SAMMON.html#parameter">parameter</a></li><li data-type='method'><a href="SAMMON.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=8035388><div class="accordion-heading child"><a href="TopoMap.html">TopoMap</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="TopoMap.html#init">init</a></li><li data-type='method'><a href="TopoMap.html#parameter">parameter</a></li><li data-type='method'><a href="TopoMap.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=4292717><div class="accordion-heading child"><a href="TriMap.html">TriMap</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="TriMap.html#_generate_triplets">_generate_triplets</a></li><li data-type='method'><a href="TriMap.html#_grad">_grad</a></li><li data-type='method'><a href="TriMap.html#generator">generator</a></li><li data-type='method'><a href="TriMap.html#init">init</a></li><li data-type='method'><a href="TriMap.html#parameter">parameter</a></li><li data-type='method'><a href="TriMap.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=4476140><div class="accordion-heading child"><a href="TSNE.html">TSNE</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="TSNE.html#generator">generator</a></li><li data-type='method'><a href="TSNE.html#init">init</a></li><li data-type='method'><a href="TSNE.html#parameter">parameter</a></li><li data-type='method'><a href="TSNE.html#transform">transform</a></li></ul></li><li class="accordion collapsed child" id=7619830><div class="accordion-heading child"><a href="UMAP.html">UMAP</a><svg><use xlink:href="#down-icon"></use></svg></div><ul class='methods accordion-content'><li data-type='method'><a href="UMAP.html#generator">generator</a></li><li data-type='method'><a href="UMAP.html#init">init</a></li><li data-type='method'><a href="UMAP.html#parameter">parameter</a></li><li data-type='method'><a href="UMAP.html#transform">transform</a></li></ul></li><li class="accordion-list" id=""><a href="XMeans.html">XMeans</a></li></ul> </div><div class="accordion collapsed" id="4182011" > <h3 class="accordion-heading">Global<svg><use xlink:href="#down-icon"></use></svg></h3><ul class="accordion-content"><li class="accordion-list" id=""><a href="global.html#Eigenpair">Eigenpair</a></li></ul> </div>
+      
+
+    </nav>
+    <div class="navbar-ham" id="navbar-ham">
+      <div>
+        <div class="first"></div>
+        <div class="second"></div>
+        <div class="third"></div>
+      </div>
+    </div>
+
+    <div id="main" class="main-content">
+      
+      <h1 id='page-title' class="page-title">
+        TriMap
+      </h1>
+      
+
+      
 
 
 
 
 <section>
 
+
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>
-            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>TriMap<span class="signature">(X, weight_adj<span class="signature-attributes">opt</span>, c<span class="signature-attributes">opt</span>, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="TriMap.html">TriMap</a>}</span></h2>
+        
+        <h2>
+        
+            <span class="ancestors"><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></span>
+        
+        TriMap
+        
+        </h2>
+        
         
     
 </header>
+
 
 <article>
     <div class="container-overview">
@@ -41,9 +133,10 @@
 
     
 
-    
-    <h4 class="name" id="TriMap"><span class="type-signature"></span>new TriMap<span class="signature">(X, weight_adj<span class="signature-attributes">opt</span>, c<span class="signature-attributes">opt</span>, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="TriMap.html">TriMap</a>}</span></h4>
-    
+    <h4 class="name" id="TriMap">
+        <a href="#TriMap">#</a>
+        <span class="type-signature"></span>new TriMap<span class="signature">(X, weight_adj<span class="signature-attributes">opt</span>, c<span class="signature-attributes">opt</span>, d<span class="signature-attributes">opt</span>, metric<span class="signature-attributes">opt</span>, seed<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="TriMap.html">TriMap</a>}</span>
+    </h4>
 
     
 
@@ -57,8 +150,9 @@
 
 
 
-    <h5>Parameters:</h5>
-    
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
+        
 
 <table class="params">
     <thead>
@@ -316,6 +410,9 @@
     </tbody>
 </table>
 
+    </div>
+
+
 
 
 
@@ -348,23 +445,27 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line11">line 11</a>
-    </li></ul></dd>
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line12">line 12</a>
+            </li></ul></dd>
+        </div>
     
 
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://arxiv.org/pdf/1910.00204v1.pdf">https://arxiv.org/pdf/1910.00204v1.pdf</a></li>
-        
-            <li><a href="https://github.com/eamid/trimap">https://github.com/eamid/trimap</a></li>
-        </ul>
-    </dd>
+        <div class="details-item-container">
+            <dt class="tag-see">See:</dt>
+            <dd class="tag-see">
+                <ul>
+                    <li><a href="https://arxiv.org/pdf/1910.00204v1.pdf">https://arxiv.org/pdf/1910.00204v1.pdf</a></li>
+                
+                    <li><a href="https://github.com/eamid/trimap">https://github.com/eamid/trimap</a></li>
+                </ul>
+            </dd>
+        </div>
     
 
     
@@ -384,12 +485,13 @@
 
 
 
-<h5>Returns:</h5>
-
+    <div class="method-member-container mt-20">
+    <strong>Returns:</strong>
         
+            
 
 
-<dl>
+<dl class="param-type">
     <dt>
         Type
     </dt>
@@ -401,8 +503,8 @@
     </dd>
 </dl>
 
-    
-
+            
+    </div>
 
 
 
@@ -411,7 +513,62 @@
     </div>
 
     
+        <h3 class="subsection-title">Extends</h3>
 
+        
+
+
+    <ul>
+        <li><a href="DR.html">DR</a></li>
+    </ul>
+
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="projection">
+    <a href="#projection">#</a>
+    <span class="type-signature"></span>projection<span class="type-signature"></span>
+</h4>
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+        <div class="details-item-container">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides"><ul class="dummy"><li>
+                <a href="DR.html#projection">DR#projection</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -422,6 +579,38 @@
 
     
 
+    
+
+    
+
+    
+
+    
+
+    
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_DR.js.html">dimred/DR.js</a>, <a href="dimred_DR.js.html#line101">line 101</a>
+            </li></ul></dd>
+        </div>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+        
     
 
     
@@ -432,17 +621,18 @@
 
     
 
-    
-    <h4 class="name" id="__argsort"><span class="type-signature">(private) </span>__argsort<span class="signature">(A)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="_generate_triplets">
+        <a href="#_generate_triplets">#</a>
+        <span class="type-signature"></span>_generate_triplets<span class="signature">(n_inliers, n_outliers, n_random)</span><span class="type-signature"></span>
+    </h4>
 
     
 
 
 
-<div class="description">
-    <p>Should do the same as np.argsort()</p>
-</div>
+    <div class="description">
+        <p>Generates <code>n_inliers</code> x <code>n_outliers</code> x <code>n_random</code> triplets.</p>
+    </div>
 
 
 
@@ -452,579 +642,9 @@
 
 
 
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
         
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>A</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line188">line 188</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_find_p"><span class="type-signature">(private) </span>_find_p<span class="signature">(knn_distances, sig, nbrs)</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Calculates the similarity matrix P</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>knn_distances</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>matrix of pairwise knn distances</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sig</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Float64Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>scaling factor for the distances</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nbrs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>nearest neighbors</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line145">line 145</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>pairwise similarity matrix</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_find_weights"><span class="type-signature">(private) </span>_find_weights<span class="signature">(triplets, P, nbrs, outlier_distances, sig)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Calculates the weights for the sampled nearest neighbors triplets</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>triplets</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Sampled Triplets.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>P</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Pairwise similarity matrix.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nbrs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>nearest Neighbors</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>outlier_distances</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Float64Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Matrix of pairwise outlier distances</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sig</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Float64Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>scaling factor for the distances.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line217">line 217</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_generate_triplets"><span class="type-signature"></span>_generate_triplets<span class="signature">(n_inliers, n_outliers, n_random)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Generates <code>n_inliers</code> x <code>n_outliers</code> x <code>n_random</code> triplets.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
 
 <table class="params">
     <thead>
@@ -1117,6 +737,9 @@
     </tbody>
 </table>
 
+    </div>
+
+
 
 
 
@@ -1149,10 +772,12 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line68">line 68</a>
-    </li></ul></dd>
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line69">line 69</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -1179,24 +804,23 @@
 
 
 
-
-
         
             
 
     
 
-    
-    <h4 class="name" id="_grad"><span class="type-signature"></span>_grad<span class="signature">(Y)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="_grad">
+        <a href="#_grad">#</a>
+        <span class="type-signature"></span>_grad<span class="signature">(Y)</span><span class="type-signature"></span>
+    </h4>
 
     
 
 
 
-<div class="description">
-    <p>Computes the gradient for updating the embedding.</p>
-</div>
+    <div class="description">
+        <p>Computes the gradient for updating the embedding.</p>
+    </div>
 
 
 
@@ -1206,8 +830,9 @@
 
 
 
-    <h5>Parameters:</h5>
-    
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
+        
 
 <table class="params">
     <thead>
@@ -1254,142 +879,8 @@
     </tbody>
 </table>
 
+    </div>
 
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line275">line 275</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_next"><span class="type-signature">(private) </span>_next<span class="signature">(iter)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Does the iteration step.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>iter</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -1423,10 +914,12 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line365">line 365</a>
-    </li></ul></dd>
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line276">line 276</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -1453,773 +946,19 @@
 
 
 
-
-
         
             
 
     
 
-    
-    <h4 class="name" id="_rejection_sample"><span class="type-signature">(private) </span>_rejection_sample<span class="signature">(n_samples, max_int, rejects)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Samples <code>n_samples</code> integers from a given interval [0, <code>max_int</code>] while rejection the values that are in the <code>rejects</code>.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>n_samples</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">*</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>max_int</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">*</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>rejects</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">*</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line202">line 202</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_sample_knn_triplets"><span class="type-signature">(private) </span>_sample_knn_triplets<span class="signature">(P, nbrs, n_inliers, n_outliers)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Sample nearest neighbors triplets based on the similarity values given in P.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>P</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Matrix of pairwise similarities between each point and its neighbors given in matrix nbrs.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nbrs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Nearest neighbors indices for each point. The similarity values are given in matrix <code>P</code>. Row i corresponds to the i-th point.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>n_inliers</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Number of inlier points.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>n_outliers</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Number of outlier points.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line161">line 161</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <h4 class="name" id="generator">
+        <a href="#generator">#</a>
+        <span class="type-signature">(generator) </span>generator<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>}</span>
+    </h4>
 
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_sample_random_triplets"><span class="type-signature">(private) </span>_sample_random_triplets<span class="signature">(X, n_random, sig)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Sample uniformly ranom triplets</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>X</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Data matrix.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>n_random</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Number of random triplets per point</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sig</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Float64Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Scaling factor for the distances</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line238">line 238</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
     
 
-    
-    <h4 class="name" id="_update_embedding"><span class="type-signature">(private) </span>_update_embedding<span class="signature">(Y, iter, grad)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Updates the embedding.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>Y</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>iter</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>grad</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line384">line 384</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
 
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="generator"><span class="type-signature">(generator) </span>generator<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Matrix.html">Matrix</a>}</span></h4>
-    
-
-    
 
 
 
@@ -2262,10 +1001,12 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line351">line 351</a>
-    </li></ul></dd>
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line352">line 352</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -2289,12 +1030,13 @@
 
 
 
-<h5>Returns:</h5>
-
+    <div class="method-member-container mt-20">
+    <strong>Returns:</strong>
         
+            
 
 
-<dl>
+<dl class="param-type">
     <dt>
         Type
     </dt>
@@ -2306,27 +1048,9 @@
     </dd>
 </dl>
 
-    
+            
+    </div>
 
-
-<h5>Yields:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Matrix.html">Matrix</a></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -2335,9 +1059,10 @@
 
     
 
-    
-    <h4 class="name" id="init"><span class="type-signature"></span>init<span class="signature">(pca<span class="signature-attributes">opt</span>, knn<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="init">
+        <a href="#init">#</a>
+        <span class="type-signature"></span>init<span class="signature">(pca<span class="signature-attributes">opt</span>, knn<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+    </h4>
 
     
 
@@ -2351,8 +1076,9 @@
 
 
 
-    <h5>Parameters:</h5>
-    
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
+        
 
 <table class="params">
     <thead>
@@ -2458,6 +1184,9 @@
     </tbody>
 </table>
 
+    </div>
+
+
 
 
 
@@ -2490,10 +1219,12 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line40">line 40</a>
-    </li></ul></dd>
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line41">line 41</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -2520,6 +1251,208 @@
 
 
 
+        
+            
+
+    
+
+    <h4 class="name" id="parameter">
+        <a href="#parameter">#</a>
+        <span class="type-signature"></span>parameter<span class="signature">(name, value<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+    <div class="description">
+        <p>Set and get parameters</p>
+    </div>
+
+
+
+
+
+
+
+
+
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>name of the parameter.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last"><p>value of the parameter to set, if <code>value == null</code> then return actual parameter value.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    </div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+        <div class="details-item-container">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides"><ul class="dummy"><li>
+                <a href="DR.html#parameter">DR#parameter</a>
+            </li></ul></dd>
+        </div>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_DR.js.html">dimred/DR.js</a>, <a href="dimred_DR.js.html#line57">line 57</a>
+            </li></ul></dd>
+        </div>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         
@@ -2527,9 +1460,10 @@
 
     
 
-    
-    <h4 class="name" id="transform"><span class="type-signature"></span>transform<span class="signature">(max_iteration)</span><span class="type-signature"></span></h4>
-    
+    <h4 class="name" id="transform">
+        <a href="#transform">#</a>
+        <span class="type-signature"></span>transform<span class="signature">(max_iteration)</span><span class="type-signature"></span>
+    </h4>
 
     
 
@@ -2543,8 +1477,9 @@
 
 
 
-    <h5>Parameters:</h5>
-    
+    <div class="method-member-container flex flex-col w-100 overflow-auto mt-20">
+        <strong>Parameters:</strong>
+        
 
 <table class="params">
     <thead>
@@ -2599,6 +1534,9 @@
     </tbody>
 </table>
 
+    </div>
+
+
 
 
 
@@ -2613,7 +1551,12 @@
     
 
     
-
+        <div class="details-item-container">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides"><ul class="dummy"><li>
+                <a href="DR.html#transform">DR#transform</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -2631,10 +1574,14 @@
     
 
     
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line339">line 339</a>
-    </li></ul></dd>
+
+    
+        <div class="details-item-container">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source"><ul class="dummy"><li>
+                <a href="dimred_TriMap.js.html">dimred/TriMap.js</a>, <a href="dimred_TriMap.js.html#line340">line 340</a>
+            </li></ul></dd>
+        </div>
     
 
     
@@ -2643,8 +1590,6 @@
 
     
 </dl>
-
-
 
 
 
@@ -2676,19 +1621,37 @@
 
 
 
-</div>
+    </div>
 
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-clustering.html">clustering</a></li><li><a href="module-datastructure.html">datastructure</a></li><li><a href="module-dimensionality_reduction.html">dimensionality_reduction</a></li><li><a href="module-knn.html">knn</a></li><li><a href="module-linear_algebra.html">linear_algebra</a></li><li><a href="module-matrix.html">matrix</a></li><li><a href="module-metrics.html">metrics</a></li><li><a href="module-numerical.html">numerical</a></li></ul><h3>Classes</h3><ul><li><a href="BallTree.html">BallTree</a></li><li><a href="DisjointSet.html">DisjointSet</a></li><li><a href="DR.html">DR</a></li><li><a href="FASTMAP.html">FASTMAP</a></li><li><a href="Heap.html">Heap</a></li><li><a href="Hierarchical_Clustering.html">Hierarchical_Clustering</a></li><li><a href="HIPP.html">HIPP</a></li><li><a href="HNSW.html">HNSW</a></li><li><a href="ISOMAP.html">ISOMAP</a></li><li><a href="KMeans.html">KMeans</a></li><li><a href="KMedoids.html">KMedoids</a></li><li><a href="KNN.html">KNN</a></li><li><a href="LDA.html">LDA</a></li><li><a href="LLE.html">LLE</a></li><li><a href="LSP.html">LSP</a></li><li><a href="LTSA.html">LTSA</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="MDS.html">MDS</a></li><li><a href="NNDescent.html">NNDescent</a></li><li><a href="OAP.html">OAP</a></li><li><a href="OPTICS.html">OPTICS</a></li><li><a href="PCA.html">PCA</a></li><li><a href="Randomizer_Randomizer.html">Randomizer</a></li><li><a href="SAMMON.html">SAMMON</a></li><li><a href="Topomap.html">Topomap</a></li><li><a href="TriMap.html">TriMap</a></li><li><a href="TSNE.html">TSNE</a></li><li><a href="UMAP.html">UMAP</a></li><li><a href="XMeans.html">XMeans</a></li></ul><h3><a href="global.html">Global</a></h3>
-</nav>
+    <footer class="footer" id="footer">
+      
+    </footer>
 
-<br class="clear">
+    <script src="scripts/third-party/prettify.js"></script>
+    <script src="scripts/third-party/lang-css.js"></script>
+    <script type="text/javascript" src="scripts/misc.js"></script>
 
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Wed Dec 29 2021 17:08:39 GMT+0100 (Mitteleuropäische Normalzeit)
-</footer>
+    <script>prettyPrint();</script>
+    <script src="scripts/linenumber.js"></script>
+    <script src="scripts/fix-code-block.js"></script>
+    <script src="scripts/fix-navbar.js"></script>
+    
+      <script src="scripts/search.js"></script>
+      <script src="scripts/third-party/fuse.js"></script>
+      <script>
+        var list = [{"title":"clustering","link":"<a href=\"module-clustering.html\">clustering</a>"},{"title":"datastructure","link":"<a href=\"module-datastructure.html\">datastructure</a>"},{"title":"dimensionality_reduction","link":"<a href=\"module-dimensionality_reduction.html\">dimensionality_reduction</a>"},{"title":"knn","link":"<a href=\"module-knn.html\">knn</a>"},{"title":"linear_algebra","link":"<a href=\"module-linear_algebra.html\">linear_algebra</a>"},{"title":"poweriteration_n","link":"<a href=\"module-linear_algebra.html\">poweriteration_n &rtrif; undefined</a>"},{"title":"qr","link":"<a href=\"module-linear_algebra.html\">qr &rtrif; undefined</a>"},{"title":"qr_givens","link":"<a href=\"module-linear_algebra.html\">qr_givens &rtrif; undefined</a>"},{"title":"qr_householder","link":"<a href=\"module-linear_algebra.html\">qr_householder &rtrif; undefined</a>"},{"title":"svrg","link":"<a href=\"module-linear_algebra.html\">svrg &rtrif; undefined</a>"},{"title":"matrix","link":"<a href=\"module-matrix.html\">matrix</a>"},{"title":"metrics","link":"<a href=\"module-metrics.html\">metrics</a>"},{"title":"canberra","link":"<a href=\"module-metrics.html\">canberra &rtrif; undefined</a>"},{"title":"chebyshev","link":"<a href=\"module-metrics.html\">chebyshev &rtrif; undefined</a>"},{"title":"cosine","link":"<a href=\"module-metrics.html\">cosine &rtrif; undefined</a>"},{"title":"euclidean","link":"<a href=\"module-metrics.html\">euclidean &rtrif; undefined</a>"},{"title":"euclidean_squared","link":"<a href=\"module-metrics.html\">euclidean_squared &rtrif; undefined</a>"},{"title":"hamming","link":"<a href=\"module-metrics.html\">hamming &rtrif; undefined</a>"},{"title":"jaccard","link":"<a href=\"module-metrics.html\">jaccard &rtrif; undefined</a>"},{"title":"manhattan","link":"<a href=\"module-metrics.html\">manhattan &rtrif; undefined</a>"},{"title":"sokal_michener","link":"<a href=\"module-metrics.html\">sokal_michener &rtrif; undefined</a>"},{"title":"yule","link":"<a href=\"module-metrics.html\">yule &rtrif; undefined</a>"},{"title":"numerical","link":"<a href=\"module-numerical.html\">numerical</a>"},{"title":"kahan_sum","link":"<a href=\"module-numerical.html\">kahan_sum &rtrif; undefined</a>"},{"title":"neumair_sum","link":"<a href=\"module-numerical.html\">neumair_sum &rtrif; undefined</a>"},{"title":"optimization","link":"<a href=\"module-optimization.html\">optimization</a>"},{"title":"powell","link":"<a href=\"module-optimization.html\">powell &rtrif; undefined</a>"},{"title":"utils","link":"<a href=\"module-utils.html\">utils</a>"},{"title":"max","link":"<a href=\"module-utils.html\">max &rtrif; undefined</a>"},{"title":"min","link":"<a href=\"module-utils.html\">min &rtrif; undefined</a>"},{"title":"BallTree","link":"<a href=\"BallTree.html\">BallTree</a>"},{"title":"BallTree#add","link":"<a href=\"BallTree.html#add\">BallTree &rtrif; add</a>"},{"title":"BallTree#search","link":"<a href=\"BallTree.html#search\">BallTree &rtrif; search</a>"},{"title":"DisjointSet","link":"<a href=\"DisjointSet.html\">DisjointSet</a>"},{"title":"DR","link":"<a href=\"DR.html\">DR</a>"},{"title":"DR#p","link":"<a href=\"DR.html#p\">DR &rtrif; p</a>"},{"title":"DR#p","link":"<a href=\"DR.html#p\">DR &rtrif; p</a>"},{"title":"DR#para","link":"<a href=\"DR.html#para\">DR &rtrif; para</a>"},{"title":"DR#para","link":"<a href=\"DR.html#para\">DR &rtrif; para</a>"},{"title":"DR#parameter","link":"<a href=\"DR.html#parameter\">DR &rtrif; parameter</a>"},{"title":"DR#transform","link":"<a href=\"DR.html#transform\">DR &rtrif; transform</a>"},{"title":"FASTMAP","link":"<a href=\"FASTMAP.html\">FASTMAP</a>"},{"title":"FASTMAP#parameter","link":"<a href=\"FASTMAP.html#parameter\">FASTMAP &rtrif; parameter</a>"},{"title":"FASTMAP#transform","link":"<a href=\"FASTMAP.html#transform\">FASTMAP &rtrif; transform</a>"},{"title":"Heap","link":"<a href=\"Heap.html\">Heap</a>"},{"title":"Heap.heapify","link":"<a href=\"Heap.html#.heapify\">Heap.heapify &rtrif; undefined</a>"},{"title":"Heap#data","link":"<a href=\"Heap.html#data\">Heap &rtrif; data</a>"},{"title":"Heap#iterate","link":"<a href=\"Heap.html#iterate\">Heap &rtrif; iterate</a>"},{"title":"Heap#pop","link":"<a href=\"Heap.html#pop\">Heap &rtrif; pop</a>"},{"title":"Heap#push","link":"<a href=\"Heap.html#push\">Heap &rtrif; push</a>"},{"title":"Heap#raw_data","link":"<a href=\"Heap.html#raw_data\">Heap &rtrif; raw_data</a>"},{"title":"Heap#toArray","link":"<a href=\"Heap.html#toArray\">Heap &rtrif; toArray</a>"},{"title":"Hierarchical_Clustering","link":"<a href=\"Hierarchical_Clustering.html\">Hierarchical_Clustering</a>"},{"title":"Hierarchical_Clustering#do","link":"<a href=\"Hierarchical_Clustering.html#do\">Hierarchical_Clustering &rtrif; do</a>"},{"title":"Hierarchical_Clustering#get_clusters","link":"<a href=\"Hierarchical_Clustering.html#get_clusters\">Hierarchical_Clustering &rtrif; get_clusters</a>"},{"title":"Hierarchical_Clustering#init","link":"<a href=\"Hierarchical_Clustering.html#init\">Hierarchical_Clustering &rtrif; init</a>"},{"title":"HIPP","link":"<a href=\"HIPP.html\">HIPP</a>"},{"title":"HIPP#parameter","link":"<a href=\"HIPP.html#parameter\">HIPP &rtrif; parameter</a>"},{"title":"HIPP#transform","link":"<a href=\"HIPP.html#transform\">HIPP &rtrif; transform</a>"},{"title":"HNSW","link":"<a href=\"HNSW.html\">HNSW</a>"},{"title":"HNSW#add","link":"<a href=\"HNSW.html#add\">HNSW &rtrif; add</a>"},{"title":"HNSW#search","link":"<a href=\"HNSW.html#search\">HNSW &rtrif; search</a>"},{"title":"HNSW#search_iter","link":"<a href=\"HNSW.html#search_iter\">HNSW &rtrif; search_iter</a>"},{"title":"ISOMAP","link":"<a href=\"ISOMAP.html\">ISOMAP</a>"},{"title":"ISOMAP#parameter","link":"<a href=\"ISOMAP.html#parameter\">ISOMAP &rtrif; parameter</a>"},{"title":"ISOMAP#transform","link":"<a href=\"ISOMAP.html#transform\">ISOMAP &rtrif; transform</a>"},{"title":"KMeans","link":"<a href=\"KMeans.html\">KMeans</a>"},{"title":"KMeans#get_clusters","link":"<a href=\"KMeans.html#get_clusters\">KMeans &rtrif; get_clusters</a>"},{"title":"KMeans#init","link":"<a href=\"KMeans.html#init\">KMeans &rtrif; init</a>"},{"title":"KMedoids","link":"<a href=\"KMedoids.html\">KMedoids</a>"},{"title":"KMedoids#_get_random_medoids","link":"<a href=\"KMedoids.html#_get_random_medoids\">KMedoids &rtrif; _get_random_medoids</a>"},{"title":"KMedoids#_iteration","link":"<a href=\"KMedoids.html#_iteration\">KMedoids &rtrif; _iteration</a>"},{"title":"KMedoids#get_clusters","link":"<a href=\"KMedoids.html#get_clusters\">KMedoids &rtrif; get_clusters</a>"},{"title":"KMedoids#init","link":"<a href=\"KMedoids.html#init\">KMedoids &rtrif; init</a>"},{"title":"KNN","link":"<a href=\"KNN.html\">KNN</a>"},{"title":"KNN#search","link":"<a href=\"KNN.html#search\">KNN &rtrif; search</a>"},{"title":"LDA","link":"<a href=\"LDA.html\">LDA</a>"},{"title":"LDA#parameter","link":"<a href=\"LDA.html#parameter\">LDA &rtrif; parameter</a>"},{"title":"LDA#transform","link":"<a href=\"LDA.html#transform\">LDA &rtrif; transform</a>"},{"title":"LLE","link":"<a href=\"LLE.html\">LLE</a>"},{"title":"LLE#parameter","link":"<a href=\"LLE.html#parameter\">LLE &rtrif; parameter</a>"},{"title":"LLE#transform","link":"<a href=\"LLE.html#transform\">LLE &rtrif; transform</a>"},{"title":"LSP","link":"<a href=\"LSP.html\">LSP</a>"},{"title":"LSP#init","link":"<a href=\"LSP.html#init\">LSP &rtrif; init</a>"},{"title":"LSP#parameter","link":"<a href=\"LSP.html#parameter\">LSP &rtrif; parameter</a>"},{"title":"LSP#transform","link":"<a href=\"LSP.html#transform\">LSP &rtrif; transform</a>"},{"title":"LTSA","link":"<a href=\"LTSA.html\">LTSA</a>"},{"title":"LTSA#parameter","link":"<a href=\"LTSA.html#parameter\">LTSA &rtrif; parameter</a>"},{"title":"LTSA#transform","link":"<a href=\"LTSA.html#transform\">LTSA &rtrif; transform</a>"},{"title":"Matrix","link":"<a href=\"Matrix.html\">Matrix</a>"},{"title":"Matrix.det","link":"<a href=\"Matrix.html#.det\">Matrix.det &rtrif; undefined</a>"},{"title":"Matrix.from","link":"<a href=\"Matrix.html#.from\">Matrix.from &rtrif; undefined</a>"},{"title":"Matrix.LU","link":"<a href=\"Matrix.html#.LU\">Matrix.LU &rtrif; undefined</a>"},{"title":"Matrix.solve","link":"<a href=\"Matrix.html#.solve\">Matrix.solve &rtrif; undefined</a>"},{"title":"Matrix.solve_CG","link":"<a href=\"Matrix.html#.solve_CG\">Matrix.solve_CG &rtrif; undefined</a>"},{"title":"Matrix.SVD","link":"<a href=\"Matrix.html#.SVD\">Matrix.SVD &rtrif; undefined</a>"},{"title":"Matrix#add","link":"<a href=\"Matrix.html#add\">Matrix &rtrif; add</a>"},{"title":"Matrix#clone","link":"<a href=\"Matrix.html#clone\">Matrix &rtrif; clone</a>"},{"title":"Matrix#col","link":"<a href=\"Matrix.html#col\">Matrix &rtrif; col</a>"},{"title":"Matrix#concat","link":"<a href=\"Matrix.html#concat\">Matrix &rtrif; concat</a>"},{"title":"Matrix#divide","link":"<a href=\"Matrix.html#divide\">Matrix &rtrif; divide</a>"},{"title":"Matrix#dot","link":"<a href=\"Matrix.html#dot\">Matrix &rtrif; dot</a>"},{"title":"Matrix#entry","link":"<a href=\"Matrix.html#entry\">Matrix &rtrif; entry</a>"},{"title":"Matrix#gather","link":"<a href=\"Matrix.html#gather\">Matrix &rtrif; gather</a>"},{"title":"Matrix#get_block","link":"<a href=\"Matrix.html#get_block\">Matrix &rtrif; get_block</a>"},{"title":"Matrix#inverse","link":"<a href=\"Matrix.html#inverse\">Matrix &rtrif; inverse</a>"},{"title":"Matrix#iterate_rows","link":"<a href=\"Matrix.html#iterate_rows\">Matrix &rtrif; iterate_rows</a>"},{"title":"Matrix#mult","link":"<a href=\"Matrix.html#mult\">Matrix &rtrif; mult</a>"},{"title":"Matrix#outer","link":"<a href=\"Matrix.html#outer\">Matrix &rtrif; outer</a>"},{"title":"Matrix#row","link":"<a href=\"Matrix.html#row\">Matrix &rtrif; row</a>"},{"title":"Matrix#set_block","link":"<a href=\"Matrix.html#set_block\">Matrix &rtrif; set_block</a>"},{"title":"Matrix#set_entry","link":"<a href=\"Matrix.html#set_entry\">Matrix &rtrif; set_entry</a>"},{"title":"Matrix#set_row","link":"<a href=\"Matrix.html#set_row\">Matrix &rtrif; set_row</a>"},{"title":"Matrix#sub","link":"<a href=\"Matrix.html#sub\">Matrix &rtrif; sub</a>"},{"title":"Matrix#transpose","link":"<a href=\"Matrix.html#transpose\">Matrix &rtrif; transpose</a>"},{"title":"MDS","link":"<a href=\"MDS.html\">MDS</a>"},{"title":"MDS#parameter","link":"<a href=\"MDS.html#parameter\">MDS &rtrif; parameter</a>"},{"title":"MDS#stress","link":"<a href=\"MDS.html#stress\">MDS &rtrif; stress</a>"},{"title":"MDS#transform","link":"<a href=\"MDS.html#transform\">MDS &rtrif; transform</a>"},{"title":"NNDescent","link":"<a href=\"NNDescent.html\">NNDescent</a>"},{"title":"NNDescent#add","link":"<a href=\"NNDescent.html#add\">NNDescent &rtrif; add</a>"},{"title":"NNDescent#search","link":"<a href=\"NNDescent.html#search\">NNDescent &rtrif; search</a>"},{"title":"OAP","link":"<a href=\"OAP.html\">OAP</a>"},{"title":"OPTICS","link":"<a href=\"OPTICS.html\">OPTICS</a>"},{"title":"OPTICS#get_cluster_affirmation","link":"<a href=\"OPTICS.html#get_cluster_affirmation\">OPTICS &rtrif; get_cluster_affirmation</a>"},{"title":"OPTICS#get_clusters","link":"<a href=\"OPTICS.html#get_clusters\">OPTICS &rtrif; get_clusters</a>"},{"title":"OPTICS#init","link":"<a href=\"OPTICS.html#init\">OPTICS &rtrif; init</a>"},{"title":"PCA","link":"<a href=\"PCA.html\">PCA</a>"},{"title":"PCA#parameter","link":"<a href=\"PCA.html#parameter\">PCA &rtrif; parameter</a>"},{"title":"PCA#principal_components","link":"<a href=\"PCA.html#principal_components\">PCA &rtrif; principal_components</a>"},{"title":"PCA#transform","link":"<a href=\"PCA.html#transform\">PCA &rtrif; transform</a>"},{"title":"Randomizer","link":"<a href=\"Randomizer.html\">Randomizer</a>"},{"title":"Randomizer.choice","link":"<a href=\"Randomizer.html#.choice\">Randomizer.choice &rtrif; undefined</a>"},{"title":"Randomizer#choice","link":"<a href=\"Randomizer.html#choice\">Randomizer &rtrif; choice</a>"},{"title":"SAMMON","link":"<a href=\"SAMMON.html\">SAMMON</a>"},{"title":"SAMMON#init","link":"<a href=\"SAMMON.html#init\">SAMMON &rtrif; init</a>"},{"title":"SAMMON#parameter","link":"<a href=\"SAMMON.html#parameter\">SAMMON &rtrif; parameter</a>"},{"title":"SAMMON#transform","link":"<a href=\"SAMMON.html#transform\">SAMMON &rtrif; transform</a>"},{"title":"TopoMap","link":"<a href=\"TopoMap.html\">TopoMap</a>"},{"title":"TopoMap#init","link":"<a href=\"TopoMap.html#init\">TopoMap &rtrif; init</a>"},{"title":"TopoMap#parameter","link":"<a href=\"TopoMap.html#parameter\">TopoMap &rtrif; parameter</a>"},{"title":"TopoMap#transform","link":"<a href=\"TopoMap.html#transform\">TopoMap &rtrif; transform</a>"},{"title":"TriMap","link":"<a href=\"TriMap.html\">TriMap</a>"},{"title":"TriMap#_generate_triplets","link":"<a href=\"TriMap.html#_generate_triplets\">TriMap &rtrif; _generate_triplets</a>"},{"title":"TriMap#_grad","link":"<a href=\"TriMap.html#_grad\">TriMap &rtrif; _grad</a>"},{"title":"TriMap#generator","link":"<a href=\"TriMap.html#generator\">TriMap &rtrif; generator</a>"},{"title":"TriMap#init","link":"<a href=\"TriMap.html#init\">TriMap &rtrif; init</a>"},{"title":"TriMap#parameter","link":"<a href=\"TriMap.html#parameter\">TriMap &rtrif; parameter</a>"},{"title":"TriMap#transform","link":"<a href=\"TriMap.html#transform\">TriMap &rtrif; transform</a>"},{"title":"TSNE","link":"<a href=\"TSNE.html\">TSNE</a>"},{"title":"TSNE#generator","link":"<a href=\"TSNE.html#generator\">TSNE &rtrif; generator</a>"},{"title":"TSNE#init","link":"<a href=\"TSNE.html#init\">TSNE &rtrif; init</a>"},{"title":"TSNE#parameter","link":"<a href=\"TSNE.html#parameter\">TSNE &rtrif; parameter</a>"},{"title":"TSNE#transform","link":"<a href=\"TSNE.html#transform\">TSNE &rtrif; transform</a>"},{"title":"UMAP","link":"<a href=\"UMAP.html\">UMAP</a>"},{"title":"UMAP#generator","link":"<a href=\"UMAP.html#generator\">UMAP &rtrif; generator</a>"},{"title":"UMAP#init","link":"<a href=\"UMAP.html#init\">UMAP &rtrif; init</a>"},{"title":"UMAP#parameter","link":"<a href=\"UMAP.html#parameter\">UMAP &rtrif; parameter</a>"},{"title":"UMAP#transform","link":"<a href=\"UMAP.html#transform\">UMAP &rtrif; transform</a>"},{"title":"XMeans","link":"<a href=\"XMeans.html\">XMeans</a>"},{"title":"Eigenpair","link":"<a href=\"global.html#Eigenpair\">Eigenpair</a>"}];
+        var options = 
+          setupSearch(list, options)
+      </script>
+    
 
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
+    
+
+    
+
+    
+
+
+  </body>
+
 </html>

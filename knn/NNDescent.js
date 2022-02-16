@@ -1,6 +1,6 @@
-import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/index";
-import { Heap } from "../datastructure/index";
+import { euclidean } from "../metrics/index.js";
+import { Randomizer } from "../util/index.js";
+import { Heap } from "../datastructure/index.js";
 /**
  * @class
  * @alias NNDescent

@@ -1,10 +1,11 @@
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
 import { DR as DimRed} from "./DR.js";
 
 /**
  * @class
  * @alias SAMMON
+ * @extends DR
  */
 export class SAMMON extends DimRed {
     /**

@@ -1,5 +1,5 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { Matrix } from "../matrix/index.js";
 import { DR } from "./DR.js";
 
 /**
@@ -25,15 +25,26 @@ export class PCA extends DR{
      * Transforms the inputdata {@link X} to dimenionality {@link d}.
      */
     transform() {
-        let X = this.X;
-        let D = X.shape[1];
-        let O = new Matrix(D, D, "center");
-        let X_cent = X.dot(O);
-
-        let C = X_cent.transpose().dot(X_cent)
-        let { eigenvectors: V } = simultaneous_poweriteration(C, this._d)
-        V = Matrix.from(V).transpose()
+        const X = this.X;
+        const V = this.principal_components();
         this.Y = X.dot(V)
         return this.projection;
+    }
+
+    /**
+     * Computes the {@link d} principal components of Matrix {@link X}.
+     * @returns {Matrix} 
+     */
+    principal_components() {
+        if (this.V) {
+            return this.V;
+        }
+        const X = this.X;
+        const means = Matrix.from(X.meanCols);
+        const X_cent = X.sub(means);
+        const C = X_cent.transpose().dot(X_cent);
+        const { eigenvectors: V } = simultaneous_poweriteration(C, this._d);
+        this.V = Matrix.from(V).transpose();
+        return this.V;
     }
 } 

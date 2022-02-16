@@ -1,4 +1,4 @@
-import { Heap } from "../datastructure/Heap";
+import { Heap } from "../datastructure/index.js";
 
 /**
  * 

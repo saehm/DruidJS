@@ -1,6 +1,6 @@
-import { euclidean, euclidean_squared } from "../metrics/index";
-import { Matrix, linspace } from "../matrix/index";
-import { KMeans } from "../clustering/index";
+import { euclidean, euclidean_squared } from "../metrics/index.js";
+import { Matrix, linspace } from "../matrix/index.js";
+import { KMeans } from "../clustering/index.js";
 /**
  * @class
  * @alias XMeans

@@ -1,9 +1,9 @@
-import { euclidean, chebyshev } from "../metrics/index";
-import { MDS } from "../dimred/MDS";
-import { Randomizer } from "../util/index";
-import { BallTree } from "../knn/BallTree";
-import { Matrix } from "../matrix/index";
-import { neumair_sum } from "../numerical/index";
+import { euclidean, chebyshev } from "../metrics/index.js";
+import { MDS } from "../dimred/MDS.js";
+import { Randomizer } from "../util/index.js";
+import { BallTree } from "../knn/BallTree.js";
+import { Matrix } from "../matrix/index.js";
+import { neumair_sum } from "../numerical/index.js";
 
 /**
  * 

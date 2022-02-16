@@ -1,7 +1,7 @@
-import { qr } from "./index";
-import { Matrix } from "../matrix/Matrix";
-import { Randomizer } from "../util/index";
-import { neumair_sum } from "../numerical/index";
+import { qr } from "./index.js";
+import { Matrix } from "../matrix/index.js";
+import { Randomizer } from "../util/index.js";
+import { neumair_sum } from "../numerical/index.js";
 
 /**
  * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.

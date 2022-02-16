@@ -1,13 +1,14 @@
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { k_nearest_neighbors } from "../matrix/index";
-import { neumair_sum } from "../numerical/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { k_nearest_neighbors } from "../matrix/index.js";
+import { neumair_sum } from "../numerical/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias LLE
+ * @extends DR
  */
 export class LLE extends DR {
     /**

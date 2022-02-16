@@ -1,6 +1,6 @@
-import { Matrix, norm, linspace } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { neumair_sum } from "../numerical/index";
+import { Matrix, norm, linspace } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { neumair_sum } from "../numerical/index.js";
 
 // crout algorithm
 // https://en.wikipedia.org/wiki/Crout_matrix_decomposition

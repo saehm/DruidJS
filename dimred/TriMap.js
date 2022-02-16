@@ -1,12 +1,13 @@
-import { Matrix, linspace } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { PCA } from "./PCA";
-import { BallTree } from "../knn/index";
+import { Matrix, linspace } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { PCA } from "./PCA.js";
+import { BallTree } from "../knn/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias TriMap
+ * @extends DR
  */
 export class TriMap extends DR{
     /**

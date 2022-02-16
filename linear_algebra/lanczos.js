@@ -1,5 +1,5 @@
-import { euclidean } from "../metrics/index";
-import { Matrix, norm } from "../matrix/index";
+import { euclidean } from "../metrics/index.js";
+import { Matrix, norm } from "../matrix/index.js";
 
 export default function(A, k = 2, max_iterations = 100, metric = euclidean) {
     if (!(A instanceof Matrix)) A = Matrix.from(A);

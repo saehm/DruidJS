@@ -1,6 +1,6 @@
-import { norm } from "../matrix/index";
-import { Randomizer } from "../util/index";
-import { neumair_sum } from "../numerical/index";
+import { norm } from "../matrix/index.js";
+import { Randomizer } from "../util/index.js";
+import { neumair_sum } from "../numerical/index.js";
 /**
  * @typedef {Eigenpair} Eigenpair
  * @property {Array} Eigenvalues - Array of Eigenvalues

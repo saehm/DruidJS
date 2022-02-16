@@ -1,9 +1,9 @@
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { k_nearest_neighbors } from "../matrix/index";
-import { neumair_sum } from "../numerical/index";
-import { norm } from "../matrix/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { k_nearest_neighbors } from "../matrix/index.js";
+import { neumair_sum } from "../numerical/index.js";
+import { norm } from "../matrix/index.js";
 
 export class MLLE{
     constructor(X, neighbors, d=2, metric=euclidean) {

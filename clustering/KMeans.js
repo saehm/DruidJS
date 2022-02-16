@@ -1,7 +1,7 @@
-import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/index";
-import { Heap } from "../datastructure/index";
-import { linspace } from "../matrix/index";
+import { euclidean } from "../metrics/index.js";
+import { Randomizer } from "../util/index.js";
+import { Heap } from "../datastructure/index.js";
+import { linspace } from "../matrix/index.js";
 
 /**
  * @class

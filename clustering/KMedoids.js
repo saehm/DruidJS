@@ -1,7 +1,7 @@
-import { euclidean } from "../metrics/index";
-import { Randomizer } from "../util/index";
-import { linspace, Matrix } from "../matrix/index";
-import { min } from "../util/index";
+import { euclidean } from "../metrics/index.js";
+import { Randomizer } from "../util/index.js";
+import { linspace, Matrix } from "../matrix/index.js";
+import { min } from "../util/index.js";
 /**
  * @class
  * @alias KMedoids

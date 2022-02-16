@@ -1,11 +1,12 @@
-import { Matrix, k_nearest_neighbors } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { simultaneous_poweriteration} from "../linear_algebra/index";
+import { Matrix, k_nearest_neighbors } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias LTSA
+ * @extends DR
  */
 export class LTSA extends DR {
     /**

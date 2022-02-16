@@ -1,3 +1,6 @@
-export { Randomizer } from "./randomizer";
-export { max } from "./max";
-export { min } from "./min";
+/**
+ * @module utils
+ */
+export { Randomizer } from "./randomizer.js";
+export { default as max } from "./max.js";
+export { default as min } from "./min.js";

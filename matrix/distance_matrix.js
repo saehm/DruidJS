@@ -1,17 +1,14 @@
-import { euclidean } from "../metrics/index"
-import { Matrix } from "./Matrix";
+import { euclidean } from "../metrics/index.js";
+import { Matrix } from "./Matrix.js";
 
-export default function(A, metric = euclidean) {
+/**
+ * Computes the distance matrix of datamatrix {@link A}.
+ * @param {Matrix} A - Matrix
+ * @param {Function} [metric=euclidean] - The diistance metric.
+ * @returns {Matrix} D - The distance matrix of {@link A}.
+ */
+export default function (A, metric = euclidean) {
     let n = A.shape[0];
-    /* let D = new Array(n);
-    for (let i = 0; i < n; ++i) {
-        D[i] = new Float64Array(n);
-    }
-    for (let i = 0; i < n; ++i) {
-        for (let j = i + 1; j < n; ++j) {
-            D[i][j] = D[j][i] = metric(A[i], A[j]);
-        }
-    } */
     const D = new Matrix(n, n);
     for (let i = 0; i < n; ++i) {
         const A_i = A.row(i);

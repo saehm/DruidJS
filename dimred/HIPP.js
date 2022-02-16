@@ -1,9 +1,10 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { Matrix } from "../matrix/index.js";
 
 /**
  * @class
  * @alias HIPP
+ * @extends DR
  */
 export class HIPP{
     /**

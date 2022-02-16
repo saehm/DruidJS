@@ -1,12 +1,14 @@
-import { euclidean } from "../metrics/index";
-import { Matrix } from "../matrix/index";
-import { Randomizer } from "../util/randomizer";
+import { euclidean } from "../metrics/index.js";
+import { Matrix } from "../matrix/index.js";
+import { Randomizer } from "../util/index.js";
 
 /**
  * @class
  * @alias DR
+ * @borrows DR#parameter as DR#para
+ * @borrows DR#parameter as DR#p
  */
-export class DR{
+export class DR {
     //static parameter_list = [];
     get parameter_list() {
         return this._parameter_list;
@@ -17,17 +19,17 @@ export class DR{
         return this;
     }
     /**
-     * 
+     *
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data. 
+     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
      * @param {number} [d = 2] - the dimensionality of the projection.
-     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {seed} [seed=1987] - the seed value for the random number generator.
+     * @param {function} [metric = euclidean] - the metric which defines the distance between two points.
+     * @param {seed} [seed = 1212] - the seed value for the random number generator.
      * @returns {DR}
      */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
+    constructor(X, d = 2, metric = euclidean, seed = 1212) {
         if (Array.isArray(X)) {
             this._type = "array";
             this.X = Matrix.from(X);
@@ -35,7 +37,7 @@ export class DR{
             this._type = "matrix";
             this.X = X;
         } else {
-            throw "no valid type for X";
+            throw new Error("no valid type for X");
         }
         [this._N, this._D] = this.X.shape;
         this._d = d;
@@ -45,39 +47,31 @@ export class DR{
         this._is_initialized = false;
         return this;
     }
-        
+
     /**
      * Set and get parameters
      * @param {String} name - name of the parameter.
-     * @param {Number} [value = null] - value of the parameter to set, if null then return actual parameter value.
+     * @param {Number} [value = null] - value of the parameter to set, if <code>value == null</code> then return actual parameter value.
+     * @memberof DR
      */
-    parameter(name, value=null) {
-        if (this.parameter_list.findIndex(parameter => parameter === name) === -1) {
-            throw `${name} is not a valid parameter!`;
-        } 
+    parameter(name, value = null) {
+        if (this.parameter_list.includes(name)) {
+            throw new Error(`${name} is not a valid parameter!`);
+        }
         if (value) {
             this[`_${name}`] = value;
-            return this; 
+            this._is_initialized = false;
+            return this;
         } else {
             return this[`_${name}`];
         }
     }
 
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    para(name, value=null) {
+    para(name, value = null) {
         return this.parameter(name, value);
     }
 
-    /**
-     * Alias for 'parameter'.
-     * @param {String} name 
-     * @param {Number} value 
-     */
-    p(name, value=null) {
+    p(name, value = null) {
         return this.parameter(name, value);
     }
 
@@ -87,10 +81,10 @@ export class DR{
      */
     transform() {
         this.check_init();
-        return this.Y;
+        return this.projection;
     }
 
-    * generator() {
+    *generator() {
         return this.transform();
     }
 
@@ -108,8 +102,9 @@ export class DR{
         return this._type === "matrix" ? this.Y : this.Y.to2dArray;
     }
 
-    async transform_async() {
-        return this.transform();
+    async transform_async(...args) {
+        const dr = new this(...args);
+        return dr.transform();
     }
 
     static transform(...args) {
@@ -128,4 +123,4 @@ export class DR{
             yield res;
         }
     }
-} 
+}

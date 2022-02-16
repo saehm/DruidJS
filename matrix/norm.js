@@ -1,5 +1,5 @@
-import { euclidean } from "../metrics/index";
-import { Matrix } from "../matrix/index";
+import { euclidean } from "../metrics/index.js";
+import { Matrix } from "../matrix/index.js";
 //import { neumair_sum } from "../numerical/index";
 
 export default function(v, metric = euclidean) {

@@ -1,12 +1,13 @@
-import { Matrix } from "../matrix/index";
+import { Matrix } from "../matrix/index.js";
 import { DR } from "./DR.js";
 import { MDS } from "./MDS.js";
-import { KMedoids } from "../clustering/index";
-import { euclidean } from "../metrics/index";
-import { BallTree } from "../knn/index";
+import { KMedoids } from "../clustering/index.js";
+import { euclidean } from "../metrics/index.js";
+import { BallTree } from "../knn/index.js";
 /**
  * @class
  * @alias LSP
+ * @extends DR
  */
 export class LSP extends DR {
     /**

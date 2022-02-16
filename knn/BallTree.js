@@ -1,5 +1,5 @@
-import { euclidean } from "../metrics/index";
-import { Heap } from "../datastructure/index";
+import { euclidean } from "../metrics/index.js";
+import { Heap } from "../datastructure/index.js";
 /**
  * @class
  * @alias BallTree

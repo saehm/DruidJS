@@ -1,0 +1,12 @@
+{
+    "all": true,
+    "check-coverage": true,
+    "reporter": "html",
+    "include": [
+      "**/*.js"
+    ],
+    "exclude": [
+        "node_modules/**", "test/**"
+    ]
+
+}

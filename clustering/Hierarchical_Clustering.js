@@ -1,27 +1,27 @@
-import { euclidean } from "../metrics/index";
-import { Matrix } from "../matrix/index";
+import { euclidean } from "../metrics/index.js";
+import { Matrix } from "../matrix/index.js";
 /**
  * @class
  * @alias Hierarchical_Clustering
  */
- export class Hierarchical_Clustering {
+export class Hierarchical_Clustering {
     /**
      * @constructor
      * @memberof module:clustering
      * @alias Hierarchical_Clustering
-     * @todo needs restructuring. 
+     * @todo needs restructuring.
      * @param {Matrix} - Data or distance matrix if metric is 'precomputed'
-     * @param {("single"|"complete"|"average")} [linkage = "complete"] 
-     * @param {Function|"precomputed"} [metric = euclidean] 
+     * @param {("single"|"complete"|"average")} [linkage = "complete"]
+     * @param {Function|"precomputed"} [metric = euclidean]
      * @returns {Hierarchical_Clustering}
      */
-    constructor(matrix, linkage="complete", metric=euclidean) {
+    constructor(matrix, linkage = "complete", metric = euclidean) {
         this._id = 0;
-        this._matrix = (matrix instanceof Matrix) ? matrix : Matrix.from(matrix);
+        this._matrix = matrix instanceof Matrix ? matrix : Matrix.from(matrix);
         this._metric = metric;
         this._linkage = linkage;
         if (metric === "precomputed" && this._matrix.shape[0] !== this._matrix.shape[1]) {
-            throw "If metric is 'precomputed', then matrix has to be square!";
+            throw new Error("If metric is 'precomputed', then matrix has to be square!");
         }
         this.init();
         this.root = this.do();
@@ -29,34 +29,34 @@ import { Matrix } from "../matrix/index";
     }
 
     /**
-     * 
+     *
      * @param {Number} value - value where to cut the tree.
      * @param {("distance"|"depth")} [type = "distance"] - type of value.
      * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}.
      */
-    get_clusters(value, type="distance") {
+    get_clusters(value, type = "distance") {
         let clusters = [];
         let accessor;
         switch (type) {
             case "distance":
-                accessor = d => d.dist;
+                accessor = (d) => d.dist;
                 break;
             case "depth":
-                accessor = d => d.depth;
+                accessor = (d) => d.depth;
                 break;
             default:
-                throw "invalid type";
+                throw new Error("invalid type");
         }
         this._traverse(this.root, accessor, value, clusters);
-        return clusters
+        return clusters;
     }
 
     /**
      * @private
-     * @param {} node 
-     * @param {*} f 
-     * @param {*} value 
-     * @param {*} result 
+     * @param {} node
+     * @param {*} f
+     * @param {*} value
+     * @param {*} result
      */
     _traverse(node, f, value, result) {
         if (f(node) <= value) {
@@ -73,11 +73,11 @@ import { Matrix } from "../matrix/index";
     init() {
         const metric = this._metric;
         const A = this._matrix;
-        const n = this._n = A.shape[0];
-        const d_min = this._d_min = new Float64Array(n);
+        const n = (this._n = A.shape[0]);
+        const d_min = (this._d_min = new Float64Array(n));
         let distance_matrix;
         if (metric !== "precomputed") {
-            distance_matrix = new Matrix(n, n, 0);//new Array(n);
+            distance_matrix = new Matrix(n, n, 0); //new Array(n);
             for (let i = 0; i < n; ++i) {
                 d_min[i] = 0;
                 //distance_matrix[i] = new Float64Array(n);
@@ -101,8 +101,8 @@ import { Matrix } from "../matrix/index";
             }
         }
         this._distance_matrix = distance_matrix;
-        const clusters = this._clusters = new Array(n);
-        const c_size = this._c_size = new Uint16Array(n);
+        const clusters = (this._clusters = new Array(n));
+        const c_size = (this._c_size = new Uint16Array(n));
         for (let i = 0; i < n; ++i) {
             clusters[i] = [];
             clusters[i][0] = new Cluster(this._id++, null, null, 0, A.row(i), i, 1, 0);
@@ -152,38 +152,36 @@ import { Matrix } from "../matrix/index";
             for (let j = 0; j < n; ++j) {
                 const D_c1_j = D.entry(c1, j);
                 const D_c2_j = D.entry(c2, j);
-
-                switch(linkage) {
+                let value;
+                switch (linkage) {
                     case "single":
-                        const min = Math.min(D_c1_j, D_c2_j);
-                        D.set_entry(j, c1, min);
-                        D.set_entry(c1, j, min);
+                        value = Math.min(D_c1_j, D_c2_j);
                         break;
                     case "complete":
-                        const max = Math.max(D_c1_j, D_c2_j);
-                        D.set_entry(j, c1, max);
-                        D.set_entry(c1, j, max);
+                        value = Math.max(D_c1_j, D_c2_j);
                         break;
                     case "average":
-                        const value = (c_size[c1] * D.entry(c1, j) + c_size[c2] * D.entry(c2, j)) / (c_size[c1] + c_size[j]);
-                        D.set_entry(j, c1, value);
-                        D.set_entry(c1, j, value);
+                        value = (c_size[c1] * D_c1_j + c_size[c2] * D_c2_j) / (c_size[c1] + c_size[j]);
                         break;
                 }
+                D.set_entry(j, c1, value);
+                D.set_entry(c1, j, value);
             }
+
             D.set_entry(c1, c1, Infinity);
             for (let i = 0; i < n; ++i) {
                 D.set_entry(i, c2, Infinity);
                 D.set_entry(c2, i, Infinity);
             }
-            for (let j = 0; j < n; ++j) {
+
+            /* for (let j = 0; j < n; ++j) {
                 if (d_min[j] === c2) {
                     d_min[j] = c1;
                 }
                 if (D.entry(c1, j) < D.entry(c1, d_min[c1])) {
                     d_min[c1] = j;
                 }
-            }
+            } */
             root = new_cluster;
         }
         return root;
@@ -226,16 +224,13 @@ class Cluster {
         if (this.isLeaf) return [this];
         const left = this.left;
         const right = this.right;
-        return (left.isLeaf ? [left] : left.leaves())
-            .concat(right.isLeaf ? [right] : right.leaves())
+        return (left.isLeaf ? [left] : left.leaves()).concat(right.isLeaf ? [right] : right.leaves());
     }
 
     descendants() {
         if (this.isLeaf) return [this];
         const left_descendants = this.left.descendants();
         const right_descendants = this.right.descendants();
-        return left_descendants
-            .concat(right_descendants)
-            .concat([this]);
+        return left_descendants.concat(right_descendants).concat([this]);
     }
 }

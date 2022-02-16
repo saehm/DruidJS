@@ -1,11 +1,12 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { distance_matrix, Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { distance_matrix, Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias MDS
+ * @extends DR
  */
 export class MDS extends DR{
     /**

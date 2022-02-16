@@ -1,18 +1,18 @@
 /**
  * @module dimensionality_reduction
  */
-export { PCA } from "./PCA";
-export { MDS } from "./MDS";
-export { ISOMAP } from "./ISOMAP";
-export { FASTMAP } from "./FASTMAP";
-export { LDA } from "./LDA";
-export { LLE } from "./LLE";
+export { PCA } from "./PCA.js";
+export { MDS } from "./MDS.js";
+export { ISOMAP } from "./ISOMAP.js";
+export { FASTMAP } from "./FASTMAP.js";
+export { LDA } from "./LDA.js";
+export { LLE } from "./LLE.js";
 //export { MLLE } from "./MLLE";
-export { LTSA } from "./LTSA";
-export { TSNE } from "./TSNE";
-export { UMAP } from "./UMAP";
+export { LTSA } from "./LTSA.js";
+export { TSNE } from "./TSNE.js";
+export { UMAP } from "./UMAP.js";
 //export { OAP } from "./OAP";
-export { TriMap } from "./TriMap";
-export { LSP } from "./LSP";
-export { TopoMap } from "./TopoMap";
-export { SAMMON } from "./SAMMON";
+export { TriMap } from "./TriMap.js";
+export { LSP } from "./LSP.js";
+export { TopoMap } from "./TopoMap.js";
+export { SAMMON } from "./SAMMON.js";

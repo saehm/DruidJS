@@ -1,4 +1,4 @@
-import { Matrix } from "../matrix/index";
+import { Matrix } from "../matrix/index.js";
 
 /**
  * Computes the QR Decomposition of the Matrix {@link A} with givens rotation.

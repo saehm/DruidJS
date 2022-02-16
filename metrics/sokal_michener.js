@@ -6,7 +6,7 @@
  * @param {Array<Number>} b 
  * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
  */
- export default function(a, b) {
+export default function(a, b) {
     if (a.length != b.length) return undefined
     const n = a.length;
     let num_not_equal = 0;

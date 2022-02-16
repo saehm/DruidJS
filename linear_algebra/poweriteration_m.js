@@ -1,5 +1,5 @@
-import { Matrix, norm } from "../matrix/index";
-import { Randomizer } from "../util/index";
+import { Matrix, norm } from "../matrix/index.js";
+import { Randomizer } from "../util/index.js";
 
 /**
  * 

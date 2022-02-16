@@ -1,6 +1,6 @@
-import { euclidean } from "../metrics/index";
-import { Heap } from "../datastructure/index";
-import { distance_matrix, Matrix } from "../matrix/index";
+import { euclidean } from "../metrics/index.js";
+import { Heap } from "../datastructure/index.js";
+import { distance_matrix, Matrix } from "../matrix/index.js";
 
 /**
  * @class

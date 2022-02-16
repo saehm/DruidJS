@@ -1,12 +1,13 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index";
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
-import { Heap } from "../datastructure/index";
+import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
+import { Heap } from "../datastructure/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias ISOMAP
+ * @extends DR
  */
 export class ISOMAP extends DR {
     /**

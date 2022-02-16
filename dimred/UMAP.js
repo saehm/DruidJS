@@ -1,16 +1,17 @@
-import { Matrix } from "../matrix/index";
-import { euclidean, euclidean_squared } from "../metrics/index";
-import { BallTree } from "../knn/index";
-import { neumair_sum } from "../numerical/index";
-import { linspace } from "../matrix/index";
-import { powell } from "../optimization/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean, euclidean_squared } from "../metrics/index.js";
+import { BallTree } from "../knn/index.js";
+import { neumair_sum } from "../numerical/index.js";
+import { linspace } from "../matrix/index.js";
+import { powell } from "../optimization/index.js";
 import { DR } from "./DR.js";
-import { max } from "../util/index";
-import { KNN } from "../knn/KNN";
+import { max } from "../util/index.js";
+import { KNN } from "../knn/index.js";
 
 /**
  * @class
  * @alias UMAP
+ * @extends DR
  */
 export class UMAP extends DR {
 

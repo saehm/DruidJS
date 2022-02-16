@@ -2,11 +2,11 @@
  * Computes the yule distance between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias yule
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the yule distance between {@link a} and {@link b}.  
+ * @param {Array<Number>} a
+ * @param {Array<Number>} b
+ * @returns {Number} the yule distance between {@link a} and {@link b}.
  */
- export default function(a, b) {
+export default function (a, b) {
     if (a.length != b.length) return undefined;
     const n = a.length;
     let num_true_true = 0;
@@ -20,8 +20,5 @@
         num_false_true += !x && x;
     }
     const num_false_false = n - num_true_true - num_true_false - num_false_true;
-    return (num_true_false == 0 || num_false_true == 0) 
-        ? 0 
-        : ((2 * num_true_false * num_false_true) 
-            / (num_true_true * num_false_false + num_true_false * num_false_true));
+    return num_true_false == 0 || num_false_true == 0 ? 0 : (2 * num_true_false * num_false_true) / (num_true_true * num_false_false + num_true_false * num_false_true);
 }

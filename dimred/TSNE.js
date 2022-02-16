@@ -1,10 +1,11 @@
-import { Matrix } from "../matrix/index";
-import { euclidean } from "../metrics/index";
+import { Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /**
  * @class
  * @alias TSNE
+ * @extends DR
  */
 export class TSNE extends DR {
     /**
