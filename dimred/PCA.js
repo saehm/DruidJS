@@ -1,4 +1,4 @@
-import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Matrix } from "../matrix/index.js";
 import { DR } from "./DR.js";
 
@@ -7,33 +7,43 @@ import { DR } from "./DR.js";
  * @alias PCA
  * @augments DR
  */
-export class PCA extends DR{
+export class PCA extends DR {
     /**
      * @constructor
      * @memberof module:dimensionality_reduction
-     * @alias PCA 
+     * @alias PCA
      * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
      * @param {Number} [d = 2] - the dimensionality of the projection.
      * @returns {PCA}
      */
-    constructor(X, d=2) {
+    constructor(X, d = 2) {
         super(X, d);
         return this;
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     * Transforms the inputdata {@link X} to dimensionality {@link d}. If parameter {@link A} is given, then project {@link A} with the principal components of {@link X}.
+     * @param {null|Matrix|Array} [A = null] - If given, the data to project.
+     * @returns {Matrix|Array} - The projected data.
      */
-    transform() {
-        const X = this.X;
+    transform(A = null) {
         const V = this.principal_components();
-        this.Y = X.dot(V)
-        return this.projection;
+        if (A == null) {
+            const X = this.X;
+            this.Y = X.dot(V);
+            return this.projection;
+        } else if (Array.isArray(A)) {
+            return druid.Matrix.from(A).dot(V).asArray;
+        } else if (A instanceof Matrix) {
+            return A.dot(V);
+        } else {
+            throw new Error("No valid type for A!");
+        }
     }
 
     /**
      * Computes the {@link d} principal components of Matrix {@link X}.
-     * @returns {Matrix} 
+     * @returns {Matrix}
      */
     principal_components() {
         if (this.V) {
@@ -47,4 +57,4 @@ export class PCA extends DR{
         this.V = Matrix.from(V).transpose();
         return this.V;
     }
-} 
+}

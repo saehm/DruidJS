@@ -55,7 +55,7 @@ export class DR {
      * @memberof DR
      */
     parameter(name, value = null) {
-        if (this.parameter_list.includes(name)) {
+        if (!this.parameter_list.includes(name)) {
             throw new Error(`${name} is not a valid parameter!`);
         }
         if (value) {
