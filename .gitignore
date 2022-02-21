@@ -3,3 +3,4 @@ data
 .vscode
 *.bak
 *.bak[0-9]*
+.nyc_output
