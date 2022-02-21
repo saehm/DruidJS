@@ -11,20 +11,19 @@ import { DisjointSet } from "../datastructure/index.js";
  */
 export class TopoMap extends DR {
     /**
-     *
+     * TopoMap: A 0-dimensional Homology Preserving Projection of High-Dimensional Data.
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias TopoMap
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TopoMap}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
-    constructor(X, d = 2, metric = euclidean, seed = 1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = [];
+    constructor(X, parameters) {
+        super(X, { metric: euclidean, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
         this._distance_matrix = new Matrix(this._N, this._N, 0);
         return this;
@@ -82,8 +81,9 @@ export class TopoMap extends DR {
      * initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.
      */
     init() {
-        this.Y = new Matrix(this._N, this._d, 0);
-        this._Emst = this._make_minimum_spanning_tree(this._metric);
+        const { metric} = this._parameters
+        this.Y = new Matrix(this._N, 2, 0);
+        this._Emst = this._make_minimum_spanning_tree(metric);
         this._is_initialized = true;
         return this;
     }
@@ -261,7 +261,7 @@ export class TopoMap extends DR {
     transform() {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;
-        const Y = [...this.Y];
+        const Y = this.Y.to2dArray;
         const components = new DisjointSet(
             Y.map((y, i) => {
                 y.i = i;
@@ -282,7 +282,7 @@ export class TopoMap extends DR {
     *generator() {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;
-        const Y = [...this.Y];
+        const Y = this.Y.to2dArray;
         const components = new DisjointSet(
             Y.map((y, i) => {
                 y.i = i;
@@ -296,12 +296,6 @@ export class TopoMap extends DR {
             if (component_u === component_v) continue;
             this.__align_components(component_u, component_v, w);
             components.union(component_u, component_v);
-            /* let ok = true
-            Y.forEach(([x, y]) => ok = ok && !isNaN(x) && !isNaN(y))
-            if (!ok) {
-                console.log(...Y) 
-                throw "error" 
-            } */
             yield this.projection;
         }
         return this.projection;

@@ -6,38 +6,39 @@ import { DR } from "./DR.js";
  * @alias FASTMAP
  * @extends DR
  */
-export class FASTMAP extends DR{
+export class FASTMAP extends DR {
     /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias FASTMAP
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @param {Matrix} X - the high-dimensional data.
+     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Number} [parameters.seed = 1212] - the dimensionality of the projection.
      * @returns {FASTMAP}
      * @see {@link https://doi.org/10.1145/223784.223812}
      */
-    constructor(X, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
+    constructor(X, parameters) {
+        super(X, { d: 2, metric: euclidean, seed: 1212 }, parameters);
         return this;
     }
 
     /**
      * Chooses two points which are the most distant in the actual projection.
      * @private
-     * @param {function} dist 
+     * @param {Function} dist
      * @returns {Array} An array consisting of first index, second index, and distance between the two points.
      */
     _choose_distant_objects(dist) {
         const X = this.X;
         const N = X.shape[0];
-        let a_index = this._randomizer.random_int % N - 1;
+        let a_index = (this._randomizer.random_int % N) - 1;
         let b_index = null;
         let max_dist = -Infinity;
         for (let i = 0; i < N; ++i) {
-            const d_ai = dist(a_index, i)
+            const d_ai = dist(a_index, i);
             if (d_ai > max_dist) {
                 max_dist = d_ai;
                 b_index = i;
@@ -45,7 +46,7 @@ export class FASTMAP extends DR{
         }
         max_dist = -Infinity;
         for (let i = 0; i < N; ++i) {
-            const d_bi = dist(b_index, i)
+            const d_bi = dist(b_index, i);
             if (d_bi > max_dist) {
                 max_dist = d_bi;
                 a_index = i;
@@ -61,8 +62,7 @@ export class FASTMAP extends DR{
     transform() {
         const X = this.X;
         const N = X.shape[0];
-        const d = this._d;
-        const metric = this._metric;
+        const { d, metric } = this._parameters;
         const Y = new Matrix(N, d, 0);
         let dist = (a, b) => metric(X.row(a), X.row(b));
 
@@ -70,15 +70,6 @@ export class FASTMAP extends DR{
             let old_dist = dist;
             // choose pivot objects
             const [a_index, b_index, d_ab] = this._choose_distant_objects(dist);
-            // record id of pivot objects
-            //PA[0].push(a_index);
-            //PA[1].push(b_index);
-            /* if (d_ab === 0) {
-                // because all inter-object distances are zeros
-                for (let i = 0; i < N; ++i) {
-                    Y.set_entry(i, _col, 0);
-                }
-            } else { */
             if (d_ab !== 0) {
                 // project the objects on the line (O_a, O_b)
                 for (let i = 0; i < N; ++i) {
@@ -89,12 +80,12 @@ export class FASTMAP extends DR{
                 }
                 // consider the projections of the objects on a
                 // hyperplane perpendicluar to the line (a, b);
-                // the distance function D'() between two 
+                // the distance function D'() between two
                 // projections is given by Eq.4
-                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2)
+                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);
             }
         }
-        // return embedding
+        // return embedding.
         this.Y = Y;
         return this.projection;
     }

@@ -13,11 +13,17 @@ export class PCA extends DR {
      * @memberof module:dimensionality_reduction
      * @alias PCA
      * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
+     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @returns {PCA}
      */
-    constructor(X, d = 2) {
-        super(X, d);
+    constructor(X, parameters) {
+        super(X, { d: 2, seed: 1212, eig_args: {} }, parameters);
+        if (!this._parameters.eig_args.hasOwnProperty("seed")) {
+            this._parameters.eig_args.seed = this._randomizer;
+        }
         return this;
     }
 
@@ -49,12 +55,18 @@ export class PCA extends DR {
         if (this.V) {
             return this.V;
         }
+        const { d, eig_args } = this._parameters;
         const X = this.X;
         const means = Matrix.from(X.meanCols);
         const X_cent = X.sub(means);
         const C = X_cent.transpose().dot(X_cent);
-        const { eigenvectors: V } = simultaneous_poweriteration(C, this._d);
+        const { eigenvectors: V } = simultaneous_poweriteration(C, d, eig_args);
         this.V = Matrix.from(V).transpose();
         return this.V;
+    }
+
+    static principal_components(X, parameters) {
+        const dr = new this(X, parameters);
+        return dr.principal_components();
     }
 }

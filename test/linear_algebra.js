@@ -17,6 +17,6 @@ describe("eig", () => {
         assert.ok(druid.simultaneous_poweriteration(M, 2, 100, 1212, druid.qr_householder));
         //assert.ok(druid.simultaneous_poweriteration(M, 2, 100, 1212, druid.qr_givens));
         const eigs = druid.simultaneous_poweriteration(M, 2, 100, 1212);
-        console.log(eigs);
+        //console.log(eigs);
     });
 });

@@ -7,11 +7,12 @@ import { euclidean } from "../metrics/index.js";
  * @alias k_nearest_neigbhors
  * @param {Matrix} A - Either the data matrix, or a distance matrix.
  * @param {Number} k - The number of neighbors to compute.
- * @param {Function|"precomputed"} metric
+ * @param {Function|"precomputed"} [metric=euclidean]
+ * @returns {Array<Object>} -
  */
 export default function (A, k, metric = euclidean) {
     const rows = A.shape[0];
-    let D = metric == "precomputed" ? A.clone() : distance_matrix(A, metric);
+    let D = metric == "precomputed" ? A : distance_matrix(A, metric);
     let nN = new Array(rows);
     for (let row = 0; row < rows; ++row) {
         nN[row] = Array.from(D.row(row))

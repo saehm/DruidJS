@@ -9,52 +9,48 @@ import { DR } from "./DR.js";
  * @alias TriMap
  * @extends DR
  */
-export class TriMap extends DR{
+export class TriMap extends DR {
     /**
-     * 
+     *
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias TriMap
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [weight_adj = 500] - scaling factor.
-     * @param {Number} [c = 5] - number of triplets multiplier.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @param {Matrix} X - the high-dimensional data.
+     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Number} [parameters.weight_adj = 500] - scaling factor.
+     * @param {Number} [parameters.c = 5] - number of triplets multiplier.
+     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {Number} [parameters.tol = 1e-8] -
+     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TriMap}
      * @see {@link https://arxiv.org/pdf/1910.00204v1.pdf}
      * @see {@link https://github.com/eamid/trimap}
      */
-    constructor(X, weight_adj = 500, c = 5, d = 2, metric = euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["weight_adj", "c"];
-        this.parameter("weight_adj", weight_adj);
-        this.parameter("c", c)
+    constructor(X, parameters) {
+        super(X, { weight_adj: 500, c: 5, d: 2, metric: euclidean, tol: 1e-8, seed: 1212 }, parameters);
         return this;
     }
 
     /**
-     * 
-     * @param {Matrix} [pca = null] - Initial Embedding (if null then PCA gets used). 
-     * @param {KNN} [knn = null] - KNN Object (if null then BallTree gets used). 
+     *
+     * @param {Matrix} [pca = null] - Initial Embedding (if null then PCA gets used).
+     * @param {KNN} [knn = null] - KNN Object (if null then BallTree gets used).
      */
     init(pca = null, knn = null) {
         const X = this.X;
         const N = X.shape[0];
-        const d = this._d;
-        const metric = this._metric;
-        const c = this._c;
+        const { d, metric, c } = this._parameters;
         this.n_inliers = 2 * c;
         this.n_outliers = 1 * c;
         this.n_random = 1 * c;
-        this.Y = pca || new PCA(X, d).transform()//.mult(.01);
+        this.Y = pca || new PCA(X, d).transform();
         this.knn = knn || new BallTree(X.to2dArray, metric);
-        const {triplets, weights} = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
+        const { triplets, weights } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
         this.triplets = triplets;
         this.weights = weights;
-        this.lr = 1000 * N / triplets.shape[0];
+        this.lr = (1000 * N) / triplets.shape[0];
         this.C = Infinity;
-        this.tol = 1e-7;
         this.vel = new Matrix(N, d, 0);
         this.gain = new Matrix(N, d, 1);
         return this;
@@ -62,13 +58,12 @@ export class TriMap extends DR{
 
     /**
      * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.
-     * @param {Number} n_inliers 
-     * @param {Number} n_outliers 
-     * @param {Number} n_random 
+     * @param {Number} n_inliers
+     * @param {Number} n_outliers
+     * @param {Number} n_random
      */
     _generate_triplets(n_inliers, n_outliers, n_random) {
-        const metric = this._metric;
-        const weight_adj = this._weight_adj;
+        const { metric, weight_adj } = this._parameters;
         const X = this.X;
         const N = X.shape[0];
         const knn = this.knn;
@@ -78,26 +73,21 @@ export class TriMap extends DR{
         for (let i = 0; i < N; ++i) {
             knn.search(X.row(i), n_extra + 1)
                 .raw_data()
-                .filter(d => d.value != 0)
+                .filter((d) => d.value != 0)
                 .sort((a, b) => a.value - b.value)
                 .forEach((d, j) => {
-                    nbrs.set_entry(i, j, d.element.index)
-                    knn_distances.set_entry(i, j, d.value)
+                    nbrs.set_entry(i, j, d.element.index);
+                    knn_distances.set_entry(i, j, d.value);
                 });
         }
         // scale parameter
         const sig = new Float64Array(N);
         for (let i = 0; i < N; ++i) {
-            sig[i] = Math.max(
-                   (knn_distances.entry(i, 3) +
-                    knn_distances.entry(i, 4) +
-                    knn_distances.entry(i, 5) +
-                    knn_distances.entry(i, 6)) / 4,
-                    1e-10);
+            sig[i] = Math.max((knn_distances.entry(i, 3) + knn_distances.entry(i, 4) + knn_distances.entry(i, 5) + knn_distances.entry(i, 6)) / 4, 1e-10);
         }
-        
+
         const P = this._find_p(knn_distances, sig, nbrs);
-        
+
         let triplets = this._sample_knn_triplets(P, nbrs, n_inliers, n_outliers);
         let n_triplets = triplets.shape[0];
         const outlier_distances = new Float64Array(n_triplets);
@@ -107,22 +97,24 @@ export class TriMap extends DR{
             outlier_distances[i] = metric(X.row(j), X.row(k));
         }
         let weights = this._find_weights(triplets, P, nbrs, outlier_distances, sig);
-        
+
         if (n_random > 0) {
-            const {random_triplets, random_weights} = this._sample_random_triplets(X, n_random, sig);
+            const { random_triplets, random_weights } = this._sample_random_triplets(X, n_random, sig);
             triplets = triplets.concat(random_triplets, "vertical");
-            weights = Float64Array.from([...weights, ...random_weights])
+            weights = Float64Array.from([...weights, ...random_weights]);
         }
         n_triplets = triplets.shape[0];
         let max_weight = -Infinity;
         for (let i = 0; i < n_triplets; ++i) {
-            if (isNaN(weights[i])) {weights[i] = 0;}
+            if (isNaN(weights[i])) {
+                weights[i] = 0;
+            }
             if (max_weight < weights[i]) max_weight = weights[i];
         }
         let max_weight_2 = -Infinity;
         for (let i = 0; i < n_triplets; ++i) {
             weights[i] /= max_weight;
-            weights[i] += .0001;
+            weights[i] += 0.0001;
             weights[i] = Math.log(1 + weight_adj * weights[i]);
             if (max_weight_2 < weights[i]) max_weight_2 = weights[i];
         }
@@ -130,9 +122,9 @@ export class TriMap extends DR{
             weights[i] /= max_weight_2;
         }
         return {
-            "triplets": triplets,
-            "weights": weights,
-        }
+            triplets: triplets,
+            weights: weights,
+        };
     }
 
     /**
@@ -146,7 +138,7 @@ export class TriMap extends DR{
     _find_p(knn_distances, sig, nbrs) {
         const [N, n_neighbors] = knn_distances.shape;
         return new Matrix(N, n_neighbors, (i, j) => {
-            return Math.exp(-((knn_distances.entry(i, j) ** 2) / sig[i] / sig[nbrs.entry(i, j)]));
+            return Math.exp(-(knn_distances.entry(i, j) ** 2 / sig[i] / sig[nbrs.entry(i, j)]));
         });
     }
 
@@ -157,14 +149,14 @@ export class TriMap extends DR{
      * @param {Matrix} nbrs - Nearest neighbors indices for each point. The similarity values are given in matrix {@link P}. Row i corresponds to the i-th point.
      * @param {Number} n_inliers - Number of inlier points.
      * @param {Number} n_outliers - Number of outlier points.
-     * 
+     *
      */
     _sample_knn_triplets(P, nbrs, n_inliers, n_outliers) {
         const N = nbrs.shape[0];
         const triplets = new Matrix(N * n_inliers * n_outliers, 3);
         for (let i = 0; i < N; ++i) {
             let n_i = i * n_inliers * n_outliers;
-            const sort_indices = this.__argsort(P.row(i).map(d => -d));
+            const sort_indices = this.__argsort(P.row(i).map((d) => -d));
             for (let j = 0; j < n_inliers; ++j) {
                 let n_j = j * n_outliers;
                 const sim = nbrs.entry(i, sort_indices[j]);
@@ -184,11 +176,12 @@ export class TriMap extends DR{
     /**
      * Should do the same as np.argsort()
      * @private
-     * @param {Array} A 
+     * @param {Array} A
      */
     __argsort(A) {
-        return A
-            .map((d, i) => {return {d: d, i: i};})
+        return A.map((d, i) => {
+            return { d: d, i: i };
+        })
             .sort((a, b) => a.d - b.d)
             .map((d) => d.i);
     }
@@ -196,13 +189,13 @@ export class TriMap extends DR{
     /**
      * Samples {@link n_samples} integers from a given interval [0, {@link max_int}] while rejection the values that are in the {@link rejects}.
      * @private
-     * @param {*} n_samples 
-     * @param {*} max_int 
-     * @param {*} rejects 
+     * @param {*} n_samples
+     * @param {*} max_int
+     * @param {*} rejects
      */
     _rejection_sample(n_samples, max_int, rejects) {
         const randomizer = this._randomizer;
-        const interval = linspace(0, max_int - 1).filter(d => rejects.indexOf(d) < 0);
+        const interval = linspace(0, max_int - 1).filter((d) => rejects.indexOf(d) < 0);
         return randomizer.choice(interval, Math.min(n_samples, interval.length - 2));
     }
 
@@ -237,19 +230,19 @@ export class TriMap extends DR{
      * @param {Float64Array} sig - Scaling factor for the distances
      */
     _sample_random_triplets(X, n_random, sig) {
-        const metric = this._metric;
+        const metric = this.parameter("metric");
         const randomizer = this._randomizer;
         const N = X.shape[0];
         const random_triplets = new Matrix(N * n_random, 3);
         const random_weights = new Float64Array(N * n_random);
         for (let i = 0; i < N; ++i) {
             const n_i = i * n_random;
-            const indices = [...linspace(0, i - 1), ...linspace(i + 1, N - 1)]
+            const indices = [...linspace(0, i - 1), ...linspace(i + 1, N - 1)];
             for (let j = 0; j < n_random; ++j) {
                 let [sim, out] = randomizer.choice(indices, 2);
-                let p_sim = Math.exp(-((metric(X.row(i), X.row(sim)) ** 2) / (sig[i] * sig[sim])));
+                let p_sim = Math.exp(-(metric(X.row(i), X.row(sim)) ** 2 / (sig[i] * sig[sim])));
                 if (p_sim < 1e-20) p_sim = 1e-20;
-                let p_out = Math.exp(-((metric(X.row(i), X.row(out)) ** 2) / (sig[i] * sig[out]))); 
+                let p_out = Math.exp(-(metric(X.row(i), X.row(out)) ** 2 / (sig[i] * sig[out])));
                 if (p_out < 1e-20) p_out = 1e-20;
 
                 if (p_sim < p_out) {
@@ -264,9 +257,9 @@ export class TriMap extends DR{
             }
         }
         return {
-            "random_triplets": random_triplets,
-            "random_weights": random_weights,
-        }
+            random_triplets: random_triplets,
+            random_weights: random_weights,
+        };
     }
 
     /**
@@ -281,8 +274,8 @@ export class TriMap extends DR{
         const [N, dim] = Y.shape;
         const n_triplets = triplets.shape[0];
         const grad = new Matrix(N, dim, 0);
-        let y_ij = new Array(dim).fill(0);
-        let y_ik = new Array(dim).fill(0);
+        let y_ij = new Float64Array(dim);
+        let y_ik = new Float64Array(dim);
         let d_ij = 1;
         let d_ik = 1;
         let n_viol = 0;
@@ -293,25 +286,25 @@ export class TriMap extends DR{
             const [i, j, k] = triplets.row(t);
             // update y_ij, y_ik, d_ij, d_ik
             if (t % n_outliers == 0 || t >= n_knn_triplets) {
-                d_ij = 1
-                d_ik = 1
+                d_ij = 1;
+                d_ik = 1;
                 for (let d = 0; d < dim; ++d) {
                     const Y_id = Y.entry(i, d);
                     const Y_jd = Y.entry(j, d);
                     const Y_kd = Y.entry(k, d);
                     y_ij[d] = Y_id - Y_jd;
                     y_ik[d] = Y_id - Y_kd;
-                    d_ij += (y_ij[d] ** 2);
-                    d_ik += (y_ik[d] ** 2);
+                    d_ij += y_ij[d] ** 2;
+                    d_ik += y_ik[d] ** 2;
                 }
-            // update y_ik and d_ik only
+                // update y_ik and d_ik only
             } else {
                 d_ik = 1;
                 for (let d = 0; d < dim; ++d) {
                     const Y_id = Y.entry(i, d);
                     const Y_kd = Y.entry(k, d);
                     y_ik[d] = Y_id - Y_kd;
-                    d_ik += (y_ik[d] ** 2);
+                    d_ik += y_ik[d] ** 2;
                 }
             }
 
@@ -326,32 +319,29 @@ export class TriMap extends DR{
                 grad.set_entry(k, d, grad.entry(k, d) + go);
             }
         }
-        return {
-            "grad": grad,
-            "loss": loss,
-            "n_viol": n_viol,
-        };
+        return { grad, loss, n_viol };
     }
 
     /**
-     * 
-     * @param {Number} max_iteration 
+     *
+     * @param {Number} max_iteration
      */
     transform(max_iteration = 400) {
         this.check_init();
         for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter)
+            this._next(iter);
         }
         return this.projection;
     }
 
     /**
+     * @param {Number} max_iteration
      * @yields {Matrix}
      * @returns {Matrix}
      */
-    * generator() {
+    *generator(max_iteration = 800) {
         this.check_init();
-        for (let iter = 0; iter < 800; ++iter) {
+        for (let iter = 0; iter < max_iteration; ++iter) {
             this._next(iter);
             yield this.projection;
         }
@@ -361,37 +351,37 @@ export class TriMap extends DR{
     /**
      * Does the iteration step.
      * @private
-     * @param {Number} iter 
+     * @param {Number} iter
      */
     _next(iter) {
-        const gamma = iter > 150 ? .5 : .3;
+        const gamma = iter > 150 ? 0.5 : 0.3;
         const old_C = this.C;
         const vel = this.vel;
         const Y = this.Y.add(vel.mult(gamma));
-        const {grad, loss, n_viol} = this._grad(Y);
+        const { grad, loss, n_viol } = this._grad(Y);
         this.C = loss;
         this.Y = this._update_embedding(Y, iter, grad);
-        this.lr *= (old_C > loss + this.tol)  ? 1.01 : .9;
+        this.lr *= old_C > loss + this._parameters.tol ? 1.01 : 0.9;
         return this.Y;
     }
 
     /**
      * Updates the embedding.
      * @private
-     * @param {Matrix} Y 
-     * @param {Number} iter 
-     * @param {Matrix} grad 
+     * @param {Matrix} Y
+     * @param {Number} iter
+     * @param {Matrix} grad
      */
     _update_embedding(Y, iter, grad) {
         const [N, dim] = Y.shape;
-        const gamma = iter > 150 ? .9 : .5; // moment parameter
-        const min_gain = .01;
+        const gamma = iter > 150 ? 0.9 : 0.5; // moment parameter
+        const min_gain = 0.01;
         const gain = this.gain;
         const vel = this.vel;
         const lr = this.lr;
         for (let i = 0; i < N; ++i) {
             for (let d = 0; d < dim; ++d) {
-                const new_gain = (Math.sign(vel.entry(i, d)) != Math.sign(grad.entry(i, d))) ? gain.entry(i, d) + .2 : Math.max(gain.entry(i, d) * .8, min_gain);
+                const new_gain = Math.sign(vel.entry(i, d)) != Math.sign(grad.entry(i, d)) ? gain.entry(i, d) + 0.2 : Math.max(gain.entry(i, d) * 0.8, min_gain);
                 gain.set_entry(i, d, new_gain);
                 vel.set_entry(i, d, gamma * vel.entry(i, d) - lr * gain.entry(i, d) * grad.entry(i, d));
                 Y.set_entry(i, d, Y.entry(i, d) + vel.entry(i, d));

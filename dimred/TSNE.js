@@ -9,64 +9,61 @@ import { DR } from "./DR.js";
  */
 export class TSNE extends DR {
     /**
-     * 
+     *
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias TSNE
-     * @param {Matrix} X - the high-dimensional data. 
-     * @param {Number} [perplexity = 50] - perplexity.
-     * @param {Number} [epsilon = 10] - learning parameter.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.  
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
+     * @param {Matrix} X - the high-dimensional data.
+     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Number} [parameters.perplexity = 50] - perplexity.
+     * @param {Number} [parameters.epsilon = 10] - learning parameter.
+     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
-    constructor(X, perplexity=50, epsilon=10, d=2, metric=euclidean, seed=1212) {
-        super(X, d, metric, seed);
-        super.parameter_list = ["perplexity", "epsilon"];
-        [ this._N, this._D ] = this.X.shape;
-        this.parameter("perplexity", Math.min(perplexity, this._N - 1));
-        this.parameter("epsilon", epsilon);
+    constructor(X, parameters) {
+        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean, seed: 1212 }, parameters);
+        [this._N, this._D] = this.X.shape;
         this._iter = 0;
-        this.Y = new Matrix(this._N, this._d, () => this._randomizer.random);
+        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.random);
         return this;
     }
 
     /**
-     * 
+     *
      * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
      * @returns {TSNE}
      */
-    init(distance_matrix=null) {
+    init() {
         // init
-        const Htarget = Math.log(this._perplexity);
+        const Htarget = Math.log(this.parameter("perplexity"));
         const N = this._N;
         const D = this._D;
-        const metric = this._metric;
+        const {metric} = this._parameters;
         const X = this.X;
         let Delta;
-        if (distance_matrix) {
-            Delta = distance_matrix;
+        if (metric =="precomputed") {
+            Delta = druid.Matrix.from(X);
         } else {
             Delta = new Matrix(N, N);
             for (let i = 0; i < N; ++i) {
                 const X_i = X.row(i);
                 for (let j = i + 1; j < N; ++j) {
-                    const distance = metric(X_i, X.row(j))
+                    const distance = metric(X_i, X.row(j));
                     Delta.set_entry(i, j, distance);
                     Delta.set_entry(j, i, distance);
                 }
             }
+        }
 
-        } 
-            
         const P = new Matrix(N, N, "zeros");
 
         this._ystep = new Matrix(N, D, "zeros");
         this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Array(N).fill(0);
+        let prow = new Float64Array(N)
         const tol = 1e-4;
         const maxtries = 50;
         for (let i = 0; i < N; ++i) {
@@ -76,7 +73,7 @@ export class TSNE extends DR {
             let done = false;
 
             let num = 0;
-            while(!done) {
+            while (!done) {
                 let psum = 0;
                 for (let j = 0; j < N; ++j) {
                     let pj = Math.exp(-Delta.entry(i, j) * beta);
@@ -86,7 +83,7 @@ export class TSNE extends DR {
                 }
                 let Hhere = 0;
                 for (let j = 0; j < N; ++j) {
-                    let pj = (psum === 0) ? 0 : prow[j] / psum;
+                    let pj = psum === 0 ? 0 : prow[j] / psum;
                     prow[j] = pj;
                     if (pj > 1e-7) {
                         Hhere -= pj * Math.log(pj);
@@ -94,10 +91,10 @@ export class TSNE extends DR {
                 }
                 if (Hhere > Htarget) {
                     betamin = beta;
-                    beta = (betamax === Infinity) ? (beta * 2) : ((beta + betamax) / 2);
+                    beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
                 } else {
                     betamax = beta;
-                    beta = (betamin === -Infinity) ? (beta / 2) : ((beta + betamin) / 2);
+                    beta = betamin === -Infinity ? beta / 2 : (beta + betamin) / 2;
                 }
                 ++num;
                 if (Math.abs(Hhere - Htarget) < tol) done = true;
@@ -110,7 +107,7 @@ export class TSNE extends DR {
         }
 
         //compute probabilities
-        const Pout = new Matrix(N, N, "zeros")
+        const Pout = new Matrix(N, N, "zeros");
         const N2 = N * 2;
         for (let i = 0; i < N; ++i) {
             for (let j = i; j < N; ++j) {
@@ -124,11 +121,11 @@ export class TSNE extends DR {
     }
 
     /**
-     * 
+     *
      * @param {Number} [iterations=500] - number of iterations.
      * @yields {Matrix|Array<Array>} - the projection.
      */
-    transform(iterations=500) {
+    transform(iterations = 500) {
         this.check_init();
         for (let i = 0; i < iterations; ++i) {
             this.next();
@@ -137,11 +134,11 @@ export class TSNE extends DR {
     }
 
     /**
-     * 
+     *
      * @param {Number} [iterations=500] - number of iterations.
      * @yields {Matrix|Array<Array>} - the projection.
      */
-    * generator(iterations=500) {
+    *generator(iterations = 500) {
         this.check_init();
         for (let i = 0; i < iterations; ++i) {
             this.next();
@@ -161,15 +158,14 @@ export class TSNE extends DR {
         const ystep = this._ystep;
         const gains = this._gains;
         const N = this._N;
-        const epsilon = this._epsilon;
-        const dim = this._d;
+        const { d: dim, epsilon} = this._parameters;
         let Y = this.Y;
 
         //calc cost gradient;
         const pmul = iter < 100 ? 4 : 1;
-        
+
         // compute Q dist (unnormalized)
-        const Qu = new Matrix(N, N, "zeros")
+        const Qu = new Matrix(N, N, "zeros");
         let qsum = 0;
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
@@ -186,7 +182,7 @@ export class TSNE extends DR {
         }
 
         // normalize Q dist
-        const Q = new Matrix(N, N, 0)
+        const Q = new Matrix(N, N, 0);
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
                 const val = Math.max(Qu.entry(i, j) / qsum, 1e-100);
@@ -212,12 +208,12 @@ export class TSNE extends DR {
                 const gid = grad.entry(i, d);
                 const sid = ystep.entry(i, d);
                 const gainid = gains.entry(i, d);
-                
-                let newgain = Math.sign(gid) === Math.sign(sid) ? gainid * .8 : gainid + .2;
-                if (newgain < .01) newgain = .01;
+
+                let newgain = Math.sign(gid) === Math.sign(sid) ? gainid * 0.8 : gainid + 0.2;
+                if (newgain < 0.01) newgain = 0.01;
                 gains.set_entry(i, d, newgain);
 
-                const momval = iter < 250 ? .5 : .8;
+                const momval = iter < 250 ? 0.5 : 0.8;
                 const newsid = momval * sid - epsilon * newgain * gid;
                 ystep.set_entry(i, d, newsid);
 
@@ -228,10 +224,10 @@ export class TSNE extends DR {
 
         for (let i = 0; i < N; ++i) {
             for (let d = 0; d < 2; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N)
+                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);
             }
         }
 
         return this.Y;
     }
-} 
+}
