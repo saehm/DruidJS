@@ -1,9 +1,11 @@
 import { euclidean } from "../metrics/index.js";
-import { Matrix } from "./Matrix.js";
+import { Matrix } from "./index.js";
 
 /**
  * Computes the distance matrix of datamatrix {@link A}.
- * @param {Matrix} A - Matrix
+ * @memberof module:matrix
+ * @alias distance_matrix
+ * @param {Matrix} A - Matrix.
  * @param {Function} [metric=euclidean] - The diistance metric.
  * @returns {Matrix} D - The distance matrix of {@link A}.
  */

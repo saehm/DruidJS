@@ -1,16 +1,17 @@
-import { distance_matrix as dmatrix } from "../matrix/index.js";
+import { distance_matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 
 /**
- *
- * @param {*} A
- * @param {*} k
- * @param {*} distance_matrix
- * @param {*} metric
+ * Computes the k-nearest neighbors of each row of {@link A}.
+ * @memberof module:matrix
+ * @alias k_nearest_neigbhors
+ * @param {Matrix} A - Either the data matrix, or a distance matrix.
+ * @param {Number} k - The number of neighbors to compute.
+ * @param {Function|"precomputed"} metric
  */
-export default function (A, k, distance_matrix = null, metric = euclidean) {
+export default function (A, k, metric = euclidean) {
     const rows = A.shape[0];
-    let D = distance_matrix ?? dmatrix(A, metric);
+    let D = metric == "precomputed" ? A.clone() : distance_matrix(A, metric);
     let nN = new Array(rows);
     for (let row = 0; row < rows; ++row) {
         nN[row] = Array.from(D.row(row))

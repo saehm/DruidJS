@@ -1,4 +1,5 @@
 import { neumair_sum } from "../numerical/index.js";
+import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Randomizer } from "../util/index.js";
 /**
  * @class

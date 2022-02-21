@@ -188,8 +188,7 @@
 <a name='L123'></a><a href='#L123'>123</a>
 <a name='L124'></a><a href='#L124'>124</a>
 <a name='L125'></a><a href='#L125'>125</a>
-<a name='L126'></a><a href='#L126'>126</a>
-<a name='L127'></a><a href='#L127'>127</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L126'></a><a href='#L126'>126</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -312,7 +311,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { euclidean } from "../metrics/index.js";
@@ -372,7 +370,7 @@ export class DR {
      * @memberof DR
      */
 <span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    parameter(</span>n</span>ame, value = <span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        if (this.parameter_list.includes(name)) {</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        if (!this.parameter_list.includes(name)) {</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            throw new Error(`${name} is not a valid parameter!`);</span></span>
         }
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        if (value) {</span></span>
@@ -420,25 +418,24 @@ export class DR {
     }
 &nbsp;
 <span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    async t</span>ransform_async(...a</span>rgs) {
-        const dr = <span class="cstat-no" title="statement not covered" >new this(...args);</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return dr.transform();</span></span>
-    }
+        return this<span class="cstat-no" title="statement not covered" >.transform(...args</span>);
+    }<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span>
 &nbsp;
-<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    static t</span>ransform(...a</span>rgs) {
-        let dr = <span class="cstat-no" title="statement not covered" >new this(...args);</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return dr.transform();</span></span>
-    }
+    static transform(...args) {
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >        let </span>dr = new this</span>(...args);
+        return dr<span class="cstat-no" title="statement not covered" >.transform();</span>
+    }<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span>
 &nbsp;
-<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    static async t</span>ransform_async(...a</span>rgs) {
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return this.transform(...args);</span></span>
-    }
+    static async transform_async(...args) {
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >        return thi</span>s.transform(...args</span>);
+    }<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span>
 &nbsp;
-<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    static *g</span>enerator(...a</span>rgs) {
-        const dr = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >new this(...args);</span></span>
-        const gen = <span class="cstat-no" title="statement not covered" >dr.generator();</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        for (const res of <span class="cstat-no" title="statement not covered" >gen) {</span></span></span>
-<span class="cstat-no" title="statement not covered" >            yield res;</span>
-        }
+    static *generator(...args) {
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >        const</span> dr = new thi</span>s(...args);
+        const gen =<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" > dr.generator();</span></span>
+        for (const r<span class="cstat-no" title="statement not covered" >es of gen) {</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            yield res;<span class="cstat-no" title="statement not covered" ></span></span></span>
+        }<span class="cstat-no" title="statement not covered" ></span>
     }
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -448,7 +445,7 @@ export class DR {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at Wed Feb 16 2022 16:36:57 GMT+0100 (Mitteleuropäische Normalzeit)
+                at Thu Feb 17 2022 09:00:12 GMT+0100 (Mitteleuropäische Normalzeit)
             </div>
         <script src="../../prettify.js"></script>
         <script>

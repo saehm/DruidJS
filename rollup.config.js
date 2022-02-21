@@ -15,7 +15,7 @@ export default [
   {
     input: "index.js",
     output: {
-      sourcemap: 'inline',
+      sourcemap: true,
       extend: true,
       banner: copyright,
       file: "dist/druid.js",

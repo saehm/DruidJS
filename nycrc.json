@@ -1,12 +1,12 @@
 {
     "all": true,
-    "check-coverage": true,
-    "reporter": "html",
+    "reporter": ["html", "text"],
+    "instrument": true,
     "include": [
-      "**/*.js"
+      "*/**/*.js"
     ],
     "exclude": [
-        "node_modules/**", "test/**"
+        "node_modules/**", "test/**", "docs/**", "coverage/**"
     ]
 
 }

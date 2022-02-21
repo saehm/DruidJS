@@ -33,7 +33,7 @@ export class PCA extends DR {
             this.Y = X.dot(V);
             return this.projection;
         } else if (Array.isArray(A)) {
-            return druid.Matrix.from(A).dot(V).asArray;
+            return Matrix.from(A).dot(V).asArray;
         } else if (A instanceof Matrix) {
             return A.dot(V);
         } else {

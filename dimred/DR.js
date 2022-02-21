@@ -103,8 +103,7 @@ export class DR {
     }
 
     async transform_async(...args) {
-        const dr = new this(...args);
-        return dr.transform();
+        return this.transform(...args);
     }
 
     static transform(...args) {

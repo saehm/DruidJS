@@ -1,10 +1,12 @@
 /**
+ * Creates an Array containing {@link number} numbers from {@link start} to {@link end}.
+ * If <code>{@link number} = null</null>.
  * @memberof module:matrix
- * Creates an Array containing {@link number} numbers from {@link start} to {@link end}. If <code>{@link number} = null</null>
- * @param {Number} start
- * @param {Number} end
- * @param {Number} [number = null]
- * @returns {Array}
+ * @alias linspace
+ * @param {Number} start - Start value.
+ * @param {Number} end - End value.
+ * @param {Number} [number = null] - Number of number between {@link start} and {@link end}.
+ * @returns {Array} - An array with {@link number} entries, beginning at {@link start} ending at {@link end}.
  */
 export default function (start, end, number = null) {
     if (!number) {

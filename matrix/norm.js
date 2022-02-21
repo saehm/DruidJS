@@ -2,35 +2,25 @@ import { euclidean } from "../metrics/index.js";
 import { Matrix } from "../matrix/index.js";
 //import { neumair_sum } from "../numerical/index";
 
-export default function(v, metric = euclidean) {
-//export default function(vector, p=2, metric = euclidean) {
+/**
+ * Computes the norm of a vector, by computing its distance to **0**.
+ * @memberof module:matrix
+ * @alias norm
+ * @param {Matrix|Array<Number>|Float64Array} v - Vector. 
+ * @param {Function} [metric = euclidean] - Which metric should be used to compute the norm.
+ * @returns {Number} - The norm of {@link v}.
+ */
+export default function (v, metric = euclidean) {
     let vector = null;
     if (v instanceof Matrix) {
         let [rows, cols] = v.shape;
         if (rows === 1) vector = v.row(0);
         else if (cols === 1) vector = v.col(0);
-        else throw "matrix must be 1d!"
+        else throw new Error("Matrix must be 1d!");
     } else {
         vector = v;
     }
-    let n = vector.length;
-    let z = new Array(n)
-    z.fill(0);
-    return metric(vector, z);
-    
-    
-    /*let v;
-    if (vector instanceof Matrix) {
-        let [ rows, cols ] = v.shape;
-        if (rows === 1) {
-            v = vector.row(0);
-        } else if (cols === 1) {
-            v = vector.col(0);
-        } else {
-            throw "matrix must be 1d"
-        }
-    } else {
-        v = vector;
-    }
-    return Math.pow(neumair_sum(v.map(e => Math.pow(e, p))), 1 / p)*/
+    const n = vector.length;
+    const zeros = Float64Array.from({ length: n }, () => 0);
+    return metric(vector, zeros);
 }

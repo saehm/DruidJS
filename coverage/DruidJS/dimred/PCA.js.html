@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/39</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/21</span>
             </div>
         
             
@@ -101,7 +101,29 @@
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
 <a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -128,8 +150,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,8 +179,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { simultaneous_poweriteration} from "../linear_algebra/index.js";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Matrix } from "../matrix/index.js";
 import { DR } from "./DR.js";
 &nbsp;
@@ -148,43 +192,65 @@ import { DR } from "./DR.js";
  * @alias PCA
  * @augments DR
  */
-export class PCA extends DR{
+export class PCA extends DR {
     /**
      * @constructor
      * @memberof module:dimensionality_reduction
-     * @alias PCA 
+     * @alias PCA
      * @param {Matrix|Array&lt;Array&lt;Number&gt;&gt;} X - the high-dimensional data.
      * @param {Number} [d = 2] - the dimensionality of the projection.
      * @returns {PCA}
      */
-<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    constructor(</span>X</span>, d=<span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >2)</span> {</span>
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    constructor(</span>X</span>, d = <span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >2)</span> {</span>
 <span class="cstat-no" title="statement not covered" >        super(X, d);</span>
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return this;</span></span>
     }
 &nbsp;
     /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     * Transforms the inputdata {@link X} to dimensionality {@link d}. If parameter {@link A} is given, then project {@link A} with the principal components of {@link X}.
+     * @param {null|Matrix|Array} [A = null] - If given, the data to project.
+     * @returns {Matrix|Array} - The projected data.
      */
-<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    transform(</span>) {</span>
-        let X = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >this.X;</span></span>
-        let D = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >X.shape[1];</span></span>
-        let O = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >new Matrix(D, D, "center");</span></span>
-        let X_cent = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >X.dot(O);</span></span>
-&nbsp;
-        let C = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >X_cent.transpose().dot(X_cent)</span></span>
-        let { eigenvectors: V } = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >simultaneous_poweriteration(C, this._d)</span></span>
-<span class="cstat-no" title="statement not covered" >        V = Matrix.from(V).transpose()</span>
-<span class="cstat-no" title="statement not covered" >        this.Y = X.dot(V)</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return this.projection;</span></span>
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    transform(</span>A</span> = <span class="branch-0 cbranch-no" title="branch not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >null)</span> {</span>
+        const V = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >this.principal_components();</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        if (A == null) {</span></span>
+            const X = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >this.X;</span></span>
+<span class="cstat-no" title="statement not covered" >            this.Y = X.dot(V);</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            return this.projection;</span></span>
+        } else <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >if (Array.isArray(A)) {</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            return Matrix.from(A).dot(V).asArray;</span></span>
+        } else <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >if (A instanceof Matrix) {</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            return A.dot(V);</span></span>
+        } else {
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            throw new Error("No valid type for A!");</span></span>
+        }
     }
-} </pre></td></tr></table></pre>
+&nbsp;
+    /**
+     * Computes the {@link d} principal components of Matrix {@link X}.
+     * @returns {Matrix}
+     */
+<span class="fstat-no" title="function not covered" ><span class="fstat-no" title="function not covered" >    principal_components(</span>) {</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        if (this.V) {</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >            return this.V;</span></span>
+        }
+        const X = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >this.X;</span></span>
+        const means = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >Matrix.from(X.meanCols);</span></span>
+        const X_cent = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >X.sub(means);</span></span>
+        const C = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >X_cent.transpose().dot(X_cent);</span></span>
+        const { eigenvectors: V } = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >simultaneous_poweriteration(C, this._d);</span></span>
+<span class="cstat-no" title="statement not covered" >        this.V = Matrix.from(V).transpose();</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >        return this.V;</span></span>
+    }
+}
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at Wed Feb 16 2022 16:36:57 GMT+0100 (Mitteleuropäische Normalzeit)
+                at Thu Feb 17 2022 09:00:12 GMT+0100 (Mitteleuropäische Normalzeit)
             </div>
         <script src="../../prettify.js"></script>
         <script>
