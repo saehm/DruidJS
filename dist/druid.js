@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.5.0 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.5.1 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -3112,12 +3112,17 @@ class UMAP extends DR {
      * @returns {UMAP}
      */
     constructor(X, parameters) {
-        super(X, { n_neighbors: 15, local_connectivity: 1, min_dist: 1, d: 2, metric: euclidean, seed: 1212, 
-            _spread: 1, _set_op_mix_ratio: 1, _repulsion_strength: 1, _negative_sample_rate: 5, _n_epochs: 350, _initial_alpha: 1 }, parameters);
+        super(X, { n_neighbors: 15, local_connectivity: 1, min_dist: 1, d: 2, metric: euclidean, seed: 1212, _spread: 1, _set_op_mix_ratio: 1, _repulsion_strength: 1, _negative_sample_rate: 5, _n_epochs: 350, _initial_alpha: 1 }, parameters);
         [this._N, this._D] = this.X.shape;
-        let n_neighbors = Math.min(this._N - 1, this.parameter("n_neighbors"));
+        /* let n_neighbors = Math.min(this._N - 1, parameters.n_neighbors);
         this.parameter("n_neighbors", n_neighbors);
-        this.parameter("local_connectivity", Math.min(this.parameter("local_connectivity"), n_neighbors - 1));
+        this.parameter("local_connectivity", Math.min(this.parameter("local_connectivity"), n_neighbors - 1)); */
+        if (this.parameter("n_neighbors") > this._N) {
+            throw new Error(`Parameter n_neighbors (=${this.parameter("n_neighbors")}) needs to be smaller than dataset size (N=${this._N})!`);
+        }
+        if (this.parameter("local_connectivity") > this.parameter("n_neighbors")) {
+            throw new Error(`Parameter local_connectivity (=${this.parameter("local_connectivity")}) needs to be smaller than parameter n_neighbors (=${this.parameter("n_neighbors")})`);
+        }
         this._iter = 0;
         const randomizer = this._randomizer;
         this.Y = new Matrix(this._N, this.parameter("d"), () => randomizer.random);
@@ -3265,7 +3270,7 @@ class UMAP extends DR {
      */
     _fuzzy_simplicial_set(X, n_neighbors) {
         const N = X.shape[0];
-        const { metric } = this._parameters;
+        const { metric, _set_op_mix_ratio } = this._parameters;
         const knn = metric === "precomputed" ? new KNN(X, "precomputed") : new BallTree(X.to2dArray, metric);
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
@@ -3276,13 +3281,14 @@ class UMAP extends DR {
                 result.set_entry(i, distances_i[j].element.index, distances_i[j].value);
             }
         }
+
         const transposed_result = result.T;
         const prod_matrix = result.mult(transposed_result);
         return result
             .add(transposed_result)
             .sub(prod_matrix)
-            .mult(this._set_op_mix_ratio)
-            .add(prod_matrix.mult(1 - this.parameter("_set_op_mix_ratio")));
+            .mult(_set_op_mix_ratio)
+            .add(prod_matrix.mult(1 - _set_op_mix_ratio));
     }
 
     /**
@@ -3331,7 +3337,7 @@ class UMAP extends DR {
      * @returns {UMAP}
      */
     init() {
-        const { _spread, min_dist, n_neighbors, _n_epochs, _negative_sample_rate} = this._parameters;
+        const { _spread, min_dist, n_neighbors, _n_epochs, _negative_sample_rate } = this._parameters;
         const [a, b] = this._find_ab_params(_spread, min_dist);
         this._a = a;
         this._b = b;
@@ -3408,7 +3414,9 @@ class UMAP extends DR {
      * @returns {Matrix}
      */
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
-        const { _d: dim, _alpha: alpha, _repulsion_strength: repulsion_strength, _a: a, _b: b, _epochs_per_sample: epochs_per_sample, _epochs_per_negative_sample: epochs_per_negative_sample, _epoch_of_next_negative_sample: epoch_of_next_negative_sample, _epoch_of_next_sample: epoch_of_next_sample, _clip: clip } = this;
+        const randomizer = this._randomizer;
+        const { _repulsion_strength, d: dim } = this._parameters;
+        const { _alpha: alpha, _a: a, _b: b, _epochs_per_sample: epochs_per_sample, _epochs_per_negative_sample: epochs_per_negative_sample, _epoch_of_next_negative_sample: epoch_of_next_negative_sample, _epoch_of_next_sample: epoch_of_next_sample, _clip: clip } = this;
         const tail_length = tail.length;
 
         for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {
@@ -3434,12 +3442,12 @@ class UMAP extends DR {
                 epoch_of_next_sample[i] += epochs_per_sample[i];
                 const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
                 for (let p = 0; p < n_neg_samples; ++p) {
-                    const k = Math.floor(this._randomizer.random * tail_length);
+                    const k = randomizer.random_int % tail_length;
                     const other = tail_embedding.row(tail[k]);
                     const dist = euclidean_squared(current, other);
                     let grad_coeff = 0;
                     if (dist > 0) {
-                        grad_coeff = (2 * repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
                     } else if (j === k) {
                         continue;
                     }
@@ -3464,10 +3472,10 @@ class UMAP extends DR {
      * @returns {Matrix}
      */
     next() {
-        let iter = ++this._iter;
-        let Y = this.Y;
-
-        this._alpha = this.parameter("_initial_alpha") * (1 - iter / this.parameter("_n_epochs"));
+        const iter = ++this._iter;
+        const Y = this.Y;
+        const { _initial_alpha, _n_epochs } = this._parameters;
+        this._alpha = _initial_alpha * (1 - iter / _n_epochs);
         this.Y = this._optimize_layout(Y, Y, this._head, this._tail);
 
         return this.Y;
@@ -5277,7 +5285,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.5.0";
+var version="0.5.1";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;

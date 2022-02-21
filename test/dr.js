@@ -332,7 +332,6 @@ describe("DR techniques", () => {
         const dr = new druid.UMAP(X, { metric: druid.manhattan });
         assert.ok(dr.para("metric", druid.canberra));
         assert.ok(dr.transform());
-
         let generator;
         assert.ok(generator = dr.generator(200));
         for (const Y of generator) {
