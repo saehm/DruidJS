@@ -1,5 +1,5 @@
 
-<a name="module_clustering">#</a> <code>**clustering**</code>
+<a href="#module_clustering" name="module_clustering">#</a> <code>**clustering**</code>
 
 
 
@@ -51,7 +51,7 @@
 
 
 
-<a name="Hierarchical_Clustering">#</a> <code>*clustering***Hierarchical_Clustering**</code>
+<a href="#Hierarchical_Clustering" name="Hierarchical_Clustering">#</a> <code>*clustering***Hierarchical_Clustering**</code>
 
 
 **Todo**
@@ -71,7 +71,7 @@
 
 
 
-<a name="new_Hierarchical_Clustering_new">#</a> new <code>**exports.Hierarchical_Clustering**</code>
+<a href="#new_Hierarchical_Clustering_new" name="new_Hierarchical_Clustering_new">#</a> new <code>**exports.Hierarchical_Clustering**</code>
 (matrix, [linkage], [metric])
 
 
@@ -80,7 +80,7 @@
 - [metric] <code>function</code> | <code>&quot;precomputed&quot;</code> <code> = euclidean</code>
 
 
-<a name="Hierarchical_Clustering+get_clusters">#</a> <code>*hierarchical_Clustering*.**get_clusters**</code>
+<a href="#Hierarchical_Clustering+get_clusters" name="Hierarchical_Clustering+get_clusters">#</a> <code>*hierarchical_Clustering*.**get_clusters**</code>
 (value, [type])
 
 
@@ -89,19 +89,19 @@
 
 **Returns**: <code>Array.&lt;Array&gt;</code> - - Array of clusters with the indices of the rows in given [matrix](matrix).  
 
-<a name="Hierarchical_Clustering+init">#</a> <code>*hierarchical_Clustering*.**init**</code>
+<a href="#Hierarchical_Clustering+init" name="Hierarchical_Clustering+init">#</a> <code>*hierarchical_Clustering*.**init**</code>
 ()
 
 computes the tree.
 
 
-<a name="Hierarchical_Clustering+do">#</a> <code>*hierarchical_Clustering*.**do**</code>
+<a href="#Hierarchical_Clustering+do" name="Hierarchical_Clustering+do">#</a> <code>*hierarchical_Clustering*.**do**</code>
 ()
 
 computes the tree.
 
 
-<a name="KMeans">#</a> <code>*clustering***KMeans**</code>
+<a href="#KMeans" name="KMeans">#</a> <code>*clustering***KMeans**</code>
 
 
 **Todo**
@@ -119,7 +119,7 @@ computes the tree.
 
 
 
-<a name="new_KMeans_new">#</a> new <code>**exports.KMeans**</code>
+<a href="#new_KMeans_new" name="new_KMeans_new">#</a> new <code>**exports.KMeans**</code>
 (matrix, K, [metric], [seed], [init])
 
 
@@ -130,12 +130,12 @@ computes the tree.
 - [init] <code>Boolean</code> <code> = true</code>
 
 
-<a name="KMeans+get_clusters">#</a> <code>*kMeans*.**get_clusters**</code>
+<a href="#KMeans+get_clusters" name="KMeans+get_clusters">#</a> <code>*kMeans*.**get_clusters**</code>
 ()
 
 **Returns**: <code>Array.&lt;Array&gt;</code> - - Array of clusters with the indices of the rows in given [matrix](matrix).  
 
-<a name="KMeans+init">#</a> <code>*kMeans*.**init**</code>
+<a href="#KMeans+init" name="KMeans+init">#</a> <code>*kMeans*.**init**</code>
 (K)
 
 Computes [K](K) clusters out of the [matrix](matrix).
@@ -144,7 +144,7 @@ Computes [K](K) clusters out of the [matrix](matrix).
 - K <code>Number</code> - number of clusters.
 
 
-<a name="KMedoids">#</a> <code>*clustering***KMedoids**</code>
+<a href="#KMedoids" name="KMedoids">#</a> <code>*clustering***KMedoids**</code>
 
 
 **See**: [https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16](https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16) Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms  
@@ -167,7 +167,7 @@ Computes [K](K) clusters out of the [matrix](matrix).
 
 
 
-<a name="new_KMedoids_new">#</a> new <code>**exports.KMedoids**</code>
+<a href="#new_KMedoids_new" name="new_KMedoids_new">#</a> new <code>**exports.KMedoids**</code>
 (matrix, K, [max_iter], [metric], [seed])
 
 
@@ -178,18 +178,18 @@ Computes [K](K) clusters out of the [matrix](matrix).
 - [seed] <code>Number</code> <code> = 1212</code> - seed value for random number generator
 
 
-<a name="KMedoids+get_clusters">#</a> <code>*kMedoids*.**get_clusters**</code>
+<a href="#KMedoids+get_clusters" name="KMedoids+get_clusters">#</a> <code>*kMedoids*.**get_clusters**</code>
 ()
 
 **Returns**: <code>Array.&lt;Array&gt;</code> - - Array of clusters with the indices of the rows in given [matrix](matrix).  
 
-<a name="KMedoids+_iteration">#</a> <code>*kMedoids*.**_iteration**</code>
+<a href="#KMedoids+_iteration" name="KMedoids+_iteration">#</a> <code>*kMedoids*.**_iteration**</code>
 ()
 
 Algorithm 2. FastPAM2: SWAP with multiple candidates
 
 
-<a name="KMedoids+init">#</a> <code>*kMedoids*.**init**</code>
+<a href="#KMedoids+init" name="KMedoids+init">#</a> <code>*kMedoids*.**init**</code>
 (K)
 
 Computes [K](K) clusters out of the [matrix](matrix).
@@ -198,7 +198,7 @@ Computes [K](K) clusters out of the [matrix](matrix).
 - K <code>Number</code> - number of clusters.
 
 
-<a name="KMedoids+_get_random_medoids">#</a> <code>*kMedoids*.**_get_random_medoids**</code>
+<a href="#KMedoids+_get_random_medoids" name="KMedoids+_get_random_medoids">#</a> <code>*kMedoids*.**_get_random_medoids**</code>
 (K)
 
 Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
@@ -207,7 +207,7 @@ Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
 - K <code>number</code> - number of clusters
 
 
-<a name="OPTICS">#</a> <code>*clustering***OPTICS**</code>
+<a href="#OPTICS" name="OPTICS">#</a> <code>*clustering***OPTICS**</code>
 
 
 **See**
@@ -232,7 +232,7 @@ Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
 
 
 
-<a name="new_OPTICS_new">#</a> new <code>**exports.OPTICS**</code>
+<a href="#new_OPTICS_new" name="new_OPTICS_new">#</a> new <code>**exports.OPTICS**</code>
 (matrix, epsilon, min_points, [metric])
 
 **O**rdering **P**oints **T**o **I**dentify the **C**lustering **S**tructure.
@@ -244,25 +244,25 @@ Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
 - [metric] <code>function</code> <code> = euclidean</code> - the distance metric which defines the distance between two points of the [matrix](matrix).
 
 
-<a name="OPTICS+init">#</a> <code>*opticS*.**init**</code>
+<a href="#OPTICS+init" name="OPTICS+init">#</a> <code>*opticS*.**init**</code>
 ()
 
 Computes the clustering.
 
 
-<a name="OPTICS+get_clusters">#</a> <code>*opticS*.**get_clusters**</code>
+<a href="#OPTICS+get_clusters" name="OPTICS+get_clusters">#</a> <code>*opticS*.**get_clusters**</code>
 ()
 
 Returns an array of clusters.
 
 **Returns**: <code>Array.&lt;Array&gt;</code> - Array of clusters with the indices of the rows in given [matrix](matrix).  
 
-<a name="OPTICS+get_cluster_affirmation">#</a> <code>*opticS*.**get_cluster_affirmation**</code>
+<a href="#OPTICS+get_cluster_affirmation" name="OPTICS+get_cluster_affirmation">#</a> <code>*opticS*.**get_cluster_affirmation**</code>
 ()
 
 **Returns**: <code>Array</code> - Returns an array, where the ith entry defines the cluster affirmation of the ith point of [matrix](matrix). (-1 stands for outlier)  
 
-<a name="XMeans">#</a> <code>*clustering***XMeans**</code>
+<a href="#XMeans" name="XMeans">#</a> <code>*clustering***XMeans**</code>
 
 
 **See**
@@ -276,7 +276,7 @@ Returns an array of clusters.
 - [ ] needs restructuring and repairing!!
 
 
-<a name="new_XMeans_new">#</a> new <code>**exports.XMeans**</code>
+<a href="#new_XMeans_new" name="new_XMeans_new">#</a> new <code>**exports.XMeans**</code>
 (matrix, K_max, K_min, [metric], [seed])
 
 

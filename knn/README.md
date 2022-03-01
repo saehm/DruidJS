@@ -1,5 +1,5 @@
 
-<a name="module_knn">#</a> <code>**knn**</code>
+<a href="#module_knn" name="module_knn">#</a> <code>**knn**</code>
 
 
 
@@ -39,7 +39,7 @@
 
 
 
-<a name="BallTree">#</a> <code>*knn***BallTree**</code>
+<a href="#BallTree" name="BallTree">#</a> <code>*knn***BallTree**</code>
 
 
 **See**
@@ -58,7 +58,7 @@
 
 
 
-<a name="new_BallTree_new">#</a> new <code>**exports.BallTree**</code>
+<a href="#new_BallTree_new" name="new_BallTree_new">#</a> new <code>**exports.BallTree**</code>
 ([elements], [metric])
 
 Generates a BallTree with given [elements](elements).
@@ -68,14 +68,14 @@ Generates a BallTree with given [elements](elements).
 - [metric] <code>function</code> <code> = euclidean</code> - metric to use: (a, b) => distance
 
 
-<a name="BallTree+add">#</a> <code>*ballTree*.**add**</code>
+<a href="#BallTree+add" name="BallTree+add">#</a> <code>*ballTree*.**add**</code>
 (elements)
 
 
 - elements <code>Array.&lt;\*&gt;</code> - new elements.
 
 
-<a name="BallTree+search">#</a> <code>*ballTree*.**search**</code>
+<a href="#BallTree+search" name="BallTree+search">#</a> <code>*ballTree*.**search**</code>
 (t, [k])
 
 
@@ -84,7 +84,7 @@ Generates a BallTree with given [elements](elements).
 
 **Returns**: <code>Heap</code> - - Heap consists of the [k](k) nearest neighbors.  
 
-<a name="HNSW">#</a> <code>*knn***HNSW**</code>
+<a href="#HNSW" name="HNSW">#</a> <code>*knn***HNSW**</code>
 
 
 **See**
@@ -105,7 +105,7 @@ Generates a BallTree with given [elements](elements).
 
 
 
-<a name="new_HNSW_new">#</a> new <code>**exports.HNSW**</code>
+<a href="#new_HNSW_new" name="new_HNSW_new">#</a> new <code>**exports.HNSW**</code>
 ([metric], [heuristic], [m], [ef], [m0], [mL], [seed])
 
 Hierarchical navigable small world graph. Efficient and robust approximate nearest neighbor search.
@@ -120,14 +120,14 @@ Hierarchical navigable small world graph. Efficient and robust approximate neare
 - [seed] <code>Number</code> <code> = 1987</code> - seed for random number generator.
 
 
-<a name="HNSW+add">#</a> <code>*hnsW*.**add**</code>
+<a href="#HNSW+add" name="HNSW+add">#</a> <code>*hnsW*.**add**</code>
 (elements)
 
 
 - elements <code>Array.&lt;\*&gt;</code> - new elements.
 
 
-<a name="HNSW+search">#</a> <code>*hnsW*.**search**</code>
+<a href="#HNSW+search" name="HNSW+search">#</a> <code>*hnsW*.**search**</code>
 (q, K, ef)
 
 
@@ -137,7 +137,7 @@ Hierarchical navigable small world graph. Efficient and robust approximate neare
 
 **Returns**: <code>Array</code> - K nearest elements to q.  
 
-<a name="HNSW+search_iter">#</a> <code>*hnsW*.**search_iter**</code>
+<a href="#HNSW+search_iter" name="HNSW+search_iter">#</a> <code>*hnsW*.**search_iter**</code>
 (q, K, ef)
 
 Iterator for searching the HNSW graphs
@@ -148,7 +148,7 @@ Iterator for searching the HNSW graphs
 - ef <code>\*</code> <code> = 1</code> - size of the dynamic cnadidate list.
 
 
-<a name="KNN">#</a> <code>*knn***KNN**</code>
+<a href="#KNN" name="KNN">#</a> <code>*knn***KNN**</code>
 
 
 
@@ -160,7 +160,7 @@ Iterator for searching the HNSW graphs
 
 
 
-<a name="new_KNN_new">#</a> new <code>**exports.KNN**</code>
+<a href="#new_KNN_new" name="new_KNN_new">#</a> new <code>**exports.KNN**</code>
 ([elements], [metric])
 
 Generates a KNN list with given [elements](elements).
@@ -170,7 +170,7 @@ Generates a KNN list with given [elements](elements).
 - [metric] <code>function</code> | <code>&quot;precomputed&quot;</code> <code> = euclidean</code> - metric is either precomputed or a function to use: (a, b) => distance
 
 
-<a name="KNN+search">#</a> <code>*knN*.**search**</code>
+<a href="#KNN+search" name="KNN+search">#</a> <code>*knN*.**search**</code>
 (t, [k])
 
 
@@ -179,7 +179,7 @@ Generates a KNN list with given [elements](elements).
 
 **Returns**: <code>Heap</code> - - Heap consists of the [k](k) nearest neighbors.  
 
-<a name="NNDescent">#</a> <code>*knn***NNDescent**</code>
+<a href="#NNDescent" name="NNDescent">#</a> <code>*knn***NNDescent**</code>
 
 
 **See**: [http://www.cs.princeton.edu/cass/papers/www11.pdf](http://www.cs.princeton.edu/cass/papers/www11.pdf)  
@@ -194,7 +194,7 @@ Generates a KNN list with given [elements](elements).
 
 
 
-<a name="new_NNDescent_new">#</a> new <code>**exports.NNDescent**</code>
+<a href="#new_NNDescent_new" name="new_NNDescent_new">#</a> new <code>**exports.NNDescent**</code>
 ([elements], [metric], [K], [rho], [delta], [seed])
 
 
@@ -206,14 +206,14 @@ Generates a KNN list with given [elements](elements).
 - [seed] <code>Number</code> <code> = 1987</code> - seed for the random number generator.
 
 
-<a name="NNDescent+add">#</a> <code>*nnDescent*.**add**</code>
+<a href="#NNDescent+add" name="NNDescent+add">#</a> <code>*nnDescent*.**add**</code>
 (elements)
 
 
 - elements <code>Array</code>
 
 
-<a name="NNDescent+search">#</a> <code>*nnDescent*.**search**</code>
+<a href="#NNDescent+search" name="NNDescent+search">#</a> <code>*nnDescent*.**search**</code>
 (x, k)
 
 **Todo**

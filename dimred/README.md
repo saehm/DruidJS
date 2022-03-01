@@ -1,5 +1,5 @@
 
-<a name="module_dimensionality_reduction">#</a> <code>**dimensionality_reduction**</code>
+<a href="#module_dimensionality_reduction" name="module_dimensionality_reduction">#</a> <code>**dimensionality_reduction**</code>
 
 
 
@@ -282,7 +282,7 @@
 
 
 
-<a name="TopoMap">#</a> <code>*dimensionality_reduction***TopoMap**</code>
+<a href="#TopoMap" name="TopoMap">#</a> <code>*dimensionality_reduction***TopoMap**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -308,7 +308,7 @@
 
 
 
-<a name="new_TopoMap_new">#</a> new <code>**exports.TopoMap**</code>
+<a href="#new_TopoMap_new" name="new_TopoMap_new">#</a> new <code>**exports.TopoMap**</code>
 (X, parameters)
 
 TopoMap: A 0-dimensional Homology Preserving Projection of High-Dimensional Data.
@@ -320,26 +320,26 @@ TopoMap: A 0-dimensional Homology Preserving Projection of High-Dimensional Data
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*topoMap*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*topoMap*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="TopoMap+init">#</a> <code>*topoMap*.**init**</code>
+<a href="#TopoMap+init" name="TopoMap+init">#</a> <code>*topoMap*.**init**</code>
 ()
 
 initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.
 
 
-<a name="TopoMap+transform">#</a> <code>*topoMap*.**transform**</code>
+<a href="#TopoMap+transform" name="TopoMap+transform">#</a> <code>*topoMap*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
 Transforms the inputdata [X](X) to dimensionality 2.
 
 
-<a name="DR+parameter">#</a> <code>*topoMap*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*topoMap*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -357,7 +357,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*topoMap*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*topoMap*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -365,14 +365,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*topoMap*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*topoMap*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*topoMap*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*topoMap*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -381,7 +381,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="DR">#</a> <code>*dimensionality_reduction***DR**</code>
+<a href="#DR" name="DR">#</a> <code>*dimensionality_reduction***DR**</code>
 
 
 
@@ -419,7 +419,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_DR_new">#</a> new <code>**exports.DR**</code>
+<a href="#new_DR_new" name="new_DR_new">#</a> new <code>**exports.DR**</code>
 (X, parameters)
 
 Takes the default parameters and seals them, remembers the type of input [X](X), and initializes the random number generator.
@@ -432,12 +432,12 @@ Takes the default parameters and seals them, remembers the type of input [X](X),
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed value for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*dR*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*dR*.**projection**</code>
 
 
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="DR+parameter">#</a> <code>*dR*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*dR*.**parameter**</code>
 (name, [value])
 
 Set and get parameters
@@ -454,27 +454,27 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+transform">#</a> <code>*dR*.**transform**</code>
+<a href="#DR+transform" name="DR+transform">#</a> <code>*dR*.**transform**</code>
 ()
 
 Computes the projection.
 
 **Returns**: <code>Matrix</code> - - Returns the projection.  
 
-<a name="DR+generator">#</a> <code>*dR*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*dR*.**generator**</code>
 ()
 
 Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*dR*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*dR*.**check_init**</code>
 ()
 
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*dR*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*dR*.**transform_async**</code>
 (...args)
 
 
@@ -482,7 +482,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="DR+para">#</a> <code>*dR*.**para**</code>
+<a href="#DR+para" name="DR+para">#</a> <code>*dR*.**para**</code>
 (name, [value])
 
 Set and get parameters
@@ -499,7 +499,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+p">#</a> <code>*dR*.**p**</code>
+<a href="#DR+p" name="DR+p">#</a> <code>*dR*.**p**</code>
 (name, [value])
 
 Set and get parameters
@@ -516,7 +516,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+para">#</a> <code>*dR*.**para**</code>
+<a href="#DR+para" name="DR+para">#</a> <code>*dR*.**para**</code>
 (name, [value])
 
 Set and get parameters
@@ -533,7 +533,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+p">#</a> <code>*dR*.**p**</code>
+<a href="#DR+p" name="DR+p">#</a> <code>*dR*.**p**</code>
 (name, [value])
 
 Set and get parameters
@@ -550,7 +550,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR.transform">#</a> <code>*DR*.**transform**</code>
+<a href="#DR.transform" name="DR.transform">#</a> <code>*DR*.**transform**</code>
 (...args)
 
 
@@ -558,7 +558,7 @@ DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR
 
 **Returns**: <code>Matrix</code> \| <code>Array</code> - - The dimensionality reduced dataset.  
 
-<a name="DR.transform_async">#</a> <code>*DR*.**transform_async**</code>
+<a href="#DR.transform_async" name="DR.transform_async">#</a> <code>*DR*.**transform_async**</code>
 (...args)
 
 
@@ -566,7 +566,7 @@ DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="DR.generator">#</a> <code>*DR*.**generator**</code>
+<a href="#DR.generator" name="DR.generator">#</a> <code>*DR*.**generator**</code>
 (...args)
 
 
@@ -574,7 +574,7 @@ DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="FASTMAP">#</a> <code>*dimensionality_reduction***FASTMAP**</code>
+<a href="#FASTMAP" name="FASTMAP">#</a> <code>*dimensionality_reduction***FASTMAP**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -598,7 +598,7 @@ DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR
 
 
 
-<a name="new_FASTMAP_new">#</a> new <code>**exports.FASTMAP**</code>
+<a href="#new_FASTMAP_new" name="new_FASTMAP_new">#</a> new <code>**exports.FASTMAP**</code>
 (X, parameters)
 
 FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
@@ -611,13 +611,13 @@ FastMap: a fast algorithm for indexing, data-mining and visualization of traditi
     - [.seed] <code>Number</code> <code> = 1212</code> - the dimensionality of the projection.
 
 
-<a name="DR+projection">#</a> <code>*fastmaP*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*fastmaP*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="FASTMAP+transform">#</a> <code>*fastmaP*.**transform**</code>
+<a href="#FASTMAP+transform" name="FASTMAP+transform">#</a> <code>*fastmaP*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -625,7 +625,7 @@ Computes the projection.
 
 **Returns**: <code>Matrix</code> - The [d](d)-dimensional projection of the data matrix [X](X).  
 
-<a name="DR+parameter">#</a> <code>*fastmaP*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*fastmaP*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -643,7 +643,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*fastmaP*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*fastmaP*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -651,14 +651,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*fastmaP*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*fastmaP*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*fastmaP*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*fastmaP*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -667,7 +667,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="HIPP">#</a> <code>*dimensionality_reduction***HIPP**</code>
+<a href="#HIPP" name="HIPP">#</a> <code>*dimensionality_reduction***HIPP**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -690,7 +690,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_HIPP_new">#</a> new <code>**exports.HIPP**</code>
+<a href="#new_HIPP_new" name="new_HIPP_new">#</a> new <code>**exports.HIPP**</code>
 (X, [d], [metric])
 
 
@@ -699,13 +699,13 @@ If the respective DR method has an <code>init</code> function, call it before <c
 - [metric] <code>function</code> <code> = euclidean</code> - the metric which defines the distance between two points.
 
 
-<a name="HIPP+projection">#</a> <code>*hipP*.**projection**</code>
+<a href="#HIPP+projection" name="HIPP+projection">#</a> <code>*hipP*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> - Returns the projection.  
 
-<a name="HIPP+transform">#</a> <code>*hipP*.**transform**</code>
+<a href="#HIPP+transform" name="HIPP+transform">#</a> <code>*hipP*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -713,7 +713,7 @@ Computes the projection.
 
 **Returns**: <code>Matrix</code> - Returns the projection.  
 
-<a name="DR+parameter">#</a> <code>*hipP*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*hipP*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -731,7 +731,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*hipP*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*hipP*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -739,14 +739,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*hipP*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*hipP*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*hipP*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*hipP*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -755,7 +755,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="ISOMAP">#</a> <code>*dimensionality_reduction***ISOMAP**</code>
+<a href="#ISOMAP" name="ISOMAP">#</a> <code>*dimensionality_reduction***ISOMAP**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -779,7 +779,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_ISOMAP_new">#</a> new <code>**exports.ISOMAP**</code>
+<a href="#new_ISOMAP_new" name="new_ISOMAP_new">#</a> new <code>**exports.ISOMAP**</code>
 (X, parameters)
 
 Isometric feature mapping (ISOMAP).
@@ -794,13 +794,13 @@ Isometric feature mapping (ISOMAP).
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*isomaP*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*isomaP*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="ISOMAP+transform">#</a> <code>*isomaP*.**transform**</code>
+<a href="#ISOMAP+transform" name="ISOMAP+transform">#</a> <code>*isomaP*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -808,7 +808,7 @@ Computes the projection.
 
 **Returns**: <code>Matrix</code> - Returns the projection.  
 
-<a name="DR+parameter">#</a> <code>*isomaP*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*isomaP*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -826,7 +826,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*isomaP*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*isomaP*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -834,14 +834,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*isomaP*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*isomaP*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*isomaP*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*isomaP*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -850,7 +850,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="LDA">#</a> <code>*dimensionality_reduction***LDA**</code>
+<a href="#LDA" name="LDA">#</a> <code>*dimensionality_reduction***LDA**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -874,7 +874,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_LDA_new">#</a> new <code>**exports.LDA**</code>
+<a href="#new_LDA_new" name="new_LDA_new">#</a> new <code>**exports.LDA**</code>
 (X, parameters)
 
 Linear Discriminant Analysis.
@@ -888,20 +888,20 @@ Linear Discriminant Analysis.
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*ldA*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*ldA*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="LDA+transform">#</a> <code>*ldA*.**transform**</code>
+<a href="#LDA+transform" name="LDA+transform">#</a> <code>*ldA*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
 Transforms the inputdata [X](X) to dimenionality [d](d).
 
 
-<a name="DR+parameter">#</a> <code>*ldA*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*ldA*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -919,7 +919,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*ldA*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*ldA*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -927,14 +927,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*ldA*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*ldA*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*ldA*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*ldA*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -943,7 +943,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="LLE">#</a> <code>*dimensionality_reduction***LLE**</code>
+<a href="#LLE" name="LLE">#</a> <code>*dimensionality_reduction***LLE**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -967,7 +967,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_LLE_new">#</a> new <code>**exports.LLE**</code>
+<a href="#new_LLE_new" name="new_LLE_new">#</a> new <code>**exports.LLE**</code>
 (X, parameters, neighbors, [d], [metric], [seed])
 
 Locally Linear Embedding.
@@ -982,20 +982,20 @@ Locally Linear Embedding.
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*llE*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*llE*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="LLE+transform">#</a> <code>*llE*.**transform**</code>
+<a href="#LLE+transform" name="LLE+transform">#</a> <code>*llE*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
 Transforms the inputdata [X](X) to dimenionality [d](d).
 
 
-<a name="DR+parameter">#</a> <code>*llE*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*llE*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1013,7 +1013,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*llE*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*llE*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1021,14 +1021,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*llE*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*llE*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*llE*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*llE*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1037,7 +1037,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="LSP">#</a> <code>*dimensionality_reduction***LSP**</code>
+<a href="#LSP" name="LSP">#</a> <code>*dimensionality_reduction***LSP**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1067,7 +1067,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_LSP_new">#</a> new <code>**exports.LSP**</code>
+<a href="#new_LSP_new" name="new_LSP_new">#</a> new <code>**exports.LSP**</code>
 (X, parameters)
 
 Least Squares Projection.
@@ -1082,13 +1082,13 @@ Least Squares Projection.
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*lsP*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*lsP*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="LSP+init">#</a> <code>*lsP*.**init**</code>
+<a href="#LSP+init" name="LSP+init">#</a> <code>*lsP*.**init**</code>
 (DR, DR_parameters)
 
 
@@ -1096,7 +1096,7 @@ Least Squares Projection.
 - DR_parameters <code>Object</code> - Object containing parameters for the DR method which projects the control points
 
 
-<a name="LSP+transform">#</a> <code>*lsP*.**transform**</code>
+<a href="#LSP+transform" name="LSP+transform">#</a> <code>*lsP*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1104,7 +1104,7 @@ Computes the projection.
 
 **Returns**: <code>Matrix</code> - Returns the projection.  
 
-<a name="DR+parameter">#</a> <code>*lsP*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*lsP*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1122,7 +1122,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*lsP*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*lsP*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1130,14 +1130,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*lsP*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*lsP*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*lsP*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*lsP*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1146,7 +1146,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="LTSA">#</a> <code>*dimensionality_reduction***LTSA**</code>
+<a href="#LTSA" name="LTSA">#</a> <code>*dimensionality_reduction***LTSA**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1170,7 +1170,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_LTSA_new">#</a> new <code>**exports.LTSA**</code>
+<a href="#new_LTSA_new" name="new_LTSA_new">#</a> new <code>**exports.LTSA**</code>
 (X, parameters)
 
 Local Tangent Space Alignment
@@ -1185,20 +1185,20 @@ Local Tangent Space Alignment
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*ltsA*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*ltsA*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="LTSA+transform">#</a> <code>*ltsA*.**transform**</code>
+<a href="#LTSA+transform" name="LTSA+transform">#</a> <code>*ltsA*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
 Transforms the inputdata [X](X) to dimenionality [d](d).
 
 
-<a name="DR+parameter">#</a> <code>*ltsA*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*ltsA*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1216,7 +1216,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*ltsA*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*ltsA*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1224,14 +1224,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*ltsA*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*ltsA*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*ltsA*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*ltsA*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1240,7 +1240,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="MDS">#</a> <code>*dimensionality_reduction***MDS**</code>
+<a href="#MDS" name="MDS">#</a> <code>*dimensionality_reduction***MDS**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1265,7 +1265,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_MDS_new">#</a> new <code>**exports.MDS**</code>
+<a href="#new_MDS_new" name="new_MDS_new">#</a> new <code>**exports.MDS**</code>
 (X, parameters)
 
 Classical MDS.
@@ -1279,25 +1279,25 @@ Classical MDS.
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*mdS*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*mdS*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="MDS+transform">#</a> <code>*mdS*.**transform**</code>
+<a href="#MDS+transform" name="MDS+transform">#</a> <code>*mdS*.**transform**</code>
 ()
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
 Transforms the inputdata [X](X) to dimensionality [d](d).
 
 
-<a name="MDS+stress">#</a> <code>*mdS*.**stress**</code>
+<a href="#MDS+stress" name="MDS+stress">#</a> <code>*mdS*.**stress**</code>
 ()
 
 **Returns**: <code>Number</code> - - the stress of the projection.  
 
-<a name="DR+parameter">#</a> <code>*mdS*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*mdS*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1315,7 +1315,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*mdS*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*mdS*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1323,14 +1323,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*mdS*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*mdS*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*mdS*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*mdS*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1339,7 +1339,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="PCA">#</a> <code>*dimensionality_reduction***PCA**</code>
+<a href="#PCA" name="PCA">#</a> <code>*dimensionality_reduction***PCA**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1364,7 +1364,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_PCA_new">#</a> new <code>**exports.PCA**</code>
+<a href="#new_PCA_new" name="new_PCA_new">#</a> new <code>**exports.PCA**</code>
 (X, parameters)
 
 
@@ -1375,13 +1375,13 @@ If the respective DR method has an <code>init</code> function, call it before <c
     - [.eig_args] <code>Number</code> - Parameters for the eigendecomposition algorithm.
 
 
-<a name="DR+projection">#</a> <code>*pcA*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*pcA*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="PCA+transform">#</a> <code>*pcA*.**transform**</code>
+<a href="#PCA+transform" name="PCA+transform">#</a> <code>*pcA*.**transform**</code>
 ([A])
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1392,13 +1392,13 @@ Transforms the inputdata [X](X) to dimensionality [d](d). If parameter [A](A) is
 
 **Returns**: <code>Matrix</code> \| <code>Array</code> - - The projected data.  
 
-<a name="PCA+principal_components">#</a> <code>*pcA*.**principal_components**</code>
+<a href="#PCA+principal_components" name="PCA+principal_components">#</a> <code>*pcA*.**principal_components**</code>
 ()
 
 Computes the [d](d) principal components of Matrix [X](X).
 
 
-<a name="DR+parameter">#</a> <code>*pcA*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*pcA*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1416,7 +1416,7 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+generator">#</a> <code>*pcA*.**generator**</code>
+<a href="#DR+generator" name="DR+generator">#</a> <code>*pcA*.**generator**</code>
 ()
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1424,14 +1424,14 @@ Computes the projection.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the dimensionality reduction method.  
 
-<a name="DR+check_init">#</a> <code>*pcA*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*pcA*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*pcA*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*pcA*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1440,7 +1440,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="SAMMON">#</a> <code>*dimensionality_reduction***SAMMON**</code>
+<a href="#SAMMON" name="SAMMON">#</a> <code>*dimensionality_reduction***SAMMON**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1464,7 +1464,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_SAMMON_new">#</a> new <code>**exports.SAMMON**</code>
+<a href="#new_SAMMON_new" name="new_SAMMON_new">#</a> new <code>**exports.SAMMON**</code>
 (X, parameters)
 
 SAMMON's Mapping
@@ -1479,13 +1479,13 @@ SAMMON's Mapping
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*sammoN*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*sammoN*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="SAMMON+transform">#</a> <code>*sammoN*.**transform**</code>
+<a href="#SAMMON+transform" name="SAMMON+transform">#</a> <code>*sammoN*.**transform**</code>
 ([max_iter])
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1496,7 +1496,7 @@ Transforms the inputdata [X](X) to dimenionality 2.
 
 **Returns**: <code>Matrix</code> \| <code>Array</code> - - The projection of [X](X).  
 
-<a name="SAMMON+generator">#</a> <code>*sammoN*.**generator**</code>
+<a href="#SAMMON+generator" name="SAMMON+generator">#</a> <code>*sammoN*.**generator**</code>
 ([max_iter])
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1507,7 +1507,7 @@ Transforms the inputdata [X](X) to dimenionality 2.
 
 **Returns**: <code>Generator</code> - - A generator yielding the intermediate steps of the projection of [X](X).  
 
-<a name="DR+parameter">#</a> <code>*sammoN*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*sammoN*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1525,14 +1525,14 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+check_init">#</a> <code>*sammoN*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*sammoN*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*sammoN*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*sammoN*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1541,7 +1541,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="TriMap">#</a> <code>*dimensionality_reduction***TriMap**</code>
+<a href="#TriMap" name="TriMap">#</a> <code>*dimensionality_reduction***TriMap**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1575,7 +1575,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_TriMap_new">#</a> new <code>**exports.TriMap**</code>
+<a href="#new_TriMap_new" name="new_TriMap_new">#</a> new <code>**exports.TriMap**</code>
 (X, parameters)
 
 
@@ -1589,13 +1589,13 @@ If the respective DR method has an <code>init</code> function, call it before <c
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*triMap*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*triMap*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="TriMap+init">#</a> <code>*triMap*.**init**</code>
+<a href="#TriMap+init" name="TriMap+init">#</a> <code>*triMap*.**init**</code>
 ([pca], [knn])
 
 
@@ -1603,7 +1603,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 - [knn] <code>KNN</code> <code> = </code> - KNN Object (if null then BallTree gets used).
 
 
-<a name="TriMap+_generate_triplets">#</a> <code>*triMap*.**_generate_triplets**</code>
+<a href="#TriMap+_generate_triplets" name="TriMap+_generate_triplets">#</a> <code>*triMap*.**_generate_triplets**</code>
 (n_inliers, n_outliers, n_random)
 
 Generates [n_inliers](n_inliers) x [n_outliers](n_outliers) x [n_random](n_random) triplets.
@@ -1614,7 +1614,7 @@ Generates [n_inliers](n_inliers) x [n_outliers](n_outliers) x [n_random](n_rando
 - n_random <code>Number</code>
 
 
-<a name="TriMap+_grad">#</a> <code>*triMap*.**_grad**</code>
+<a href="#TriMap+_grad" name="TriMap+_grad">#</a> <code>*triMap*.**_grad**</code>
 (Y)
 
 Computes the gradient for updating the embedding.
@@ -1623,7 +1623,7 @@ Computes the gradient for updating the embedding.
 - Y <code>Matrix</code> - The embedding
 
 
-<a name="TriMap+transform">#</a> <code>*triMap*.**transform**</code>
+<a href="#TriMap+transform" name="TriMap+transform">#</a> <code>*triMap*.**transform**</code>
 (max_iteration)
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1631,7 +1631,7 @@ Computes the gradient for updating the embedding.
 - max_iteration <code>Number</code> <code> = 400</code>
 
 
-<a name="TriMap+generator">#</a> <code>*triMap*.**generator**</code>
+<a href="#TriMap+generator" name="TriMap+generator">#</a> <code>*triMap*.**generator**</code>
 (max_iteration)
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1639,7 +1639,7 @@ Computes the gradient for updating the embedding.
 - max_iteration <code>Number</code> <code> = 800</code>
 
 
-<a name="DR+parameter">#</a> <code>*triMap*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*triMap*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1657,14 +1657,14 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+check_init">#</a> <code>*triMap*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*triMap*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*triMap*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*triMap*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1673,7 +1673,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="TSNE">#</a> <code>*dimensionality_reduction***TSNE**</code>
+<a href="#TSNE" name="TSNE">#</a> <code>*dimensionality_reduction***TSNE**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1698,7 +1698,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_TSNE_new">#</a> new <code>**exports.TSNE**</code>
+<a href="#new_TSNE_new" name="new_TSNE_new">#</a> new <code>**exports.TSNE**</code>
 (X, parameters)
 
 
@@ -1711,20 +1711,20 @@ If the respective DR method has an <code>init</code> function, call it before <c
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*tsnE*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*tsnE*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="TSNE+init">#</a> <code>*tsnE*.**init**</code>
+<a href="#TSNE+init" name="TSNE+init">#</a> <code>*tsnE*.**init**</code>
 (distance_matrix)
 
 
 - distance_matrix <code>Matrix</code> - accepts a precomputed distance matrix
 
 
-<a name="TSNE+transform">#</a> <code>*tsnE*.**transform**</code>
+<a href="#TSNE+transform" name="TSNE+transform">#</a> <code>*tsnE*.**transform**</code>
 ([iterations])
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1732,7 +1732,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 - [iterations] <code>Number</code> <code> = 500</code> - number of iterations.
 
 
-<a name="TSNE+generator">#</a> <code>*tsnE*.**generator**</code>
+<a href="#TSNE+generator" name="TSNE+generator">#</a> <code>*tsnE*.**generator**</code>
 ([iterations])
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1740,7 +1740,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 - [iterations] <code>Number</code> <code> = 500</code> - number of iterations.
 
 
-<a name="DR+parameter">#</a> <code>*tsnE*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*tsnE*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1758,14 +1758,14 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+check_init">#</a> <code>*tsnE*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*tsnE*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*tsnE*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*tsnE*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  
@@ -1774,7 +1774,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 **Returns**: <code>Promise</code> - - A promise yielding the dimensionality reduced dataset.  
 
-<a name="UMAP">#</a> <code>*dimensionality_reduction***UMAP**</code>
+<a href="#UMAP" name="UMAP">#</a> <code>*dimensionality_reduction***UMAP**</code>
 
 
 **Extends**: [<code>DR</code>](#DR)  
@@ -1799,7 +1799,7 @@ If the respective DR method has an <code>init</code> function, call it before <c
 
 
 
-<a name="new_UMAP_new">#</a> new <code>**exports.UMAP**</code>
+<a href="#new_UMAP_new" name="new_UMAP_new">#</a> new <code>**exports.UMAP**</code>
 (X, parameters)
 
 
@@ -1819,19 +1819,19 @@ If the respective DR method has an <code>init</code> function, call it before <c
     - [.seed] <code>Number</code> <code> = 1212</code> - the seed for the random number generator.
 
 
-<a name="DR+projection">#</a> <code>*umaP*.**projection**</code>
+<a href="#DR+projection" name="DR+projection">#</a> <code>*umaP*.**projection**</code>
 
 
 **Overrides**: [<code>projection</code>](#DR+projection)  
 **Returns**: <code>Matrix</code> \| <code>Array</code> - Returns the projection.  
 
-<a name="UMAP+init">#</a> <code>*umaP*.**init**</code>
+<a href="#UMAP+init" name="UMAP+init">#</a> <code>*umaP*.**init**</code>
 ()
 
 Computes all necessary
 
 
-<a name="UMAP+transform">#</a> <code>*umaP*.**transform**</code>
+<a href="#UMAP+transform" name="UMAP+transform">#</a> <code>*umaP*.**transform**</code>
 ([iterations])
 
 **Overrides**: [<code>transform</code>](#DR+transform)  
@@ -1839,7 +1839,7 @@ Computes all necessary
 - [iterations] <code>Number</code> <code> = 350</code> - number of iterations.
 
 
-<a name="UMAP+generator">#</a> <code>*umaP*.**generator**</code>
+<a href="#UMAP+generator" name="UMAP+generator">#</a> <code>*umaP*.**generator**</code>
 ([iterations])
 
 **Overrides**: [<code>generator</code>](#DR+generator)  
@@ -1847,7 +1847,7 @@ Computes all necessary
 - [iterations] <code>Number</code> <code> = 350</code> - number of iterations.
 
 
-<a name="DR+parameter">#</a> <code>*umaP*.**parameter**</code>
+<a href="#DR+parameter" name="DR+parameter">#</a> <code>*umaP*.**parameter**</code>
 (name, [value])
 
 **Overrides**: [<code>parameter</code>](#DR+parameter)  
@@ -1865,14 +1865,14 @@ DR.parameter("d"); // returns 3,
 DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
 ```
 
-<a name="DR+check_init">#</a> <code>*umaP*.**check_init**</code>
+<a href="#DR+check_init" name="DR+check_init">#</a> <code>*umaP*.**check_init**</code>
 ()
 
 **Overrides**: [<code>check\_init</code>](#DR+check_init)  
 If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
 
 
-<a name="DR+transform_async">#</a> <code>*umaP*.**transform_async**</code>
+<a href="#DR+transform_async" name="DR+transform_async">#</a> <code>*umaP*.**transform_async**</code>
 (...args)
 
 **Overrides**: [<code>transform\_async</code>](#DR+transform_async)  

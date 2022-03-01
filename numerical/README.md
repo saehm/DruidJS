@@ -1,5 +1,5 @@
 
-<a name="module_numerical">#</a> <code>**numerical**</code>
+<a href="#module_numerical" name="module_numerical">#</a> <code>**numerical**</code>
 
 
 
@@ -11,7 +11,7 @@
 
 
 
-<a name="kahan_sum">#</a> <code>*numerical***kahan_sum**</code>
+<a href="#kahan_sum" name="kahan_sum">#</a> <code>*numerical***kahan_sum**</code>
 (summands)
 
 **See**: [https://en.wikipedia.org/wiki/Kahan_summation_algorithm](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)  
@@ -22,7 +22,7 @@ Numerical stable summation with the Kahan summation algorithm.
 
 **Returns**: <code>number</code> - The sum.  
 
-<a name="neumair_sum">#</a> <code>*numerical***neumair_sum**</code>
+<a href="#neumair_sum" name="neumair_sum">#</a> <code>*numerical***neumair_sum**</code>
 (summands)
 
 **See**: [https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements)  

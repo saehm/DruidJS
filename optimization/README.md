@@ -1,9 +1,9 @@
 
-<a name="module_optimization">#</a> <code>**optimization**</code>
+<a href="#module_optimization" name="module_optimization">#</a> <code>**optimization**</code>
 
 
 
-<a name="powell">#</a> <code>*optimization***powell**</code>
+<a href="#powell" name="powell">#</a> <code>*optimization***powell**</code>
 (f, x0, [max_iter])
 
 **See**: http://optimization-js.github.io/optimization-js/optimization.js.html#line438  

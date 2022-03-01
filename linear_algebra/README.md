@@ -13,7 +13,7 @@
 </dl>
 
 
-<a name="module_linear_algebra">#</a> <code>**linear_algebra**</code>
+<a href="#module_linear_algebra" name="module_linear_algebra">#</a> <code>**linear_algebra**</code>
 
 
 
@@ -35,7 +35,7 @@
 
 
 
-<a name="inner_product">#</a> <code>*linear_algebra***inner_product**</code>
+<a href="#inner_product" name="inner_product">#</a> <code>*linear_algebra***inner_product**</code>
 (a, b)
 
 Computes the inner product between two arrays of the same length.
@@ -46,7 +46,7 @@ Computes the inner product between two arrays of the same length.
 
 **Returns**: The inner product between [a](a) and [b](b)  
 
-<a name="poweriteration_n">#</a> <code>*linear_algebra***poweriteration_n**</code>
+<a href="#poweriteration_n" name="poweriteration_n">#</a> <code>*linear_algebra***poweriteration_n**</code>
 (data, n, x, beta, max_iter, seed)
 
 Computes the [n](n) biggest Eigenpair of the Matrix [data](data).
@@ -61,7 +61,7 @@ Computes the [n](n) biggest Eigenpair of the Matrix [data](data).
 
 **Returns**: [<code>Eigenpair</code>](#Eigenpair) - The [n](n) Eigenpairs.  
 
-<a name="qr_givens">#</a> <code>*linear_algebra***qr_givens**</code>
+<a href="#qr_givens" name="qr_givens">#</a> <code>*linear_algebra***qr_givens**</code>
 (A)
 
 **See**: [https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations](https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations)  
@@ -71,7 +71,7 @@ Computes the QR Decomposition of the Matrix [A](A) with givens rotation.
 - A <code>Matrix</code>
 
 
-<a name="qr_householder">#</a> <code>*linear_algebra***qr_householder**</code>
+<a href="#qr_householder" name="qr_householder">#</a> <code>*linear_algebra***qr_householder**</code>
 (A)
 
 **See**
@@ -85,7 +85,7 @@ Computes the QR Decomposition of the Matrix [A](A) with householder transformati
 - A <code>Matrix</code>
 
 
-<a name="qr">#</a> <code>*linear_algebra***qr**</code>
+<a href="#qr" name="qr">#</a> <code>*linear_algebra***qr**</code>
 (A)
 
 **See**: [https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process](https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process)  
@@ -95,7 +95,7 @@ Computes the QR Decomposition of the Matrix [A](A) using Gram-Schmidt process.
 - A <code>Matrix</code>
 
 
-<a name="simultaneous_poweriteration">#</a> <code>*linear_algebra***simultaneous_poweriteration**</code>
+<a href="#simultaneous_poweriteration" name="simultaneous_poweriteration">#</a> <code>*linear_algebra***simultaneous_poweriteration**</code>
 (A, k, parameters)
 
 Computes the [k](k) biggest Eigenvectors and Eigenvalues from Matrix [A](A) with the QR-Algorithm.
@@ -111,7 +111,7 @@ Computes the [k](k) biggest Eigenvectors and Eigenvalues from Matrix [A](A) with
 
 **Returns**: <code>Object</code> - - The [k](k) biggest eigenvectors and eigenvalues of Matrix [A](A).  
 
-<a name="svrg">#</a> <code>*linear_algebra***svrg**</code>
+<a href="#svrg" name="svrg">#</a> <code>*linear_algebra***svrg**</code>
 (data, x, beta, epoch, m, s, seed)
 
 **See**: [https://arxiv.org/abs/1707.02670](https://arxiv.org/abs/1707.02670)  
@@ -127,7 +127,7 @@ Computes the eigenvector of [X](X) with an accelerated stochastic power iteratio
 - seed <code>number</code> - seed for the random number generator
 
 
-<a name="Eigenpair">#</a> <code>**Eigenpair**</code>
+<a href="#Eigenpair" name="Eigenpair">#</a> <code>**Eigenpair**</code>
 
 
 **Properties**

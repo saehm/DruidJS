@@ -1,5 +1,5 @@
 
-<a name="module_matrix">#</a> <code>**matrix**</code>
+<a href="#module_matrix" name="module_matrix">#</a> <code>**matrix**</code>
 
 
 
@@ -96,7 +96,7 @@
 
 
 
-<a name="distance_matrix">#</a> <code>*matrix***distance_matrix**</code>
+<a href="#distance_matrix" name="distance_matrix">#</a> <code>*matrix***distance_matrix**</code>
 (A, [metric])
 
 Computes the distance matrix of datamatrix [A](A).
@@ -107,7 +107,7 @@ Computes the distance matrix of datamatrix [A](A).
 
 **Returns**: [<code>Matrix</code>](#Matrix) - D - The distance matrix of [A](A).  
 
-<a name="k_nearest_neigbhors">#</a> <code>*matrix***k_nearest_neigbhors**</code>
+<a href="#k_nearest_neigbhors" name="k_nearest_neigbhors">#</a> <code>*matrix***k_nearest_neigbhors**</code>
 (A, k, [metric])
 
 Computes the k-nearest neighbors of each row of [A](A).
@@ -119,7 +119,7 @@ Computes the k-nearest neighbors of each row of [A](A).
 
 **Returns**: <code>Array.&lt;Object&gt;</code> - -  
 
-<a name="linspace">#</a> <code>*matrix***linspace**</code>
+<a href="#linspace" name="linspace">#</a> <code>*matrix***linspace**</code>
 (start, end, [number])
 
 Creates an Array containing [number](number) numbers from [start](start) to [end](end).
@@ -132,7 +132,7 @@ If <code>[number](number) = null</null>.
 
 **Returns**: <code>Array</code> - - An array with [number](number) entries, beginning at [start](start) ending at [end](end).  
 
-<a name="norm">#</a> <code>*matrix***norm**</code>
+<a href="#norm" name="norm">#</a> <code>*matrix***norm**</code>
 (v, [metric])
 
 Computes the norm of a vector, by computing its distance to **0**.
@@ -143,7 +143,7 @@ Computes the norm of a vector, by computing its distance to **0**.
 
 **Returns**: <code>Number</code> - - The norm of [v](v).  
 
-<a name="normalize">#</a> <code>*matrix***normalize**</code>
+<a href="#normalize" name="normalize">#</a> <code>*matrix***normalize**</code>
 (v, metric)
 
 Normalizes Vector [v](v).
@@ -154,7 +154,7 @@ Normalizes Vector [v](v).
 
 **Returns**: <code>Array.&lt;Number&gt;</code> \| <code>Float64Array</code> - - The normalized vector with length 1.  
 
-<a name="Matrix">#</a> <code>*matrix***Matrix**</code>
+<a href="#Matrix" name="Matrix">#</a> <code>*matrix***Matrix**</code>
 
 
 
@@ -238,7 +238,7 @@ Normalizes Vector [v](v).
 
 
 
-<a name="new_Matrix_new">#</a> new <code>**exports.Matrix**</code>
+<a href="#new_Matrix_new" name="new_Matrix_new">#</a> new <code>**exports.Matrix**</code>
 (rows, cols, value)
 
 creates a new Matrix. Entries are stored in a Float64Array.
@@ -261,20 +261,20 @@ let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random 
 let B = new Matrix(3, 3, "I"); // creates a 3 times 3 identity matrix.
 ```
 
-<a name="Matrix+T">#</a> <code>*matrix*.**T**</code>
+<a href="#Matrix+T" name="Matrix+T">#</a> <code>*matrix*.**T**</code>
 
 
 Returns a new transposed Matrix. Short-form of {@function transpose}.
 
 
-<a name="Matrix+shape">#</a> <code>*matrix*.**shape**</code>
+<a href="#Matrix+shape" name="Matrix+shape">#</a> <code>*matrix*.**shape**</code>
 
 
 Returns the number of rows and columns of the Matrix.
 
 **Returns**: <code>Array</code> - An Array in the form [rows, columns].  
 
-<a name="Matrix+shape">#</a> <code>*matrix*.**shape**</code>
+<a href="#Matrix+shape" name="Matrix+shape">#</a> <code>*matrix*.**shape**</code>
 
 
 Returns the matrix in the given shape with the given function which returns values for the entries of the matrix.
@@ -283,55 +283,55 @@ Returns the matrix in the given shape with the given function which returns valu
 - parameter <code>Array</code> - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.
 
 
-<a name="Matrix+to2dArray">#</a> <code>*matrix*.**to2dArray**</code>
+<a href="#Matrix+to2dArray" name="Matrix+to2dArray">#</a> <code>*matrix*.**to2dArray**</code>
 
 
 Returns the Matrix as a Array of Float64Arrays.
 
 
-<a name="Matrix+asArray">#</a> <code>*matrix*.**asArray**</code>
+<a href="#Matrix+asArray" name="Matrix+asArray">#</a> <code>*matrix*.**asArray**</code>
 
 
 Returns the Matrix as a Array of Arrays.
 
 
-<a name="Matrix+diag">#</a> <code>*matrix*.**diag**</code>
+<a href="#Matrix+diag" name="Matrix+diag">#</a> <code>*matrix*.**diag**</code>
 
 
 Returns the diagonal of the Matrix.
 
 
-<a name="Matrix+mean">#</a> <code>*matrix*.**mean**</code>
+<a href="#Matrix+mean" name="Matrix+mean">#</a> <code>*matrix*.**mean**</code>
 
 
 Returns the mean of all entries of the Matrix.
 
 
-<a name="Matrix+sum">#</a> <code>*matrix*.**sum**</code>
+<a href="#Matrix+sum" name="Matrix+sum">#</a> <code>*matrix*.**sum**</code>
 
 
 Returns the sum oof all entries of the Matrix.
 
 
-<a name="Matrix+values">#</a> <code>*matrix*.**values**</code>
+<a href="#Matrix+values" name="Matrix+values">#</a> <code>*matrix*.**values**</code>
 
 
 Returns the sum oof all entries of the Matrix.
 
 
-<a name="Matrix+meanRows">#</a> <code>*matrix*.**meanRows**</code>
+<a href="#Matrix+meanRows" name="Matrix+meanRows">#</a> <code>*matrix*.**meanRows**</code>
 
 
 Returns the mean of each row of the matrix.
 
 
-<a name="Matrix+meanCols">#</a> <code>*matrix*.**meanCols**</code>
+<a href="#Matrix+meanCols" name="Matrix+meanCols">#</a> <code>*matrix*.**meanCols**</code>
 
 
 Returns the mean of each column of the matrix.
 
 
-<a name="Matrix+row">#</a> <code>*matrix*.**row**</code>
+<a href="#Matrix+row" name="Matrix+row">#</a> <code>*matrix*.**row**</code>
 (row)
 
 Returns the [row](row)<sup>th</sup> row from the Matrix.
@@ -340,13 +340,13 @@ Returns the [row](row)<sup>th</sup> row from the Matrix.
 - row <code>Number</code>
 
 
-<a name="Matrix+iterate_rows">#</a> <code>*matrix*.**iterate_rows**</code>
+<a href="#Matrix+iterate_rows" name="Matrix+iterate_rows">#</a> <code>*matrix*.**iterate_rows**</code>
 ()
 
 Returns an generator yielding each row of the Matrix.
 
 
-<a name="Matrix+set_row">#</a> <code>*matrix*.**set_row**</code>
+<a href="#Matrix+set_row" name="Matrix+set_row">#</a> <code>*matrix*.**set_row**</code>
 (row, values)
 
 Sets the entries of [row](row)<sup>th</sup> row from the Matrix to the entries from [values](values).
@@ -356,7 +356,7 @@ Sets the entries of [row](row)<sup>th</sup> row from the Matrix to the entries f
 - values <code>Array</code>
 
 
-<a name="Matrix+col">#</a> <code>*matrix*.**col**</code>
+<a href="#Matrix+col" name="Matrix+col">#</a> <code>*matrix*.**col**</code>
 (col)
 
 Returns the [col](col)<sup>th</sup> column from the Matrix.
@@ -365,7 +365,7 @@ Returns the [col](col)<sup>th</sup> column from the Matrix.
 - col <code>int</code>
 
 
-<a name="Matrix+entry">#</a> <code>*matrix*.**entry**</code>
+<a href="#Matrix+entry" name="Matrix+entry">#</a> <code>*matrix*.**entry**</code>
 (row, col)
 
 Returns the [col](col)<sup>th</sup> entry from the [row](row)<sup>th</sup> row of the Matrix.
@@ -375,7 +375,7 @@ Returns the [col](col)<sup>th</sup> entry from the [row](row)<sup>th</sup> row o
 - col <code>int</code>
 
 
-<a name="Matrix+set_entry">#</a> <code>*matrix*.**set_entry**</code>
+<a href="#Matrix+set_entry" name="Matrix+set_entry">#</a> <code>*matrix*.**set_entry**</code>
 (row, col, value)
 
 Sets the [col](col)<sup>th</sup> entry from the [row](row)<sup>th</sup> row of the Matrix to the given [value](value).
@@ -386,19 +386,19 @@ Sets the [col](col)<sup>th</sup> entry from the [row](row)<sup>th</sup> row of t
 - value <code>float64</code>
 
 
-<a name="Matrix+transpose">#</a> <code>*matrix*.**transpose**</code>
+<a href="#Matrix+transpose" name="Matrix+transpose">#</a> <code>*matrix*.**transpose**</code>
 ()
 
 Returns a new transposed Matrix.
 
 
-<a name="Matrix+inverse">#</a> <code>*matrix*.**inverse**</code>
+<a href="#Matrix+inverse" name="Matrix+inverse">#</a> <code>*matrix*.**inverse**</code>
 ()
 
 Returns the inverse of the Matrix.
 
 
-<a name="Matrix+dot">#</a> <code>*matrix*.**dot**</code>
+<a href="#Matrix+dot" name="Matrix+dot">#</a> <code>*matrix*.**dot**</code>
 (B)
 
 Returns the dot product. If [B](B) is an Array or Float64Array then an Array gets returned. If [B](B) is a Matrix then a Matrix gets returned.
@@ -407,7 +407,7 @@ Returns the dot product. If [B](B) is an Array or Float64Array then an Array get
 - B [<code>Matrix</code>](#Matrix) | <code>Array</code> | <code>Float64Array</code> - the right side
 
 
-<a name="Matrix+outer">#</a> <code>*matrix*.**outer**</code>
+<a href="#Matrix+outer" name="Matrix+outer">#</a> <code>*matrix*.**outer**</code>
 (B)
 
 Computes the outer product from [this](this) and [B](B).
@@ -416,7 +416,7 @@ Computes the outer product from [this](this) and [B](B).
 - B [<code>Matrix</code>](#Matrix)
 
 
-<a name="Matrix+concat">#</a> <code>*matrix*.**concat**</code>
+<a href="#Matrix+concat" name="Matrix+concat">#</a> <code>*matrix*.**concat**</code>
 (B, [type])
 
 Appends matrix [B](B) to the matrix.
@@ -435,7 +435,7 @@ A.concat(B, "vertical"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]
 A.concat(B, "diag"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]
 ```
 
-<a name="Matrix+set_block">#</a> <code>*matrix*.**set_block**</code>
+<a href="#Matrix+set_block" name="Matrix+set_block">#</a> <code>*matrix*.**set_block**</code>
 (offset_row, offset_col, B)
 
 Writes the entries of B in A at an offset position given by [offset_row](offset_row) and [offset_col](offset_col).
@@ -446,7 +446,7 @@ Writes the entries of B in A at an offset position given by [offset_row](offset_
 - B [<code>Matrix</code>](#Matrix)
 
 
-<a name="Matrix+get_block">#</a> <code>*matrix*.**get_block**</code>
+<a href="#Matrix+get_block" name="Matrix+get_block">#</a> <code>*matrix*.**get_block**</code>
 (start_row, start_col, [end_row], [end_col])
 
 Extracts the entries from the [start_row](start_row)<sup>th</sup> row to the [end_row](end_row)<sup>th</sup> row, the [start_col](start_col)<sup>th</sup> column to the [end_col](end_col)<sup>th</sup> column of the matrix.
@@ -469,7 +469,7 @@ A.get_block(1, 1, 2, 2); // [[5]]
 A.get_block(0, 0, 2, 2); // [[1, 2], [4, 5]]
 ```
 
-<a name="Matrix+gather">#</a> <code>*matrix*.**gather**</code>
+<a href="#Matrix+gather" name="Matrix+gather">#</a> <code>*matrix*.**gather**</code>
 (row_indices, col_indices)
 
 Returns a new array gathering entries defined by the indices given by argument.
@@ -479,13 +479,13 @@ Returns a new array gathering entries defined by the indices given by argument.
 - col_indices <code>Array.&lt;Number&gt;</code> - Array consists of indices of cols for gathering entries of this matrix
 
 
-<a name="Matrix+clone">#</a> <code>*matrix*.**clone**</code>
+<a href="#Matrix+clone" name="Matrix+clone">#</a> <code>*matrix*.**clone**</code>
 ()
 
 Clones the Matrix.
 
 
-<a name="Matrix+mult">#</a> <code>*matrix*.**mult**</code>
+<a href="#Matrix+mult" name="Matrix+mult">#</a> <code>*matrix*.**mult**</code>
 (value)
 
 Entrywise multiplication with [value](value).
@@ -502,7 +502,7 @@ A.mult(2); // [[2, 4], [6, 8]];
 A.mult(B); // [[1, 4], [9, 16]];
 ```
 
-<a name="Matrix+divide">#</a> <code>*matrix*.**divide**</code>
+<a href="#Matrix+divide" name="Matrix+divide">#</a> <code>*matrix*.**divide**</code>
 (value)
 
 Entrywise division with [value](value).
@@ -519,7 +519,7 @@ A.divide(2); // [[0.5, 1], [1.5, 2]];
 A.divide(B); // [[1, 1], [1, 1]];
 ```
 
-<a name="Matrix+add">#</a> <code>*matrix*.**add**</code>
+<a href="#Matrix+add" name="Matrix+add">#</a> <code>*matrix*.**add**</code>
 (value)
 
 Entrywise addition with [value](value).
@@ -536,7 +536,7 @@ A.add(2); // [[3, 4], [5, 6]];
 A.add(B); // [[2, 4], [6, 8]];
 ```
 
-<a name="Matrix+sub">#</a> <code>*matrix*.**sub**</code>
+<a href="#Matrix+sub" name="Matrix+sub">#</a> <code>*matrix*.**sub**</code>
 (value)
 
 Entrywise subtraction with [value](value).
@@ -553,7 +553,7 @@ A.sub(2); // [[-1, 0], [1, 2]];
 A.sub(B); // [[0, 0], [0, 0]];
 ```
 
-<a name="Matrix.from">#</a> <code>*Matrix*.**from**</code>
+<a href="#Matrix.from" name="Matrix.from">#</a> <code>*Matrix*.**from**</code>
 (A, [type])
 
 Creates a Matrix out of [A](A).
@@ -568,7 +568,7 @@ let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.
 let S = Matrix.from([1, 2, 3], "diag"); // creates a 3 by 3 matrix with 1, 2, 3 on its diagonal. [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
 ```
 
-<a name="Matrix.solve_CG">#</a> <code>*Matrix*.**solve_CG**</code>
+<a href="#Matrix.solve_CG" name="Matrix.solve_CG">#</a> <code>*Matrix*.**solve_CG**</code>
 (A, b, [randomizer], [tol])
 
 Solves the equation [A](A)x = [b](b) using the conjugate gradient method. Returns the result x.
@@ -580,7 +580,7 @@ Solves the equation [A](A)x = [b](b) using the conjugate gradient method. Return
 - [tol] <code>Number</code> <code> = 1e-3</code>
 
 
-<a name="Matrix.solve">#</a> <code>*Matrix*.**solve**</code>
+<a href="#Matrix.solve" name="Matrix.solve">#</a> <code>*Matrix*.**solve**</code>
 (A, b)
 
 Solves the equation [A](A)x = [b](b). Returns the result x.
@@ -590,7 +590,7 @@ Solves the equation [A](A)x = [b](b). Returns the result x.
 - b [<code>Matrix</code>](#Matrix) - Matrix
 
 
-<a name="Matrix.LU">#</a> <code>*Matrix*.**LU**</code>
+<a href="#Matrix.LU" name="Matrix.LU">#</a> <code>*Matrix*.**LU**</code>
 (A)
 
 [L](L)[U](U) decomposition of the Matrix [A](A). Creates two matrices, so that the dot product LU equals A.
@@ -600,7 +600,7 @@ Solves the equation [A](A)x = [b](b). Returns the result x.
 
 **Returns**: <code>Object</code> - result - Returns the left triangle matrix [L](L) and the upper triangle matrix [U](U).  
 
-<a name="Matrix.det">#</a> <code>*Matrix*.**det**</code>
+<a href="#Matrix.det" name="Matrix.det">#</a> <code>*Matrix*.**det**</code>
 (A)
 
 Computes the determinante of [A](A), by using the LU decomposition of [A](A).
@@ -610,7 +610,7 @@ Computes the determinante of [A](A), by using the LU decomposition of [A](A).
 
 **Returns**: <code>Number</code> - det - Returns the determinate of the Matrix [A](A).  
 
-<a name="Matrix.SVD">#</a> <code>*Matrix*.**SVD**</code>
+<a href="#Matrix.SVD" name="Matrix.SVD">#</a> <code>*Matrix*.**SVD**</code>
 (M, [k])
 
 Computes the [k](k) components of the SVD decomposition of the matrix [M](M)
