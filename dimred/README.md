@@ -34,7 +34,7 @@ Works like [DR.transform](#DR.transform) but returns a Promise.
 
 <a href="#DR.generator" name="DR.generator">#</a> <code>_DR_.**generator**(X, [parameters])</code>
 
-Returns a generator, which yields either the intermediate step of the dimensionality reduction methods if the method is iterative, or yields the final result if it is computed in one step.
+Returns a generator, which, if the method is iterative, yields either the intermediate steps of the dimensionality reduction method, or yields the final projection if the dimensionality reduction method computes the projection in one step.
 
 ```javascript
 const DR = new druid.DR(X, parameters);
