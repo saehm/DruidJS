@@ -2148,7 +2148,7 @@ class DR {
         if (!this._parameters.hasOwnProperty(name)) {
             throw new Error(`${name} is not a valid parameter!`);
         }
-        if (value) {
+        if (value !== null) {
             this._parameters[name] = value;
             this._is_initialized = false;
             return this;

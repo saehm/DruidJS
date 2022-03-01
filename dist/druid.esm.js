@@ -724,7 +724,7 @@ constructor(t,e,r){if(this._parameters=Object.assign(Object.seal(e),r),Array.isA
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
      * DR.parameter("d"); // returns 3,
      * DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
-     */parameter(t,e=null){if(!this._parameters.hasOwnProperty(t))throw new Error(`${t} is not a valid parameter!`);return e?(this._parameters[t]=e,this._is_initialized=!1,this):this._parameters[t]}para(t,e=null){return this.parameter(t,e)}p(t,e=null){return this.parameter(t,e)}
+     */parameter(t,e=null){if(!this._parameters.hasOwnProperty(t))throw new Error(`${t} is not a valid parameter!`);return null!==e?(this._parameters[t]=e,this._is_initialized=!1,this):this._parameters[t]}para(t,e=null){return this.parameter(t,e)}p(t,e=null){return this.parameter(t,e)}
 /**
      * Computes the projection.
      * @returns {Matrix} - Returns the projection.
