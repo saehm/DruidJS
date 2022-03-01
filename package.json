@@ -1,6 +1,6 @@
 {
   "name": "@saehrimnir/druidjs",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A JavaScript Library for Dimensionality Reduction.",
   "keywords": [
     "dimensionality reduction",
@@ -21,10 +21,10 @@
     "dist/**/*.js"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "pnpm run docs && rollup -c",
     "dev": "rollup -cw",
     "test": "mocha",
-    "coverage": "NODE_ENV=test nyc --nycrc-path ./nycrc.json npm run test"
+    "docs": "jsdoc -r -d docs -c jsdoc.config.json"
   },
   "main": "dist/druid.js",
   "browser": "dist/druid.min.js",
@@ -38,7 +38,6 @@
     "clean-jsdoc-theme": "^3.3.2",
     "json2module": "0.0",
     "mocha": "^9.2.0",
-    "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.67.2",
     "rollup-plugin-jsdoc": "^0.1.2",

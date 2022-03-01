@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.5.1 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.5.2 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -5285,7 +5285,7 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.5.1";
+var version="0.5.2";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
