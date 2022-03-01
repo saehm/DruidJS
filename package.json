@@ -21,10 +21,11 @@
     "dist/**/*.js"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "pnpm run docs && rollup -c",
     "dev": "rollup -cw",
     "test": "mocha",
-    "coverage": "NODE_ENV=test nyc --nycrc-path ./nycrc.json npm run test"
+    "docs": "node create_docs.js",
+    "docs2": "jsdoc2md -c jsdoc2md.json"
   },
   "main": "dist/druid.js",
   "browser": "dist/druid.min.js",
@@ -36,6 +37,8 @@
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.1.3",
     "clean-jsdoc-theme": "^3.3.2",
+    "dmd-clear": "^0.1.2",
+    "jsdoc-to-markdown": "^7.1.1",
     "json2module": "0.0",
     "mocha": "^9.2.0",
     "nyc": "^15.1.0",
