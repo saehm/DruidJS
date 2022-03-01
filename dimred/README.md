@@ -16,7 +16,7 @@ If *value* is specified, sets the value of the specified parameter and returns t
 
 Is an shorthand alias for <code>_DR_.parameter</code>.
 
-<a href="#DR.p" name="DR.p">#</a> <code>_DR_.**para**(name, [value])</code>
+<a href="#DR.p" name="DR.p">#</a> <code>_DR_.**p**(name, [value])</code>
 
 Is an shorthand alias for <code>_DR_.parameter</code>.
 
@@ -75,7 +75,7 @@ Is the static variant of the [`generator`](#DR.generator) function.
 
 ### <code>druid.PCA</code>
 
-The dimensionality reduction method "Principal Component Analysis" is a very old technique. It projects high-dimensional data, so that the projection will have the biggest variance of the original high-dimensional datapoints. The high-dimensional data gets centered, from that a covariance matrix gets derived. The $d$ first eigenvectors of that covariance matrix are the so called *principal components*. A $d$-dimensional projection is then computed with the dot-product of the original high-dimensional data and the $d$ biggest principal components.
+The dimensionality reduction method "Principal Component Analysis" is a very old technique. It projects high-dimensional data, so that the projection will have the biggest variance of the original high-dimensional datapoints. The high-dimensional data gets centered, from that a covariance matrix gets derived. The first *d* eigenvectors of that covariance matrix are the so called *principal components*. A *d*-dimensional projection is then computed with the dot-product of the original high-dimensional data and the *d* biggest principal components.
 
 This technqiue is linear, which results in interpretable axis of the projection.
 
@@ -87,11 +87,11 @@ Creates an <code>_PCA_</code> object for projecting the data `X` with given `par
  - `parameters.eig_args` - The parameters for the eigendecomposition algorithm.
 
 <a href="#PCA.principal_components" name="PCA.principal_components">#</a> <code>_PCA_.**principal_components**()</code>
-Computes the $d$ principal components - if not already computed - and returns them.
+Computes the *d* principal components - if not already computed - and returns them.
 
 <a href="#PCA.transform" name="PCA.transform">#</a> <code>_PCA_.**transform**([A])</code>
 
-If `A` is not given, returns the projection of `X` (see [DR.transform](#DR.transform)). If `A` is given, returns the projection of `A` with the $d$ principal components of `X`.
+If `A` is not given, returns the projection of `X` (see [<code>_DR_.transform</code>](#DR.transform)). If `A` is given, returns the projection of `A` with the *d* principal components of `X`.
 
 ---
 
@@ -113,7 +113,7 @@ If the value of `parameters.metric` is `"precomputed"`, then `X` gets used as th
 
 <a href="#MDS.transform" name="MDS.transform">#</a> <code>_MDS_.**transform**()</code>
 
-See [<code>_DR_.transform</code>](DR.transform).
+See [<code>_DR_.transform</code>](#DR.transform).
 
 <a href="#MDS.stress" name="MDS.stress">#</a> <code>get _MDS_.stress</code>
 
