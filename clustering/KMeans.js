@@ -14,13 +14,13 @@ export class KMeans {
      * @alias KMeans
      * @todo needs restructuring. 
      * @param {Matrix} matrix 
-     * @param {Numbers} K 
+     * @param {Number} K 
      * @param {Function} [metric = euclidean] 
-     * @param {Number} [seed = 1987]
+     * @param {Number} [seed = 1212]
      * @param {Boolean} [init = true]
      * @returns {KMeans}
      */
-    constructor(matrix, K, metric = euclidean, seed=1987, init = true) {
+    constructor(matrix, K, metric = euclidean, seed=1212, init = true) {
         this._metric = metric;
         this._matrix = matrix;
         this._K = K;
@@ -36,7 +36,7 @@ export class KMeans {
     }
 
     /**
-     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
+     * @returns {Number[][]} - Array of clusters with the indices of the rows in given {@link matrix}. 
      */
     get_clusters() {
         const K = this._K;

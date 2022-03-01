@@ -153,7 +153,7 @@ export class OPTICS {
 
     /**
      * Returns an array of clusters.
-     * @returns {Array<Array>} Array of clusters with the indices of the rows in given {@link matrix}.
+     * @returns {Number[][]} Array of clusters with the indices of the rows in given {@link matrix}.
      */
     get_clusters() {
         const clusters = [];
@@ -171,7 +171,7 @@ export class OPTICS {
     }
 
     /**
-     * @returns {Array} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)
+     * @returns {Number[]} Returns an array, where the ith entry defines the cluster affirmation of the ith point of {@link matrix}. (-1 stands for outlier)
      */
     get_cluster_affirmation() {
         const N = this._matrix.shape[0];

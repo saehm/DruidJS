@@ -1,5 +1,5 @@
 //import * as druid from "./test_index.js";
-import "../dist/druid.js";
+import * as druid from "./test_index.js";
 import * as assert from "assert";
 /* 
 describe("DR", () => {
@@ -219,6 +219,10 @@ describe("DR techniques", () => {
         assert.ok(dr.parameter("d", 8));
         assert.ok(dr.para("d", 3));
         assert.ok(dr.p("d", 2));
+        assert.ok(dr.p("d", 2).p("seed", 1111).p("eig_args", {tol: 1e-2}));
+        assert.equal(dr.p("d"), 2)
+        assert.equal(dr.p("seed"), 1111)
+        assert.equal(dr.p("eig_args").tol, 1e-2)
         assert.ok(dr.transform());
         assert.ok(dr.generator());
         assert.ok(dr.transform_async());

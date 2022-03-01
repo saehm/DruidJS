@@ -1,0 +1,10 @@
+{
+    "include": ["index.js", "src/**/*"],
+    "compilerOptions": {
+        "allowJs": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        //"outFile": "dist/druid.d.ts",
+        "declarationMap": true
+    }
+}

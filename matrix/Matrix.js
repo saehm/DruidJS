@@ -12,15 +12,15 @@ export class Matrix {
      * @constructor
      * @memberof module:matrix
      * @alias Matrix
-     * @param {number} rows - The amount of rows of the matrix.
-     * @param {number} cols - The amount of columns of the matrix.
-     * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
-     *  - **function**: for each entry the function gets called with the parameters for the actual row and column.
-     *  - **string**: allowed are
+     * @param {Number} rows - The amount of rows of the matrix.
+     * @param {Number} cols - The amount of columns of the matrix.
+     * @param {(Function|"zero"|"identity"|"center"|"I"|Number)} [value = 0] - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
+     *  - **Function**: for each entry the function gets called with the parameters for the actual row and column.
+     *  - **String**: allowed are
      *      - "zero", creates a zero matrix.
      *      - "identity" or "I", creates an identity matrix.
      *      - "center", creates an center matrix.
-     *  - **number**: create a matrix filled with the given value.
+     *  - **Number**: create a matrix filled with the given value.
      * @example
      *
      * let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random matrix.
@@ -82,7 +82,7 @@ export class Matrix {
 
     /**
      * Creates a Matrix out of {@link A}.
-     * @param {(Matrix|Array|Float64Array|number)} A - The matrix, array, or number, which should converted to a Matrix.
+     * @param {(Matrix|Number|Number[]|Number[][])} A - The matrix, array, or number, which should converted to a Matrix.
      * @param {"row"|"col"|"diag"} [type = "row"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector.
      * @returns {Matrix}
      *
@@ -160,8 +160,8 @@ export class Matrix {
 
     /**
      * Sets the entries of {@link row}<sup>th</sup> row from the Matrix to the entries from {@link values}.
-     * @param {int} row
-     * @param {Array} values
+     * @param {Number} row
+     * @param {Number[]|Matrix} values
      * @returns {Matrix}
      */
     set_row(row, values) {
@@ -182,8 +182,8 @@ export class Matrix {
 
     /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
-     * @param {int} col
-     * @returns {Array}
+     * @param {Number} col
+     * @returns {Number[]}
      */
     col(col) {
         let result_col = new Float64Array(this._rows);
@@ -195,9 +195,9 @@ export class Matrix {
 
     /**
      * Returns the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
-     * @param {int} row
-     * @param {int} col
-     * @returns {float64}
+     * @param {Number} row
+     * @param {Number} col
+     * @returns {Number}
      */
     entry(row, col) {
         return this.values[row * this._cols + col];
@@ -205,9 +205,9 @@ export class Matrix {
 
     /**
      * Sets the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix to the given {@link value}.
-     * @param {int} row
-     * @param {int} col
-     * @param {float64} value
+     * @param {Number} row
+     * @param {Number} col
+     * @param {Number} value
      * @returns {Matrix}
      */
     set_entry(row, col, value) {
@@ -306,8 +306,8 @@ export class Matrix {
 
     /**
      * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
-     * @param {(Matrix|Array|Float64Array)} B the right side
-     * @returns {(Matrix|Array)}
+     * @param {Matrix|Number[]} B the right side
+     * @returns {Matrix|Number[]}
      */
     dot(B) {
         if (B instanceof Matrix) {
@@ -414,8 +414,8 @@ export class Matrix {
 
     /**
      * Writes the entries of B in A at an offset position given by {@link offset_row} and {@link offset_col}.
-     * @param {int} offset_row
-     * @param {int} offset_col
+     * @param {Number} offset_row
+     * @param {Number} offset_col
      * @param {Matrix} B
      * @returns {Matrix}
      */
@@ -474,8 +474,8 @@ export class Matrix {
 
     /**
      * Returns a new array gathering entries defined by the indices given by argument.
-     * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix
-     * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix
+     * @param {Number[]} row_indices - Array consists of indices of rows for gathering entries of this matrix
+     * @param {Number[]} col_indices  - Array consists of indices of cols for gathering entries of this matrix
      * @returns {Matrix}
      */
     gather(row_indices, col_indices) {
@@ -497,8 +497,8 @@ export class Matrix {
     /**
      * Applies a function to each entry of the matrix.
      * @private
-     * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
+     * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
+     * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
      */
     _apply_array(f, v) {
         const data = this.values;
@@ -691,7 +691,7 @@ export class Matrix {
 
     /**
      * Returns the Matrix as a Array of Float64Arrays.
-     * @returns {Array<Float64Array>}
+     * @returns {Number[][]}
      */
     get to2dArray() {
         const result = [];
@@ -703,7 +703,7 @@ export class Matrix {
 
     /**
      * Returns the Matrix as a Array of Arrays.
-     * @returns {Array<Array>}
+     * @returns {Number[][]}
      */
     get asArray() {
         const result = [];
@@ -715,7 +715,7 @@ export class Matrix {
 
     /**
      * Returns the diagonal of the Matrix.
-     * @returns {Float64Array}
+     * @returns {Number[]}
      */
     get diag() {
         const rows = this._rows;
@@ -910,7 +910,7 @@ export class Matrix {
     /**
      * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
      * @param {Matrix} M
-     * @param {int} [k=2]
+     * @param {Number} [k=2]
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
     static SVD(M, k = 2) {

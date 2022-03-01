@@ -11,16 +11,16 @@ export class KMedoids {
      * @constructor
      * @memberof module:clustering
      * @alias KMedoids
-     * @todo needs restructuring. 
+     * @todo needs restructuring.
      * @param {Matrix} matrix - data matrix
-     * @param {Numbers} K - number of clusters
-     * @param {number} [max_iter=null] - maximum number of iterations. Default is 10 * Math.log10(N)
-     * @param {Function} [metric = euclidean] - metric defining the dissimilarity 
+     * @param {Number} K - number of clusters
+     * @param {Number} [max_iter=null] - maximum number of iterations. Default is 10 * Math.log10(N)
+     * @param {Function} [metric = euclidean] - metric defining the dissimilarity
      * @param {Number} [seed = 1212] - seed value for random number generator
      * @returns {KMedoids}
      * @see {@link https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16} Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms
      */
-    constructor(matrix, K, max_iter=null, metric = euclidean, seed=1212) {
+    constructor(matrix, K, max_iter = null, metric = euclidean, seed = 1212) {
         this._metric = metric;
         this._matrix = matrix;
         this._A = this._matrix.to2dArray;
@@ -28,7 +28,7 @@ export class KMedoids {
         const [N, D] = matrix.shape;
         this._N = N;
         this._D = D;
-        this._max_iter = max_iter || 10 * Math.log10(N) 
+        this._max_iter = max_iter || 10 * Math.log10(N);
         this._distance_matrix = new Matrix(N, N, "zeros");
         /* for (let i = 1; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
@@ -47,7 +47,7 @@ export class KMedoids {
     }
 
     /**
-     * @returns {Array<Array>} - Array of clusters with the indices of the rows in given {@link matrix}. 
+     * @returns {Number[][]} - Array of clusters with the indices of the rows in given {@link matrix}.
      */
     get_clusters() {
         const K = this._K;
@@ -58,20 +58,20 @@ export class KMedoids {
         const result = new Array(K).fill().map(() => new Array());
         A.forEach((x_j, j) => {
             result[this._nearest_medoid(x_j, j).index_nearest].push(j);
-        })
+        });
         result.medoids = this._cluster_medoids;
         return result;
     }
 
-    async* generator() {
+    async *generator() {
         const max_iter = this._max_iter;
-        yield this.get_clusters()
+        yield this.get_clusters();
         let finish = false;
-        let i = 0
+        let i = 0;
         do {
             finish = this._iteration();
             yield this.get_clusters();
-        } while (!finish && ++i < max_iter)
+        } while (!finish && ++i < max_iter);
     }
 
     /**
@@ -132,7 +132,7 @@ export class KMedoids {
     } */
 
     /** Algorithm 2. FastPAM2: SWAP with multiple candidates
-     * 
+     *
      */
     _iteration() {
         const A = this._A;
@@ -143,16 +143,16 @@ export class KMedoids {
         const DeltaTD = new Array(K).fill(0);
         const xs = new Array(K).fill(null);
         A.forEach((x_j, j) => {
-            if (medoids.findIndex(m => m === j) < 0) {
+            if (medoids.findIndex((m) => m === j) < 0) {
                 const d_j = cache[j].distance_nearest; // distance to current medoid
                 const deltaTD = new Array(K).fill(-d_j); // change if making j a medoid
                 A.forEach((x_o, o) => {
                     if (j === o) return;
                     const d_oj = this._get_distance(o, j, x_o, x_j); // distance to new medoid
-                    const {"index_nearest": n, "distance_nearest": d_n, "distance_second": d_s} = cache[o]; // cached
+                    const { index_nearest: n, distance_nearest: d_n, distance_second: d_s } = cache[o]; // cached
                     deltaTD[n] += Math.min(d_oj, d_s) - d_n; // loss change for x_o
                     // Reassignment check
-                    if (d_oj < d_n) { 
+                    if (d_oj < d_n) {
                         // update loss change
                         for (let i = 0; i < K; ++i) {
                             if (i !== n) deltaTD[i] += d_oj - d_n;
@@ -168,47 +168,43 @@ export class KMedoids {
                             DeltaTD[i] = d;
                             xs[i] = j;
                         }
-                    })
+                    });
             }
-        })
+        });
         // stop if no improvements were found
-        if (min(DeltaTD) >= 0) return true; 
+        if (min(DeltaTD) >= 0) return true;
 
         // execute all improvements
         while (min(DeltaTD) < 0) {
             // swap roles of medoid m_i and non_medoid xs_i
-            const i = DeltaTD
-                .map((d, i) => [d, i])
-                .sort(([a], [b]) => a - b)[0][1];
-            if (medoids.filter(m => m == xs[i]).length == 0) {
+            const i = DeltaTD.map((d, i) => [d, i]).sort(([a], [b]) => a - b)[0][1];
+            if (medoids.filter((m) => m == xs[i]).length == 0) {
                 medoids[i] = xs[i];
             }
             // disable the swap just performed
-            DeltaTD[i] = 0; 
+            DeltaTD[i] = 0;
             // recompute TD for remaining swap candidates
-            DeltaTD
-                .map((d_j, j) => [d_j, j])
+            DeltaTD.map((d_j, j) => [d_j, j])
                 .filter(([d_j]) => d_j < 0)
                 .forEach(([_, j]) => {
                     const x_j = A[j];
                     let sum = 0;
                     A.forEach((x_o, o) => {
-                        if (medoids.findIndex(m => m != j && m == o) >= 0) return;
+                        if (medoids.findIndex((m) => m != j && m == o) >= 0) return;
                         if (i == j) return;
-                        if (cache[o].index_nearest === medoids[j])
-                            sum += (Math.min(this._get_distance(o, j, x_o, x_j), cache[o].distance_second) - cache[o].distance_nearest); 
+                        if (cache[o].index_nearest === medoids[j]) sum += Math.min(this._get_distance(o, j, x_o, x_j), cache[o].distance_second) - cache[o].distance_nearest;
                         else {
-                            sum += (Math.min(this._get_distance(o, j, x_o, x_j) - cache[o].distance_nearest, 0));
+                            sum += Math.min(this._get_distance(o, j, x_o, x_j) - cache[o].distance_nearest, 0);
                         }
                     });
                     DeltaTD[j] = sum;
-                })
+                });
         }
         this._cluster_medoids = medoids;
         return false;
     }
 
-    _get_distance(i, j, x_i=null, x_j=null) {
+    _get_distance(i, j, x_i = null, x_j = null) {
         if (i === j) return 0;
         const D = this._distance_matrix;
         const A = this._A;
@@ -227,16 +223,16 @@ export class KMedoids {
         const A = this._A;
         const [nearest, second] = medoids
             .map((m, i) => {
-                const x_m = A[m]; 
+                const x_m = A[m];
                 return [this._get_distance(j, m, x_j, x_m), i];
             })
             .sort((m1, m2) => m1[0] - m2[0]);
-        
-        return { 
-            "distance_nearest": nearest[0], 
-            "index_nearest": nearest[1],
-            "distance_second": second[0],
-            "index_second": second[1],
+
+        return {
+            distance_nearest: nearest[0],
+            index_nearest: nearest[1],
+            distance_second: second[0],
+            index_second: second[1],
         };
     }
 
@@ -249,17 +245,17 @@ export class KMedoids {
         if (!cluster_medoids) cluster_medoids = this._get_random_medoids(K);
         const max_iter = this._max_iter;
         let finish = false;
-        let i = 0
+        let i = 0;
         do {
             finish = this._iteration();
-        } while (!finish && ++i < max_iter)
+        } while (!finish && ++i < max_iter);
         return this;
     }
 
     /**
      * Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
      * @param {number} K - number of clusters
-     * 
+     *
      */
     _get_random_medoids(K) {
         const N = this._N;
@@ -288,7 +284,10 @@ export class KMedoids {
         // other medoids
         for (let i = 1; i < K; ++i) {
             let DeltaTD = Infinity;
-            S = randomizer.choice(indices.filter(index => medoids.findIndex(d => d === index) < 0), n);
+            S = randomizer.choice(
+                indices.filter((index) => medoids.findIndex((d) => d === index) < 0),
+                n
+            );
             for (let j = 0; j < n; ++j) {
                 let deltaTD = 0;
                 const S_j = S[j];
@@ -297,7 +296,7 @@ export class KMedoids {
                     if (o === j) continue;
                     const S_o = S[o];
                     const x_o = A[S_o];
-                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - min(medoids.map(m => this._get_distance(S_o, m, x_o)));
+                    let delta = this._get_distance(S_j, S_o, x_j, x_o) - min(medoids.map((m) => this._get_distance(S_o, m, x_o)));
                     if (delta < 0) {
                         deltaTD = deltaTD + delta;
                     }
@@ -312,5 +311,4 @@ export class KMedoids {
         }
         return medoids.slice(0, K);
     }
-    
 }

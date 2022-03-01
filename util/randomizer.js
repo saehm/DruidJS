@@ -56,7 +56,7 @@ export class Randomizer {
 
     /**
      * Returns an integer between 0 and MAX_INTEGER.
-     * @returns {Integer} - A random integer.
+     * @returns {Number} - A random integer.
      */
     get random_int() {
         let y,
@@ -97,9 +97,9 @@ export class Randomizer {
 
     /**
      * Returns samples from an input Matrix or Array.
-     * @param {Matrix|Array|Float64Array} A - The input Matrix or Array.
+     * @param {Matrix|Number[]|Float64Array} A - The input Matrix or Array.
      * @param {Number} n - The number of samples.
-     * @returns {Array} - A random selection form {@link A} of {@link n} samples.
+     * @returns {Number[]} - A random selection form {@link A} of {@link n} samples.
      */
     choice(A, n) {
         if (A instanceof Matrix) {
@@ -132,13 +132,13 @@ export class Randomizer {
     /**
      * @static
      * Returns samples from an input Matrix or Array.
-     * @param {Matrix|Array|Float64Array} A - The input Matrix or Array.
+     * @param {Matrix|Number[]|Float64Array} A - The input Matrix or Array.
      * @param {Number} n - The number of samples.
-     * @param {Number} seed - The seed for the random number generator.
-     * @returns {Array} - A random selection form {@link A} of {@link n} samples.
+     * @param {Number|Randomizer} seed - The seed for the random number generator.
+     * @returns {Number[]} - A random selection form {@link A} of {@link n} samples.
      */
     static choice(A, n, seed = 1212) {
-        const R = new Randomizer(seed);
+        const R = seed instanceof Randomizer ? seed : new Randomizer(seed);
         return R.choice(A, n);
         /* let rows = A.shape[0];
         if (n > rows) {

@@ -2,8 +2,8 @@
  * Numerical stable summation with the Kahan summation algorithm.
  * @memberof module:numerical
  * @alias kahan_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
+ * @param {Number[]} summands - Array of values to sum up.
+ * @returns {Number} The sum.
  * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
  */
 export default function (summands) {
