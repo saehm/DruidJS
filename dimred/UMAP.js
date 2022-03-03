@@ -17,9 +17,9 @@ export class UMAP extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias UMAP
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.n_neighbors = 15] - size of the local neighborhood.
      * @param {Number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.

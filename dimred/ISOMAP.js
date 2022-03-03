@@ -13,7 +13,7 @@ export class ISOMAP extends DR {
     /**
      * Isometric feature mapping (ISOMAP).
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias ISOMAP
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.

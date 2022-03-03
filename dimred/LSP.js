@@ -13,7 +13,7 @@ export class LSP extends DR {
     /**
      * Least Squares Projection.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LSP
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.

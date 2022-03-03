@@ -12,7 +12,7 @@ export class LTSA extends DR {
     /**
      * Local Tangent Space Alignment
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LTSA
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.

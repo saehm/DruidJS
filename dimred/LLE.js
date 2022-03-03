@@ -14,7 +14,7 @@ export class LLE extends DR {
     /**
      * Locally Linear Embedding.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LLE
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.

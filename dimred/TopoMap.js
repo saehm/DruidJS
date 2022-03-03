@@ -6,16 +6,15 @@ import { DisjointSet } from "../datastructure/index.js";
 /**
  * @class
  * @alias TopoMap
- * @memberof module:dimensionality_reduction
  * @extends DR
  */
 export class TopoMap extends DR {
     /**
      * TopoMap: A 0-dimensional Homology Preserving Projection of High-Dimensional Data.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TopoMap
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.

@@ -11,9 +11,9 @@ export class TSNE extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TSNE
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.

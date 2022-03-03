@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import { terser } from "rollup-plugin-terser";
-import jsdoc from 'rollup-plugin-jsdoc';
 import json from '@rollup/plugin-json';
 import meta from "./package.json";
 
@@ -29,10 +28,6 @@ export default [
             exclude: 'node_modules/**',
         }),
         resolve(),
-        jsdoc({
-            args: ["-r", "-d", "docs"],
-            config: "jsdoc.config.json",
-        }), 
     ],
     onwarn
   }, {

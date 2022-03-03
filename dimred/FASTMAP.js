@@ -1,19 +1,16 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
-/**
- * @class
- * @alias FASTMAP
- * @extends DR
- */
+
 export class FASTMAP extends DR {
     /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof druid/FASTMAP
      * @alias FASTMAP
+     * @typicalname druid.FASTMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Object} [parameters] - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the dimensionality of the projection.
@@ -57,7 +54,7 @@ export class FASTMAP extends DR {
 
     /**
      * Computes the projection.
-     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
+     * @returns {Matrix} The **d**-dimensional projection of the data matrix <code>X</code>.
      */
     transform() {
         const X = this.X;

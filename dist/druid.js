@@ -2106,12 +2106,12 @@ class KNN {
  */
 class DR {
     /**
-     * Takes the default parameters and seals them, remembers the type of input {@link X}, and initializes the random number generator.
+     * Takes the default parameters and seals them, remembers the type of input <code>X</code>, and initializes the random number generator.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:@druid/dimensionality_reduction
      * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
+     * @param {Object} [parameters] - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed value for the random number generator.
@@ -2136,6 +2136,7 @@ class DR {
 
     /**
      * Set and get parameters
+     * @chainable
      * @param {String} name - name of the parameter.
      * @param {any} [value = null] - value of the parameter to set.
      * @returns {DR|any} - On setting a parameter, this function returns the DR object. If <code>value == null</code> then return actual parameter value.
@@ -2195,7 +2196,7 @@ class DR {
     }
 
     /**
-     * @returns {Matrix|Array} Returns the projection.
+     * @returns {Matrix|Number[][]} Returns the projection.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -2208,7 +2209,7 @@ class DR {
 
     /**
      *
-     * @param  {...any} args - Arguments the transform method of the respective DR method takes.
+     * @param  {...any} [args] - Arguments the transform method of the respective DR method takes.
      * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
      */
     async transform_async(...args) {
@@ -2217,7 +2218,7 @@ class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Matrix|Array} - The dimensionality reduced dataset.
      */
     static transform(...args) {
@@ -2227,7 +2228,7 @@ class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
      */
     static async transform_async(...args) {
@@ -2236,7 +2237,7 @@ class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
      */
     static *generator(...args) {
@@ -2256,9 +2257,9 @@ class DR {
 class PCA extends DR {
     /**
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias PCA
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
@@ -2319,21 +2320,21 @@ class PCA extends DR {
 
 /**
  * @class
- * @alias MDS
  * @extends DR
  */
 class MDS extends DR {
     /**
      * Classical MDS.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @name druid.MDS
      * @alias MDS
+     * @memberof module:@druid/dimensionality_reduction
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Object} [parameters] - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {Object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      */
     constructor(X, parameters) {
         super(X, { d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
@@ -2401,7 +2402,7 @@ class ISOMAP extends DR {
     /**
      * Isometric feature mapping (ISOMAP).
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias ISOMAP
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
@@ -2488,19 +2489,15 @@ class ISOMAP extends DR {
     }
 }
 
-/**
- * @class
- * @alias FASTMAP
- * @extends DR
- */
 class FASTMAP extends DR {
     /**
      * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof druid/FASTMAP
      * @alias FASTMAP
+     * @typicalname druid.FASTMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Object} [parameters] - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the dimensionality of the projection.
@@ -2544,7 +2541,7 @@ class FASTMAP extends DR {
 
     /**
      * Computes the projection.
-     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
+     * @returns {Matrix} The **d**-dimensional projection of the data matrix <code>X</code>.
      */
     transform() {
         const X = this.X;
@@ -2587,7 +2584,7 @@ class LDA extends DR {
     /**
      * Linear Discriminant Analysis.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LDA
      * @param {Matrix} X - The high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
@@ -2679,7 +2676,7 @@ class LLE extends DR {
     /**
      * Locally Linear Embedding.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LLE
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
@@ -2749,7 +2746,7 @@ class LTSA extends DR {
     /**
      * Local Tangent Space Alignment
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LTSA
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
@@ -2825,9 +2822,9 @@ class TSNE extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TSNE
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.
@@ -3093,9 +3090,9 @@ class UMAP extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias UMAP
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.n_neighbors = 15] - size of the local neighborhood.
      * @param {Number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
@@ -3491,9 +3488,9 @@ class TriMap extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TriMap
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.weight_adj = 500] - scaling factor.
      * @param {Number} [parameters.c = 5] - number of triplets multiplier.
@@ -4782,7 +4779,7 @@ class LSP extends DR {
     /**
      * Least Squares Projection.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LSP
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
@@ -4866,16 +4863,15 @@ class LSP extends DR {
 /**
  * @class
  * @alias TopoMap
- * @memberof module:dimensionality_reduction
  * @extends DR
  */
 class TopoMap extends DR {
     /**
      * TopoMap: A 0-dimensional Homology Preserving Projection of High-Dimensional Data.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TopoMap
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
@@ -5171,9 +5167,9 @@ class SAMMON extends DR {
     /**
      * SAMMON's Mapping
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:@druid/dimensionality_reduction
      * @alias SAMMON
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.

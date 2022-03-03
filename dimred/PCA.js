@@ -10,9 +10,9 @@ import { DR } from "./DR.js";
 export class PCA extends DR {
     /**
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias PCA
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.

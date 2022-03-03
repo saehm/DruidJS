@@ -13,9 +13,9 @@ export class SAMMON extends DR {
     /**
      * SAMMON's Mapping
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:@druid/dimensionality_reduction
      * @alias SAMMON
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.

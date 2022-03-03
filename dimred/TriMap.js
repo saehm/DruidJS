@@ -13,9 +13,9 @@ export class TriMap extends DR {
     /**
      *
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias TriMap
-     * @param {Matrix} X - the high-dimensional data.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Number} [parameters.weight_adj = 500] - scaling factor.
      * @param {Number} [parameters.c = 5] - number of triplets multiplier.

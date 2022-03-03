@@ -1,6 +1,3 @@
-/**
- * @module dimensionality_reduction
- */
 export { PCA } from "./PCA.js";
 export { MDS } from "./MDS.js";
 export { ISOMAP } from "./ISOMAP.js";

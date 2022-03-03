@@ -11,7 +11,7 @@ export class LDA extends DR {
     /**
      * Linear Discriminant Analysis.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:druid/dimensionality_reduction
      * @alias LDA
      * @param {Matrix} X - The high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.

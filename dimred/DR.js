@@ -10,12 +10,12 @@ import { Randomizer } from "../util/index.js";
  */
 export class DR {
     /**
-     * Takes the default parameters and seals them, remembers the type of input {@link X}, and initializes the random number generator.
+     * Takes the default parameters and seals them, remembers the type of input <code>X</code>, and initializes the random number generator.
      * @constructor
-     * @memberof module:dimensionality_reduction
+     * @memberof module:@druid/dimensionality_reduction
      * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
+     * @param {Matrix|Number[][]} X - the high-dimensional data.
+     * @param {Object} [parameters] - Object containing parameterization of the DR method.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed value for the random number generator.
@@ -40,6 +40,7 @@ export class DR {
 
     /**
      * Set and get parameters
+     * @chainable
      * @param {String} name - name of the parameter.
      * @param {any} [value = null] - value of the parameter to set.
      * @returns {DR|any} - On setting a parameter, this function returns the DR object. If <code>value == null</code> then return actual parameter value.
@@ -99,7 +100,7 @@ export class DR {
     }
 
     /**
-     * @returns {Matrix|Array} Returns the projection.
+     * @returns {Matrix|Number[][]} Returns the projection.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -112,7 +113,7 @@ export class DR {
 
     /**
      *
-     * @param  {...any} args - Arguments the transform method of the respective DR method takes.
+     * @param  {...any} [args] - Arguments the transform method of the respective DR method takes.
      * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
      */
     async transform_async(...args) {
@@ -121,7 +122,7 @@ export class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Matrix|Array} - The dimensionality reduced dataset.
      */
     static transform(...args) {
@@ -131,7 +132,7 @@ export class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
      */
     static async transform_async(...args) {
@@ -140,7 +141,7 @@ export class DR {
 
     /**
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
+     * @param  {...any} [args] - Takes the same arguments of the constructor of the respective DR method.
      * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
      */
     static *generator(...args) {
