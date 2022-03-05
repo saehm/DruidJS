@@ -6,7 +6,7 @@ import { Matrix } from "../matrix/index.js";
  * Computes the norm of a vector, by computing its distance to **0**.
  * @memberof module:matrix
  * @alias norm
- * @param {Matrix|Array<Number>|Float64Array} v - Vector. 
+ * @param {Matrix|Array<Number>|Float64Array} v - Vector.
  * @param {Function} [metric = euclidean] - Which metric should be used to compute the norm.
  * @returns {Number} - The norm of {@link v}.
  */
@@ -21,6 +21,6 @@ export default function (v, metric = euclidean) {
         vector = v;
     }
     const n = vector.length;
-    const zeros = Float64Array.from({ length: n }, () => 0);
+    const zeros = new Float64Array(n);
     return metric(vector, zeros);
 }

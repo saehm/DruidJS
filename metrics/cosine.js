@@ -2,11 +2,15 @@
  * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias cosine
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @example
- * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4
+ * @param {Number[]} a
+ * @param {Number[]} b
  * @returns {Number} The cosine distance between {@link a} and {@link b}.
+ * 
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ * 
+ * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4;
+ * 
  */
 export default function (a, b) {
     if (a.length !== b.length) return undefined;
