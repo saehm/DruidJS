@@ -9,9 +9,7 @@ import { Randomizer } from "../util/index.js";
 export class Matrix {
     /**
      * creates a new Matrix. Entries are stored in a Float64Array.
-     * @constructor
      * @memberof module:matrix
-     * @alias Matrix
      * @param {number} rows - The amount of rows of the matrix.
      * @param {number} cols - The amount of columns of the matrix.
      * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
@@ -160,33 +158,35 @@ export class Matrix {
 
     /**
      * Sets the entries of {@link row}<sup>th</sup> row from the Matrix to the entries from {@link values}.
-     * @param {int} row
+     * @param {Number} row
      * @param {Array} values
      * @returns {Matrix}
      */
     set_row(row, values) {
-        let cols = this._cols;
-        if (Array.isArray(values) && values.length === cols) {
-            let offset = row * cols;
+        const cols = this._cols;
+        if ((Array.isArray(values) || values instanceof Float64Array) && values.length === cols) {
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values[col];
             }
         } else if (values instanceof Matrix && values.shape[1] === cols && values.shape[0] === 1) {
-            let offset = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values._data[col];
             }
+        } else {
+            throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!")
         }
         return this;
     }
 
     /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
-     * @param {int} col
+     * @param {Number} col
      * @returns {Array}
      */
     col(col) {
-        let result_col = new Float64Array(this._rows);
+        const result_col = new Float64Array(this._rows);
         for (let row = 0; row < this._rows; ++row) {
             result_col[row] = this.values[row * this._cols + col];
         }
@@ -497,8 +497,8 @@ export class Matrix {
     /**
      * Applies a function to each entry of the matrix.
      * @private
-     * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
+     * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
+     * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
      */
     _apply_array(f, v) {
         const data = this.values;
@@ -603,6 +603,8 @@ export class Matrix {
     /**
      * Entrywise multiplication with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies multiplication to the element, otherwise it creates first a copy and applies the multiplication on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -612,13 +614,16 @@ export class Matrix {
      * A.mult(2); // [[2, 4], [6, 8]];
      * A.mult(B); // [[1, 4], [9, 16]];
      */
-    mult(value) {
-        return this.clone()._apply(value, (a, b) => a * b);
+    mult(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a * b);
     }
 
     /**
      * Entrywise division with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies division to the element, otherwise it creates first a copy and applies the division on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -628,13 +633,16 @@ export class Matrix {
      * A.divide(2); // [[0.5, 1], [1.5, 2]];
      * A.divide(B); // [[1, 1], [1, 1]];
      */
-    divide(value) {
-        return this.clone()._apply(value, (a, b) => a / b);
+    divide(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a / b);
     }
 
     /**
      * Entrywise addition with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies addition to the element, otherwise it creates first a copy and applies the addition on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -644,13 +652,16 @@ export class Matrix {
      * A.add(2); // [[3, 4], [5, 6]];
      * A.add(B); // [[2, 4], [6, 8]];
      */
-    add(value) {
-        return this.clone()._apply(value, (a, b) => a + b);
+    add(value, {inline = false} = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a + b);
     }
 
     /**
      * Entrywise subtraction with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies subtraction to the element, otherwise it creates first a copy and applies the subtraction on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -660,8 +671,9 @@ export class Matrix {
      * A.sub(2); // [[-1, 0], [1, 2]];
      * A.sub(B); // [[0, 0], [0, 0]];
      */
-    sub(value) {
-        return this.clone()._apply(value, (a, b) => a - b);
+    sub(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a - b);
     }
 
     /**
