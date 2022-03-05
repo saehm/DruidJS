@@ -32,7 +32,6 @@ export class TSNE extends DR {
 
     /**
      *
-     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
      * @returns {TSNE}
      */
     init() {
@@ -122,8 +121,8 @@ export class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @param {Number} [iterations=500] - Number of iterations.
+     * @returns {Matrix|Number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -136,7 +135,7 @@ export class TSNE extends DR {
     /**
      *
      * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @yields {Matrix|Number[][]} - the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
