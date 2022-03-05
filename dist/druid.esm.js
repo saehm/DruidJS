@@ -1,11 +1,11 @@
-// https://renecutura.eu v0.5.2 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.0 Copyright 2022 Rene Cutura
 /**
- * Computes the euclidean distance (l<sub>2</sub>) between {@link a} and {@link b}.
+ * Computes the euclidean distance (<code>l<sub>2</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the euclidean distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the euclidean distance between <code>a</code> and <code>b</code>.
  */
 function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
 /**
@@ -20,84 +20,88 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * Numerical stable summation with the Neumair summation algorithm.
  * @memberof module:numerical
  * @alias neumair_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
+ * @param {Number[]} summands - Array of values to sum up.
+ * @returns {Number} The sum.
  * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
- */function neumair_sum(t){let e=t.length,r=0,s=0;for(let i=0;i<e;++i){let e=t[i],n=r+e;Math.abs(r)>=Math.abs(e)?s+=r-n+e:s+=e-n+r,r=n}return r+s}
+ */function neumair_sum(t){const e=t.length;let r=0,s=0;for(let i=0;i<e;++i){const e=t[i],n=r+e;Math.abs(r)>=Math.abs(e)?s+=r-n+e:s+=e-n+r,r=n}return r+s}
 /**
- * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between {@link a} and {@link b}.
+ * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean_squared
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the squared euclidean distance between {@link a} and {@link b}.
- */function euclidean_squared(t,e){if(t.length!=e.length)return;let r=t.length,s=new Array(r);for(let i=0;i<r;++i){let r=t[i],n=e[i];s[i]=(r-n)*(r-n)}return neumair_sum(s)}
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the squared euclidean distance between <code>a</code> and <code>b</code>.
+ */function euclidean_squared(t,e){if(t.length!=e.length)return;const r=t.length,s=new Float64Array(r);for(let i=0;i<r;++i){const r=t[i]-e[i];s[i]=r*r}return neumair_sum(s)}
 /**
  * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias cosine
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @example
- * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4
+ * @param {Number[]} a
+ * @param {Number[]} b
  * @returns {Number} The cosine distance between {@link a} and {@link b}.
+ * 
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ * 
+ * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4;
+ * 
  */function cosine(t,e){if(t.length!==e.length)return;let r=t.length,s=0,i=0,n=0;for(let o=0;o<r;++o)s+=t[o]*e[o],i+=t[o]*t[o],n+=e[o]*e[o];return Math.acos(s/(Math.sqrt(i)*Math.sqrt(n)))}
 /**
- * Computes the manhattan distance (l<sub>1</sub>) between {@link a} and {@link b}.
+ * Computes the manhattan distance (<code>l<sub>1</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias manhattan
  * @param {Array<Number>} a
  * @param {Array<Number>} b
- * @returns {Number} the manhattan distance between {@link a} and {@link b}.
- */function manhattan(t,e){if(t.length!=e.length)return;let r=t.length,s=0;for(let i=0;i<r;++i)s+=Math.abs(t[i]-e[i]);return s}
+ * @returns {Number} the manhattan distance between <code>a</code> and <code>b</code>.
+ */function manhattan(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i)s+=Math.abs(t[i]-e[i]);return s}
 /**
  * Computes the chebyshev distance (L<sub>∞</sub>) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias chebyshev
- * @param {Array<Number>} a
- * @param {Array<Number>} b
+ * @param {Number[]} a
+ * @param {Number[]} b
  * @returns {Number} the chebyshev distance between {@link a} and {@link b}.
- */function chebyshev(t,e){if(t.length!=e.length)return;let r=t.length,s=[];for(let i=0;i<r;++i)s.push(Math.abs(t[i]-e[i]));return Math.max(...s)}
+ */function chebyshev(t,e){if(t.length!=e.length)return;const r=t.length;let s=[];for(let i=0;i<r;++i)s.push(Math.abs(t[i]-e[i]));return Math.max(...s)}
 /**
- * Computes the canberra distance between {@link a} and {@link b}.
+ * Computes the canberra distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias canberra
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} The canberra distance between {@link a} and {@link b}.
+ * @param {Number[]} a 
+ * @param {Number[]} b 
+ * @returns {Number} the canberra distance between <code>a</code> and <code>b</code>.
  * @see {@link https://en.wikipedia.org/wiki/Canberra_distance}
- */function canberra(t,e){if(t.length!==e.length)return;let r=t.length,s=0;for(let i=0;i<r;++i)s+=Math.abs(t[i]-e[i])/(Math.abs(t[i])+Math.abs(e[i]));return s}
+ */function canberra(t,e){if(t.length!==e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i)s+=Math.abs(t[i]-e[i])/(Math.abs(t[i])+Math.abs(e[i]));return s}
 /**
- * Computes the jaccard distance between {@link a} and {@link b}.
+ * Computes the jaccard distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias jaccard
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the jaccard distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the jaccard distance between <code>a</code> and <code>b</code>.
  */function jaccard(t,e){if(t.length!=e.length)return;const r=t.length;let s=0,i=0;for(let n=0;n<r;++n){const r=0!=t[n],o=0!=e[n];s+=r||o,i+=r&&o}return(s-i)/s}
 /**
- * Computes the hamming distance between {@link a} and {@link b}.
+ * Computes the hamming distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias hamming
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the hamming distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the hamming distance between <code>a</code> and <code>b</code>.
  */function hamming(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i){s+=t[i]!=e[i]}return s/r}
 /**
- * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * Computes the Sokal-Michener distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias sokal_michener
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
+ * @param {Number[]} a 
+ * @param {Number[]} b 
+ * @returns {Number} the Sokal-Michener distance between <code>a</code> and <code>b</code>.  
  */function sokal_michener(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i){s+=0!=t[i]!=(0!=e[i])}return 2*s/(r+s)}
 /**
- * Computes the yule distance between {@link a} and {@link b}.
+ * Computes the yule distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias yule
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the yule distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the yule distance between <code>a</code> and <code>b</code>.
  */function yule(t,e){if(t.length!=e.length)return;const r=t.length;let s=0,i=0,n=0;for(let o=0;o<r;++o){const r=0!=t[o],a=0!=e[o];s+=r&&a,i+=r&&!a,n+=!r&&r}return 0==i||0==n?0:2*i*n/(s*(r-s-i-n)+i*n)}
 /**
  * Computes the k-nearest neighbors of each row of {@link A}.
@@ -131,10 +135,10 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * Computes the norm of a vector, by computing its distance to **0**.
  * @memberof module:matrix
  * @alias norm
- * @param {Matrix|Array<Number>|Float64Array} v - Vector. 
+ * @param {Matrix|Array<Number>|Float64Array} v - Vector.
  * @param {Function} [metric = euclidean] - Which metric should be used to compute the norm.
  * @returns {Number} - The norm of {@link v}.
- */function norm(t,e=euclidean){let r=null;if(t instanceof Matrix){let[e,s]=t.shape;if(1===e)r=t.row(0);else{if(1!==s)throw new Error("Matrix must be 1d!");r=t.col(0)}}else r=t;const s=r.length;return e(r,Float64Array.from({length:s},(()=>0)))}
+ */function norm(t,e=euclidean){let r=null;if(t instanceof Matrix){let[e,s]=t.shape;if(1===e)r=t.row(0);else{if(1!==s)throw new Error("Matrix must be 1d!");r=t.col(0)}}else r=t;const s=r.length;return e(r,new Float64Array(s))}
 /**
  * Normalizes Vector {@link v}.
  * @memberof module:matrix
@@ -188,9 +192,7 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  */class Matrix{
 /**
      * creates a new Matrix. Entries are stored in a Float64Array.
-     * @constructor
      * @memberof module:matrix
-     * @alias Matrix
      * @param {number} rows - The amount of rows of the matrix.
      * @param {number} cols - The amount of columns of the matrix.
      * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
@@ -236,15 +238,15 @@ if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,
      */*[Symbol.iterator](){for(const t of this.iterate_rows())yield t}
 /**
      * Sets the entries of {@link row}<sup>th</sup> row from the Matrix to the entries from {@link values}.
-     * @param {int} row
+     * @param {Number} row
      * @param {Array} values
      * @returns {Matrix}
-     */set_row(t,e){let r=this._cols;if(Array.isArray(e)&&e.length===r){let s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e[t]}else if(e instanceof Matrix&&e.shape[1]===r&&1===e.shape[0]){let s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e._data[t]}return this}
+     */set_row(t,e){const r=this._cols;if((Array.isArray(e)||e instanceof Float64Array)&&e.length===r){const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e[t]}else{if(!(e instanceof Matrix&&e.shape[1]===r&&1===e.shape[0]))throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!");{const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e._data[t]}}return this}
 /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
-     * @param {int} col
+     * @param {Number} col
      * @returns {Array}
-     */col(t){let e=new Float64Array(this._rows);for(let r=0;r<this._rows;++r)e[r]=this.values[r*this._cols+t];return e}
+     */col(t){const e=new Float64Array(this._rows);for(let r=0;r<this._rows;++r)e[r]=this.values[r*this._cols+t];return e}
 /**
      * Returns the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
      * @param {int} row
@@ -331,8 +333,8 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
 /**
      * Applies a function to each entry of the matrix.
      * @private
-     * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
+     * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
+     * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
      */_apply_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0;n<s;++n){const s=n*i;for(let o=0;o<i;++o){const i=s+o;r[i]=t(r[i],e(n,o))}}return this}_apply_rowwise_array(t,e){return this._apply_array(e,((e,r)=>t[r]))}_apply_colwise_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0;n<s;++n){const s=n*i;for(let o=0;o<i;++o){const i=s+o;r[i]=e(r[i],t[n])}}return this}_apply(t,e){let r=this.values;if(t instanceof Matrix){let[s,i]=t.shape,[n,o]=this.shape;if(1===s){if(o!==i)throw new Error("cols !== value_cols");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(0,i))}else if(1===i){if(n!==s)throw new Error("rows !== value_rows");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(s,0))}else{if(n!=s||o!=i)throw new Error("error");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(s,i))}}else if(Array.isArray(t)){let s=this._rows,i=this._cols;if(t.length===s)for(let n=0;n<s;++n)for(let s=0;s<i;++s)r[n*i+s]=e(r[n*i+s],t[n]);else{if(t.length!==i)throw new Error("error");for(let n=0;n<s;++n)for(let s=0;s<i;++s)r[n*i+s]=e(r[n*i+s],t[s])}}else for(let s=0,i=this._rows*this._cols;s<i;++s)r[s]=e(r[s],t);return this}
 /**
      * Clones the Matrix.
@@ -341,6 +343,8 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
 /**
      * Entrywise multiplication with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies multiplication to the element, otherwise it creates first a copy and applies the multiplication on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -349,10 +353,12 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      *
      * A.mult(2); // [[2, 4], [6, 8]];
      * A.mult(B); // [[1, 4], [9, 16]];
-     */mult(t){return this.clone()._apply(t,((t,e)=>t*e))}
+     */mult(t,{inline:e=!1}={}){return(e?this:this.clone())._apply(t,((t,e)=>t*e))}
 /**
      * Entrywise division with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies division to the element, otherwise it creates first a copy and applies the division on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -361,10 +367,12 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      *
      * A.divide(2); // [[0.5, 1], [1.5, 2]];
      * A.divide(B); // [[1, 1], [1, 1]];
-     */divide(t){return this.clone()._apply(t,((t,e)=>t/e))}
+     */divide(t,{inline:e=!1}={}){return(e?this:this.clone())._apply(t,((t,e)=>t/e))}
 /**
      * Entrywise addition with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies addition to the element, otherwise it creates first a copy and applies the addition on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -373,10 +381,12 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      *
      * A.add(2); // [[3, 4], [5, 6]];
      * A.add(B); // [[2, 4], [6, 8]];
-     */add(t){return this.clone()._apply(t,((t,e)=>t+e))}
+     */add(t,{inline:e=!1}={}){return(e?this:this.clone())._apply(t,((t,e)=>t+e))}
 /**
      * Entrywise subtraction with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies subtraction to the element, otherwise it creates first a copy and applies the subtraction on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -385,7 +395,7 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      *
      * A.sub(2); // [[-1, 0], [1, 2]];
      * A.sub(B); // [[0, 0], [0, 0]];
-     */sub(t){return this.clone()._apply(t,((t,e)=>t-e))}
+     */sub(t,{inline:e=!1}={}){return(e?this:this.clone())._apply(t,((t,e)=>t-e))}
 /**
      * Returns the number of rows and columns of the Matrix.
      * @returns {Array} An Array in the form [rows, columns].
@@ -717,48 +727,57 @@ constructor(t=null,e=euclidean){this._metric=e,this._elements=t instanceof Matri
 constructor(t,e,r){if(this._parameters=Object.assign(Object.seal(e),r),Array.isArray(t))this._type="array",this.X=Matrix.from(t);else{if(!(t instanceof Matrix))throw new Error("No valid type for X!");this._type="matrix",this.X=t}return[this._N,this._D]=this.X.shape,this._randomizer=new Randomizer(this._parameters.seed),this._is_initialized=!1,this}
 /**
      * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {any} [value = null] - value of the parameter to set.
-     * @returns {DR|any} - On setting a parameter, this function returns the DR object. If <code>value == null</code> then return actual parameter value.
+     * @param {String} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
+     * @param {any} [value = null] - Value of the parameter to set. If <code>name</code> is set and <code>value</code> is not given, returns the value of the respective parameter.
+     * @returns {DR|any|Object} 
+     * On setting a parameter, this function returns the DR object. 
+     * If <code>name</code> is set and <code>value == null</code> then return actual parameter value.
+     * If <code>name</code> is not given, then returns all parameters as an Object.
+     * 
      * @example
+     * '''
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
      * DR.parameter("d"); // returns 3,
      * DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
-     */parameter(t,e=null){if(!this._parameters.hasOwnProperty(t))throw new Error(`${t} is not a valid parameter!`);return null!==e?(this._parameters[t]=e,this._is_initialized=!1,this):this._parameters[t]}para(t,e=null){return this.parameter(t,e)}p(t,e=null){return this.parameter(t,e)}
+     * '''
+     */parameter(t=null,e=null){if(null===t)return Object.assign({},this._parameters);if(!this._parameters.hasOwnProperty(t))throw new Error(`${t} is not a valid parameter!`);return null!==e?(this._parameters[t]=e,this._is_initialized=!1,this):this._parameters[t]}para(t=null,e=null){return this.parameter(t,e)}p(t=null,e=null){return this.parameter(t,e)}
 /**
      * Computes the projection.
-     * @returns {Matrix} - Returns the projection.
+     * @returns {Matrix} the projection.
      */transform(){return this.check_init(),this.projection}
 /**
      * Computes the projection.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
      */*generator(){return this.transform()}
 /**
      * If the respective DR method has an <code>init</code> function, call it before <code>transform</code>.
      * @returns {DR}
      */check_init(){return this._is_initialized||"function"!=typeof this.init||(this.init(),this._is_initialized=!0),this}
 /**
-     * @returns {Matrix|Array} Returns the projection.
+     * @returns {Matrix|Number[][]} the projection in the type of input <code>X</code>.
      */get projection(){if(this.hasOwnProperty("Y"))return this.check_init(),"matrix"===this._type?this.Y:this.Y.to2dArray;throw new Error("The dataset is not transformed yet!")}
 /**
-     *
-     * @param  {...any} args - Arguments the transform method of the respective DR method takes.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * Computes the projection.
+     * @param  {...unknown} args - Arguments the transform method of the respective DR method takes.
+     * @returns {Promise<Matrix|Number[][]>} the dimensionality reduced dataset.
      */async transform_async(...t){return this.transform(...t)}
 /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Matrix|Array} - The dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Matrix|Array} the dimensionality reduced dataset.
      */static transform(...t){return new this(...t).transform()}
 /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Promise} a promise yielding the dimensionality reduced dataset.
      */static async transform_async(...t){return this.transform(...t)}
 /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Generator} a generator yielding the intermediate steps of the dimensionality reduction method.
      */static*generator(...t){const e=new this(...t).generator();for(const t of e)yield t}}
 /**
  * @class
@@ -996,7 +1015,6 @@ return this.Y=Matrix.from(_.slice(1)).transpose(),this.projection}}
 constructor(t,e){return super(t,{perplexity:50,epsilon:10,d:2,metric:euclidean,seed:1212},e),[this._N,this._D]=this.X.shape,this._iter=0,this.Y=new Matrix(this._N,this.parameter("d"),(()=>this._randomizer.random)),this}
 /**
      *
-     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
      * @returns {TSNE}
      */init(){
 // init
@@ -1007,13 +1025,13 @@ let a=new Float64Array(e);for(let r=0;r<e;++r){let s=-1/0,i=1/0,h=1,l=!1,_=0;for
 const h=new Matrix(e,e,"zeros"),l=2*e;for(let t=0;t<e;++t)for(let r=t;r<e;++r){const e=Math.max((o.entry(t,r)+o.entry(r,t))/l,1e-100);h.set_entry(t,r,e),h.set_entry(r,t,e)}return this._P=h,this}
 /**
      *
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @param {Number} [iterations=500] - Number of iterations.
+     * @returns {Matrix|Number[][]} the projection.
      */transform(t=500){this.check_init();for(let e=0;e<t;++e)this.next();return this.projection}
 /**
      *
      * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @yields {Matrix|Number[][]} - the projection.
      */*generator(t=500){this.check_init();for(let e=0;e<t;++e)this.next(),yield this.projection;return this.projection}
 /**
      * performs a optimization step
@@ -1133,7 +1151,7 @@ if(a[t]>0)h[t]<s*p&&(h[t]=s*p);else{const e=c.reduce(((t,e)=>t+e.reduce(((t,e)=>
      * @param {Matrix} head
      * @param {Matrix} tail
      * @returns {Matrix}
-     */_optimize_layout(t,e,r,s){const i=this._randomizer,{_repulsion_strength:n,d:o}=this._parameters,{_alpha:a,_a:h,_b:l,_epochs_per_sample:_,_epochs_per_negative_sample:c,_epoch_of_next_negative_sample:u,_epoch_of_next_sample:d,_clip:m}=this,p=s.length;for(let f=0,y=_.length;f<y;++f)if(d[f]<=this._iter){const y=r[f],w=s[f],g=t.row(y),x=e.row(w),M=euclidean_squared(g,x);let A=0;M>0&&(A=-2*h*l*Math.pow(M,l-1)/(h*Math.pow(M,l)+1));for(let r=0;r<o;++r){const s=m(A*(g[r]-x[r]))*a,i=g[r]+s,n=x[r]-s;g[r]=i,x[r]=n,t.set_entry(y,r,i),e.set_entry(w,r,n)}d[f]+=_[f];const b=(this._iter-u[f])/c[f];for(let r=0;r<b;++r){const r=i.random_int%p,_=e.row(s[r]),c=euclidean_squared(g,_);let u=0;if(c>0)u=2*n*l/((.01+c)*(h*Math.pow(c,l)+1));else if(y===r)continue;for(let i=0;i<o;++i){const n=m(u*(g[i]-_[i]))*a,o=g[i]+n,h=_[i]-n;g[i]=o,_[i]=h,t.set_entry(y,i,o),e.set_entry(s[r],i,h)}}u[f]+=b*c[f]}return t}
+     */_optimize_layout(t,e,r,s){const i=this._randomizer,{_repulsion_strength:n,d:o}=this._parameters,{_alpha:a,_a:h,_b:l,_epochs_per_sample:_,_epochs_per_negative_sample:c,_epoch_of_next_negative_sample:u,_epoch_of_next_sample:d,_clip:m}=this,p=s.length;for(let f=0,y=_.length;f<y;++f)if(d[f]<=this._iter){const y=r[f],g=s[f],w=t.row(y),x=e.row(g),M=euclidean_squared(w,x);let A=0;M>0&&(A=-2*h*l*Math.pow(M,l-1)/(h*Math.pow(M,l)+1));for(let r=0;r<o;++r){const s=m(A*(w[r]-x[r]))*a,i=w[r]+s,n=x[r]-s;w[r]=i,x[r]=n,t.set_entry(y,r,i),e.set_entry(g,r,n)}d[f]+=_[f];const b=(this._iter-u[f])/c[f];for(let r=0;r<b;++r){const r=i.random_int%p,_=e.row(s[r]),c=euclidean_squared(w,_);let u=0;if(c>0)u=2*n*l/((.01+c)*(h*Math.pow(c,l)+1));else if(y===r)continue;for(let i=0;i<o;++i){const n=m(u*(w[i]-_[i]))*a,o=w[i]+n,h=_[i]-n;w[i]=o,_[i]=h,t.set_entry(y,i,o),e.set_entry(s[r],i,h)}}u[f]+=b*c[f]}return t}
 /**
      * @private
      * @returns {Matrix}
@@ -1173,7 +1191,7 @@ constructor(t,e){return super(t,{weight_adj:500,c:5,d:2,metric:euclidean,tol:1e-
      * @param {Number} n_random
      */_generate_triplets(t,e,r){const{metric:s,weight_adj:i}=this._parameters,n=this.X,o=n.shape[0],a=this.knn,h=Math.min(t+20,o),l=new Matrix(o,h),_=new Matrix(o,h);for(let t=0;t<o;++t)a.search(n.row(t),h+1).raw_data().filter((t=>0!=t.value)).sort(((t,e)=>t.value-e.value)).forEach(((e,r)=>{l.set_entry(t,r,e.element.index),_.set_entry(t,r,e.value)}));
 // scale parameter
-const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.entry(t,4)+_.entry(t,5)+_.entry(t,6))/4,1e-10);const u=this._find_p(_,c,l);let d=this._sample_knn_triplets(u,l,t,e),m=d.shape[0];const p=new Float64Array(m);for(let t=0;t<m;++t){const e=d.entry(t,0),r=d.entry(t,2);p[t]=s(n.row(e),n.row(r))}let f=this._find_weights(d,u,l,p,c);if(r>0){const{random_triplets:t,random_weights:e}=this._sample_random_triplets(n,r,c);d=d.concat(t,"vertical"),f=Float64Array.from([...f,...e])}m=d.shape[0];let y=-1/0;for(let t=0;t<m;++t)isNaN(f[t])&&(f[t]=0),y<f[t]&&(y=f[t]);let w=-1/0;for(let t=0;t<m;++t)f[t]/=y,f[t]+=1e-4,f[t]=Math.log(1+i*f[t]),w<f[t]&&(w=f[t]);for(let t=0;t<m;++t)f[t]/=w;return{triplets:d,weights:f}}
+const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.entry(t,4)+_.entry(t,5)+_.entry(t,6))/4,1e-10);const u=this._find_p(_,c,l);let d=this._sample_knn_triplets(u,l,t,e),m=d.shape[0];const p=new Float64Array(m);for(let t=0;t<m;++t){const e=d.entry(t,0),r=d.entry(t,2);p[t]=s(n.row(e),n.row(r))}let f=this._find_weights(d,u,l,p,c);if(r>0){const{random_triplets:t,random_weights:e}=this._sample_random_triplets(n,r,c);d=d.concat(t,"vertical"),f=Float64Array.from([...f,...e])}m=d.shape[0];let y=-1/0;for(let t=0;t<m;++t)isNaN(f[t])&&(f[t]=0),y<f[t]&&(y=f[t]);let g=-1/0;for(let t=0;t<m;++t)f[t]/=y,f[t]+=1e-4,f[t]=Math.log(1+i*f[t]),g<f[t]&&(g=f[t]);for(let t=0;t<m;++t)f[t]/=g;return{triplets:d,weights:f}}
 /**
      * Calculates the similarity matrix P
      * @private
@@ -1542,7 +1560,7 @@ constructor(t,e){return super(t,{neighbors:void 0,control_points:void 0,d:2,metr
      * @param {DR} DR - method used for position control points.
      * @param {Object} DR_parameters - Object containing parameters for the DR method which projects the control points
      * @returns {LSP}
-     */init(t=MDS,e={},r=BallTree){if(this._is_initialized)return this;const s=this.X,i=this._N,n=this.parameter("neighbors"),o=this.parameter("d"),a=this.parameter("seed"),h=this.parameter("metric");e=Object.assign({d:o,metric:h,seed:a},e);const l=this.parameter("control_points"),_=new KMedoids(s,l,null,h).get_clusters().medoids,c=new Matrix(l,i,"zeros");_.forEach(((t,e)=>{c.set_entry(e,t,1)}));const u=new t(Matrix.from(_.map((t=>s.row(t)))),e).transform(),d=s.to2dArray,m=new r(d,h),p=new Matrix(i,i,"I"),f=-1/n;d.forEach(((t,e)=>{for(const{index:r}of m.search(t,n).iterate())e!==r&&p.set_entry(e,r,f)}));const y=p.concat(c,"vertical"),w=new Matrix(i,o,"zeros").concat(u,"vertical");return this._A=y,this._b=w,this._is_initialized=!0,this}
+     */init(t=MDS,e={},r=BallTree){if(this._is_initialized)return this;const s=this.X,i=this._N,n=this.parameter("neighbors"),o=this.parameter("d"),a=this.parameter("seed"),h=this.parameter("metric");e=Object.assign({d:o,metric:h,seed:a},e);const l=this.parameter("control_points"),_=new KMedoids(s,l,null,h).get_clusters().medoids,c=new Matrix(l,i,"zeros");_.forEach(((t,e)=>{c.set_entry(e,t,1)}));const u=new t(Matrix.from(_.map((t=>s.row(t)))),e).transform(),d=s.to2dArray,m=new r(d,h),p=new Matrix(i,i,"I"),f=-1/n;d.forEach(((t,e)=>{for(const{index:r}of m.search(t,n).iterate())e!==r&&p.set_entry(e,r,f)}));const y=p.concat(c,"vertical"),g=new Matrix(i,o,"zeros").concat(u,"vertical");return this._A=y,this._b=g,this._is_initialized=!0,this}
 /**
      * Computes the projection.
      * @returns {Matrix} Returns the projection.
@@ -1661,5 +1679,97 @@ constructor(t,e){return super(t,{magic:.1,d:2,metric:euclidean,seed:1212,init_DR
      * Transforms the inputdata {@link X} to dimenionality 2.
      * @param {Number} [max_iter=200] - Maximum number of iteration steps.
      * @returns {Generator} - A generator yielding the intermediate steps of the projection of {@link X}.
-     */*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this.X.shape[0],{d:s,metric:i}=this._parameters;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,m=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/m,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/m}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}var t="0.5.2";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */*generator(t=200){this._is_initialized||this.init();for(let e=0;e<t;++e)this._step(),yield this.projection;return this.projection}_step(){const t=this.parameter("magic"),e=this.distance_matrix,r=this.X.shape[0],{d:s,metric:i}=this._parameters;let n=this.Y,o=new Matrix(r,s,0),a=new Float64Array(s);for(let h=0;h<r;++h){let l=new Float64Array(s),_=new Float64Array(s);const c=n.row(h);for(let t=0;t<r;++t){if(h===t)continue;const r=n.row(t),o=new Float64Array(s);for(let t=0;t<s;++t)o[t]=c[t]-r[t];const a=i(c,r),u=e.entry(h,t),d=u-a,m=Math.max(u*a,.01);for(let t=0;t<s;++t)l[t]+=o[t]*d/m,_[t]+=(d-Math.pow(o[t],2)*(1+d/a)/a)/m}for(let e=0;e<s;++e){const r=n.entry(h,e)+(t*l[e]/Math.abs(_[e])||0);o.set_entry(h,e,r),a[e]+=r}}for(let t=0;t<s;++t)a[t]/=r;for(let t=0;t<r;++t)for(let e=0;e<s;++e)n.set_entry(t,e,o.entry(t,e)-a[e]);return n}}class SQDMDS extends DR{
+/**
+     * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE and UMAP.
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @param {Matrix|Number[][]} X
+     * @param {Object} [parameters]
+     * @param {Number} [parameters.d=2]
+     * @param {Function} [parameters.metric = euclidean]
+     * @param {Number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
+     * @param {Number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
+     * @param {Object} [parameters.init_DR]
+     * @returns {SQDMDS}
+     * @see {@link https://arxiv.org/pdf/2202.12087.pdf}
+     */
+constructor(t,e){return super(t,{d:2,metric:euclidean,seed:1212,decay_start:.1,decay_cte:.34,// 0.34
+init_DR:{type:"random"}},e),this}
+/**
+     * @private
+     */init(){const t=this._N,e=this.parameter("d");
+// initialize helpers.
+this._add=this.__add(e),this._sub_div=this.__sub_div(e),this._minus=this.__minus(e),this._mult=this.__mult(e),this._LR_init=Math.max(2,.005*t),this._LR=this._LR_init,this._offset=-Math.exp(-1/this.parameter("decay_cte")),this._momentums=new Matrix(t,e,0),this._grads=new Matrix(t,e,0),this._indices=linspace(0,t-1);
+// initialize projection.
+const r=this._randomizer;this.Y=new Matrix(t,e,(()=>r.random-.5));
+// preparing metric for optimization.
+const s=this.parameter("metric");"precomputed"===s?(this._HD_metric=function(t,e,r){return r.entry(t,e)},this._HD_metric_exaggeration=function(t,e,r){return Math.pow(r.entry(t,e),2)}):(this._HD_metric=function(t,e,r){return s(r.row(t),r.row(e))},this._HD_metric_exaggeration=s==euclidean?function(t,e,r){return euclidean_squared(r.row(t),r.row(e))}:function(t,e,r){return Math.pow(s(r.row(t),r.row(e)),2)})}
+/**
+     * Computes the projection.
+     * @param {Number} [iterations=500] - Number of iterations.
+     * @returns {Matrix|Number[][]} the projection.
+     */transform(t=500){this.check_init(),this._decay_start=Math.round(this.parameter("decay_start")*t);for(let e=0;e<t;++e)this._step(e,t);return this.projection}
+/**
+     * Computes the projection.
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     */*generator(t=500){this.check_init(),this._decay_start=Math.round(this.parameter("decay_start")*t);for(let e=0;e<t;++e)this._step(e,t),yield this.projection;return this.projection}
+/**
+     * Performs an optimization step.
+     * @private
+     * @param {Number} i - Acutal iteration.
+     * @param {Number} iterations - Number of iterations.
+     */_step(t,e){const r=this._decay_start;if(t>r){const s=this.parameter("decay_cte"),i=this._offset,n=(t-r)/(e-r);this._LR=this._LR_init*(Math.exp(-n*n/s)+i),this._distance_exaggeration=!1}else this._distance_exaggeration=!0;this._nestrov_iteration(this._distance_exaggeration)}
+/**
+     * Creates quartets of non overlapping indices.
+     * @private
+     * @returns {Number[][]}
+     */__quartets(){const t=this._N,e=t-t%4,r=this._randomizer.choice(this._indices,e),s=[];for(let t=0;t<e;t+=4)s.push(Uint32Array.of(r[t],r[t+1],r[t+2],r[t+3]));return s}
+/**
+     * Computes and applies gradients, and updates momentum.
+     * @private
+     * @param {Boolean} distance_exaggeration
+     */_nestrov_iteration(t){const e=this._momentums.mult(.99,{inline:!0}),r=this._LR,s=this._fill_MDS_grads(this.Y.add(e),this._grads,t),[i,n]=e.shape;for(let t=0;t<i;++t){const i=s.row(t),o=norm(i);if(0==o)continue;const a=r/o,h=e.row(t);for(let t=0;t<n;++t)h[t]-=a*i[t]}// momentums -= (LR / norm) * grads
+this.Y.add(e,{inline:!0})}
+/**
+     * Computes the gradients.
+     * @param {Matrix} Y - The Projection.
+     * @param {Matrix} grads - The gradients.
+     * @param {Boolean} [exaggeration = false] - Whether or not to use early exaggeration.
+     * @param {Boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
+     * @returns {Matrix} the gradients.
+     */_fill_MDS_grads(t,e,r=!1,s=!0){s&&
+// compute new gradients
+e.values.fill(0);const i=this._add,n=this.X;let o;o=1==r?this._HD_metric_exaggeration:this._HD_metric;const a=new Float64Array(6),h=this.__quartets();for(const[r,s,l,_]of h){
+// compute quartet's HD distances.
+a[0]=o(r,s,n),a[1]=o(r,l,n),a[2]=o(r,_,n),a[3]=o(s,l,n),a[4]=o(s,_,n),a[5]=o(l,_,n);const h=neumair_sum(a);if(h>0)for(let t=0;t<6;++t)a[t]/=h,a[t]+=1e-11;const[c,u,d,m]=this._compute_quartet_grads(t,[r,s,l,_],a);
+// add is inline, row acces the matrix
+i(e.row(r),c),i(e.row(s),u),i(e.row(l),d),i(e.row(_),m)}return e}
+/**
+     * Quartet gradients for a projection.
+     * @private
+     * @param {Matrix} Y - The acutal projection.
+     * @param {Number[]} quartet - The indices of the quartet.
+     * @param {Number[]} D_hd - The high-dimensional distances of the quartet.
+     * @returns {Number[][]} the gradients for the quartet.
+     */_compute_quartet_grads(t,e,[r,s,i,n,o,a]){const[h,l,_,c]=e.map((e=>t.row(e))),u=euclidean(h,l)+1e-12,d=euclidean(h,_)+1e-12,m=euclidean(h,c)+1e-12,p=euclidean(l,_)+1e-12,f=euclidean(l,c)+1e-12,y=euclidean(_,c)+1e-12,g=neumair_sum([u,d,m,p,f,y]),[w,x,M,A]=this._ABCD_grads(h,l,_,c,u,d,m,p,f,y,r,g),[b,v,z,D]=this._ABCD_grads(h,_,l,c,d,u,m,p,y,f,s,g),[N,j,E,k]=this._ABCD_grads(h,c,_,l,m,d,u,y,f,p,i,g),[R,S,F,L]=this._ABCD_grads(l,_,h,c,p,u,f,d,y,m,n,g),[X,P,q,T]=this._ABCD_grads(l,c,h,_,f,u,p,m,y,d,o,g),[Y,C,B,K]=this._ABCD_grads(_,c,h,l,y,d,p,m,f,u,a,g),O=this._add;
+// LD distances, add a small number just in case
+return[O(w,b,N,F,q,B),O(x,z,k,R,X,K),O(M,v,E,S,T,Y),O(A,D,j,L,P,C)]}
+/**
+     * Gradients for one element of the loss function's sum.
+     * @private
+     */_ABCD_grads(t,e,r,s,i,n,o,a,h,l,_,c){const u=i/c,d=(_-u)/c*2,m=this._minus,p=this._add,f=this._mult,y=this._sub_div;return[f(m(f(p(y(t,e,i),y(t,r,n),y(t,s,o)),u),y(t,e,i)),d),f(m(f(p(y(e,t,i),y(e,r,a),y(e,s,h)),u),y(e,t,i)),d),f(p(y(r,t,n),y(r,e,a),y(r,s,l)),u*d),f(p(y(s,t,o),y(s,e,h),y(s,r,l)),u*d)]}
+/**
+     * Inline!
+     */__minus(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]-=r[s];return e}}
+/**
+     * Inline!
+     */__add(t){return(...e)=>{const r=e.length,s=e[0];for(let i=1;i<r;++i){const r=e[i];for(let e=0;e<t;++e)s[e]+=r[e]}return s}}
+/**
+     * Inline!
+     */__mult(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]*=r;return e}}
+/**
+     * Creates a new array <code>(x - y) / div</code>
+     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.0";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
 //# sourceMappingURL=druid.esm.js.map

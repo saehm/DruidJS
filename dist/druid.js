@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.5.2 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.0 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -6,12 +6,12 @@ typeof define === 'function' && define.amd ? define(['exports'], factory) :
 })(this, (function (exports) { 'use strict';
 
 /**
- * Computes the euclidean distance (l<sub>2</sub>) between {@link a} and {@link b}.
+ * Computes the euclidean distance (<code>l<sub>2</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the euclidean distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the euclidean distance between <code>a</code> and <code>b</code>.
  */
 function euclidean (a, b) {
     return Math.sqrt(euclidean_squared(a, b));
@@ -44,18 +44,18 @@ function kahan_sum (summands) {
  * Numerical stable summation with the Neumair summation algorithm.
  * @memberof module:numerical
  * @alias neumair_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
+ * @param {Number[]} summands - Array of values to sum up.
+ * @returns {Number} The sum.
  * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
  */
 function neumair_sum (summands) {
-    let n = summands.length;
+    const n = summands.length;
     let sum = 0;
     let compensation = 0;
 
     for (let i = 0; i < n; ++i) {
-        let summand = summands[i];
-        let t = sum + summand;
+        const summand = summands[i];
+        const t = sum + summand;
         if (Math.abs(sum) >= Math.abs(summand)) {
             compensation += sum - t + summand;
         } else {
@@ -67,21 +67,22 @@ function neumair_sum (summands) {
 }
 
 /**
- * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between {@link a} and {@link b}.
+ * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean_squared
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the squared euclidean distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the squared euclidean distance between <code>a</code> and <code>b</code>.
  */
 function euclidean_squared (a, b) {
     if (a.length != b.length) return undefined;
-    let n = a.length;
-    let s = new Array(n);
+    const n = a.length;
+    const s = new Float64Array(n);
     for (let i = 0; i < n; ++i) {
-        let x = a[i];
-        let y = b[i];
-        s[i] = (x - y) * (x - y);
+        const x = a[i];
+        const y = b[i];
+        const x_y = x - y;
+        s[i] = x_y * x_y;
     }
     return neumair_sum(s);
 }
@@ -90,11 +91,15 @@ function euclidean_squared (a, b) {
  * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias cosine
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @example
- * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4
+ * @param {Number[]} a
+ * @param {Number[]} b
  * @returns {Number} The cosine distance between {@link a} and {@link b}.
+ * 
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ * 
+ * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4;
+ * 
  */
 function cosine (a, b) {
     if (a.length !== b.length) return undefined;
@@ -111,16 +116,16 @@ function cosine (a, b) {
 }
 
 /**
- * Computes the manhattan distance (l<sub>1</sub>) between {@link a} and {@link b}.
+ * Computes the manhattan distance (<code>l<sub>1</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias manhattan
  * @param {Array<Number>} a
  * @param {Array<Number>} b
- * @returns {Number} the manhattan distance between {@link a} and {@link b}.
+ * @returns {Number} the manhattan distance between <code>a</code> and <code>b</code>.
  */ 
 function manhattan (a, b) {
     if (a.length != b.length) return undefined;
-    let n = a.length;
+    const n = a.length;
     let sum = 0;
     for (let i = 0; i < n; ++i) {
         sum += Math.abs(a[i] - b[i]);
@@ -132,13 +137,13 @@ function manhattan (a, b) {
  * Computes the chebyshev distance (L<sub>∞</sub>) between {@link a} and {@link b}.
  * @memberof module:metrics
  * @alias chebyshev
- * @param {Array<Number>} a
- * @param {Array<Number>} b
+ * @param {Number[]} a
+ * @param {Number[]} b
  * @returns {Number} the chebyshev distance between {@link a} and {@link b}.
  */
 function chebyshev (a, b) {
     if (a.length != b.length) return undefined;
-    let n = a.length;
+    const n = a.length;
     let res = [];
     for (let i = 0; i < n; ++i) {
         res.push(Math.abs(a[i] - b[i]));
@@ -147,17 +152,17 @@ function chebyshev (a, b) {
 }
 
 /**
- * Computes the canberra distance between {@link a} and {@link b}.
+ * Computes the canberra distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias canberra
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} The canberra distance between {@link a} and {@link b}.
+ * @param {Number[]} a 
+ * @param {Number[]} b 
+ * @returns {Number} the canberra distance between <code>a</code> and <code>b</code>.
  * @see {@link https://en.wikipedia.org/wiki/Canberra_distance}
  */
 function canberra(a, b) {
     if (a.length !== b.length) return undefined;
-    let n = a.length;
+    const n = a.length;
     let sum = 0;
     for (let i = 0; i < n; ++i) {
         sum += (Math.abs(a[i] - b[i]) / (Math.abs(a[i]) + Math.abs(b[i])));
@@ -166,12 +171,12 @@ function canberra(a, b) {
 }
 
 /**
- * Computes the jaccard distance between {@link a} and {@link b}.
+ * Computes the jaccard distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias jaccard
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the jaccard distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the jaccard distance between <code>a</code> and <code>b</code>.
  */
 function jaccard (a, b) {
     if (a.length != b.length) return undefined;
@@ -188,12 +193,12 @@ function jaccard (a, b) {
 }
 
 /**
- * Computes the hamming distance between {@link a} and {@link b}.
+ * Computes the hamming distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias hamming
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the hamming distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the hamming distance between <code>a</code> and <code>b</code>.
  */
 function hamming (a, b) {
     if (a.length != b.length) return undefined;
@@ -208,12 +213,12 @@ function hamming (a, b) {
 }
 
 /**
- * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * Computes the Sokal-Michener distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias sokal_michener
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
+ * @param {Number[]} a 
+ * @param {Number[]} b 
+ * @returns {Number} the Sokal-Michener distance between <code>a</code> and <code>b</code>.  
  */
 function sokal_michener(a, b) {
     if (a.length != b.length) return undefined
@@ -228,12 +233,12 @@ function sokal_michener(a, b) {
 }
 
 /**
- * Computes the yule distance between {@link a} and {@link b}.
+ * Computes the yule distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias yule
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the yule distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the yule distance between <code>a</code> and <code>b</code>.
  */
 function yule (a, b) {
     if (a.length != b.length) return undefined;
@@ -333,7 +338,7 @@ function linspace (start, end, number = null) {
  * Computes the norm of a vector, by computing its distance to **0**.
  * @memberof module:matrix
  * @alias norm
- * @param {Matrix|Array<Number>|Float64Array} v - Vector. 
+ * @param {Matrix|Array<Number>|Float64Array} v - Vector.
  * @param {Function} [metric = euclidean] - Which metric should be used to compute the norm.
  * @returns {Number} - The norm of {@link v}.
  */
@@ -348,7 +353,7 @@ function norm (v, metric = euclidean) {
         vector = v;
     }
     const n = vector.length;
-    const zeros = Float64Array.from({ length: n }, () => 0);
+    const zeros = new Float64Array(n);
     return metric(vector, zeros);
 }
 
@@ -492,9 +497,7 @@ function inner_product (a, b) {
 class Matrix {
     /**
      * creates a new Matrix. Entries are stored in a Float64Array.
-     * @constructor
      * @memberof module:matrix
-     * @alias Matrix
      * @param {number} rows - The amount of rows of the matrix.
      * @param {number} cols - The amount of columns of the matrix.
      * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
@@ -643,33 +646,35 @@ class Matrix {
 
     /**
      * Sets the entries of {@link row}<sup>th</sup> row from the Matrix to the entries from {@link values}.
-     * @param {int} row
+     * @param {Number} row
      * @param {Array} values
      * @returns {Matrix}
      */
     set_row(row, values) {
-        let cols = this._cols;
-        if (Array.isArray(values) && values.length === cols) {
-            let offset = row * cols;
+        const cols = this._cols;
+        if ((Array.isArray(values) || values instanceof Float64Array) && values.length === cols) {
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values[col];
             }
         } else if (values instanceof Matrix && values.shape[1] === cols && values.shape[0] === 1) {
-            let offset = row * cols;
+            const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values._data[col];
             }
+        } else {
+            throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!")
         }
         return this;
     }
 
     /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
-     * @param {int} col
+     * @param {Number} col
      * @returns {Array}
      */
     col(col) {
-        let result_col = new Float64Array(this._rows);
+        const result_col = new Float64Array(this._rows);
         for (let row = 0; row < this._rows; ++row) {
             result_col[row] = this.values[row * this._cols + col];
         }
@@ -980,8 +985,8 @@ class Matrix {
     /**
      * Applies a function to each entry of the matrix.
      * @private
-     * @param {function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
+     * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
+     * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
      */
     _apply_array(f, v) {
         const data = this.values;
@@ -1086,6 +1091,8 @@ class Matrix {
     /**
      * Entrywise multiplication with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies multiplication to the element, otherwise it creates first a copy and applies the multiplication on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -1095,13 +1102,16 @@ class Matrix {
      * A.mult(2); // [[2, 4], [6, 8]];
      * A.mult(B); // [[1, 4], [9, 16]];
      */
-    mult(value) {
-        return this.clone()._apply(value, (a, b) => a * b);
+    mult(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a * b);
     }
 
     /**
      * Entrywise division with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies division to the element, otherwise it creates first a copy and applies the division on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -1111,13 +1121,16 @@ class Matrix {
      * A.divide(2); // [[0.5, 1], [1.5, 2]];
      * A.divide(B); // [[1, 1], [1, 1]];
      */
-    divide(value) {
-        return this.clone()._apply(value, (a, b) => a / b);
+    divide(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a / b);
     }
 
     /**
      * Entrywise addition with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false]  - If true, applies addition to the element, otherwise it creates first a copy and applies the addition on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -1127,13 +1140,16 @@ class Matrix {
      * A.add(2); // [[3, 4], [5, 6]];
      * A.add(B); // [[2, 4], [6, 8]];
      */
-    add(value) {
-        return this.clone()._apply(value, (a, b) => a + b);
+    add(value, {inline = false} = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a + b);
     }
 
     /**
      * Entrywise subtraction with {@link value}.
      * @param {Matrix|Array|Number} value
+     * @param {Object} [options]
+     * @param {Boolean} [options.inline = false] - If true, applies subtraction to the element, otherwise it creates first a copy and applies the subtraction on the copy.
      * @returns {Matrix}
      * @example
      *
@@ -1143,8 +1159,9 @@ class Matrix {
      * A.sub(2); // [[-1, 0], [1, 2]];
      * A.sub(B); // [[0, 0], [0, 0]];
      */
-    sub(value) {
-        return this.clone()._apply(value, (a, b) => a - b);
+    sub(value, { inline = false } = {}) {
+        const A = inline ? this : this.clone();
+        return A._apply(value, (a, b) => a - b);
     }
 
     /**
@@ -2136,15 +2153,24 @@ class DR {
 
     /**
      * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {any} [value = null] - value of the parameter to set.
-     * @returns {DR|any} - On setting a parameter, this function returns the DR object. If <code>value == null</code> then return actual parameter value.
+     * @param {String} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
+     * @param {any} [value = null] - Value of the parameter to set. If <code>name</code> is set and <code>value</code> is not given, returns the value of the respective parameter.
+     * @returns {DR|any|Object} 
+     * On setting a parameter, this function returns the DR object. 
+     * If <code>name</code> is set and <code>value == null</code> then return actual parameter value.
+     * If <code>name</code> is not given, then returns all parameters as an Object.
+     * 
      * @example
+     * '''
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
      * DR.parameter("d"); // returns 3,
      * DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
+     * '''
      */
-    parameter(name, value = null) {
+    parameter(name = null, value = null) {
+        if (name === null) {
+            return Object.assign({}, this._parameters);
+        }
         if (!this._parameters.hasOwnProperty(name)) {
             throw new Error(`${name} is not a valid parameter!`);
         }
@@ -2157,17 +2183,17 @@ class DR {
         }
     }
 
-    para(name, value = null) {
+    para(name = null, value = null) {
         return this.parameter(name, value);
     }
 
-    p(name, value = null) {
+    p(name = null, value = null) {
         return this.parameter(name, value);
     }
 
     /**
      * Computes the projection.
-     * @returns {Matrix} - Returns the projection.
+     * @returns {Matrix} the projection.
      */
     transform() {
         this.check_init();
@@ -2176,7 +2202,7 @@ class DR {
 
     /**
      * Computes the projection.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
      */
     *generator() {
         return this.transform();
@@ -2195,7 +2221,7 @@ class DR {
     }
 
     /**
-     * @returns {Matrix|Array} Returns the projection.
+     * @returns {Matrix|Number[][]} the projection in the type of input <code>X</code>.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -2207,18 +2233,19 @@ class DR {
     }
 
     /**
-     *
-     * @param  {...any} args - Arguments the transform method of the respective DR method takes.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * Computes the projection.
+     * @param  {...unknown} args - Arguments the transform method of the respective DR method takes.
+     * @returns {Promise<Matrix|Number[][]>} the dimensionality reduced dataset.
      */
     async transform_async(...args) {
         return this.transform(...args);
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Matrix|Array} - The dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Matrix|Array} the dimensionality reduced dataset.
      */
     static transform(...args) {
         let dr = new this(...args);
@@ -2226,18 +2253,20 @@ class DR {
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Promise} a promise yielding the dimensionality reduced dataset.
      */
     static async transform_async(...args) {
         return this.transform(...args);
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Generator} a generator yielding the intermediate steps of the dimensionality reduction method.
      */
     static *generator(...args) {
         const dr = new this(...args);
@@ -2846,7 +2875,6 @@ class TSNE extends DR {
 
     /**
      *
-     * @param {Matrix} distance_matrix - accepts a precomputed distance matrix
      * @returns {TSNE}
      */
     init() {
@@ -2936,8 +2964,8 @@ class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @param {Number} [iterations=500] - Number of iterations.
+     * @returns {Matrix|Number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -2950,7 +2978,7 @@ class TSNE extends DR {
     /**
      *
      * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Array<Array>} - the projection.
+     * @yields {Matrix|Number[][]} - the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -5285,7 +5313,334 @@ class SAMMON extends DR {
     }
 }
 
-var version="0.5.2";
+class SQDMDS extends DR {
+    /**
+     * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE and UMAP.
+     * @constructor
+     * @memberof module:dimensionality_reduction
+     * @param {Matrix|Number[][]} X
+     * @param {Object} [parameters]
+     * @param {Number} [parameters.d=2]
+     * @param {Function} [parameters.metric = euclidean]
+     * @param {Number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
+     * @param {Number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
+     * @param {Object} [parameters.init_DR]
+     * @returns {SQDMDS}
+     * @see {@link https://arxiv.org/pdf/2202.12087.pdf}
+     */
+    constructor(X, parameters) {
+        super(
+            X,
+            {
+                d: 2,
+                metric: euclidean,
+                seed: 1212,
+                decay_start: 0.1,
+                decay_cte: 0.34, // 0.34
+                init_DR: {type: "random"}
+            },
+            parameters
+        );
+
+        return this;
+    }
+
+    /**
+     * @private
+     */
+    init() {
+        const N = this._N;
+        const d = this.parameter("d");
+
+        // initialize helpers.
+        this._add = this.__add(d);
+        this._sub_div = this.__sub_div(d);
+        this._minus = this.__minus(d);
+        this._mult = this.__mult(d);
+        this._LR_init = Math.max(2, 0.005 * N);
+        this._LR = this._LR_init;
+        this._offset = -Math.exp(-1 / this.parameter("decay_cte"));
+        this._momentums = new Matrix(N, d, 0);
+        this._grads = new Matrix(N, d, 0);
+        this._indices = linspace(0, N - 1);
+        // initialize projection.
+        const R = this._randomizer;
+        this.Y = new Matrix(N, d, () => R.random - 0.5);
+
+        // preparing metric for optimization.
+        const this_metric = this.parameter("metric");
+        if (this_metric === "precomputed") {
+            this._HD_metric = function (i, j, X) {
+                return X.entry(i, j);
+            };
+            this._HD_metric_exaggeration = function (i, j, X) {
+                return Math.pow(X.entry(i, j), 2);
+            };
+        } else {
+            this._HD_metric = function (i, j, X) {
+                return this_metric(X.row(i), X.row(j));
+            };
+            if (this_metric == euclidean) {
+                this._HD_metric_exaggeration = function (i, j, X) {
+                    return euclidean_squared(X.row(i), X.row(j));
+                };
+            } else {
+                this._HD_metric_exaggeration = function (i, j, X) {
+                    return Math.pow(this_metric(X.row(i), X.row(j)), 2);
+                };
+            }
+        }
+        return;
+    }
+
+    /**
+     * Computes the projection.
+     * @param {Number} [iterations=500] - Number of iterations.
+     * @returns {Matrix|Number[][]} the projection.
+     */
+    transform(iterations = 500) {
+        this.check_init();
+        this._decay_start = Math.round(this.parameter("decay_start") * iterations);
+        for (let i = 0; i < iterations; ++i) {
+            this._step(i, iterations);
+        }
+        return this.projection;
+    }
+
+    /**
+     * Computes the projection.
+     * @param {Number} [iterations=500] - number of iterations.
+     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     */
+    *generator(iterations = 500) {
+        this.check_init();
+        this._decay_start = Math.round(this.parameter("decay_start") * iterations);
+        for (let i = 0; i < iterations; ++i) {
+            this._step(i, iterations);
+            yield this.projection;
+        }
+        return this.projection;
+    }
+
+    /**
+     * Performs an optimization step.
+     * @private
+     * @param {Number} i - Acutal iteration.
+     * @param {Number} iterations - Number of iterations.
+     */
+    _step(i, iterations) {
+        const decay_start = this._decay_start;
+        if (i > decay_start) {
+            const decay_cte = this.parameter("decay_cte");
+            const offset = this._offset;
+            const ratio = (i - decay_start) / (iterations - decay_start);
+            this._LR = this._LR_init * (Math.exp(-(ratio * ratio) / decay_cte) + offset);
+            this._distance_exaggeration = false;
+        } else {
+            this._distance_exaggeration = true;
+        }
+        this._nestrov_iteration(this._distance_exaggeration);
+    }
+
+    /**
+     * Creates quartets of non overlapping indices.
+     * @private
+     * @returns {Number[][]}
+     */
+    __quartets() {
+        const N = this._N;
+        const max_N = N - (N % 4);
+        const R = this._randomizer;
+        const shuffled_indices = R.choice(this._indices, max_N);
+        const result = [];
+        for (let i = 0; i < max_N; i += 4) {
+            result.push(Uint32Array.of(shuffled_indices[i], shuffled_indices[i + 1], shuffled_indices[i + 2], shuffled_indices[i + 3]));
+        }
+        return result;
+    }
+
+    /**
+     * Computes and applies gradients, and updates momentum.
+     * @private
+     * @param {Boolean} distance_exaggeration
+     */
+    _nestrov_iteration(distance_exaggeration) {
+        const momentums = this._momentums.mult(0.99, { inline: true });
+        const LR = this._LR;
+        const grads = this._fill_MDS_grads(this.Y.add(momentums), this._grads, distance_exaggeration);
+        const [n, d] = momentums.shape;
+        for (let i = 0; i < n; ++i) {
+            const g_i = grads.row(i);
+            const g_i_norm = norm(g_i);
+            if (g_i_norm == 0) continue;
+            const mul = LR / g_i_norm;
+            const m_i = momentums.row(i);
+            for (let j = 0; j < d; ++j) {
+                m_i[j] -= mul * g_i[j];
+            }
+        } // momentums -= (LR / norm) * grads
+        this.Y.add(momentums, { inline: true });
+    }
+
+    /**
+     * Computes the gradients.
+     * @param {Matrix} Y - The Projection.
+     * @param {Matrix} grads - The gradients.
+     * @param {Boolean} [exaggeration = false] - Whether or not to use early exaggeration.
+     * @param {Boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
+     * @returns {Matrix} the gradients.
+     */
+    _fill_MDS_grads(Y, grads, exaggeration = false, zero_grad = true) {
+        if (zero_grad) {
+            // compute new gradients
+            grads.values.fill(0);
+        }
+        const add = this._add;
+        const X = this.X;
+        let HD_metric;
+        if (exaggeration == true) {
+            HD_metric = this._HD_metric_exaggeration;
+        } else {
+            HD_metric = this._HD_metric;
+        }
+
+        const D_quartet = new Float64Array(6);
+        const quartets = this.__quartets();
+        for (const [i, j, k, l] of quartets) {
+            // compute quartet's HD distances.
+            D_quartet[0] = HD_metric(i, j, X);
+            D_quartet[1] = HD_metric(i, k, X);
+            D_quartet[2] = HD_metric(i, l, X);
+            D_quartet[3] = HD_metric(j, k, X);
+            D_quartet[4] = HD_metric(j, l, X);
+            D_quartet[5] = HD_metric(k, l, X);
+
+            const D_quartet_sum = neumair_sum(D_quartet);
+
+            if (D_quartet_sum > 0) {
+                for (let i = 0; i < 6; ++i) {
+                    D_quartet[i] /= D_quartet_sum;
+                    D_quartet[i] += 1e-11;
+                }
+            }
+            const [gi, gj, gk, gl] = this._compute_quartet_grads(Y, [i, j, k, l], D_quartet);
+
+            // add is inline, row acces the matrix
+            add(grads.row(i), gi);
+            add(grads.row(j), gj);
+            add(grads.row(k), gk);
+            add(grads.row(l), gl);
+        }
+        return grads;
+    }
+
+    /**
+     * Quartet gradients for a projection.
+     * @private
+     * @param {Matrix} Y - The acutal projection.
+     * @param {Number[]} quartet - The indices of the quartet.
+     * @param {Number[]} D_hd - The high-dimensional distances of the quartet.
+     * @returns {Number[][]} the gradients for the quartet.
+     */
+    _compute_quartet_grads(Y, quartet, [p_ab, p_ac, p_ad, p_bc, p_bd, p_cd]) {
+        const [a, b, c, d] = quartet.map((index) => Y.row(index));
+        // LD distances, add a small number just in case
+        const d_ab = euclidean(a, b) + 1e-12;
+        const d_ac = euclidean(a, c) + 1e-12;
+        const d_ad = euclidean(a, d) + 1e-12;
+        const d_bc = euclidean(b, c) + 1e-12;
+        const d_bd = euclidean(b, d) + 1e-12;
+        const d_cd = euclidean(c, d) + 1e-12;
+        const sum_LD_dist = neumair_sum([d_ab, d_ac, d_ad, d_bc, d_bd, d_cd]);
+
+        // for each element of the sum: use the same gradient function and just permute the points given in input.
+        const [gA1, gB1, gC1, gD1] = this._ABCD_grads(a, b, c, d, d_ab, d_ac, d_ad, d_bc, d_bd, d_cd, p_ab, sum_LD_dist);
+        const [gA2, gC2, gB2, gD2] = this._ABCD_grads(a, c, b, d, d_ac, d_ab, d_ad, d_bc, d_cd, d_bd, p_ac, sum_LD_dist);
+        const [gA3, gD3, gC3, gB3] = this._ABCD_grads(a, d, c, b, d_ad, d_ac, d_ab, d_cd, d_bd, d_bc, p_ad, sum_LD_dist);
+        const [gB4, gC4, gA4, gD4] = this._ABCD_grads(b, c, a, d, d_bc, d_ab, d_bd, d_ac, d_cd, d_ad, p_bc, sum_LD_dist);
+        const [gB5, gD5, gA5, gC5] = this._ABCD_grads(b, d, a, c, d_bd, d_ab, d_bc, d_ad, d_cd, d_ac, p_bd, sum_LD_dist);
+        const [gC6, gD6, gA6, gB6] = this._ABCD_grads(c, d, a, b, d_cd, d_ac, d_bc, d_ad, d_bd, d_ab, p_cd, sum_LD_dist);
+
+        const add = this._add;
+        const gA = add(gA1, gA2, gA3, gA4, gA5, gA6);
+        const gB = add(gB1, gB2, gB3, gB4, gB5, gB6);
+        const gC = add(gC1, gC2, gC3, gC4, gC5, gC6);
+        const gD = add(gD1, gD2, gD3, gD4, gD5, gD6);
+
+        return [gA, gB, gC, gD];
+    }
+
+    /**
+     * Gradients for one element of the loss function's sum.
+     * @private
+     */
+    _ABCD_grads(a, b, c, d, d_ab, d_ac, d_ad, d_bc, d_bd, d_cd, p_ab, sum_LD_dist) {
+        const ratio = d_ab / sum_LD_dist;
+        const twice_ratio = 2 * ((p_ab - ratio) / sum_LD_dist);
+        const minus = this._minus;
+        const add = this._add;
+        const mult = this._mult;
+        const sub_div = this._sub_div;
+        // no side effects because sub_div creates new arrays, and the inline functions work on this new created arrays.
+        const gA = mult(minus(mult(add(sub_div(a, b, d_ab), sub_div(a, c, d_ac), sub_div(a, d, d_ad)), ratio), sub_div(a, b, d_ab)), twice_ratio);
+        const gB = mult(minus(mult(add(sub_div(b, a, d_ab), sub_div(b, c, d_bc), sub_div(b, d, d_bd)), ratio), sub_div(b, a, d_ab)), twice_ratio);
+        const gC = mult(add(sub_div(c, a, d_ac), sub_div(c, b, d_bc), sub_div(c, d, d_cd)), ratio * twice_ratio);
+        const gD = mult(add(sub_div(d, a, d_ad), sub_div(d, b, d_bd), sub_div(d, c, d_cd)), ratio * twice_ratio);
+        return [gA, gB, gC, gD];
+    }
+
+    /**
+     * Inline!
+     */
+    __minus(d) {
+        return (a, b) => {
+            for (let i = 0; i < d; ++i) {
+                a[i] -= b[i];
+            }
+            return a;
+        };
+    }
+
+    /**
+     * Inline!
+     */
+    __add(d) {
+        return (...summands) => {
+            const n = summands.length;
+            const s1 = summands[0];
+            for (let j = 1; j < n; ++j) {
+                const summand = summands[j];
+                for (let i = 0; i < d; ++i) {
+                    s1[i] += summand[i];
+                }
+            }
+            return s1;
+        };
+    }
+
+    /**
+     * Inline!
+     */
+    __mult(d) {
+        return (a, v) => {
+            for (let i = 0; i < d; ++i) {
+                a[i] *= v;
+            }
+            return a;
+        };
+    }
+
+    /**
+     * Creates a new array <code>(x - y) / div</code>
+     */
+    __sub_div(d) {
+        return (x, y, div) => {
+            return Float64Array.from({ length: d }, (_, i) => (x[i] - y[i]) / div);
+        };
+    }
+}
+
+var version="0.6.0";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
@@ -5306,6 +5661,7 @@ exports.OPTICS = OPTICS;
 exports.PCA = PCA;
 exports.Randomizer = Randomizer;
 exports.SAMMON = SAMMON;
+exports.SQDMDS = SQDMDS;
 exports.TSNE = TSNE;
 exports.TopoMap = TopoMap;
 exports.TriMap = TriMap;
