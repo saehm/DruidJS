@@ -40,15 +40,24 @@ export class DR {
 
     /**
      * Set and get parameters
-     * @param {String} name - name of the parameter.
-     * @param {any} [value = null] - value of the parameter to set.
-     * @returns {DR|any} - On setting a parameter, this function returns the DR object. If <code>value == null</code> then return actual parameter value.
+     * @param {String} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
+     * @param {any} [value = null] - Value of the parameter to set. If <code>name</code> is set and <code>value</code> is not given, returns the value of the respective parameter.
+     * @returns {DR|any|Object} 
+     * On setting a parameter, this function returns the DR object. 
+     * If <code>name</code> is set and <code>value == null</code> then return actual parameter value.
+     * If <code>name</code> is not given, then returns all parameters as an Object.
+     * 
      * @example
+     * '''
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
      * DR.parameter("d"); // returns 3,
      * DR.parameter("d", 2); // sets parameter <code>d</code> to 2 and returns <code>DR</code>.
+     * '''
      */
-    parameter(name, value = null) {
+    parameter(name = null, value = null) {
+        if (name === null) {
+            return Object.assign({}, this._parameters);
+        }
         if (!this._parameters.hasOwnProperty(name)) {
             throw new Error(`${name} is not a valid parameter!`);
         }
@@ -61,17 +70,17 @@ export class DR {
         }
     }
 
-    para(name, value = null) {
+    para(name = null, value = null) {
         return this.parameter(name, value);
     }
 
-    p(name, value = null) {
+    p(name = null, value = null) {
         return this.parameter(name, value);
     }
 
     /**
      * Computes the projection.
-     * @returns {Matrix} - Returns the projection.
+     * @returns {Matrix} the projection.
      */
     transform() {
         this.check_init();
@@ -80,7 +89,7 @@ export class DR {
 
     /**
      * Computes the projection.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
      */
     *generator() {
         return this.transform();
@@ -99,7 +108,7 @@ export class DR {
     }
 
     /**
-     * @returns {Matrix|Array} Returns the projection.
+     * @returns {Matrix|Number[][]} the projection in the type of input <code>X</code>.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -111,18 +120,19 @@ export class DR {
     }
 
     /**
-     *
-     * @param  {...any} args - Arguments the transform method of the respective DR method takes.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * Computes the projection.
+     * @param  {...unknown} args - Arguments the transform method of the respective DR method takes.
+     * @returns {Promise<Matrix|Number[][]>} the dimensionality reduced dataset.
      */
     async transform_async(...args) {
         return this.transform(...args);
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Matrix|Array} - The dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Matrix|Array} the dimensionality reduced dataset.
      */
     static transform(...args) {
         let dr = new this(...args);
@@ -130,18 +140,20 @@ export class DR {
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Promise} - A promise yielding the dimensionality reduced dataset.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Promise} a promise yielding the dimensionality reduced dataset.
      */
     static async transform_async(...args) {
         return this.transform(...args);
     }
 
     /**
+     * Computes the projection.
      * @static
-     * @param  {...any} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Generator} - A generator yielding the intermediate steps of the dimensionality reduction method.
+     * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
+     * @returns {Generator} a generator yielding the intermediate steps of the dimensionality reduction method.
      */
     static *generator(...args) {
         const dr = new this(...args);
