@@ -1,10 +1,10 @@
 /**
- * Computes the Sokal-Michener distance between {@link a} and {@link b}.
+ * Computes the Sokal-Michener distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias sokal_michener
- * @param {Array<Number>} a 
- * @param {Array<Number>} b 
- * @returns {Number} the Sokal-Michener distance between {@link a} and {@link b}.  
+ * @param {Number[]} a 
+ * @param {Number[]} b 
+ * @returns {Number} the Sokal-Michener distance between <code>a</code> and <code>b</code>.  
  */
 export default function(a, b) {
     if (a.length != b.length) return undefined

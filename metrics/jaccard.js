@@ -1,10 +1,10 @@
 /**
- * Computes the jaccard distance between {@link a} and {@link b}.
+ * Computes the jaccard distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias jaccard
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the jaccard distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the jaccard distance between <code>a</code> and <code>b</code>.
  */
 export default function (a, b) {
     if (a.length != b.length) return undefined;

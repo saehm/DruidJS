@@ -1,10 +1,10 @@
 /**
- * Computes the hamming distance between {@link a} and {@link b}.
+ * Computes the hamming distance between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias hamming
- * @param {Array<Number>} a
- * @param {Array<Number>} b
- * @returns {Number} the hamming distance between {@link a} and {@link b}.
+ * @param {Number[]} a
+ * @param {Number[]} b
+ * @returns {Number} the hamming distance between <code>a</code> and <code>b</code>.
  */
 export default function (a, b) {
     if (a.length != b.length) return undefined;
