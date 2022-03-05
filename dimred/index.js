@@ -16,3 +16,5 @@ export { TriMap } from "./TriMap.js";
 export { LSP } from "./LSP.js";
 export { TopoMap } from "./TopoMap.js";
 export { SAMMON } from "./SAMMON.js";
+
+export { SQDMDS } from "./SQDMDS.js";
