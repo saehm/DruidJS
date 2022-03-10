@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.6.1 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.2 Copyright 2022 Rene Cutura
 /**
  * Computes the euclidean distance (<code>l<sub>2</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
@@ -176,7 +176,7 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * @param {Function} [parameters.qr=qr_gramschmidt] - The QR technique to use.
  * @param {Number} [parameters.tol=1e-8] - Allowed error for stopping criteria
  * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
- */function simultaneous_poweriteration(t,e=2,{seed:r=1212,max_iterations:s=100,qr:i=qr_gramschmidt,tol:n=1e-8}={}){const o=r instanceof Randomizer?r:new Randomizer(r);t instanceof Matrix||(t=Matrix.from(t));const a=t.shape[0];let{Q:h,R:l}=i(new Matrix(a,e,(()=>2*(o.random-.5))));for(;s--;){const e=h.clone(),r=i(t.dot(h));h=r.Q,l=r.R;if(euclidean_squared(h.values,e.values)<n)break}return{eigenvalues:l.diag,eigenvectors:h.to2dArray}}
+ */function simultaneous_poweriteration(t,e=2,{seed:r=1212,max_iterations:s=100,qr:i=qr_gramschmidt,tol:n=1e-8}={}){const o=r instanceof Randomizer?r:new Randomizer(r);t instanceof Matrix||(t=Matrix.from(t));const a=t.shape[0];let{Q:h,R:l}=i(new Matrix(a,e,(()=>2*(o.random-.5))));for(;s--;){const e=h.clone(),r=i(t.dot(h));h=r.Q,l=r.R;if(euclidean_squared(h.values,e.values)<n)break}return{eigenvalues:l.diag,eigenvectors:h.transpose().to2dArray}}
 /**
  * Computes the inner product between two arrays of the same length.
  * @memberof module:linear_algebra
@@ -1771,5 +1771,5 @@ return[O(w,b,N,F,q,B),O(x,z,k,R,X,K),O(M,v,E,S,T,Y),O(A,D,j,L,P,C)]}
      */__mult(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]*=r;return e}}
 /**
      * Creates a new array <code>(x - y) / div</code>
-     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.1";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.2";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
 //# sourceMappingURL=druid.esm.js.map

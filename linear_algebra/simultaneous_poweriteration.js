@@ -4,7 +4,7 @@ import { Randomizer } from "../util/index.js";
 import { euclidean_squared } from "../metrics/index.js";
 
 /**
- * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  * @memberof module:linear_algebra
  * @alias simultaneous_poweriteration
  * @param {Matrix} A - The Matrix
@@ -13,8 +13,8 @@ import { euclidean_squared } from "../metrics/index.js";
  * @param {Number} [parameters.max_iterations=100] - The number of maxiumum iterations the algorithm should run.
  * @param {Number|Randomizer} [parameters.seed=1212] - The seed value or a randomizer used in the algorithm.
  * @param {Function} [parameters.qr=qr_gramschmidt] - The QR technique to use.
- * @param {Number} [parameters.tol=1e-8] - Allowed error for stopping criteria
- * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
+ * @param {Number} [parameters.tol=1e-8] - Tolerated error for stopping criteria.
+ * @returns {{eigenvalues: Number[], eigenvectors: Number[][]}} the `k` biggest eigenvectors and eigenvalues of Matrix `A`.
  */
 export default function (A, k = 2, {seed = 1212, max_iterations = 100, qr = qr_gramschmidt, tol = 1e-8} = {}) {
     const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
@@ -34,6 +34,6 @@ export default function (A, k = 2, {seed = 1212, max_iterations = 100, qr = qr_g
     }
 
     const eigenvalues = R.diag;
-    const eigenvectors = Q.to2dArray;
+    const eigenvectors = Q.transpose().to2dArray;
     return { eigenvalues, eigenvectors };
 }

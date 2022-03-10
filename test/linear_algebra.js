@@ -16,11 +16,11 @@ describe("eig", () => {
         assert.ok(druid.simultaneous_poweriteration(M, 2, {max_iterations: 100, seed: 1212, qr: druid.qr}));
         assert.ok(druid.simultaneous_poweriteration(M, 2, {max_iterations: 100, seed: 1212, qr: druid.qr_householder}));
         let eigs = druid.simultaneous_poweriteration(M, 2, {max_iterations: 100, seed: 1212, qr: druid.qr});
-        assert.equal(eigs.eigenvectors.length, N)
-        assert.equal(eigs.eigenvectors[0].length, 2)
+        assert.equal(eigs.eigenvectors.length, 2)
+        assert.equal(eigs.eigenvectors[0].length, N)
 
         eigs = druid.simultaneous_poweriteration(M, 6, {max_iterations: 100, seed: 1212, qr: druid.qr});
-        assert.equal(eigs.eigenvectors.length, N)
-        assert.equal(eigs.eigenvectors[0].length, 6)
+        assert.equal(eigs.eigenvectors.length, 6)
+        assert.equal(eigs.eigenvectors[0].length, N)
     }).timeout(10000);
 });

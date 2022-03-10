@@ -1,5 +1,5 @@
-//import * as druid from "./test_index.js";
-import "../dist/druid.js";
+import * as druid from "./test_index.js";
+//import "../dist/druid.js";
 import * as assert from "assert";
 /* 
 describe("DR", () => {

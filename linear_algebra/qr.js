@@ -3,7 +3,7 @@ import { euclidean } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
 
 /**
- * Computes the QR Decomposition of the Matrix {@link A} using Gram-Schmidt process.
+ * Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
  * @memberof module:linear_algebra
  * @alias qr
  * @param {Matrix} A
