@@ -34,6 +34,6 @@ export default function (A, k = 2, {seed = 1212, max_iterations = 100, qr = qr_g
     }
 
     const eigenvalues = R.diag;
-    const eigenvectors = Q.transpose().to2dArray;
+    const eigenvectors = Q.to2dArray;
     return { eigenvalues, eigenvectors };
 }

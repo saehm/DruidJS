@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.6.0 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.1 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -465,7 +465,7 @@ function simultaneous_poweriteration (A, k = 2, {seed = 1212, max_iterations = 1
     }
 
     const eigenvalues = R.diag;
-    const eigenvectors = Q.transpose().to2dArray;
+    const eigenvectors = Q.to2dArray;
     return { eigenvalues, eigenvectors };
 }
 
@@ -5640,7 +5640,7 @@ class SQDMDS extends DR {
     }
 }
 
-var version="0.6.0";
+var version="0.6.1";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
