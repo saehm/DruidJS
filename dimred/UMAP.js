@@ -86,9 +86,11 @@ export class UMAP extends DR {
      */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
-            for (let j = 0, m = distances[i].length; j < m; ++j) {
-                const v = distances[i][j].value - rhos[i];
-                distances[i][j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1;
+            const curr_dist = distances[i];
+            const rho = rhos[i].value;
+            for (let j = 0, m = curr_dist.length; j < m; ++j) {
+                const v = curr_dist[j].value - rho;
+                curr_dist[j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1.0;
             }
         }
         return distances;
@@ -137,7 +139,7 @@ export class UMAP extends DR {
                 if (index > 0) {
                     rhos.push(non_zero_dist[index - 1]);
                     if (interpolation > SMOOTH_K_TOLERANCE) {
-                        rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1]);
+                        rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1].value);
                     }
                 } else {
                     rhos[i].value = interpolation * non_zero_dist[0].value;
@@ -148,7 +150,7 @@ export class UMAP extends DR {
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
                 for (let j = 0; j < k; ++j) {
-                    const d = search_result[j].value - rhos[i];
+                    const d = search_result[j].value - rhos[i].value;
                     psum += d > 0 ? Math.exp(-(d / mid)) : 1;
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
@@ -168,7 +170,7 @@ export class UMAP extends DR {
 
             const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length;
             //let mean_d = null;
-            if (rhos[i] > 0) {
+            if (rhos[i].value > 0) {
                 if (sigmas[i] < MIN_K_DIST_SCALE * mean_ithd) {
                     sigmas[i] = MIN_K_DIST_SCALE * mean_ithd;
                 }
@@ -223,9 +225,11 @@ export class UMAP extends DR {
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
-        const weights_max = max(weights);
-        const n_samples = weights.map((w) => n_epochs * (w / weights_max));
-        for (let i = 0; i < result.length; ++i) if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
+        const weight_scl = n_epochs / max(weights);
+        weights.forEach((w, i) => {
+          const sample = w * weight_scl;
+          if (sample > 0) result[i] = Math.round(n_epochs / sample);
+        })
         return result;
     }
 
@@ -356,12 +360,8 @@ export class UMAP extends DR {
                 }
                 for (let d = 0; d < dim; ++d) {
                     const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                    const c = current[d] + grad_d;
-                    const o = other[d] - grad_d;
-                    current[d] = c;
-                    other[d] = o;
-                    head_embedding.set_entry(j, d, c);
-                    tail_embedding.set_entry(k, d, o);
+                    current[d] += grad_d;
+                    other[d] -= grad_d;
                 }
                 epoch_of_next_sample[i] += epochs_per_sample[i];
                 const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
@@ -377,12 +377,8 @@ export class UMAP extends DR {
                     }
                     for (let d = 0; d < dim; ++d) {
                         const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                        const c = current[d] + grad_d;
-                        const o = other[d] - grad_d;
-                        current[d] = c;
-                        other[d] = o;
-                        head_embedding.set_entry(j, d, c);
-                        tail_embedding.set_entry(tail[k], d, o);
+                        current[d] += grad_d;
+                        other[d] -= grad_d;
                     }
                 }
                 epoch_of_next_negative_sample[i] += n_neg_samples * epochs_per_negative_sample[i];
