@@ -312,18 +312,19 @@ export class Matrix {
     dot(B) {
         if (B instanceof Matrix) {
             let A = this;
-            if (A.shape[1] !== B.shape[0]) {
-                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix: 
-                A has ${A.shape[1]} cols and B ${B.shape[0]} rows. 
+            const [rows_A, cols_A] = A.shape;
+            const [rows_B, cols_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows.
                 Must be equal!`);
             }
-            let I = A.shape[1];
-            let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
                 const A_i = A.row(row);
-                const B_i = B.col(col);
+                const B_val = B.values;
                 let sum = 0;
-                for (let i = 0; i < I; ++i) {
-                    sum += A_i[i] * B_i[i];
+                for (let i = 0, j = col; i < cols_A; ++i, j += cols_B) {
+                    sum += A_i[i] * B_val[j];
                 }
                 return sum;
             });
@@ -420,15 +421,10 @@ export class Matrix {
      * @returns {Matrix}
      */
     set_block(offset_row, offset_col, B) {
-        let [rows, cols] = B.shape;
+        const rows = Math.min(this._rows - offset_row, B.shape[0]);
+        const cols = Math.min(this._cols - offset_col, B.shape[1]);
         for (let row = 0; row < rows; ++row) {
-            if (row > this._rows) {
-                continue;
-            }
             for (let col = 0; col < cols; ++col) {
-                if (col > this._cols) {
-                    continue;
-                }
                 this.set_entry(row + offset_row, col + offset_col, B.entry(row, col));
             }
         }
@@ -458,7 +454,7 @@ export class Matrix {
         end_col = end_col ?? cols;
         if (end_row <= start_row || end_col <= start_col) {
             throw new Error(`
-                end_row must be greater than start_row, and 
+                end_row must be greater than start_row, and
                 end_col must be greater than start_col, but
                 end_row = ${end_row}, start_row = ${start_row}, end_col = ${end_col}, and start_col = ${start_col}!`);
         }
