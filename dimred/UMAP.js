@@ -354,14 +354,13 @@ export class UMAP extends DR {
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
                 const dist = euclidean_squared(current, other);
-                let grad_coeff = 0;
                 if (dist > 0) {
-                    grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
-                }
-                for (let d = 0; d < dim; ++d) {
-                    const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                    current[d] += grad_d;
-                    other[d] -= grad_d;
+                    const grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
+                    for (let d = 0; d < dim; ++d) {
+                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                        current[d] += grad_d;
+                        other[d] -= grad_d;
+                    }
                 }
                 epoch_of_next_sample[i] += epochs_per_sample[i];
                 const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
@@ -369,16 +368,15 @@ export class UMAP extends DR {
                     const k = randomizer.random_int % tail_length;
                     const other = tail_embedding.row(tail[k]);
                     const dist = euclidean_squared(current, other);
-                    let grad_coeff = 0;
                     if (dist > 0) {
-                        grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        const grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        for (let d = 0; d < dim; ++d) {
+                            const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                            current[d] += grad_d;
+                            other[d] -= grad_d;
+                        }
                     } else if (j === k) {
                         continue;
-                    }
-                    for (let d = 0; d < dim; ++d) {
-                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                        current[d] += grad_d;
-                        other[d] -= grad_d;
                     }
                 }
                 epoch_of_next_negative_sample[i] += n_neg_samples * epochs_per_negative_sample[i];
