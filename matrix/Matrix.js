@@ -216,6 +216,30 @@ export class Matrix {
     }
 
     /**
+     * Adds a given {@link value} to the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */
+    add_entry(row, col, value) {
+      this.values[row * this._cols + col] += value;
+      return this;
+    }
+
+    /**
+     * Subtracts a given {@link value} from the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */
+    sub_entry(row, col, value) {
+      this.values[row * this._cols + col] -= value;
+      return this;
+    }
+
+    /**
      * Returns a new transposed Matrix.
      * @returns {Matrix}
      */

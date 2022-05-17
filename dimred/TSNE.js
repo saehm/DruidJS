@@ -62,7 +62,7 @@ export class TSNE extends DR {
         this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Float64Array(N)
+        let prow = new Float64Array(N);
         const tol = 1e-4;
         const maxtries = 50;
         for (let i = 0; i < N; ++i) {
@@ -99,10 +99,7 @@ export class TSNE extends DR {
                 if (Math.abs(Hhere - Htarget) < tol) done = true;
                 if (num >= maxtries) done = true;
             }
-
-            for (let j = 0; j < N; ++j) {
-                P.set_entry(i, j, prow[j]);
-            }
+            P.set_row(i, prow);
         }
 
         //compute probabilities
@@ -216,14 +213,14 @@ export class TSNE extends DR {
                 const newsid = momval * sid - epsilon * newgain * gid;
                 ystep.set_entry(i, d, newsid);
 
-                Y.set_entry(i, d, Y.entry(i, d) + newsid);
+                Y.add_entry(i, d, newsid);
                 ymean[d] += Y.entry(i, d);
             }
         }
 
         for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < 2; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);
+            for (let d = 0; d < dim; ++d) {
+                Y.sub_entry(i, d, ymean[d] / N);
             }
         }
 
