@@ -91,11 +91,11 @@ export class Matrix {
     static from(A, type = "row") {
         if (A instanceof Matrix) {
             return A.clone();
-        } else if (Array.isArray(A) || A instanceof Float64Array) {
+        } else if (Matrix.isArray(A)) {
             let m = A.length;
             if (m === 0) throw new Error("Array is empty");
             // 1d
-            if (!Array.isArray(A[0]) && !(A[0] instanceof Float64Array)) {
+            if (!Matrix.isArray(A[0])) {
                 if (type === "row") {
                     return new Matrix(1, m, (_, j) => A[j]);
                 } else if (type === "col") {
@@ -106,7 +106,7 @@ export class Matrix {
                     throw new Error("1d array has NaN entries");
                 }
                 // 2d
-            } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {
+            } else {
                 let n = A[0].length;
                 for (let row = 0; row < m; ++row) {
                     if (A[row].length !== n) {
@@ -164,7 +164,7 @@ export class Matrix {
      */
     set_row(row, values) {
         const cols = this._cols;
-        if ((Array.isArray(values) || values instanceof Float64Array) && values.length === cols) {
+        if (Matrix.isArray(values) && values.length === cols) {
             const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values[col];
@@ -353,7 +353,7 @@ export class Matrix {
                 return sum;
             });
             return C;
-        } else if (Array.isArray(B) || B instanceof Float64Array) {
+        } else if (Matrix.isArray(B)) {
             let rows = this._rows;
             if (B.length !== rows) {
                 throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
@@ -780,7 +780,7 @@ export class Matrix {
     }
 
     /**
-     * Returns the sum oof all entries of the Matrix.
+     * Returns the entries of the Matrix.
      * @returns {Float64Array}
      */
     get values() {
@@ -962,5 +962,9 @@ export class Matrix {
         let B = Matrix.bidiagonal(A.clone(), U, V);
         console.log(U,V,B)
         return { U: U, "Sigma": B, V: V }; */
+    }
+
+    static isArray(A) {
+      return Array.isArray(A) || A instanceof Float64Array || A instanceof Float32Array;
     }
 }
