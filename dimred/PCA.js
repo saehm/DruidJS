@@ -57,8 +57,7 @@ export class PCA extends DR {
         }
         const { d, eig_args } = this._parameters;
         const X = this.X;
-        const means = Matrix.from(X.meanCols);
-        const X_cent = X.sub(means);
+        const X_cent = X.sub(X.meanCols);
         const C = X_cent.transpose().dot(X_cent);
         const { eigenvectors: V } = simultaneous_poweriteration(C, d, eig_args);
         this.V = Matrix.from(V).transpose();

@@ -523,10 +523,8 @@ export class Matrix {
     _apply_array(f, v) {
         const data = this.values;
         const [rows, cols] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
+        for (let i = 0, row = 0; row < rows; ++row) {
+            for (let col = 0; col < cols; ++col, ++i) {
                 data[i] = f(data[i], v(row, col));
             }
         }
@@ -540,68 +538,66 @@ export class Matrix {
     _apply_colwise_array(values, f) {
         const data = this.values;
         const [rows, cols] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
-                data[i] = f(data[i], values[row]);
+        for (let i = 0, row = 0; row < rows; ++row) {
+            const val = values[row];
+            for (let col = 0; col < cols; ++col, ++i) {
+                data[i] = f(data[i], val);
             }
         }
         return this;
     }
 
     _apply(value, f) {
-        let data = this.values;
+        const data = this.values;
+        const [rows, cols] = this.shape;
         if (value instanceof Matrix) {
-            let [value_rows, value_cols] = value.shape;
-            let [rows, cols] = this.shape;
+            const arr = value.values();
+            const [value_rows, value_cols] = value.shape;
             if (value_rows === 1) {
                 if (cols !== value_cols) {
                     throw new Error(`cols !== value_cols`);
                 }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(0, col));
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], arr[col]);
                     }
                 }
             } else if (value_cols === 1) {
                 if (rows !== value_rows) {
                     throw new Error(`rows !== value_rows`);
                 }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, 0));
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    const v =  arr[row];
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], v);
                     }
                 }
             } else if (rows == value_rows && cols == value_cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, col));
-                    }
+                for (let i = 0, n = rows * cols; i < n; ++i) {
+                    data[i] = f(data[i], arr[i]);
                 }
             } else {
                 throw new Error(`error`);
             }
-        } else if (Array.isArray(value)) {
-            let rows = this._rows;
-            let cols = this._cols;
+        } else if (Matrix.isArray(value)) {
             if (value.length === rows) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[row]);
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    const v = value[row];
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], v);
                     }
                 }
             } else if (value.length === cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[col]);
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], value[col]);
                     }
                 }
             } else {
                 throw new Error(`error`);
             }
-        } else {
-            for (let i = 0, n = this._rows * this._cols; i < n; ++i) {
+        } else { // scalar value
+            for (let i = 0, n = rows * cols; i < n; ++i) {
                 data[i] = f(data[i], value);
             }
         }
@@ -713,9 +709,9 @@ export class Matrix {
         this._rows = rows;
         this._cols = cols;
         this._data = new Float64Array(rows * cols);
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < cols; ++col) {
-                this._data[row * cols + col] = value(row, col);
+        for (let i = 0, row = 0; row < rows; ++row) {
+            for (let col = 0; col < cols; ++col, ++i) {
+                this._data[i] = value(row, col);
             }
         }
         return this;
@@ -797,12 +793,12 @@ export class Matrix {
         const rows = this._rows;
         const cols = this._cols;
         const result = Float64Array.from({ length: rows });
-        for (let row = 0; row < rows; ++row) {
-            result[row] = 0;
-            for (let col = 0; col < cols; ++col) {
-                result[row] += data[row * cols + col];
+        for (let i = 0, row = 0; row < rows; ++row) {
+            let sum = 0;
+            for (let col = 0; col < cols; ++col, ++i) {
+                sum += data[i];
             }
-            result[row] /= cols;
+            result[row] = sum / cols;
         }
         return result;
     }
@@ -816,11 +812,11 @@ export class Matrix {
         const cols = this._cols;
         const result = Float64Array.from({ length: cols });
         for (let col = 0; col < cols; ++col) {
-            result[col] = 0;
-            for (let row = 0; row < rows; ++row) {
-                result[col] += data[row * cols + col];
+            let sum = 0;
+            for (let i = col, row = 0; row < rows; ++row, i += cols) {
+                sum += data[i];
             }
-            result[col] /= rows;
+            result[col] = sum / rows;
         }
         return result;
     }
