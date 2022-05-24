@@ -551,7 +551,7 @@ export class Matrix {
         const data = this.values;
         const [rows, cols] = this.shape;
         if (value instanceof Matrix) {
-            const arr = value.values();
+            const values = value.values;
             const [value_rows, value_cols] = value.shape;
             if (value_rows === 1) {
                 if (cols !== value_cols) {
@@ -559,7 +559,7 @@ export class Matrix {
                 }
                 for (let i = 0, row = 0; row < rows; ++row) {
                     for (let col = 0; col < cols; ++col, ++i) {
-                        data[i] = f(data[i], arr[col]);
+                        data[i] = f(data[i], values[col]);
                     }
                 }
             } else if (value_cols === 1) {
@@ -567,14 +567,14 @@ export class Matrix {
                     throw new Error(`rows !== value_rows`);
                 }
                 for (let i = 0, row = 0; row < rows; ++row) {
-                    const v =  arr[row];
+                    const v =  values[row];
                     for (let col = 0; col < cols; ++col, ++i) {
                         data[i] = f(data[i], v);
                     }
                 }
             } else if (rows == value_rows && cols == value_cols) {
                 for (let i = 0, n = rows * cols; i < n; ++i) {
-                    data[i] = f(data[i], arr[i]);
+                    data[i] = f(data[i], values[i]);
                 }
             } else {
                 throw new Error(`error`);
