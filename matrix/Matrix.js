@@ -369,7 +369,9 @@ export class Matrix {
     }
 
     /**
-     * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
+     * Transposes the current matrix and returns the dot product with {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
      * @param {(Matrix|Array|Float64Array)} B the right side
      * @returns {(Matrix|Array)}
      */
@@ -402,6 +404,47 @@ export class Matrix {
             let C = new Array(rows);
             for (let row = 0; row < rows; ++row) {
                 C[row] = neumair_sum(this.col(row).map((e) => e * B[row]));
+            }
+            return C;
+        } else {
+            throw new Error(`B must be Matrix or Array`);
+        }
+    }
+
+    /**
+     * Returns the dot product with the transposed version of {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */
+    dotTrans(B) {
+        if (B instanceof Matrix) {
+            let A = this;
+            const [rows_A, cols_A] = A.shape;
+            const [cols_B, rows_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${[rows_B, cols_B].join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
+            }
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
+                const A_i = A.row(row);
+                const B_val = B.values;
+                let sum = 0;
+                for (let i = 0, j = col * rows_B; i < cols_A; ++i, ++j) {
+                    sum += A_i[i] * B_val[j];
+                }
+                return sum;
+            });
+            return C;
+        } else if (Matrix.isArray(B)) {
+            let rows = this._rows;
+            if (B.length !== rows) {
+                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            }
+            let C = new Array(rows);
+            for (let row = 0; row < rows; ++row) {
+                C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
             }
             return C;
         } else {

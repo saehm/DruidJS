@@ -70,7 +70,7 @@ export class LDA extends DR {
             const v = V_mean.row(unique_labels[label].id);
             const m = new Matrix(cols, 1, (j) => v[j] - X_mean);
             const N = unique_labels[label].count;
-            S_b = S_b.add(m.dot(m.transpose()).mult(N));
+            S_b = S_b.add(m.dotTrans(m).mult(N));
         }
 
         // scatter_within
@@ -81,7 +81,7 @@ export class LDA extends DR {
             const R = unique_labels[label].rows;
             for (let i = 0, n = unique_labels[label].count; i < n; ++i) {
                 const row_v = new Matrix(cols, 1, (j, _) => R[i][j] - m.entry(j, 0));
-                S_w = S_w.add(row_v.dot(row_v.transpose()));
+                S_w = S_w.add(row_v.dotTrans(row_v));
             }
         }
 
