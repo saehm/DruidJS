@@ -22,7 +22,7 @@ export default function (A) {
             Gji.set_entry(i - 1, i, -s);
             Gji.set_entry(i, i - 1, s);
             Gji.set_entry(i, i, c);
-            R = Gji.T.dot(R);
+            R = Gji.transDot(R);
             Q = Q.dot(Gji);
         }
     }

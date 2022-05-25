@@ -369,6 +369,47 @@ export class Matrix {
     }
 
     /**
+     * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */
+    transDot(B) {
+        if (B instanceof Matrix) {
+            let A = this;
+            const [cols_A, rows_A] = A.shape; // transpose matrix
+            const [rows_B, cols_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${[rows_A, cols_A].join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
+            }
+            // let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
+            // this.values[row * this._cols + col];
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
+                const A_val = A.values;
+                const B_val = B.values;
+                let sum = 0;
+                for (let i = 0, j = row, k = col; i < cols_A; ++i, j += rows_A, k += cols_B) {
+                    sum += A_val[j] * B_val[k];
+                }
+                return sum;
+            });
+            return C;
+        } else if (Matrix.isArray(B)) {
+            let rows = this._cols;
+            if (B.length !== rows) {
+                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            }
+            let C = new Array(rows);
+            for (let row = 0; row < rows; ++row) {
+                C[row] = neumair_sum(this.col(row).map((e) => e * B[row]));
+            }
+            return C;
+        } else {
+            throw new Error(`B must be Matrix or Array`);
+        }
+    }
+
+    /**
      * Computes the outer product from {@link this} and {@link B}.
      * @param {Matrix} B
      * @returns {Matrix}
@@ -843,10 +884,10 @@ export class Matrix {
             let d = r.clone();
             do {
                 const z = A.dot(d);
-                const alpha = r.T.dot(r).entry(0, 0) / d.T.dot(z).entry(0, 0);
+                const alpha = r.transDot(r).entry(0, 0) / d.transDot(z).entry(0, 0);
                 x = x.add(d.mult(alpha));
                 const r_next = r.sub(z.mult(alpha));
-                const beta = r_next.T.dot(r_next).entry(0, 0) / r.T.dot(r).entry(0, 0);
+                const beta = r_next.transDot(r_next).entry(0, 0) / r.transDot(r).entry(0, 0);
                 d = r_next.add(d.mult(beta));
                 r = r_next;
             } while (Math.abs(r.mean) > tol);

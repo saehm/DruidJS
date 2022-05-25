@@ -12,7 +12,7 @@ import { Randomizer } from "../util/index.js";
 export default function(data, x0, beta, max_iter=20, seed) {
     let randomizer = new Randomizer(seed);
     let [ n, d ] = data.shape;
-    let A = data.T.dot(data).divide(n)
+    let A = data.transDot(data).divide(n)
     if (x0 === null) x0 = new Matrix(d, 1, () => randomizer.random)
     x0 = x0.divide(norm(x0));
     let x = x0.clone()
