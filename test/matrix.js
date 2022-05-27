@@ -27,6 +27,28 @@ describe("Matrix", () => {
         }
         assert.deepEqual(A.dot(B).shape, [5, 2]);
         assert.throws(() => B.dot(A), Error, "error thrown");
+
+        const D = new druid.Matrix(2, 3);
+        D._data = Float64Array.from([0, 1, 2, 3, 4, 5]);
+
+        assert.ok(D.dot(D.T));
+        assert.ok(D.dotTrans(D));
+        const D_dot_DT = Float64Array.from([5, 14, 14, 50]);
+        assert.deepEqual(D.dot(D.T).values, D_dot_DT);
+        assert.deepEqual(D.dotTrans(D).values, D_dot_DT);
+
+        assert.ok(D.T.dot(D));
+        assert.ok(D.transDot(D));
+        const DT_dot_D = Float64Array.from([9, 12, 15, 12, 17, 22, 15, 22, 29]);
+        assert.deepEqual(D.T.dot(D).values, DT_dot_D);
+        assert.deepEqual(D.transDot(D).values, DT_dot_D);
+    });
+
+    it("Matrix inversion", () => {
+      const A = new druid.Matrix(2, 2);
+      A._data = Float64Array.from([2, 3, 4, 7]);
+      assert.ok(A.inverse());
+      assert.deepEqual(A.inverse().values, Float64Array.from([3.5, -1.5, -2, 1]));
     });
 
     it("LU decomposition", () => {
@@ -51,6 +73,6 @@ describe("norm", () => {
     it("norm", () => {
         const v = druid.normalize(Float64Array.from({length: 100}, () => Math.random() * 100 - 50));
         assert.equal(Math.abs(druid.norm(v) - 1) < 1e-12, 1)
-        
+
     })
 })

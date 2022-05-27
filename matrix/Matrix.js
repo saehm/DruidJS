@@ -429,10 +429,10 @@ export class Matrix {
             }
             const C = new Matrix(rows_A, cols_B, (row, col) => {
                 const A_i = A.row(row);
-                const B_val = B.values;
+                const B_i = B.row(col);
                 let sum = 0;
-                for (let i = 0, j = col * rows_B; i < cols_A; ++i, ++j) {
-                    sum += A_i[i] * B_val[j];
+                for (let i = 0; i < cols_A; ++i) {
+                    sum += A_i[i] * B_i[i];
                 }
                 return sum;
             });
