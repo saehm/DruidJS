@@ -181,6 +181,22 @@ export class Matrix {
     }
 
     /**
+     * Swaps the rows {@link row1} and {@link row2} of the Matrix.
+     * @param {Number} row1
+     * @param {Number} row2
+     * @returns {Matrix}
+     */
+    swap_rows(row1, row2) {
+        const cols = this._cols;
+        const data = this.values;
+        for (let i = row1 * cols, j = row2 * cols, col = 0; col < cols; ++col, ++i, ++j) {
+            const t = data[i];
+            data[i] = data[j];
+            data[j] = t;
+        }
+    }
+
+    /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
      * @param {Number} col
      * @returns {Array}
@@ -263,69 +279,62 @@ export class Matrix {
     inverse() {
         const rows = this._rows;
         const cols = this._cols;
-        let B = new Matrix(rows, 2 * cols, (i, j) => {
-            if (j >= cols) {
-                return i === j - cols ? 1 : 0;
-            } else {
-                return this.entry(i, j);
-            }
-        });
-        let h = 0;
-        let k = 0;
-        while (h < rows && k < cols) {
-            var i_max = 0;
-            let max_val = -Infinity;
-            for (let i = h; i < rows; ++i) {
-                let val = Math.abs(B.entry(i, k));
+        const A = this.clone();
+        const B = new Matrix(rows, cols, 'I');
+
+        // foreach column
+        for (let col = 0; col < cols; ++col) {
+            // Search for maximum in this column (pivot)
+            let max_idx = col;
+            let max_val = Math.abs(A.entry(col, col));
+            for (let row = col + 1; row < rows; ++row) {
+                const val = Math.abs(A.entry(row, col));
                 if (max_val < val) {
-                    i_max = i;
+                    max_idx = row;
                     max_val = val;
                 }
             }
-            if (B.entry(i_max, k) == 0) {
-                k++;
-            } else {
-                // swap rows
-                for (let j = 0; j < 2 * cols; ++j) {
-                    let h_val = B.entry(h, j);
-                    let i_val = B.entry(i_max, j);
-                    B.set_entry(h, j, h_val);
-                    B.set_entry(i_max, j, i_val);
-                }
-                for (let i = h + 1; i < rows; ++i) {
-                    let f = B.entry(i, k) / B.entry(h, k);
-                    B.set_entry(i, k, 0);
-                    for (let j = k + 1; j < 2 * cols; ++j) {
-                        B.set_entry(i, j, B.entry(i, j) - B.entry(h, j) * f);
+            if (max_val === 0) {
+                throw new Error('Cannot compute inverse of Matrix, determinant is zero');
+            }
+            // Swap maximum row with current row
+            if (max_idx !== col) {
+                A.swap_rows(col, max_idx);
+                B.swap_rows(col, max_idx);
+            }
+
+            // eliminate non-zero values on the other rows at column c
+            const A_col = A.row(col);
+            const B_col = B.row(col);
+            for (let row = 0; row < rows; ++row) {
+                const A_row = A.row(row);
+                const B_row = B.row(row);
+                if (row !== col) {
+                    // eliminate value at column c and row r
+                    if (A_row[col] !== 0) {
+                        const f = A_row[col] / A_col[col];
+                        // sub (f * row c) from row r to eliminate the value at column c
+                        for (let s = col; s < cols; ++s) {
+                            A_row[s] -= (f * A_col[s]);
+                        }
+                        for (let s = 0; s < cols; ++s) {
+                            B_row[s] -= (f * B_col[s]);
+                        }
+                    }
+                } else {
+                    // normalize value at Acc to 1,
+                    // divide each value on row r with the value at Acc
+                    const f = A_col[col]
+                    for (let s = col; s < cols; ++s) {
+                        A_row[s] /= f;
+                    }
+                    for (let s = 0; s < cols; ++s) {
+                        B_row[s] /= f;
                     }
                 }
-                h++;
-                k++;
             }
         }
-
-        for (let row = 0; row < rows; ++row) {
-            let f = B.entry(row, row);
-            for (let col = row; col < 2 * cols; ++col) {
-                B.set_entry(row, col, B.entry(row, col) / f);
-            }
-        }
-
-        for (let row = rows - 1; row >= 0; --row) {
-            let B_row_row = B.entry(row, row);
-            for (let i = 0; i < row; i++) {
-                let B_i_row = B.entry(i, row);
-                let f = B_i_row / B_row_row;
-                for (let j = i; j < 2 * cols; ++j) {
-                    let B_i_j = B.entry(i, j);
-                    let B_row_j = B.entry(row, j);
-                    B_i_j = B_i_j - B_row_j * f;
-                    B.set_entry(i, j, B_i_j);
-                }
-            }
-        }
-
-        return new Matrix(rows, cols, (i, j) => B.entry(i, j + cols));
+        return B;
     }
 
     /**

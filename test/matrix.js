@@ -49,6 +49,36 @@ describe("Matrix", () => {
       A._data = Float64Array.from([2, 3, 4, 7]);
       assert.ok(A.inverse());
       assert.deepEqual(A.inverse().values, Float64Array.from([3.5, -1.5, -2, 1]));
+
+      const B = new druid.Matrix(3, 3);
+      B._data = Float64Array.from([1, 4, 7, 3, 0, 5, -1, 9, 11]);
+      deepEqual(B.inverse().values, Float64Array.from([5.625, -2.375, -2.5, 4.75, -2.25, -2, -3.375, 1.625, 1.5]));
+
+      const C = new druid.Matrix(3, 3);
+      C._data = Float64Array.from([2, -1, 0, -1, 2, -1, 0, -1, 2]);
+      deepEqual(C.inverse().values, Float64Array.from([3/4, 1/2, 1/4, 1/2, 1, 1/2, 1/4, 1/2, 3/4]));
+
+      const D = new druid.Matrix(3, 3);
+      D._data = Float64Array.from([1, 0, 0, 0, 0, 1, 0, 1, 0]);
+      assert.deepEqual(D.inverse().values, Float64Array.from([1, 0, 0, 0, 0, 1, 0, 1, 0]));
+
+      const E = new druid.Matrix(3, 3);
+      E._data = Float64Array.from([1, 0, 0, 0, -1, -1, 0, 0, 1]);
+      assert.deepEqual(E.inverse().values, Float64Array.from([1, 0, 0, 0, -1, -1, 0, 0, 1]));
+
+      const F = new druid.Matrix(4, 4);
+      F._data = Float64Array.from([
+        0, 1, 0, 788,
+        -1, 0, 0, 692,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]);
+      assert.deepEqual(F.inverse().values, Float64Array.from([
+        0, -1, 0, 692,
+        1, 0, 0, -788,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]));
     });
 
     it("LU decomposition", () => {
@@ -76,3 +106,11 @@ describe("norm", () => {
 
     })
 })
+
+function deepEqual(a, b) {
+  assert.ok(a.length === b.length);
+  const N = a.length;
+  for (let i = 0; i < N; ++i) {
+    assert.ok(Math.abs(a[i] - b[i]) < 0.0001, (a + ' ~= ' + b));
+  }
+}
