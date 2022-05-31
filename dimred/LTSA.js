@@ -64,7 +64,7 @@ export class LTSA extends DR {
                 .add(1 / Math.sqrt(neighbors + 1));
             for (let i = 0; i < neighbors + 1; ++i) {
                 for (let j = 0; j < neighbors + 1; ++j) {
-                    B.set_entry(I_i[i], I_i[j], B.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0) + W_i.entry(i, j));
+                    B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
                 }
             }
         }

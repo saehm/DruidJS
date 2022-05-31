@@ -69,9 +69,11 @@ export class ISOMAP extends DR {
 
         for (let i = 0; i < rows; ++i) {
             for (let j = 0; j < rows; ++j) {
+                let min_val = G.entry(i, j);
                 for (let k = 0; k < rows; ++k) {
-                    G.set_entry(i, j, Math.min(G.entry(i, j), G.entry(i, k) + G.entry(k, j)));
+                    min_val = Math.min(min_val, G.entry(i, k) + G.entry(k, j));
                 }
+                G.set_entry(i, j, min_val);
             }
         }
 

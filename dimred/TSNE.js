@@ -192,7 +192,7 @@ export class TSNE extends DR {
             for (let j = 0; j < N; ++j) {
                 const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
+                    grad.add_entry(i, d, premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
         }

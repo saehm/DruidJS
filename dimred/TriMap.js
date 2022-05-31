@@ -310,9 +310,9 @@ export class TriMap extends DR {
             for (let d = 0; d < dim; ++d) {
                 const gs = y_ij[d] * d_ik * w;
                 const go = y_ik[d] * d_ij * w;
-                grad.set_entry(i, d, grad.entry(i, d) + gs - go);
-                grad.set_entry(j, d, grad.entry(j, d) - gs);
-                grad.set_entry(k, d, grad.entry(k, d) + go);
+                grad.add_entry(i, d, gs - go);
+                grad.sub_entry(j, d, gs);
+                grad.add_entry(k, d, go);
             }
         }
         return { grad, loss, n_viol };

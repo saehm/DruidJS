@@ -322,8 +322,8 @@ export class Matrix {
                         }
                     }
                 } else {
-                    // normalize value at Acc to 1,
-                    // divide each value on row r with the value at Acc
+                    // normalize value at Acc to 1 (diagonal):
+                    // divide each value of row r=c by the value at Acc
                     const f = A_col[col];
                     for (let s = col; s < cols; ++s) {
                         A_col[s] /= f;
@@ -962,7 +962,7 @@ export class Matrix {
         // forward
         for (let row = 0; row < rows; ++row) {
             for (let col = 0; col < row - 1; ++col) {
-                x.set_entry(0, row, x.entry(0, row) - L.entry(row, col) * x.entry(1, col));
+                x.sub_entry(0, row, L.entry(row, col) * x.entry(1, col));
             }
             x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
         }
@@ -970,7 +970,7 @@ export class Matrix {
         // backward
         for (let row = rows - 1; row >= 0; --row) {
             for (let col = rows - 1; col > row; --col) {
-                x.set_entry(0, row, x.entry(0, row) - U.entry(row, col) * x.entry(0, col));
+                x.sub_entry(0, row, U.entry(row, col) * x.entry(0, col));
             }
             x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));
         }

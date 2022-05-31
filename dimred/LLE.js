@@ -53,7 +53,7 @@ export class LLE extends DR {
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j < neighbors; ++j) {
-                    C.set_entry(j, j, C.entry(j, j) + C_trace);
+                    C.add_entry(j, j, C_trace);
                 }
             }
             // reconstruct;
