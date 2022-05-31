@@ -307,10 +307,10 @@ export class Matrix {
             const A_col = A.row(col);
             const B_col = B.row(col);
             for (let row = 0; row < rows; ++row) {
-                const A_row = A.row(row);
-                const B_row = B.row(row);
                 if (row !== col) {
                     // eliminate value at column c and row r
+                    const A_row = A.row(row);
+                    const B_row = B.row(row);
                     if (A_row[col] !== 0) {
                         const f = A_row[col] / A_col[col];
                         // sub (f * row c) from row r to eliminate the value at column c
@@ -324,12 +324,12 @@ export class Matrix {
                 } else {
                     // normalize value at Acc to 1,
                     // divide each value on row r with the value at Acc
-                    const f = A_col[col]
+                    const f = A_col[col];
                     for (let s = col; s < cols; ++s) {
-                        A_row[s] /= f;
+                        A_col[s] /= f;
                     }
                     for (let s = 0; s < cols; ++s) {
-                        B_row[s] /= f;
+                        B_col[s] /= f;
                     }
                 }
             }
