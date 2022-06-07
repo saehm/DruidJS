@@ -22,7 +22,7 @@ export default function (A, k = 2, {seed = 1212, max_iterations = 100, qr = qr_g
     const n = A.shape[0];
     let { Q, R } = qr(new Matrix(n, k, () => (randomizer.random - .5) * 2));
     while (max_iterations--) {
-        const oldQ = Q.clone();
+        const oldQ = Q;
         const Z = A.dot(Q);
         const QR = qr(Z);
         Q = QR.Q;

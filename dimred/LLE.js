@@ -49,7 +49,7 @@ export class LLE extends DR {
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
             const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.T);
+            const C = Z.dotTrans(Z);
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j < neighbors; ++j) {

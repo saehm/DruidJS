@@ -1035,9 +1035,8 @@ export class Matrix {
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
     static SVD(M, k = 2) {
-        const MT = M.T;
-        let MtM = MT.dot(M);
-        let MMt = M.dot(MT);
+        let MtM = M.transDot(M);
+        let MMt = M.dotTrans(M);
         let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
         let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
         return { U: U, Sigma: Sigma.map((sigma) => Math.sqrt(sigma)), V: V };
