@@ -2,7 +2,7 @@
 import * as druid from "./test_index.js";
 import * as assert from "assert";
 
-const eps = 0.0000001;
+const eps = 0.000001;
 describe("eig", () => {
     const N = 20;
     const R = new druid.Randomizer(1212);
@@ -63,21 +63,22 @@ describe("eig", () => {
         let eigs = druid.simultaneous_poweriteration(M, 2, {max_iterations: 100, seed: 1212, qr: druid.qr});
         assert.equal(eigs.eigenvectors.length, 2)
         assert.equal(eigs.eigenvectors[0].length, N)
+        checkEigs(M, eigs.eigenvalues, eigs.eigenvectors);
 
         eigs = druid.simultaneous_poweriteration(M, 6, {max_iterations: 100, seed: 1212, qr: druid.qr});
         assert.equal(eigs.eigenvectors.length, 6)
         assert.equal(eigs.eigenvectors[0].length, N)
+        checkEigs(M, eigs.eigenvalues, eigs.eigenvectors);
 
         const A = druid.Matrix.from([[1, 0.1], [0.1, 1]]);
         const { eigenvalues: A_val } = druid.simultaneous_poweriteration(A, 2);
         approxEqual(A_val, Float64Array.from([1.1, 0.9]));
 
         // const B = druid.Matrix.from([[3, -1, -1], [-12, 0, 5], [4, -2, -1]]);
-        // const { eigenvalues: B_val, eigenvectors: B_vec } = druid.simultaneous_poweriteration(B, 3);
-        // const B_val2 = druid.Matrix.from(B_vec);
-        // // approxEqual(B_val, Float64Array.from([3, 1, 0]));
-        // approxEqual(B.dot(B_vec), [0, 0]);
-
+        const B = druid.Matrix.from([[13, -4, 2], [-4, 11, -2], [2, -2, 8]]);
+        const { eigenvalues: B_val, eigenvectors: B_vec } = druid.simultaneous_poweriteration(B, 3);
+        approxEqual(B_val, Float64Array.from([17, 8, 7]));
+        checkEigs(B, B_val, B_vec);
     }).timeout(10000);
 });
 
@@ -98,11 +99,19 @@ function checkDecomposition(A, Q, R) {
     }
 }
 
-function approxEqual(a, b) {
+function checkEigs(A, vals, vecs) {
+  vals.forEach((val, i) => {
+    const proj1 = A.dot(druid.Matrix.from(vecs[i], 'col'));
+    const proj2 = vecs[i].map(d => d * val);
+    approxEqual(proj1.values, proj2, 0.005);
+  });
+}
+
+function approxEqual(a, b, e = eps) {
   // assert.deepEqual(a, b);
   const N = a.length;
   assert.ok(a.length === b.length);
   for (let i = 0; i < N; ++i) {
-    assert.ok(Math.abs(a[i] - b[i]) < eps);
+    assert.ok(Math.abs(a[i] - b[i]) < e, a[i] + ' != ' + b[i]);
   }
 }
