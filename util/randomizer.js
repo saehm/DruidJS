@@ -95,6 +95,21 @@ export class Randomizer {
         return y >>> 0;
     }
 
+    gauss_random() {
+        let x, y, r;
+        if (this._val != null) {
+            x = this._val, this._val = null;
+            return x;
+        } else do {
+            x = 2 * this.random - 1;
+            y = 2 * this.random - 1;
+            r = x * x + y * y;
+        } while (!r || r > 1);
+        const c = Math.sqrt(-2 * Math.log(r) / r);
+        this._val = y * c; // cache this for next function call for efficiency
+        return x * c;
+    }
+
     /**
      * Returns samples from an input Matrix or Array.
      * @param {Matrix|Array|Float64Array} A - The input Matrix or Array.

@@ -26,7 +26,7 @@ export class TSNE extends DR {
         super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
         this._iter = 0;
-        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.random);
+        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.gauss_random() * 1e-4);
         return this;
     }
 
