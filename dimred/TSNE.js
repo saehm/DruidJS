@@ -56,63 +56,62 @@ export class TSNE extends DR {
             }
         }
 
-        const P = new Matrix(N, N, "zeros");
+        const P = new Matrix(N, N, 0);
 
-        this._ystep = new Matrix(N, D, "zeros");
+        this._ystep = new Matrix(N, D, 0);
         this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Float64Array(N);
         const tol = 1e-4;
         const maxtries = 50;
         for (let i = 0; i < N; ++i) {
+            const dist_i = Delta.row(i);
+            const prow = P.row(i);
             let betamin = -Infinity;
             let betamax = Infinity;
             let beta = 1;
+            let cnt = maxtries;
             let done = false;
+            let psum;
 
-            let num = 0;
-            while (!done) {
-                let psum = 0;
+            while (!done && cnt--) {
+                // compute entropy and kernel row with beta precision
+                psum = 0;
+                let dp_sum = 0;
                 for (let j = 0; j < N; ++j) {
-                    let pj = Math.exp(-Delta.entry(i, j) * beta);
-                    if (i === j) pj = 0;
+                    const dist = dist_i[j];
+                    const pj = (i !== j) ? Math.exp(-dist * beta) : 0;
+                    dp_sum += dist * pj;
                     prow[j] = pj;
                     psum += pj;
                 }
-                let Hhere = 0;
-                for (let j = 0; j < N; ++j) {
-                    let pj = psum === 0 ? 0 : prow[j] / psum;
-                    prow[j] = pj;
-                    if (pj > 1e-7) {
-                        Hhere -= pj * Math.log(pj);
-                    }
-                }
-                if (Hhere > Htarget) {
+                // compute entropy
+                const H = psum > 0 ? Math.log(psum) + beta * dp_sum / psum : 0;
+                if (H > Htarget) {
                     betamin = beta;
                     beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
                 } else {
                     betamax = beta;
                     beta = betamin === -Infinity ? beta / 2 : (beta + betamin) / 2;
                 }
-                ++num;
-                if (Math.abs(Hhere - Htarget) < tol) done = true;
-                if (num >= maxtries) done = true;
+                done = Math.abs(H - Htarget) < tol;
             }
-            P.set_row(i, prow);
+            // normalize p
+            for (let j = 0; j < N; ++j) {
+                prow[j] /= psum;
+            }
         }
 
-        //compute probabilities
-        const Pout = new Matrix(N, N, "zeros");
+        // compute probabilities
         const N2 = N * 2;
         for (let i = 0; i < N; ++i) {
             for (let j = i; j < N; ++j) {
                 const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);
-                Pout.set_entry(i, j, p);
-                Pout.set_entry(j, i, p);
+                P.set_entry(i, j, p);
+                P.set_entry(j, i, p);
             }
         }
-        this._P = Pout;
+        this._P = P;
         return this;
     }
 
