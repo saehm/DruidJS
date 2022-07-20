@@ -1,5 +1,5 @@
 import { Matrix } from "../matrix/index.js";
-import { euclidean } from "../metrics/index.js";
+import { euclidean_squared } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /**
@@ -18,12 +18,12 @@ export class TSNE extends DR {
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
     constructor(X, parameters) {
-        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean, seed: 1212 }, parameters);
+        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean_squared, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
         this._iter = 0;
         this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.gauss_random() * 1e-4);

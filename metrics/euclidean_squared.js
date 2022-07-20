@@ -1,4 +1,3 @@
-import { neumair_sum } from "../numerical/index.js";
 /**
  * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
@@ -10,12 +9,10 @@ import { neumair_sum } from "../numerical/index.js";
 export default function (a, b) {
     if (a.length != b.length) return undefined;
     const n = a.length;
-    const s = new Float64Array(n);
+    let sum = 0;
     for (let i = 0; i < n; ++i) {
-        const x = a[i];
-        const y = b[i];
-        const x_y = x - y;
-        s[i] = x_y * x_y;
+        const a_b = a[i] - b[i];
+        sum += a_b * a_b;
     }
-    return neumair_sum(s);
+    return sum;
 }
