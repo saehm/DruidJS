@@ -26,8 +26,8 @@ export default function (A, max_iterations = 100, batch_size = 10, beta = 0.05, 
         r = r_next.divide(r_next_norm);
     }
 
-    let u = r.transpose().dot(A).dot(r);
-    let l = r.transpose().dot(r);
+    let u = r.transDot(A).dot(r);
+    let l = r.transDot(r);
     let lambda = u.divide(l).entry(0, 0);
     return {
         eigenvector: r.transpose().to2dArray[0],

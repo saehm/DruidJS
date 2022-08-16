@@ -55,17 +55,16 @@ export class LTSA extends DR {
             // center X_i
             X_i = X_i.dot(O);
             // correlation matrix
-            const C = X_i.dot(X_i.transpose());
+            const C = X_i.dotTrans(X_i);
             const { eigenvectors: g } = simultaneous_poweriteration(C, d, eig_args);
             //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
             // 2. Constructing alignment matrix
-            const W_i = G_i_t.transpose()
-                .dot(G_i_t)
+            const W_i = G_i_t.transDot(G_i_t)
                 .add(1 / Math.sqrt(neighbors + 1));
             for (let i = 0; i < neighbors + 1; ++i) {
                 for (let j = 0; j < neighbors + 1; ++j) {
-                    B.set_entry(I_i[i], I_i[j], B.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0) + W_i.entry(i, j));
+                    B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
                 }
             }
         }

@@ -34,7 +34,7 @@ export class MLLE{
             let X_i = Matrix.from(I_i.map(n => X.row(n)));
             X_i = X_i.sub(x_i);
             //X_i = X_i.dot(new Matrix(X_i._cols, X_i._cols, "center"))
-            let C_i = X_i.dot(X_i.transpose()) // k by k
+            let C_i = X_i.dotTrans(X_i); // k by k
 
             let gamma = neumair_sum(C_i.diag) / 1000;
             for (let j = 0; j < k; ++j) {
@@ -91,9 +91,9 @@ export class MLLE{
             H_i = H_i.sub(h.mult(2).outer(h));
             let W_i = V_i.sub(V_i.dot(h).dot(h.T).mult(2)).add(w_i.mult(1 - alpha_i))
             */
-            let W_i = V_i.sub(V_i.dot(h).dot(h.T).mult(2)).add(w_i.mult(1 - alpha_i).dot(ones.T))
-            
-            W_i = W_i.dot(W_i.T)
+            let W_i = V_i.sub(V_i.dot(h).dotTrans(h).mult(2)).add(w_i.mult(1 - alpha_i).dotTrans(ones))
+
+            W_i = W_i.dotTrans(W_i);
             for (let i = 0; i < k + 1; ++i) {
                 for (let j = 0; j < s_i; ++j) {
                     Phi.set_entry(I_i[i], I_i[j], Phi.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0 ) + W_i.entry(i, j));

@@ -40,11 +40,11 @@ export class TriMap extends DR {
     init(pca = null, knn = null) {
         const X = this.X;
         const N = X.shape[0];
-        const { d, metric, c } = this._parameters;
+        const { c, d, metric, seed } = this._parameters;
         this.n_inliers = 2 * c;
         this.n_outliers = 1 * c;
         this.n_random = 1 * c;
-        this.Y = pca || new PCA(X, d).transform();
+        this.Y = pca || new PCA(X, { d, seed }).transform();
         this.knn = knn || new BallTree(X.to2dArray, metric);
         const { triplets, weights } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
         this.triplets = triplets;
@@ -156,7 +156,7 @@ export class TriMap extends DR {
         const triplets = new Matrix(N * n_inliers * n_outliers, 3);
         for (let i = 0; i < N; ++i) {
             let n_i = i * n_inliers * n_outliers;
-            const sort_indices = this.__argsort(P.row(i).map((d) => -d));
+            const sort_indices = this.__argsort(P.row(i));
             for (let j = 0; j < n_inliers; ++j) {
                 let n_j = j * n_outliers;
                 const sim = nbrs.entry(i, sort_indices[j]);
@@ -179,11 +179,7 @@ export class TriMap extends DR {
      * @param {Array} A
      */
     __argsort(A) {
-        return A.map((d, i) => {
-            return { d: d, i: i };
-        })
-            .sort((a, b) => a.d - b.d)
-            .map((d) => d.i);
+        return linspace(0, A.length - 1).sort((i, j) => A[j] - A[i]);
     }
 
     /**
@@ -314,9 +310,9 @@ export class TriMap extends DR {
             for (let d = 0; d < dim; ++d) {
                 const gs = y_ij[d] * d_ik * w;
                 const go = y_ik[d] * d_ij * w;
-                grad.set_entry(i, d, grad.entry(i, d) + gs - go);
-                grad.set_entry(j, d, grad.entry(j, d) - gs);
-                grad.set_entry(k, d, grad.entry(k, d) + go);
+                grad.add_entry(i, d, gs - go);
+                grad.sub_entry(j, d, gs);
+                grad.add_entry(k, d, go);
             }
         }
         return { grad, loss, n_viol };

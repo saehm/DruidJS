@@ -220,7 +220,7 @@ export class OAP {
             return i < j ? -d_X.entry(i, j) / d_Y.entry(i, j) : ratio.entry(j, i);
         }]
         for (let i = 0; i < N; ++i) {
-            ratio.set_entry(i, i, ratio.entry(i, i) - neumair_sum(ratio.row(i)));
+            ratio.sub_entry(i, i, neumair_sum(ratio.row(i)));
         }
         const mds_Y = ratio.dot(Y).divide(N);
 
@@ -232,7 +232,7 @@ export class OAP {
             const dm = M(mds_Y.row(i));
             const h_i = h[i];
             for (let d = 0; d < dim; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) + step_size * (diff_Y.entry(i, d) + w * 2 * (m - h_i) * dm));
+                Y.add_entry(i, d, step_size * (diff_Y.entry(i, d) + w * 2 * (m - h_i) * dm));
             }
         }
 

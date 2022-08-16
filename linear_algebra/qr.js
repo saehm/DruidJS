@@ -20,8 +20,10 @@ export default function (A) {
         for (let i = 0; i < j; ++i) {
             const q = Q.col(i);
             const q_dot_v = neumair_sum(q.map((q_, k) => q_ * v[k]));
+            for (let k = 0; k < rows; ++k) {
+                v[k] -= q_dot_v * q[k];
+            }
             R.set_entry(i, j, q_dot_v);
-            v = v.map((v_, k) => v_ - q_dot_v * q[k]);
         }
         const v_norm = norm(v, euclidean);
         for (let k = 0; k < rows; ++k) {

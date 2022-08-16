@@ -49,11 +49,11 @@ export class LLE extends DR {
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
             const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.T);
+            const C = Z.dotTrans(Z);
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j < neighbors; ++j) {
-                    C.set_entry(j, j, C.entry(j, j) + C_trace);
+                    C.add_entry(j, j, C_trace);
                 }
             }
             // reconstruct;
@@ -66,7 +66,7 @@ export class LLE extends DR {
         // comp embedding
         const I = new Matrix(rows, rows, "identity");
         const IW = I.sub(W);
-        const M = IW.T.dot(IW);
+        const M = IW.transDot(IW);
         const { eigenvectors: V } = simultaneous_poweriteration(M.T.inverse(), d + 1, eig_args);
         this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 

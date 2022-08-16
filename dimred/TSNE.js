@@ -1,5 +1,5 @@
 import { Matrix } from "../matrix/index.js";
-import { euclidean } from "../metrics/index.js";
+import { euclidean_squared } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /**
@@ -18,15 +18,15 @@ export class TSNE extends DR {
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
     constructor(X, parameters) {
-        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean, seed: 1212 }, parameters);
+        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean_squared, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
         this._iter = 0;
-        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.random);
+        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.gauss_random() * 1e-4);
         return this;
     }
 
@@ -56,66 +56,62 @@ export class TSNE extends DR {
             }
         }
 
-        const P = new Matrix(N, N, "zeros");
+        const P = new Matrix(N, N, 0);
 
-        this._ystep = new Matrix(N, D, "zeros");
+        this._ystep = new Matrix(N, D, 0);
         this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Float64Array(N)
         const tol = 1e-4;
         const maxtries = 50;
         for (let i = 0; i < N; ++i) {
+            const dist_i = Delta.row(i);
+            const prow = P.row(i);
             let betamin = -Infinity;
             let betamax = Infinity;
             let beta = 1;
+            let cnt = maxtries;
             let done = false;
+            let psum;
 
-            let num = 0;
-            while (!done) {
-                let psum = 0;
+            while (!done && cnt--) {
+                // compute entropy and kernel row with beta precision
+                psum = 0;
+                let dp_sum = 0;
                 for (let j = 0; j < N; ++j) {
-                    let pj = Math.exp(-Delta.entry(i, j) * beta);
-                    if (i === j) pj = 0;
+                    const dist = dist_i[j];
+                    const pj = (i !== j) ? Math.exp(-dist * beta) : 0;
+                    dp_sum += dist * pj;
                     prow[j] = pj;
                     psum += pj;
                 }
-                let Hhere = 0;
-                for (let j = 0; j < N; ++j) {
-                    let pj = psum === 0 ? 0 : prow[j] / psum;
-                    prow[j] = pj;
-                    if (pj > 1e-7) {
-                        Hhere -= pj * Math.log(pj);
-                    }
-                }
-                if (Hhere > Htarget) {
+                // compute entropy
+                const H = psum > 0 ? Math.log(psum) + beta * dp_sum / psum : 0;
+                if (H > Htarget) {
                     betamin = beta;
                     beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
                 } else {
                     betamax = beta;
                     beta = betamin === -Infinity ? beta / 2 : (beta + betamin) / 2;
                 }
-                ++num;
-                if (Math.abs(Hhere - Htarget) < tol) done = true;
-                if (num >= maxtries) done = true;
+                done = Math.abs(H - Htarget) < tol;
             }
-
+            // normalize p
             for (let j = 0; j < N; ++j) {
-                P.set_entry(i, j, prow[j]);
+                prow[j] /= psum;
             }
         }
 
-        //compute probabilities
-        const Pout = new Matrix(N, N, "zeros");
+        // compute probabilities
         const N2 = N * 2;
         for (let i = 0; i < N; ++i) {
             for (let j = i; j < N; ++j) {
                 const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);
-                Pout.set_entry(i, j, p);
-                Pout.set_entry(j, i, p);
+                P.set_entry(i, j, p);
+                P.set_entry(j, i, p);
             }
         }
-        this._P = Pout;
+        this._P = P;
         return this;
     }
 
@@ -195,7 +191,7 @@ export class TSNE extends DR {
             for (let j = 0; j < N; ++j) {
                 const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
+                    grad.add_entry(i, d, premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
         }
@@ -216,14 +212,14 @@ export class TSNE extends DR {
                 const newsid = momval * sid - epsilon * newgain * gid;
                 ystep.set_entry(i, d, newsid);
 
-                Y.set_entry(i, d, Y.entry(i, d) + newsid);
+                Y.add_entry(i, d, newsid);
                 ymean[d] += Y.entry(i, d);
             }
         }
 
         for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < 2; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);
+            for (let d = 0; d < dim; ++d) {
+                Y.sub_entry(i, d, ymean[d] / N);
             }
         }
 
