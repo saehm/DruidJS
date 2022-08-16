@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.6.2 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.3 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -18,55 +18,6 @@ function euclidean (a, b) {
 }
 
 /**
- * Numerical stable summation with the Kahan summation algorithm.
- * @memberof module:numerical
- * @alias kahan_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
- */
-function kahan_sum (summands) {
-    let n = summands.length;
-    let sum = 0;
-    let compensation = 0;
-    let y, t;
-
-    for (let i = 0; i < n; ++i) {
-        y = summands[i] - compensation;
-        t = sum + y;
-        compensation = t - sum - y;
-        sum = t;
-    }
-    return sum;
-}
-
-/**
- * Numerical stable summation with the Neumair summation algorithm.
- * @memberof module:numerical
- * @alias neumair_sum
- * @param {Number[]} summands - Array of values to sum up.
- * @returns {Number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
- */
-function neumair_sum (summands) {
-    const n = summands.length;
-    let sum = 0;
-    let compensation = 0;
-
-    for (let i = 0; i < n; ++i) {
-        const summand = summands[i];
-        const t = sum + summand;
-        if (Math.abs(sum) >= Math.abs(summand)) {
-            compensation += sum - t + summand;
-        } else {
-            compensation += summand - t + sum;
-        }
-        sum = t;
-    }
-    return sum + compensation;
-}
-
-/**
  * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean_squared
@@ -77,14 +28,12 @@ function neumair_sum (summands) {
 function euclidean_squared (a, b) {
     if (a.length != b.length) return undefined;
     const n = a.length;
-    const s = new Float64Array(n);
+    let sum = 0;
     for (let i = 0; i < n; ++i) {
-        const x = a[i];
-        const y = b[i];
-        const x_y = x - y;
-        s[i] = x_y * x_y;
+        const a_b = a[i] - b[i];
+        sum += a_b * a_b;
     }
-    return neumair_sum(s);
+    return sum;
 }
 
 /**
@@ -371,7 +320,56 @@ function normalize(v, metric = euclidean)  {
 }
 
 /**
- * Computes the QR Decomposition of the Matrix {@link A} using Gram-Schmidt process.
+ * Numerical stable summation with the Kahan summation algorithm.
+ * @memberof module:numerical
+ * @alias kahan_sum
+ * @param {Array} summands - Array of values to sum up.
+ * @returns {number} The sum.
+ * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
+ */
+function kahan_sum (summands) {
+    let n = summands.length;
+    let sum = 0;
+    let compensation = 0;
+    let y, t;
+
+    for (let i = 0; i < n; ++i) {
+        y = summands[i] - compensation;
+        t = sum + y;
+        compensation = t - sum - y;
+        sum = t;
+    }
+    return sum;
+}
+
+/**
+ * Numerical stable summation with the Neumair summation algorithm.
+ * @memberof module:numerical
+ * @alias neumair_sum
+ * @param {Number[]} summands - Array of values to sum up.
+ * @returns {Number} The sum.
+ * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
+ */
+function neumair_sum (summands) {
+    const n = summands.length;
+    let sum = 0;
+    let compensation = 0;
+
+    for (let i = 0; i < n; ++i) {
+        const summand = summands[i];
+        const t = sum + summand;
+        if (Math.abs(sum) >= Math.abs(summand)) {
+            compensation += sum - t + summand;
+        } else {
+            compensation += summand - t + sum;
+        }
+        sum = t;
+    }
+    return sum + compensation;
+}
+
+/**
+ * Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
  * @memberof module:linear_algebra
  * @alias qr
  * @param {Matrix} A
@@ -388,8 +386,10 @@ function qr_gramschmidt (A) {
         for (let i = 0; i < j; ++i) {
             const q = Q.col(i);
             const q_dot_v = neumair_sum(q.map((q_, k) => q_ * v[k]));
+            for (let k = 0; k < rows; ++k) {
+                v[k] -= q_dot_v * q[k];
+            }
             R.set_entry(i, j, q_dot_v);
-            v = v.map((v_, k) => v_ - q_dot_v * q[k]);
         }
         const v_norm = norm(v, euclidean);
         for (let k = 0; k < rows; ++k) {
@@ -435,7 +435,7 @@ function qr_householder (A) {
 }
 
 /**
- * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  * @memberof module:linear_algebra
  * @alias simultaneous_poweriteration
  * @param {Matrix} A - The Matrix
@@ -444,8 +444,8 @@ function qr_householder (A) {
  * @param {Number} [parameters.max_iterations=100] - The number of maxiumum iterations the algorithm should run.
  * @param {Number|Randomizer} [parameters.seed=1212] - The seed value or a randomizer used in the algorithm.
  * @param {Function} [parameters.qr=qr_gramschmidt] - The QR technique to use.
- * @param {Number} [parameters.tol=1e-8] - Allowed error for stopping criteria
- * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
+ * @param {Number} [parameters.tol=1e-8] - Tolerated error for stopping criteria.
+ * @returns {{eigenvalues: Number[], eigenvectors: Number[][]}} the `k` biggest eigenvectors and eigenvalues of Matrix `A`.
  */
 function simultaneous_poweriteration (A, k = 2, {seed = 1212, max_iterations = 100, qr = qr_gramschmidt, tol = 1e-8} = {}) {
     const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
@@ -453,7 +453,7 @@ function simultaneous_poweriteration (A, k = 2, {seed = 1212, max_iterations = 1
     const n = A.shape[0];
     let { Q, R } = qr(new Matrix(n, k, () => (randomizer.random - .5) * 2));
     while (max_iterations--) {
-        const oldQ = Q.clone();
+        const oldQ = Q;
         const Z = A.dot(Q);
         const QR = qr(Z);
         Q = QR.Q;
@@ -579,11 +579,11 @@ class Matrix {
     static from(A, type = "row") {
         if (A instanceof Matrix) {
             return A.clone();
-        } else if (Array.isArray(A) || A instanceof Float64Array) {
+        } else if (Matrix.isArray(A)) {
             let m = A.length;
             if (m === 0) throw new Error("Array is empty");
             // 1d
-            if (!Array.isArray(A[0]) && !(A[0] instanceof Float64Array)) {
+            if (!Matrix.isArray(A[0])) {
                 if (type === "row") {
                     return new Matrix(1, m, (_, j) => A[j]);
                 } else if (type === "col") {
@@ -594,7 +594,7 @@ class Matrix {
                     throw new Error("1d array has NaN entries");
                 }
                 // 2d
-            } else if (Array.isArray(A[0]) || A[0] instanceof Float64Array) {
+            } else {
                 let n = A[0].length;
                 for (let row = 0; row < m; ++row) {
                     if (A[row].length !== n) {
@@ -652,7 +652,7 @@ class Matrix {
      */
     set_row(row, values) {
         const cols = this._cols;
-        if ((Array.isArray(values) || values instanceof Float64Array) && values.length === cols) {
+        if (Matrix.isArray(values) && values.length === cols) {
             const offset = row * cols;
             for (let col = 0; col < cols; ++col) {
                 this.values[offset + col] = values[col];
@@ -666,6 +666,22 @@ class Matrix {
             throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!")
         }
         return this;
+    }
+
+    /**
+     * Swaps the rows {@link row1} and {@link row2} of the Matrix.
+     * @param {Number} row1
+     * @param {Number} row2
+     * @returns {Matrix}
+     */
+    swap_rows(row1, row2) {
+        const cols = this._cols;
+        const data = this.values;
+        for (let i = row1 * cols, j = row2 * cols, col = 0; col < cols; ++col, ++i, ++j) {
+            const t = data[i];
+            data[i] = data[j];
+            data[j] = t;
+        }
     }
 
     /**
@@ -704,6 +720,30 @@ class Matrix {
     }
 
     /**
+     * Adds a given {@link value} to the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */
+    add_entry(row, col, value) {
+      this.values[row * this._cols + col] += value;
+      return this;
+    }
+
+    /**
+     * Subtracts a given {@link value} from the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */
+    sub_entry(row, col, value) {
+      this.values[row * this._cols + col] -= value;
+      return this;
+    }
+
+    /**
      * Returns a new transposed Matrix.
      * @returns {Matrix}
      */
@@ -727,69 +767,62 @@ class Matrix {
     inverse() {
         const rows = this._rows;
         const cols = this._cols;
-        let B = new Matrix(rows, 2 * cols, (i, j) => {
-            if (j >= cols) {
-                return i === j - cols ? 1 : 0;
-            } else {
-                return this.entry(i, j);
-            }
-        });
-        let h = 0;
-        let k = 0;
-        while (h < rows && k < cols) {
-            var i_max = 0;
-            let max_val = -Infinity;
-            for (let i = h; i < rows; ++i) {
-                let val = Math.abs(B.entry(i, k));
+        const A = this.clone();
+        const B = new Matrix(rows, cols, 'I');
+
+        // foreach column
+        for (let col = 0; col < cols; ++col) {
+            // Search for maximum in this column (pivot)
+            let max_idx = col;
+            let max_val = Math.abs(A.entry(col, col));
+            for (let row = col + 1; row < rows; ++row) {
+                const val = Math.abs(A.entry(row, col));
                 if (max_val < val) {
-                    i_max = i;
+                    max_idx = row;
                     max_val = val;
                 }
             }
-            if (B.entry(i_max, k) == 0) {
-                k++;
-            } else {
-                // swap rows
-                for (let j = 0; j < 2 * cols; ++j) {
-                    let h_val = B.entry(h, j);
-                    let i_val = B.entry(i_max, j);
-                    B.set_entry(h, j, h_val);
-                    B.set_entry(i_max, j, i_val);
-                }
-                for (let i = h + 1; i < rows; ++i) {
-                    let f = B.entry(i, k) / B.entry(h, k);
-                    B.set_entry(i, k, 0);
-                    for (let j = k + 1; j < 2 * cols; ++j) {
-                        B.set_entry(i, j, B.entry(i, j) - B.entry(h, j) * f);
+            if (max_val === 0) {
+                throw new Error('Cannot compute inverse of Matrix, determinant is zero');
+            }
+            // Swap maximum row with current row
+            if (max_idx !== col) {
+                A.swap_rows(col, max_idx);
+                B.swap_rows(col, max_idx);
+            }
+
+            // eliminate non-zero values on the other rows at column c
+            const A_col = A.row(col);
+            const B_col = B.row(col);
+            for (let row = 0; row < rows; ++row) {
+                if (row !== col) {
+                    // eliminate value at column c and row r
+                    const A_row = A.row(row);
+                    const B_row = B.row(row);
+                    if (A_row[col] !== 0) {
+                        const f = A_row[col] / A_col[col];
+                        // sub (f * row c) from row r to eliminate the value at column c
+                        for (let s = col; s < cols; ++s) {
+                            A_row[s] -= (f * A_col[s]);
+                        }
+                        for (let s = 0; s < cols; ++s) {
+                            B_row[s] -= (f * B_col[s]);
+                        }
+                    }
+                } else {
+                    // normalize value at Acc to 1 (diagonal):
+                    // divide each value of row r=c by the value at Acc
+                    const f = A_col[col];
+                    for (let s = col; s < cols; ++s) {
+                        A_col[s] /= f;
+                    }
+                    for (let s = 0; s < cols; ++s) {
+                        B_col[s] /= f;
                     }
                 }
-                h++;
-                k++;
             }
         }
-
-        for (let row = 0; row < rows; ++row) {
-            let f = B.entry(row, row);
-            for (let col = row; col < 2 * cols; ++col) {
-                B.set_entry(row, col, B.entry(row, col) / f);
-            }
-        }
-
-        for (let row = rows - 1; row >= 0; --row) {
-            let B_row_row = B.entry(row, row);
-            for (let i = 0; i < row; i++) {
-                let B_i_row = B.entry(i, row);
-                let f = B_i_row / B_row_row;
-                for (let j = i; j < 2 * cols; ++j) {
-                    let B_i_j = B.entry(i, j);
-                    let B_row_j = B.entry(row, j);
-                    B_i_j = B_i_j - B_row_j * f;
-                    B.set_entry(i, j, B_i_j);
-                }
-            }
-        }
-
-        return new Matrix(rows, cols, (i, j) => B.entry(i, j + cols));
+        return B;
     }
 
     /**
@@ -800,23 +833,108 @@ class Matrix {
     dot(B) {
         if (B instanceof Matrix) {
             let A = this;
-            if (A.shape[1] !== B.shape[0]) {
-                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix: 
-                A has ${A.shape[1]} cols and B ${B.shape[0]} rows. 
+            const [rows_A, cols_A] = A.shape;
+            const [rows_B, cols_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows.
                 Must be equal!`);
             }
-            let I = A.shape[1];
-            let C = new Matrix(A.shape[0], B.shape[1], (row, col) => {
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
                 const A_i = A.row(row);
-                const B_i = B.col(col);
+                const B_val = B.values;
                 let sum = 0;
-                for (let i = 0; i < I; ++i) {
+                for (let i = 0, j = col; i < cols_A; ++i, j += cols_B) {
+                    sum += A_i[i] * B_val[j];
+                }
+                return sum;
+            });
+            return C;
+        } else if (Matrix.isArray(B)) {
+            let rows = this._rows;
+            if (B.length !== rows) {
+                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            }
+            let C = new Array(rows);
+            for (let row = 0; row < rows; ++row) {
+                C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
+            }
+            return C;
+        } else {
+            throw new Error(`B must be Matrix or Array`);
+        }
+    }
+
+    /**
+     * Transposes the current matrix and returns the dot product with {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */
+    transDot(B) {
+        if (B instanceof Matrix) {
+            let A = this;
+            const [cols_A, rows_A] = A.shape; // transpose matrix
+            const [rows_B, cols_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${[rows_A, cols_A].join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
+            }
+            // let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
+            // this.values[row * this._cols + col];
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
+                const A_val = A.values;
+                const B_val = B.values;
+                let sum = 0;
+                for (let i = 0, j = row, k = col; i < cols_A; ++i, j += rows_A, k += cols_B) {
+                    sum += A_val[j] * B_val[k];
+                }
+                return sum;
+            });
+            return C;
+        } else if (Matrix.isArray(B)) {
+            let rows = this._cols;
+            if (B.length !== rows) {
+                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            }
+            let C = new Array(rows);
+            for (let row = 0; row < rows; ++row) {
+                C[row] = neumair_sum(this.col(row).map((e) => e * B[row]));
+            }
+            return C;
+        } else {
+            throw new Error(`B must be Matrix or Array`);
+        }
+    }
+
+    /**
+     * Returns the dot product with the transposed version of {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */
+    dotTrans(B) {
+        if (B instanceof Matrix) {
+            let A = this;
+            const [rows_A, cols_A] = A.shape;
+            const [cols_B, rows_B] = B.shape;
+            if (cols_A !== rows_B) {
+                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${[rows_B, cols_B].join(" ⨯ ")}-Matrix:
+                A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
+            }
+            const C = new Matrix(rows_A, cols_B, (row, col) => {
+                const A_i = A.row(row);
+                const B_i = B.row(col);
+                let sum = 0;
+                for (let i = 0; i < cols_A; ++i) {
                     sum += A_i[i] * B_i[i];
                 }
                 return sum;
             });
             return C;
-        } else if (Array.isArray(B) || B instanceof Float64Array) {
+        } else if (Matrix.isArray(B)) {
             let rows = this._rows;
             if (B.length !== rows) {
                 throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
@@ -908,15 +1026,10 @@ class Matrix {
      * @returns {Matrix}
      */
     set_block(offset_row, offset_col, B) {
-        let [rows, cols] = B.shape;
+        const rows = Math.min(this._rows - offset_row, B.shape[0]);
+        const cols = Math.min(this._cols - offset_col, B.shape[1]);
         for (let row = 0; row < rows; ++row) {
-            if (row > this._rows) {
-                continue;
-            }
             for (let col = 0; col < cols; ++col) {
-                if (col > this._cols) {
-                    continue;
-                }
                 this.set_entry(row + offset_row, col + offset_col, B.entry(row, col));
             }
         }
@@ -946,7 +1059,7 @@ class Matrix {
         end_col = end_col ?? cols;
         if (end_row <= start_row || end_col <= start_col) {
             throw new Error(`
-                end_row must be greater than start_row, and 
+                end_row must be greater than start_row, and
                 end_col must be greater than start_col, but
                 end_row = ${end_row}, start_row = ${start_row}, end_col = ${end_col}, and start_col = ${start_col}!`);
         }
@@ -991,10 +1104,8 @@ class Matrix {
     _apply_array(f, v) {
         const data = this.values;
         const [rows, cols] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
+        for (let i = 0, row = 0; row < rows; ++row) {
+            for (let col = 0; col < cols; ++col, ++i) {
                 data[i] = f(data[i], v(row, col));
             }
         }
@@ -1008,68 +1119,66 @@ class Matrix {
     _apply_colwise_array(values, f) {
         const data = this.values;
         const [rows, cols] = this.shape;
-        for (let row = 0; row < rows; ++row) {
-            const offset = row * cols;
-            for (let col = 0; col < cols; ++col) {
-                const i = offset + col;
-                data[i] = f(data[i], values[row]);
+        for (let i = 0, row = 0; row < rows; ++row) {
+            const val = values[row];
+            for (let col = 0; col < cols; ++col, ++i) {
+                data[i] = f(data[i], val);
             }
         }
         return this;
     }
 
     _apply(value, f) {
-        let data = this.values;
+        const data = this.values;
+        const [rows, cols] = this.shape;
         if (value instanceof Matrix) {
-            let [value_rows, value_cols] = value.shape;
-            let [rows, cols] = this.shape;
+            const values = value.values;
+            const [value_rows, value_cols] = value.shape;
             if (value_rows === 1) {
                 if (cols !== value_cols) {
                     throw new Error(`cols !== value_cols`);
                 }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(0, col));
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], values[col]);
                     }
                 }
             } else if (value_cols === 1) {
                 if (rows !== value_rows) {
                     throw new Error(`rows !== value_rows`);
                 }
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, 0));
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    const v =  values[row];
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], v);
                     }
                 }
             } else if (rows == value_rows && cols == value_cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value.entry(row, col));
-                    }
+                for (let i = 0, n = rows * cols; i < n; ++i) {
+                    data[i] = f(data[i], values[i]);
                 }
             } else {
                 throw new Error(`error`);
             }
-        } else if (Array.isArray(value)) {
-            let rows = this._rows;
-            let cols = this._cols;
+        } else if (Matrix.isArray(value)) {
             if (value.length === rows) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[row]);
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    const v = value[row];
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], v);
                     }
                 }
             } else if (value.length === cols) {
-                for (let row = 0; row < rows; ++row) {
-                    for (let col = 0; col < cols; ++col) {
-                        data[row * cols + col] = f(data[row * cols + col], value[col]);
+                for (let i = 0, row = 0; row < rows; ++row) {
+                    for (let col = 0; col < cols; ++col, ++i) {
+                        data[i] = f(data[i], value[col]);
                     }
                 }
             } else {
                 throw new Error(`error`);
             }
-        } else {
-            for (let i = 0, n = this._rows * this._cols; i < n; ++i) {
+        } else { // scalar value
+            for (let i = 0, n = rows * cols; i < n; ++i) {
                 data[i] = f(data[i], value);
             }
         }
@@ -1181,9 +1290,9 @@ class Matrix {
         this._rows = rows;
         this._cols = cols;
         this._data = new Float64Array(rows * cols);
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < cols; ++col) {
-                this._data[row * cols + col] = value(row, col);
+        for (let i = 0, row = 0; row < rows; ++row) {
+            for (let col = 0; col < cols; ++col, ++i) {
+                this._data[i] = value(row, col);
             }
         }
         return this;
@@ -1248,7 +1357,7 @@ class Matrix {
     }
 
     /**
-     * Returns the sum oof all entries of the Matrix.
+     * Returns the entries of the Matrix.
      * @returns {Float64Array}
      */
     get values() {
@@ -1265,12 +1374,12 @@ class Matrix {
         const rows = this._rows;
         const cols = this._cols;
         const result = Float64Array.from({ length: rows });
-        for (let row = 0; row < rows; ++row) {
-            result[row] = 0;
-            for (let col = 0; col < cols; ++col) {
-                result[row] += data[row * cols + col];
+        for (let i = 0, row = 0; row < rows; ++row) {
+            let sum = 0;
+            for (let col = 0; col < cols; ++col, ++i) {
+                sum += data[i];
             }
-            result[row] /= cols;
+            result[row] = sum / cols;
         }
         return result;
     }
@@ -1284,11 +1393,11 @@ class Matrix {
         const cols = this._cols;
         const result = Float64Array.from({ length: cols });
         for (let col = 0; col < cols; ++col) {
-            result[col] = 0;
-            for (let row = 0; row < rows; ++row) {
-                result[col] += data[row * cols + col];
+            let sum = 0;
+            for (let i = col, row = 0; row < rows; ++row, i += cols) {
+                sum += data[i];
             }
-            result[col] /= rows;
+            result[col] = sum / rows;
         }
         return result;
     }
@@ -1315,10 +1424,10 @@ class Matrix {
             let d = r.clone();
             do {
                 const z = A.dot(d);
-                const alpha = r.T.dot(r).entry(0, 0) / d.T.dot(z).entry(0, 0);
+                const alpha = r.transDot(r).entry(0, 0) / d.transDot(z).entry(0, 0);
                 x = x.add(d.mult(alpha));
                 const r_next = r.sub(z.mult(alpha));
-                const beta = r_next.T.dot(r_next).entry(0, 0) / r.T.dot(r).entry(0, 0);
+                const beta = r_next.transDot(r_next).entry(0, 0) / r.transDot(r).entry(0, 0);
                 d = r_next.add(d.mult(beta));
                 r = r_next;
             } while (Math.abs(r.mean) > tol);
@@ -1341,7 +1450,7 @@ class Matrix {
         // forward
         for (let row = 0; row < rows; ++row) {
             for (let col = 0; col < row - 1; ++col) {
-                x.set_entry(0, row, x.entry(0, row) - L.entry(row, col) * x.entry(1, col));
+                x.sub_entry(0, row, L.entry(row, col) * x.entry(1, col));
             }
             x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
         }
@@ -1349,7 +1458,7 @@ class Matrix {
         // backward
         for (let row = rows - 1; row >= 0; --row) {
             for (let col = rows - 1; col > row; --col) {
-                x.set_entry(0, row, x.entry(0, row) - U.entry(row, col) * x.entry(0, col));
+                x.sub_entry(0, row, U.entry(row, col) * x.entry(0, col));
             }
             x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));
         }
@@ -1414,9 +1523,8 @@ class Matrix {
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
      */
     static SVD(M, k = 2) {
-        const MT = M.T;
-        let MtM = MT.dot(M);
-        let MMt = M.dot(MT);
+        let MtM = M.transDot(M);
+        let MMt = M.dotTrans(M);
         let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
         let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
         return { U: U, Sigma: Sigma.map((sigma) => Math.sqrt(sigma)), V: V };
@@ -1430,6 +1538,10 @@ class Matrix {
         let B = Matrix.bidiagonal(A.clone(), U, V);
         console.log(U,V,B)
         return { U: U, "Sigma": B, V: V }; */
+    }
+
+    static isArray(A) {
+      return Array.isArray(A) || A instanceof Float64Array || A instanceof Float32Array;
     }
 }
 
@@ -1526,6 +1638,21 @@ class Randomizer {
         y ^= y >>> 18;
 
         return y >>> 0;
+    }
+
+    gauss_random() {
+        let x, y, r;
+        if (this._val != null) {
+            x = this._val, this._val = null;
+            return x;
+        } else do {
+            x = 2 * this.random - 1;
+            y = 2 * this.random - 1;
+            r = x * x + y * y;
+        } while (!r || r > 1);
+        const c = Math.sqrt(-2 * Math.log(r) / r);
+        this._val = y * c; // cache this for next function call for efficiency
+        return x * c;
     }
 
     /**
@@ -2332,9 +2459,8 @@ class PCA extends DR {
         }
         const { d, eig_args } = this._parameters;
         const X = this.X;
-        const means = Matrix.from(X.meanCols);
-        const X_cent = X.sub(means);
-        const C = X_cent.transpose().dot(X_cent);
+        const X_cent = X.sub(X.meanCols);
+        const C = X_cent.transDot(X_cent);
         const { eigenvectors: V } = simultaneous_poweriteration(C, d, eig_args);
         this.V = Matrix.from(V).transpose();
         return this.V;
@@ -2486,9 +2612,11 @@ class ISOMAP extends DR {
 
         for (let i = 0; i < rows; ++i) {
             for (let j = 0; j < rows; ++j) {
+                let min_val = G.entry(i, j);
                 for (let k = 0; k < rows; ++k) {
-                    G.set_entry(i, j, Math.min(G.entry(i, j), G.entry(i, k) + G.entry(k, j)));
+                    min_val = Math.min(min_val, G.entry(i, k) + G.entry(k, j));
                 }
+                G.set_entry(i, j, min_val);
             }
         }
 
@@ -2675,7 +2803,7 @@ class LDA extends DR {
             const v = V_mean.row(unique_labels[label].id);
             const m = new Matrix(cols, 1, (j) => v[j] - X_mean);
             const N = unique_labels[label].count;
-            S_b = S_b.add(m.dot(m.transpose()).mult(N));
+            S_b = S_b.add(m.dotTrans(m).mult(N));
         }
 
         // scatter_within
@@ -2686,7 +2814,7 @@ class LDA extends DR {
             const R = unique_labels[label].rows;
             for (let i = 0, n = unique_labels[label].count; i < n; ++i) {
                 const row_v = new Matrix(cols, 1, (j, _) => R[i][j] - m.entry(j, 0));
-                S_w = S_w.add(row_v.dot(row_v.transpose()));
+                S_w = S_w.add(row_v.dotTrans(row_v));
             }
         }
 
@@ -2743,11 +2871,11 @@ class LLE extends DR {
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
             const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
-            const C = Z.dot(Z.T);
+            const C = Z.dotTrans(Z);
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag) / 1000;
                 for (let j = 0; j < neighbors; ++j) {
-                    C.set_entry(j, j, C.entry(j, j) + C_trace);
+                    C.add_entry(j, j, C_trace);
                 }
             }
             // reconstruct;
@@ -2760,7 +2888,7 @@ class LLE extends DR {
         // comp embedding
         const I = new Matrix(rows, rows, "identity");
         const IW = I.sub(W);
-        const M = IW.T.dot(IW);
+        const M = IW.transDot(IW);
         const { eigenvectors: V } = simultaneous_poweriteration(M.T.inverse(), d + 1, eig_args);
         this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 
@@ -2821,17 +2949,16 @@ class LTSA extends DR {
             // center X_i
             X_i = X_i.dot(O);
             // correlation matrix
-            const C = X_i.dot(X_i.transpose());
+            const C = X_i.dotTrans(X_i);
             const { eigenvectors: g } = simultaneous_poweriteration(C, d, eig_args);
             //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
             // 2. Constructing alignment matrix
-            const W_i = G_i_t.transpose()
-                .dot(G_i_t)
+            const W_i = G_i_t.transDot(G_i_t)
                 .add(1 / Math.sqrt(neighbors + 1));
             for (let i = 0; i < neighbors + 1; ++i) {
                 for (let j = 0; j < neighbors + 1; ++j) {
-                    B.set_entry(I_i[i], I_i[j], B.entry(I_i[i], I_i[j]) - (i === j ? 1 : 0) + W_i.entry(i, j));
+                    B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
                 }
             }
         }
@@ -2861,15 +2988,15 @@ class TSNE extends DR {
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
     constructor(X, parameters) {
-        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean, seed: 1212 }, parameters);
+        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean_squared, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
         this._iter = 0;
-        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.random);
+        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.gauss_random() * 1e-4);
         return this;
     }
 
@@ -2899,66 +3026,62 @@ class TSNE extends DR {
             }
         }
 
-        const P = new Matrix(N, N, "zeros");
+        const P = new Matrix(N, N, 0);
 
-        this._ystep = new Matrix(N, D, "zeros");
+        this._ystep = new Matrix(N, D, 0);
         this._gains = new Matrix(N, D, 1);
 
         // search for fitting sigma
-        let prow = new Float64Array(N);
         const tol = 1e-4;
         const maxtries = 50;
         for (let i = 0; i < N; ++i) {
+            const dist_i = Delta.row(i);
+            const prow = P.row(i);
             let betamin = -Infinity;
             let betamax = Infinity;
             let beta = 1;
+            let cnt = maxtries;
             let done = false;
+            let psum;
 
-            let num = 0;
-            while (!done) {
-                let psum = 0;
+            while (!done && cnt--) {
+                // compute entropy and kernel row with beta precision
+                psum = 0;
+                let dp_sum = 0;
                 for (let j = 0; j < N; ++j) {
-                    let pj = Math.exp(-Delta.entry(i, j) * beta);
-                    if (i === j) pj = 0;
+                    const dist = dist_i[j];
+                    const pj = (i !== j) ? Math.exp(-dist * beta) : 0;
+                    dp_sum += dist * pj;
                     prow[j] = pj;
                     psum += pj;
                 }
-                let Hhere = 0;
-                for (let j = 0; j < N; ++j) {
-                    let pj = psum === 0 ? 0 : prow[j] / psum;
-                    prow[j] = pj;
-                    if (pj > 1e-7) {
-                        Hhere -= pj * Math.log(pj);
-                    }
-                }
-                if (Hhere > Htarget) {
+                // compute entropy
+                const H = psum > 0 ? Math.log(psum) + beta * dp_sum / psum : 0;
+                if (H > Htarget) {
                     betamin = beta;
                     beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
                 } else {
                     betamax = beta;
                     beta = betamin === -Infinity ? beta / 2 : (beta + betamin) / 2;
                 }
-                ++num;
-                if (Math.abs(Hhere - Htarget) < tol) done = true;
-                if (num >= maxtries) done = true;
+                done = Math.abs(H - Htarget) < tol;
             }
-
+            // normalize p
             for (let j = 0; j < N; ++j) {
-                P.set_entry(i, j, prow[j]);
+                prow[j] /= psum;
             }
         }
 
-        //compute probabilities
-        const Pout = new Matrix(N, N, "zeros");
+        // compute probabilities
         const N2 = N * 2;
         for (let i = 0; i < N; ++i) {
             for (let j = i; j < N; ++j) {
                 const p = Math.max((P.entry(i, j) + P.entry(j, i)) / N2, 1e-100);
-                Pout.set_entry(i, j, p);
-                Pout.set_entry(j, i, p);
+                P.set_entry(i, j, p);
+                P.set_entry(j, i, p);
             }
         }
-        this._P = Pout;
+        this._P = P;
         return this;
     }
 
@@ -3038,7 +3161,7 @@ class TSNE extends DR {
             for (let j = 0; j < N; ++j) {
                 const premult = 4 * (pmul * P.entry(i, j) - Q.entry(i, j)) * Qu.entry(i, j);
                 for (let d = 0; d < dim; ++d) {
-                    grad.set_entry(i, d, grad.entry(i, d) + premult * (Y.entry(i, d) - Y.entry(j, d)));
+                    grad.add_entry(i, d, premult * (Y.entry(i, d) - Y.entry(j, d)));
                 }
             }
         }
@@ -3059,14 +3182,14 @@ class TSNE extends DR {
                 const newsid = momval * sid - epsilon * newgain * gid;
                 ystep.set_entry(i, d, newsid);
 
-                Y.set_entry(i, d, Y.entry(i, d) + newsid);
+                Y.add_entry(i, d, newsid);
                 ymean[d] += Y.entry(i, d);
             }
         }
 
         for (let i = 0; i < N; ++i) {
-            for (let d = 0; d < 2; ++d) {
-                Y.set_entry(i, d, Y.entry(i, d) - ymean[d] / N);
+            for (let d = 0; d < dim; ++d) {
+                Y.sub_entry(i, d, ymean[d] / N);
             }
         }
 
@@ -3190,9 +3313,11 @@ class UMAP extends DR {
      */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
-            for (let j = 0, m = distances[i].length; j < m; ++j) {
-                const v = distances[i][j].value - rhos[i];
-                distances[i][j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1;
+            const rho = rhos[i];
+            const curr_dist = distances[i];
+            for (let j = 0, m = curr_dist.length; j < m; ++j) {
+                const v = curr_dist[j].value - rho;
+                curr_dist[j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1.0;
             }
         }
         return distances;
@@ -3227,32 +3352,33 @@ class UMAP extends DR {
             }
         }
 
+        const index = Math.floor(local_connectivity);
+        const interpolation = local_connectivity - index;
         for (let i = 0; i < N; ++i) {
             let lo = 0;
             let hi = Infinity;
             let mid = 1;
+            let rho = 0;
 
             const search_result = distances[i];
             const non_zero_dist = search_result.filter((d) => d.value > 0);
             const non_zero_dist_length = non_zero_dist.length;
             if (non_zero_dist_length >= local_connectivity) {
-                const index = Math.floor(local_connectivity);
-                const interpolation = local_connectivity - index;
                 if (index > 0) {
-                    rhos.push(non_zero_dist[index - 1]);
+                    rho = non_zero_dist[index - 1].value;
                     if (interpolation > SMOOTH_K_TOLERANCE) {
-                        rhos[i].value += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1]);
+                        rho += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1].value);
                     }
                 } else {
-                    rhos[i].value = interpolation * non_zero_dist[0].value;
+                    rho = interpolation * non_zero_dist[0].value;
                 }
             } else if (non_zero_dist_length > 0) {
-                rhos[i] = non_zero_dist[non_zero_dist_length - 1].value;
+                rho = non_zero_dist[non_zero_dist_length - 1].value;
             }
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
                 for (let j = 0; j < k; ++j) {
-                    const d = search_result[j].value - rhos[i];
+                    const d = search_result[j].value - rho;
                     psum += d > 0 ? Math.exp(-(d / mid)) : 1;
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
@@ -3268,20 +3394,21 @@ class UMAP extends DR {
                     }
                 }
             }
-            sigmas[i] = mid;
 
-            const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length;
             //let mean_d = null;
-            if (rhos[i] > 0) {
-                if (sigmas[i] < MIN_K_DIST_SCALE * mean_ithd) {
-                    sigmas[i] = MIN_K_DIST_SCALE * mean_ithd;
+            if (rho > 0) {
+                const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length;
+                if (mid < MIN_K_DIST_SCALE * mean_ithd) {
+                    mid = MIN_K_DIST_SCALE * mean_ithd;
                 }
             } else {
                 const mean_d = distances.reduce((acc, res) => acc + res.reduce((a, b) => a + b.value, 0) / res.length);
-                if (sigmas[i] > MIN_K_DIST_SCALE * mean_d) {
-                    sigmas[i] = MIN_K_DIST_SCALE * mean_d;
+                if (mid < MIN_K_DIST_SCALE * mean_d) {
+                    mid = MIN_K_DIST_SCALE * mean_d;
                 }
             }
+            rhos[i] = rho;
+            sigmas[i] = mid;
         }
         return {
             distances: distances,
@@ -3327,9 +3454,11 @@ class UMAP extends DR {
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
-        const weights_max = max(weights);
-        const n_samples = weights.map((w) => n_epochs * (w / weights_max));
-        for (let i = 0; i < result.length; ++i) if (n_samples[i] > 0) result[i] = Math.round(n_epochs / n_samples[i]);
+        const weight_scl = n_epochs / max(weights);
+        weights.forEach((w, i) => {
+          const sample = w * weight_scl;
+          if (sample > 0) result[i] = Math.round(n_epochs / sample);
+        });
         return result;
     }
 
@@ -3454,18 +3583,13 @@ class UMAP extends DR {
                 const current = head_embedding.row(j);
                 const other = tail_embedding.row(k);
                 const dist = euclidean_squared(current, other);
-                let grad_coeff = 0;
                 if (dist > 0) {
-                    grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
-                }
-                for (let d = 0; d < dim; ++d) {
-                    const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                    const c = current[d] + grad_d;
-                    const o = other[d] - grad_d;
-                    current[d] = c;
-                    other[d] = o;
-                    head_embedding.set_entry(j, d, c);
-                    tail_embedding.set_entry(k, d, o);
+                    const grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
+                    for (let d = 0; d < dim; ++d) {
+                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                        current[d] += grad_d;
+                        other[d] -= grad_d;
+                    }
                 }
                 epoch_of_next_sample[i] += epochs_per_sample[i];
                 const n_neg_samples = (this._iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
@@ -3473,20 +3597,15 @@ class UMAP extends DR {
                     const k = randomizer.random_int % tail_length;
                     const other = tail_embedding.row(tail[k]);
                     const dist = euclidean_squared(current, other);
-                    let grad_coeff = 0;
                     if (dist > 0) {
-                        grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        const grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        for (let d = 0; d < dim; ++d) {
+                            const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
+                            current[d] += grad_d;
+                            other[d] -= grad_d;
+                        }
                     } else if (j === k) {
                         continue;
-                    }
-                    for (let d = 0; d < dim; ++d) {
-                        const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
-                        const c = current[d] + grad_d;
-                        const o = other[d] - grad_d;
-                        current[d] = c;
-                        other[d] = o;
-                        head_embedding.set_entry(j, d, c);
-                        tail_embedding.set_entry(tail[k], d, o);
                     }
                 }
                 epoch_of_next_negative_sample[i] += n_neg_samples * epochs_per_negative_sample[i];
@@ -3546,11 +3665,11 @@ class TriMap extends DR {
     init(pca = null, knn = null) {
         const X = this.X;
         const N = X.shape[0];
-        const { d, metric, c } = this._parameters;
+        const { c, d, metric, seed } = this._parameters;
         this.n_inliers = 2 * c;
         this.n_outliers = 1 * c;
         this.n_random = 1 * c;
-        this.Y = pca || new PCA(X, d).transform();
+        this.Y = pca || new PCA(X, { d, seed }).transform();
         this.knn = knn || new BallTree(X.to2dArray, metric);
         const { triplets, weights } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
         this.triplets = triplets;
@@ -3662,7 +3781,7 @@ class TriMap extends DR {
         const triplets = new Matrix(N * n_inliers * n_outliers, 3);
         for (let i = 0; i < N; ++i) {
             let n_i = i * n_inliers * n_outliers;
-            const sort_indices = this.__argsort(P.row(i).map((d) => -d));
+            const sort_indices = this.__argsort(P.row(i));
             for (let j = 0; j < n_inliers; ++j) {
                 let n_j = j * n_outliers;
                 const sim = nbrs.entry(i, sort_indices[j]);
@@ -3685,11 +3804,7 @@ class TriMap extends DR {
      * @param {Array} A
      */
     __argsort(A) {
-        return A.map((d, i) => {
-            return { d: d, i: i };
-        })
-            .sort((a, b) => a.d - b.d)
-            .map((d) => d.i);
+        return linspace(0, A.length - 1).sort((i, j) => A[j] - A[i]);
     }
 
     /**
@@ -3820,9 +3935,9 @@ class TriMap extends DR {
             for (let d = 0; d < dim; ++d) {
                 const gs = y_ij[d] * d_ik * w;
                 const go = y_ik[d] * d_ij * w;
-                grad.set_entry(i, d, grad.entry(i, d) + gs - go);
-                grad.set_entry(j, d, grad.entry(j, d) - gs);
-                grad.set_entry(k, d, grad.entry(k, d) + go);
+                grad.add_entry(i, d, gs - go);
+                grad.sub_entry(j, d, gs);
+                grad.add_entry(k, d, go);
             }
         }
         return { grad, loss, n_viol };
@@ -4882,10 +4997,9 @@ class LSP extends DR {
     transform() {
         this.check_init();
         const A = this._A;
-        const AT = A.T;
         const b = this._b;
-        const ATA = AT.dot(A);
-        const ATb = AT.dot(b);
+        const ATA = A.transDot(A);
+        const ATb = A.transDot(b);
         this.Y = Matrix.solve_CG(ATA, ATb, this._randomizer);
         return this.projection;
     }
@@ -5640,7 +5754,7 @@ class SQDMDS extends DR {
     }
 }
 
-var version="0.6.2";
+var version="0.6.3";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;

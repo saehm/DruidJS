@@ -1,4 +1,4 @@
-// https://renecutura.eu v0.6.2 Copyright 2022 Rene Cutura
+// https://renecutura.eu v0.6.3 Copyright 2022 Rene Cutura
 /**
  * Computes the euclidean distance (<code>l<sub>2</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
@@ -9,29 +9,13 @@
  */
 function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
 /**
- * Numerical stable summation with the Kahan summation algorithm.
- * @memberof module:numerical
- * @alias kahan_sum
- * @param {Array} summands - Array of values to sum up.
- * @returns {number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
- */function kahan_sum(t){let e,r,s=t.length,i=0,n=0;for(let o=0;o<s;++o)e=t[o]-n,r=i+e,n=r-i-e,i=r;return i}
-/**
- * Numerical stable summation with the Neumair summation algorithm.
- * @memberof module:numerical
- * @alias neumair_sum
- * @param {Number[]} summands - Array of values to sum up.
- * @returns {Number} The sum.
- * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
- */function neumair_sum(t){const e=t.length;let r=0,s=0;for(let i=0;i<e;++i){const e=t[i],n=r+e;Math.abs(r)>=Math.abs(e)?s+=r-n+e:s+=e-n+r,r=n}return r+s}
-/**
  * Computes the squared euclidean distance (l<sub>2</sub><sup>2</sup>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
  * @alias euclidean_squared
  * @param {Number[]} a
  * @param {Number[]} b
  * @returns {Number} the squared euclidean distance between <code>a</code> and <code>b</code>.
- */function euclidean_squared(t,e){if(t.length!=e.length)return;const r=t.length,s=new Float64Array(r);for(let i=0;i<r;++i){const r=t[i]-e[i];s[i]=r*r}return neumair_sum(s)}
+ */function euclidean_squared(t,e){if(t.length!=e.length)return;const r=t.length;let s=0;for(let i=0;i<r;++i){const r=t[i]-e[i];s+=r*r}return s}
 /**
  * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
  * @memberof module:metrics
@@ -148,13 +132,29 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * @returns {Array<Number>|Float64Array} - The normalized vector with length 1.
  */function normalize(t,e=euclidean){const r=norm(t,e);return t.map((t=>t/r))}
 /**
- * Computes the QR Decomposition of the Matrix {@link A} using Gram-Schmidt process.
+ * Numerical stable summation with the Kahan summation algorithm.
+ * @memberof module:numerical
+ * @alias kahan_sum
+ * @param {Array} summands - Array of values to sum up.
+ * @returns {number} The sum.
+ * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
+ */function kahan_sum(t){let e,r,s=t.length,i=0,n=0;for(let o=0;o<s;++o)e=t[o]-n,r=i+e,n=r-i-e,i=r;return i}
+/**
+ * Numerical stable summation with the Neumair summation algorithm.
+ * @memberof module:numerical
+ * @alias neumair_sum
+ * @param {Number[]} summands - Array of values to sum up.
+ * @returns {Number} The sum.
+ * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
+ */function neumair_sum(t){const e=t.length;let r=0,s=0;for(let i=0;i<e;++i){const e=t[i],n=r+e;Math.abs(r)>=Math.abs(e)?s+=r-n+e:s+=e-n+r,r=n}return r+s}
+/**
+ * Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
  * @memberof module:linear_algebra
  * @alias qr
  * @param {Matrix} A
  * @returns {{R: Matrix, Q: Matrix}}
  * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process}
- */function qr_gramschmidt(t){const[e,r]=t.shape,s=new Matrix(e,r,"identity"),i=new Matrix(r,r,0);for(let n=0;n<r;++n){let r=t.col(n);for(let t=0;t<n;++t){const e=s.col(t),o=neumair_sum(e.map(((t,e)=>t*r[e])));i.set_entry(t,n,o),r=r.map(((t,r)=>t-o*e[r]))}const o=norm(r,euclidean);for(let t=0;t<e;++t)s.set_entry(t,n,r[t]/o);i.set_entry(n,n,o)}return{R:i,Q:s}}
+ */function qr_gramschmidt(t){const[e,r]=t.shape,s=new Matrix(e,r,"identity"),i=new Matrix(r,r,0);for(let n=0;n<r;++n){let r=t.col(n);for(let t=0;t<n;++t){const o=s.col(t),a=neumair_sum(o.map(((t,e)=>t*r[e])));for(let t=0;t<e;++t)r[t]-=a*o[t];i.set_entry(t,n,a)}const o=norm(r,euclidean);for(let t=0;t<e;++t)s.set_entry(t,n,r[t]/o);i.set_entry(n,n,o)}return{R:i,Q:s}}
 /**
  * Computes the QR Decomposition of the Matrix {@link A} with householder transformations.
  * @memberof module:linear_algebra
@@ -165,7 +165,7 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * @see {@link http://mlwiki.org/index.php/Householder_Transformation}
  */function qr_householder(t){const[e,r]=t.shape,s=new Matrix(e,e,"I"),i=t.clone();for(let t=0;t<r;++t){const e=Matrix.from(i.col(t).slice(t)),r=norm(e),n=e.entry(0,0),o=-Math.sign(n),a=n-o*r,h=e.divide(a).set_entry(0,0,1),l=-o*a/r,_=h.outer(h),c=i.get_block(t,0),u=c.sub(_.dot(c).mult(l)),d=s.get_block(0,t),m=d.sub(d.dot(_).mult(l));i.set_block(t,0,u),s.set_block(0,t,m)}return{R:i,Q:s}}
 /**
- * Computes the {@link k} biggest Eigenvectors and Eigenvalues from Matrix {@link A} with the QR-Algorithm.
+ * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  * @memberof module:linear_algebra
  * @alias simultaneous_poweriteration
  * @param {Matrix} A - The Matrix
@@ -174,9 +174,9 @@ function euclidean(t,e){return Math.sqrt(euclidean_squared(t,e))}
  * @param {Number} [parameters.max_iterations=100] - The number of maxiumum iterations the algorithm should run.
  * @param {Number|Randomizer} [parameters.seed=1212] - The seed value or a randomizer used in the algorithm.
  * @param {Function} [parameters.qr=qr_gramschmidt] - The QR technique to use.
- * @param {Number} [parameters.tol=1e-8] - Allowed error for stopping criteria
- * @returns {{eigenvalues: Array, eigenvectors: Array}} - The {@link k} biggest eigenvectors and eigenvalues of Matrix {@link A}.
- */function simultaneous_poweriteration(t,e=2,{seed:r=1212,max_iterations:s=100,qr:i=qr_gramschmidt,tol:n=1e-8}={}){const o=r instanceof Randomizer?r:new Randomizer(r);t instanceof Matrix||(t=Matrix.from(t));const a=t.shape[0];let{Q:h,R:l}=i(new Matrix(a,e,(()=>2*(o.random-.5))));for(;s--;){const e=h.clone(),r=i(t.dot(h));h=r.Q,l=r.R;if(euclidean_squared(h.values,e.values)<n)break}return{eigenvalues:l.diag,eigenvectors:h.transpose().to2dArray}}
+ * @param {Number} [parameters.tol=1e-8] - Tolerated error for stopping criteria.
+ * @returns {{eigenvalues: Number[], eigenvectors: Number[][]}} the `k` biggest eigenvectors and eigenvalues of Matrix `A`.
+ */function simultaneous_poweriteration(t,e=2,{seed:r=1212,max_iterations:s=100,qr:i=qr_gramschmidt,tol:n=1e-8}={}){const o=r instanceof Randomizer?r:new Randomizer(r);t instanceof Matrix||(t=Matrix.from(t));const a=t.shape[0];let{Q:h,R:l}=i(new Matrix(a,e,(()=>2*(o.random-.5))));for(;s--;){const e=h,r=i(t.dot(h));h=r.Q,l=r.R;if(euclidean_squared(h.values,e.values)<n)break}return{eigenvalues:l.diag,eigenvectors:h.transpose().to2dArray}}
 /**
  * Computes the inner product between two arrays of the same length.
  * @memberof module:linear_algebra
@@ -218,11 +218,11 @@ constructor(t=null,e=null,r=null){if(this._rows=t,this._cols=e,this._data=null,t
      * @example
      * let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.
      * let S = Matrix.from([1, 2, 3], "diag"); // creates a 3 by 3 matrix with 1, 2, 3 on its diagonal. [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
-     */static from(t,e="row"){if(t instanceof Matrix)return t.clone();if(!(Array.isArray(t)||t instanceof Float64Array)){if("number"==typeof t)return new Matrix(1,1,t);throw new Error("error")}{let r=t.length;if(0===r)throw new Error("Array is empty");
+     */static from(t,e="row"){if(t instanceof Matrix)return t.clone();if(Matrix.isArray(t)){let r=t.length;if(0===r)throw new Error("Array is empty");
 // 1d
-if(!(Array.isArray(t[0])||t[0]instanceof Float64Array)){if("row"===e)return new Matrix(1,r,((e,r)=>t[r]));
+if(Matrix.isArray(t[0])){let e=t[0].length;for(let s=0;s<r;++s)if(t[s].length!==e)throw new Error("various array lengths");return new Matrix(r,e,((e,r)=>t[e][r]))}if("row"===e)return new Matrix(1,r,((e,r)=>t[r]));
 // 2d
-if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,r,((e,r)=>e==r?t[e]:0));throw new Error("1d array has NaN entries")}if(Array.isArray(t[0])||t[0]instanceof Float64Array){let e=t[0].length;for(let s=0;s<r;++s)if(t[s].length!==e)throw new Error("various array lengths");return new Matrix(r,e,((e,r)=>t[e][r]))}}}
+if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,r,((e,r)=>e==r?t[e]:0));throw new Error("1d array has NaN entries")}if("number"==typeof t)return new Matrix(1,1,t);throw new Error("error")}
 /**
      * Returns the {@link row}<sup>th</sup> row from the Matrix.
      * @param {Number} row
@@ -241,7 +241,13 @@ if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,
      * @param {Number} row
      * @param {Array} values
      * @returns {Matrix}
-     */set_row(t,e){const r=this._cols;if((Array.isArray(e)||e instanceof Float64Array)&&e.length===r){const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e[t]}else{if(!(e instanceof Matrix&&e.shape[1]===r&&1===e.shape[0]))throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!");{const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e._data[t]}}return this}
+     */set_row(t,e){const r=this._cols;if(Matrix.isArray(e)&&e.length===r){const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e[t]}else{if(!(e instanceof Matrix&&e.shape[1]===r&&1===e.shape[0]))throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!");{const s=t*r;for(let t=0;t<r;++t)this.values[s+t]=e._data[t]}}return this}
+/**
+     * Swaps the rows {@link row1} and {@link row2} of the Matrix.
+     * @param {Number} row1
+     * @param {Number} row2
+     * @returns {Matrix}
+     */swap_rows(t,e){const r=this._cols,s=this.values;for(let i=t*r,n=e*r,o=0;o<r;++o,++i,++n){const t=s[i];s[i]=s[n],s[n]=t}}
 /**
      * Returns the {@link col}<sup>th</sup> column from the Matrix.
      * @param {Number} col
@@ -261,6 +267,20 @@ if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,
      * @returns {Matrix}
      */set_entry(t,e,r){return this.values[t*this._cols+e]=r,this}
 /**
+     * Adds a given {@link value} to the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */add_entry(t,e,r){return this.values[t*this._cols+e]+=r,this}
+/**
+     * Subtracts a given {@link value} from the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
+     * @param {int} row
+     * @param {int} col
+     * @param {float64} value
+     * @returns {Matrix}
+     */sub_entry(t,e,r){return this.values[t*this._cols+e]-=r,this}
+/**
      * Returns a new transposed Matrix.
      * @returns {Matrix}
      */transpose(){return new Matrix(this._cols,this._rows,((t,e)=>this.entry(e,t)))}
@@ -271,14 +291,45 @@ if("col"===e)return new Matrix(r,1,(e=>t[e]));if("diag"===e)return new Matrix(r,
 /**
      * Returns the inverse of the Matrix.
      * @returns {Matrix}
-     */inverse(){const t=this._rows,e=this._cols;let r=new Matrix(t,2*e,((t,r)=>r>=e?t===r-e?1:0:this.entry(t,r))),s=0,i=0;for(;s<t&&i<e;){var n=0;let o=-1/0;for(let e=s;e<t;++e){let t=Math.abs(r.entry(e,i));o<t&&(n=e,o=t)}if(0==r.entry(n,i))i++;else{
-// swap rows
-for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.set_entry(n,t,i)}for(let n=s+1;n<t;++n){let t=r.entry(n,i)/r.entry(s,i);r.set_entry(n,i,0);for(let o=i+1;o<2*e;++o)r.set_entry(n,o,r.entry(n,o)-r.entry(s,o)*t)}s++,i++}}for(let s=0;s<t;++s){let t=r.entry(s,s);for(let i=s;i<2*e;++i)r.set_entry(s,i,r.entry(s,i)/t)}for(let s=t-1;s>=0;--s){let t=r.entry(s,s);for(let i=0;i<s;i++){let n=r.entry(i,s)/t;for(let t=i;t<2*e;++t){let e=r.entry(i,t);e-=r.entry(s,t)*n,r.set_entry(i,t,e)}}}return new Matrix(t,e,((t,s)=>r.entry(t,s+e)))}
+     */inverse(){const t=this._rows,e=this._cols,r=this.clone(),s=new Matrix(t,e,"I");
+// foreach column
+for(let i=0;i<e;++i){
+// Search for maximum in this column (pivot)
+let n=i,o=Math.abs(r.entry(i,i));for(let e=i+1;e<t;++e){const t=Math.abs(r.entry(e,i));o<t&&(n=e,o=t)}if(0===o)throw new Error("Cannot compute inverse of Matrix, determinant is zero");
+// Swap maximum row with current row
+n!==i&&(r.swap_rows(i,n),s.swap_rows(i,n));
+// eliminate non-zero values on the other rows at column c
+const a=r.row(i),h=s.row(i);for(let n=0;n<t;++n)if(n!==i){
+// eliminate value at column c and row r
+const t=r.row(n),o=s.row(n);if(0!==t[i]){const r=t[i]/a[i];
+// sub (f * row c) from row r to eliminate the value at column c
+for(let s=i;s<e;++s)t[s]-=r*a[s];for(let t=0;t<e;++t)o[t]-=r*h[t]}}else{
+// normalize value at Acc to 1 (diagonal):
+// divide each value of row r=c by the value at Acc
+const t=a[i];for(let r=i;r<e;++r)a[r]/=t;for(let r=0;r<e;++r)h[r]/=t}}return s}
 /**
      * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
      * @param {(Matrix|Array|Float64Array)} B the right side
      * @returns {(Matrix|Array)}
-     */dot(t){if(t instanceof Matrix){let e=this;if(e.shape[1]!==t.shape[0])throw new Error(`A.dot(B): A is a ${e.shape.join(" ⨯ ")}-Matrix, B is a ${t.shape.join(" ⨯ ")}-Matrix: \n                A has ${e.shape[1]} cols and B ${t.shape[0]} rows. \n                Must be equal!`);let r=e.shape[1];return new Matrix(e.shape[0],t.shape[1],((s,i)=>{const n=e.row(s),o=t.col(i);let a=0;for(let t=0;t<r;++t)a+=n[t]*o[t];return a}))}if(Array.isArray(t)||t instanceof Float64Array){let e=this._rows;if(t.length!==e)throw new Error(`A.dot(B): A has ${e} cols and B has ${t.length} rows. Must be equal!`);let r=new Array(e);for(let s=0;s<e;++s)r[s]=neumair_sum(this.row(s).map((e=>e*t[s])));return r}throw new Error("B must be Matrix or Array")}
+     */dot(t){if(t instanceof Matrix){let e=this;const[r,s]=e.shape,[i,n]=t.shape;if(s!==i)throw new Error(`A.dot(B): A is a ${e.shape.join(" ⨯ ")}-Matrix, B is a ${t.shape.join(" ⨯ ")}-Matrix:\n                A has ${s} cols and B ${i} rows.\n                Must be equal!`);return new Matrix(r,n,((r,i)=>{const o=e.row(r),a=t.values;let h=0;for(let t=0,e=i;t<s;++t,e+=n)h+=o[t]*a[e];return h}))}if(Matrix.isArray(t)){let e=this._rows;if(t.length!==e)throw new Error(`A.dot(B): A has ${e} cols and B has ${t.length} rows. Must be equal!`);let r=new Array(e);for(let s=0;s<e;++s)r[s]=neumair_sum(this.row(s).map((e=>e*t[s])));return r}throw new Error("B must be Matrix or Array")}
+/**
+     * Transposes the current matrix and returns the dot product with {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */transDot(t){if(t instanceof Matrix){let e=this;const[r,s]=e.shape,[i,n]=t.shape;// transpose matrix
+if(r!==i)throw new Error(`A.dot(B): A is a ${[s,r].join(" ⨯ ")}-Matrix, B is a ${t.shape.join(" ⨯ ")}-Matrix:\n                A has ${r} cols and B ${i} rows, which must be equal!`);
+// let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
+// this.values[row * this._cols + col];
+return new Matrix(s,n,((i,o)=>{const a=e.values,h=t.values;let l=0;for(let t=0,e=i,_=o;t<r;++t,e+=s,_+=n)l+=a[e]*h[_];return l}))}if(Matrix.isArray(t)){let e=this._cols;if(t.length!==e)throw new Error(`A.dot(B): A has ${e} cols and B has ${t.length} rows. Must be equal!`);let r=new Array(e);for(let s=0;s<e;++s)r[s]=neumair_sum(this.col(s).map((e=>e*t[s])));return r}throw new Error("B must be Matrix or Array")}
+/**
+     * Returns the dot product with the transposed version of {@link B}.
+     * If {@link B} is an Array or Float64Array then an Array gets returned.
+     * If {@link B} is a Matrix then a Matrix gets returned.
+     * @param {(Matrix|Array|Float64Array)} B the right side
+     * @returns {(Matrix|Array)}
+     */dotTrans(t){if(t instanceof Matrix){let e=this;const[r,s]=e.shape,[i,n]=t.shape;if(s!==n)throw new Error(`A.dot(B): A is a ${e.shape.join(" ⨯ ")}-Matrix, B is a ${[n,i].join(" ⨯ ")}-Matrix:\n                A has ${s} cols and B ${n} rows, which must be equal!`);return new Matrix(r,i,((r,i)=>{const n=e.row(r),o=t.row(i);let a=0;for(let t=0;t<s;++t)a+=n[t]*o[t];return a}))}if(Matrix.isArray(t)){let e=this._rows;if(t.length!==e)throw new Error(`A.dot(B): A has ${e} cols and B has ${t.length} rows. Must be equal!`);let r=new Array(e);for(let s=0;s<e;++s)r[s]=neumair_sum(this.row(s).map((e=>e*t[s])));return r}throw new Error("B must be Matrix or Array")}
 /**
      * Computes the outer product from {@link this} and {@link B}.
      * @param {Matrix} B
@@ -304,7 +355,7 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * @param {int} offset_col
      * @param {Matrix} B
      * @returns {Matrix}
-     */set_block(t,e,r){let[s,i]=r.shape;for(let n=0;n<s;++n)if(!(n>this._rows))for(let s=0;s<i;++s)s>this._cols||this.set_entry(n+t,s+e,r.entry(n,s));return this}
+     */set_block(t,e,r){const s=Math.min(this._rows-t,r.shape[0]),i=Math.min(this._cols-e,r.shape[1]);for(let n=0;n<s;++n)for(let s=0;s<i;++s)this.set_entry(n+t,s+e,r.entry(n,s));return this}
 /**
      * Extracts the entries from the {@link start_row}<sup>th</sup> row to the {@link end_row}<sup>th</sup> row, the {@link start_col}<sup>th</sup> column to the {@link end_col}<sup>th</sup> column of the matrix.
      * If {@link end_row} or {@link end_col} is empty, the respective value is set to {@link this.rows} or {@link this.cols}.
@@ -321,7 +372,7 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * A.get_block(0, 0, 1, 1); // [[1]]
      * A.get_block(1, 1, 2, 2); // [[5]]
      * A.get_block(0, 0, 2, 2); // [[1, 2], [4, 5]]
-     */get_block(t,e,r=null,s=null){const[i,n]=this.shape;if(s=s??n,(r=r??i)<=t||s<=e)throw new Error(`\n                end_row must be greater than start_row, and \n                end_col must be greater than start_col, but\n                end_row = ${r}, start_row = ${t}, end_col = ${s}, and start_col = ${e}!`);const o=new Matrix(r-t,s-e,"zeros");for(let i=t,n=0;i<r;++i,++n)for(let t=e,r=0;t<s;++t,++r)o.set_entry(n,r,this.entry(i,t));return o;
+     */get_block(t,e,r=null,s=null){const[i,n]=this.shape;if(s=s??n,(r=r??i)<=t||s<=e)throw new Error(`\n                end_row must be greater than start_row, and\n                end_col must be greater than start_col, but\n                end_row = ${r}, start_row = ${t}, end_col = ${s}, and start_col = ${e}!`);const o=new Matrix(r-t,s-e,"zeros");for(let i=t,n=0;i<r;++i,++n)for(let t=e,r=0;t<s;++t,++r)o.set_entry(n,r,this.entry(i,t));return o;
 //return new Matrix(end_row - start_row, end_col - start_col, (i, j) => this.entry(i + start_row, j + start_col));
 }
 /**
@@ -335,7 +386,8 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * @private
      * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
      * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
-     */_apply_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0;n<s;++n){const s=n*i;for(let o=0;o<i;++o){const i=s+o;r[i]=t(r[i],e(n,o))}}return this}_apply_rowwise_array(t,e){return this._apply_array(e,((e,r)=>t[r]))}_apply_colwise_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0;n<s;++n){const s=n*i;for(let o=0;o<i;++o){const i=s+o;r[i]=e(r[i],t[n])}}return this}_apply(t,e){let r=this.values;if(t instanceof Matrix){let[s,i]=t.shape,[n,o]=this.shape;if(1===s){if(o!==i)throw new Error("cols !== value_cols");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(0,i))}else if(1===i){if(n!==s)throw new Error("rows !== value_rows");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(s,0))}else{if(n!=s||o!=i)throw new Error("error");for(let s=0;s<n;++s)for(let i=0;i<o;++i)r[s*o+i]=e(r[s*o+i],t.entry(s,i))}}else if(Array.isArray(t)){let s=this._rows,i=this._cols;if(t.length===s)for(let n=0;n<s;++n)for(let s=0;s<i;++s)r[n*i+s]=e(r[n*i+s],t[n]);else{if(t.length!==i)throw new Error("error");for(let n=0;n<s;++n)for(let s=0;s<i;++s)r[n*i+s]=e(r[n*i+s],t[s])}}else for(let s=0,i=this._rows*this._cols;s<i;++s)r[s]=e(r[s],t);return this}
+     */_apply_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0,o=0;o<s;++o)for(let s=0;s<i;++s,++n)r[n]=t(r[n],e(o,s));return this}_apply_rowwise_array(t,e){return this._apply_array(e,((e,r)=>t[r]))}_apply_colwise_array(t,e){const r=this.values,[s,i]=this.shape;for(let n=0,o=0;o<s;++o){const s=t[o];for(let t=0;t<i;++t,++n)r[n]=e(r[n],s)}return this}_apply(t,e){const r=this.values,[s,i]=this.shape;if(t instanceof Matrix){const n=t.values,[o,a]=t.shape;if(1===o){if(i!==a)throw new Error("cols !== value_cols");for(let t=0,o=0;o<s;++o)for(let s=0;s<i;++s,++t)r[t]=e(r[t],n[s])}else if(1===a){if(s!==o)throw new Error("rows !== value_rows");for(let t=0,o=0;o<s;++o){const s=n[o];for(let n=0;n<i;++n,++t)r[t]=e(r[t],s)}}else{if(s!=o||i!=a)throw new Error("error");for(let t=0,o=s*i;t<o;++t)r[t]=e(r[t],n[t])}}else if(Matrix.isArray(t))if(t.length===s)for(let n=0,o=0;o<s;++o){const s=t[o];for(let t=0;t<i;++t,++n)r[n]=e(r[n],s)}else{if(t.length!==i)throw new Error("error");for(let n=0,o=0;o<s;++o)for(let s=0;s<i;++s,++n)r[n]=e(r[n],t[s])}else// scalar value
+for(let n=0,o=s*i;n<o;++n)r[n]=e(r[n],t);return this}
 /**
      * Clones the Matrix.
      * @returns {Matrix}
@@ -404,7 +456,7 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * Returns the matrix in the given shape with the given function which returns values for the entries of the matrix.
      * @param {Array} parameter - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.
      * @returns {Matrix}
-     */set shape([t,e,r=(()=>0)]){this._rows=t,this._cols=e,this._data=new Float64Array(t*e);for(let s=0;s<t;++s)for(let t=0;t<e;++t)this._data[s*e+t]=r(s,t);return this}
+     */set shape([t,e,r=(()=>0)]){this._rows=t,this._cols=e,this._data=new Float64Array(t*e);for(let s=0,i=0;i<t;++i)for(let t=0;t<e;++t,++s)this._data[s]=r(i,t);return this}
 /**
      * Returns the Matrix as a Array of Float64Arrays.
      * @returns {Array<Float64Array>}
@@ -426,16 +478,16 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * @returns {Number}
      */get sum(){return neumair_sum(this.values)}
 /**
-     * Returns the sum oof all entries of the Matrix.
+     * Returns the entries of the Matrix.
      * @returns {Float64Array}
      */get values(){return this._data}
 /**
      * Returns the mean of each row of the matrix.
      * @returns {Float64Array}
-     */get meanRows(){const t=this.values,e=this._rows,r=this._cols,s=Float64Array.from({length:e});for(let i=0;i<e;++i){s[i]=0;for(let e=0;e<r;++e)s[i]+=t[i*r+e];s[i]/=r}return s}
+     */get meanRows(){const t=this.values,e=this._rows,r=this._cols,s=Float64Array.from({length:e});for(let i=0,n=0;n<e;++n){let e=0;for(let s=0;s<r;++s,++i)e+=t[i];s[n]=e/r}return s}
 /** Returns the mean of each column of the matrix.
      * @returns {Float64Array}
-     */get meanCols(){const t=this.values,e=this._rows,r=this._cols,s=Float64Array.from({length:r});for(let i=0;i<r;++i){s[i]=0;for(let n=0;n<e;++n)s[i]+=t[n*r+i];s[i]/=e}return s}
+     */get meanCols(){const t=this.values,e=this._rows,r=this._cols,s=Float64Array.from({length:r});for(let i=0;i<r;++i){let n=0;for(let s=i,o=0;o<e;++o,s+=r)n+=t[s];s[i]=n/e}return s}
 /**
      * Solves the equation {@link A}x = {@link b} using the conjugate gradient method. Returns the result x.
      * @param {Matrix} A - Matrix
@@ -443,7 +495,7 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * @param {Randomizer} [randomizer=null]
      * @param {Number} [tol=1e-3]
      * @returns {Matrix}
-     */static solve_CG(t,e,r,s=.001){null===r&&(r=new Randomizer);const i=t.shape[0],n=e.shape[1];let o=new Matrix(i,0);for(let a=0;a<n;++a){const n=Matrix.from(e.col(a)).T;let h=new Matrix(i,1,(()=>r.random)),l=n.sub(t.dot(h)),_=l.clone();do{const e=t.dot(_),r=l.T.dot(l).entry(0,0)/_.T.dot(e).entry(0,0);h=h.add(_.mult(r));const s=l.sub(e.mult(r)),i=s.T.dot(s).entry(0,0)/l.T.dot(l).entry(0,0);_=s.add(_.mult(i)),l=s}while(Math.abs(l.mean)>s);o=o.concat(h,"horizontal")}return o}
+     */static solve_CG(t,e,r,s=.001){null===r&&(r=new Randomizer);const i=t.shape[0],n=e.shape[1];let o=new Matrix(i,0);for(let a=0;a<n;++a){const n=Matrix.from(e.col(a)).T;let h=new Matrix(i,1,(()=>r.random)),l=n.sub(t.dot(h)),_=l.clone();do{const e=t.dot(_),r=l.transDot(l).entry(0,0)/_.transDot(e).entry(0,0);h=h.add(_.mult(r));const s=l.sub(e.mult(r)),i=s.transDot(s).entry(0,0)/l.transDot(l).entry(0,0);_=s.add(_.mult(i)),l=s}while(Math.abs(l.mean)>s);o=o.concat(h,"horizontal")}return o}
 /**
      * Solves the equation {@link A}x = {@link b}. Returns the result x.
      * @param {Matrix} A - Matrix or LU Decomposition
@@ -451,9 +503,9 @@ for(let t=0;t<2*e;++t){let e=r.entry(s,t),i=r.entry(n,t);r.set_entry(s,t,e),r.se
      * @returns {Matrix}
      */static solve(t,e){let{L:r,U:s}="L"in t&&"U"in t?t:Matrix.LU(t),i=r.shape[0],n=e.clone();
 // forward
-for(let t=0;t<i;++t){for(let e=0;e<t-1;++e)n.set_entry(0,t,n.entry(0,t)-r.entry(t,e)*n.entry(1,e));n.set_entry(0,t,n.entry(0,t)/r.entry(t,t))}
+for(let t=0;t<i;++t){for(let e=0;e<t-1;++e)n.sub_entry(0,t,r.entry(t,e)*n.entry(1,e));n.set_entry(0,t,n.entry(0,t)/r.entry(t,t))}
 // backward
-for(let t=i-1;t>=0;--t){for(let e=i-1;e>t;--e)n.set_entry(0,t,n.entry(0,t)-s.entry(t,e)*n.entry(0,e));n.set_entry(0,t,n.entry(0,t)/s.entry(t,t))}return n}
+for(let t=i-1;t>=0;--t){for(let e=i-1;e>t;--e)n.sub_entry(0,t,s.entry(t,e)*n.entry(0,e));n.set_entry(0,t,n.entry(0,t)/s.entry(t,t))}return n}
 /**
      * {@link L}{@link U} decomposition of the Matrix {@link A}. Creates two matrices, so that the dot product LU equals A.
      * @param {Matrix} A
@@ -469,7 +521,7 @@ for(let t=i-1;t>=0;--t){for(let e=i-1;e>t;--e)n.set_entry(0,t,n.entry(0,t)-s.ent
      * @param {Matrix} M
      * @param {int} [k=2]
      * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
-     */static SVD(t,e=2){const r=t.T;let s=r.dot(t),i=t.dot(r),{eigenvectors:n,eigenvalues:o}=simultaneous_poweriteration(s,e),{eigenvectors:a}=simultaneous_poweriteration(i,e);return{U:a,Sigma:o.map((t=>Math.sqrt(t))),V:n};
+     */static SVD(t,e=2){let r=t.transDot(t),s=t.dotTrans(t),{eigenvectors:i,eigenvalues:n}=simultaneous_poweriteration(r,e),{eigenvectors:o}=simultaneous_poweriteration(s,e);return{U:o,Sigma:n.map((t=>Math.sqrt(t))),V:i};
 //Algorithm 1a: Householder reduction to bidiagonal form:
 /* const [m, n] = A.shape;
         let U = new Matrix(m, n, (i, j) => i == j ? 1 : 0);
@@ -478,7 +530,7 @@ for(let t=i-1;t>=0;--t){for(let e=i-1;e>t;--e)n.set_entry(0,t,n.entry(0,t)-s.ent
         console.log(V.to2dArray)
         let B = Matrix.bidiagonal(A.clone(), U, V);
         console.log(U,V,B)
-        return { U: U, "Sigma": B, V: V }; */}}
+        return { U: U, "Sigma": B, V: V }; */}static isArray(t){return Array.isArray(t)||t instanceof Float64Array||t instanceof Float32Array}}
 /**
  * @class
  * @memberof module:utils
@@ -505,7 +557,8 @@ constructor(t){return this._N=624,this._M=397,this._MATRIX_A=2567483615,this._UP
      */get random_int(){let t,e=new Array(0,this._MATRIX_A);if(this._mti>=this._N){let r,s=this._N-this._M,i=this._M-this._N;
 /* if (this._mti == this._N + 1) {
                 this.seed = 5489;
-            } */for(r=0;r<s;++r)t=this._mt[r]&this._UPPER_MASK|this._mt[r+1]&this._LOWER_MASK,this._mt[r]=this._mt[r+this._M]^t>>>1^e[1&t];for(;r<this._N-1;++r)t=this._mt[r]&this._UPPER_MASK|this._mt[r+1]&this._LOWER_MASK,this._mt[r]=this._mt[r+i]^t>>>1^e[1&t];t=this._mt[this._N-1]&this._UPPER_MASK|this._mt[0]&this._LOWER_MASK,this._mt[this._N-1]=this._mt[this._M-1]^t>>>1^e[1&t],this._mti=0}return t=this._mt[this._mti+=1],t^=t>>>11,t^=t<<7&2636928640,t^=t<<15&4022730752,t^=t>>>18,t>>>0}
+            } */for(r=0;r<s;++r)t=this._mt[r]&this._UPPER_MASK|this._mt[r+1]&this._LOWER_MASK,this._mt[r]=this._mt[r+this._M]^t>>>1^e[1&t];for(;r<this._N-1;++r)t=this._mt[r]&this._UPPER_MASK|this._mt[r+1]&this._LOWER_MASK,this._mt[r]=this._mt[r+i]^t>>>1^e[1&t];t=this._mt[this._N-1]&this._UPPER_MASK|this._mt[0]&this._LOWER_MASK,this._mt[this._N-1]=this._mt[this._M-1]^t>>>1^e[1&t],this._mti=0}return t=this._mt[this._mti+=1],t^=t>>>11,t^=t<<7&2636928640,t^=t<<15&4022730752,t^=t>>>18,t>>>0}gauss_random(){let t,e,r;if(null!=this._val)return t=this._val,this._val=null,t;do{t=2*this.random-1,e=2*this.random-1,r=t*t+e*e}while(!r||r>1);const s=Math.sqrt(-2*Math.log(r)/r);// cache this for next function call for efficiency
+return this._val=e*s,t*s}
 /**
      * Returns samples from an input Matrix or Array.
      * @param {Matrix|Array|Float64Array} A - The input Matrix or Array.
@@ -804,7 +857,7 @@ constructor(t,e){return super(t,{d:2,seed:1212,eig_args:{}},e),this._parameters.
 /**
      * Computes the {@link d} principal components of Matrix {@link X}.
      * @returns {Matrix}
-     */principal_components(){if(this.V)return this.V;const{d:t,eig_args:e}=this._parameters,r=this.X,s=Matrix.from(r.meanCols),i=r.sub(s),n=i.transpose().dot(i),{eigenvectors:o}=simultaneous_poweriteration(n,t,e);return this.V=Matrix.from(o).transpose(),this.V}static principal_components(t,e){return new this(t,e).principal_components()}}
+     */principal_components(){if(this.V)return this.V;const{d:t,eig_args:e}=this._parameters,r=this.X,s=r.sub(r.meanCols),i=s.transDot(s),{eigenvectors:n}=simultaneous_poweriteration(i,t,e);return this.V=Matrix.from(n).transpose(),this.V}static principal_components(t,e){return new this(t,e).principal_components()}}
 /**
  * @class
  * @alias MDS
@@ -857,7 +910,7 @@ constructor(t,e){return super(t,{neighbors:void 0,d:2,metric:euclidean,seed:1212
 /*D = dijkstra(kNearestNeighbors);*/
 // compute shortest paths
 // TODO: make extern
-/** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */const h=new Matrix(e,e,((t,e)=>{const r=a[t].find((t=>t.index===e));return r?r.distance:1/0}));for(let t=0;t<e;++t)for(let r=0;r<e;++r)for(let s=0;s<e;++s)h.set_entry(t,r,Math.min(h.entry(t,r),h.entry(t,s)+h.entry(s,r)));let l=new Float64Array(e),_=new Float64Array(e),c=0;const u=new Matrix(e,e,((t,e)=>{let r=h.entry(t,e);return r=r===1/0?0:r,l[t]+=r,_[e]+=r,c+=r,r}));l=l.map((t=>t/e)),_=_.map((t=>t/e)),c/=e**2;const d=new Matrix(e,e,((t,e)=>u.entry(t,e)-l[t]-_[e]+c)),{eigenvectors:m}=simultaneous_poweriteration(d,r,i);
+/** @see {@link https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm} */const h=new Matrix(e,e,((t,e)=>{const r=a[t].find((t=>t.index===e));return r?r.distance:1/0}));for(let t=0;t<e;++t)for(let r=0;r<e;++r){let s=h.entry(t,r);for(let i=0;i<e;++i)s=Math.min(s,h.entry(t,i)+h.entry(i,r));h.set_entry(t,r,s)}let l=new Float64Array(e),_=new Float64Array(e),c=0;const u=new Matrix(e,e,((t,e)=>{let r=h.entry(t,e);return r=r===1/0?0:r,l[t]+=r,_[e]+=r,c+=r,r}));l=l.map((t=>t/e)),_=_.map((t=>t/e)),c/=e**2;const d=new Matrix(e,e,((t,e)=>u.entry(t,e)-l[t]-_[e]+c)),{eigenvectors:m}=simultaneous_poweriteration(d,r,i);
 // compute d eigenvectors
 // return embedding
 return this.Y=Matrix.from(m).transpose(),this.projection}}
@@ -926,9 +979,9 @@ constructor(t,e){return super(t,{labels:null,d:2,seed:1212,eig_args:{}},e),this.
 // create X_mean and vector means;
 const h=t.mean,l=new Matrix(a,r);for(const t in o){const e=Matrix.from(o[t].rows).meanCols;for(let s=0;s<r;++s)l.set_entry(o[t].id,s,e[s])}
 // scatter_between
-let _=new Matrix(r,r);for(const t in o){const e=l.row(o[t].id),s=new Matrix(r,1,(t=>e[t]-h)),i=o[t].count;_=_.add(s.dot(s.transpose()).mult(i))}
+let _=new Matrix(r,r);for(const t in o){const e=l.row(o[t].id),s=new Matrix(r,1,(t=>e[t]-h)),i=o[t].count;_=_.add(s.dotTrans(s).mult(i))}
 // scatter_within
-let c=new Matrix(r,r);for(const t in o){const e=l.row(o[t].id),s=new Matrix(r,1,(t=>e[t])),i=o[t].rows;for(let e=0,n=o[t].count;e<n;++e){const t=new Matrix(r,1,((t,r)=>i[e][t]-s.entry(t,0)));c=c.add(t.dot(t.transpose()))}}let{eigenvectors:u}=simultaneous_poweriteration(c.inverse().dot(_),s,n);
+let c=new Matrix(r,r);for(const t in o){const e=l.row(o[t].id),s=new Matrix(r,1,(t=>e[t])),i=o[t].rows;for(let e=0,n=o[t].count;e<n;++e){const t=new Matrix(r,1,((t,r)=>i[e][t]-s.entry(t,0)));c=c.add(t.dotTrans(t))}}let{eigenvectors:u}=simultaneous_poweriteration(c.inverse().dot(_),s,n);
 // return embedding
 return u=Matrix.from(u).transpose(),this.Y=t.dot(u),this.projection}}
 /**
@@ -953,11 +1006,11 @@ return u=Matrix.from(u).transpose(),this.Y=t.dot(u),this.projection}}
 constructor(t,e){return super(t,{neighbors:void 0,d:2,metric:euclidean,seed:1212,eig_args:{}},e),this.parameter("neighbors",Math.min(e.neighbors??Math.max(Math.floor(this._N/10),2),this._N-1)),this._parameters.eig_args.hasOwnProperty("seed")||(this._parameters.eig_args.seed=this._randomizer),this}
 /**
      * Transforms the inputdata {@link X} to dimenionality {@link d}.
-     */transform(){const t=this.X,e=this._N,r=this._D,{neighbors:s,d:i,eig_args:n,metric:o}=this._parameters,a=k_nearest_neighbors(t,s,o),h=new Matrix(s,1,1),l=new Matrix(e,e);for(let i=0;i<e;++i){const e=a[i],n=new Matrix(s,r,((r,s)=>t.entry(e[r].j,s)-t.entry(i,s))),o=n.dot(n.T);if(s>r){const t=neumair_sum(o.diag)/1e3;for(let e=0;e<s;++e)o.set_entry(e,e,o.entry(e,e)+t)}
+     */transform(){const t=this.X,e=this._N,r=this._D,{neighbors:s,d:i,eig_args:n,metric:o}=this._parameters,a=k_nearest_neighbors(t,s,o),h=new Matrix(s,1,1),l=new Matrix(e,e);for(let i=0;i<e;++i){const e=a[i],n=new Matrix(s,r,((r,s)=>t.entry(e[r].j,s)-t.entry(i,s))),o=n.dotTrans(n);if(s>r){const t=neumair_sum(o.diag)/1e3;for(let e=0;e<s;++e)o.add_entry(e,e,t)}
 // reconstruct;
 let _=Matrix.solve_CG(o,h,this._randomizer);_=_.divide(_.sum);for(let t=0;t<s;++t)l.set_entry(i,e[t].j,_.entry(t,0))}
 // comp embedding
-const _=new Matrix(e,e,"identity").sub(l),c=_.T.dot(_),{eigenvectors:u}=simultaneous_poweriteration(c.T.inverse(),i+1,n);
+const _=new Matrix(e,e,"identity").sub(l),c=_.transDot(_),{eigenvectors:u}=simultaneous_poweriteration(c.T.inverse(),i+1,n);
 // return embedding
 return this.Y=Matrix.from(u.slice(1,1+i)).T,this.projection}}
 /**
@@ -988,7 +1041,7 @@ const e=[r,...a[r].map((t=>t.j))];let n=Matrix.from(e.map((e=>t.row(e))));
 // center X_i
 n=n.dot(h);
 // correlation matrix
-const _=n.dot(n.transpose()),{eigenvectors:c}=simultaneous_poweriteration(_,s,o),u=Matrix.from(c),d=u.transpose().dot(u).add(1/Math.sqrt(i+1));for(let t=0;t<i+1;++t)for(let r=0;r<i+1;++r)l.set_entry(e[t],e[r],l.entry(e[t],e[r])-(t===r?1:0)+d.entry(t,r))}
+const _=n.dotTrans(n),{eigenvectors:c}=simultaneous_poweriteration(_,s,o),u=Matrix.from(c),d=u.transDot(u).add(1/Math.sqrt(i+1));for(let t=0;t<i+1;++t)for(let r=0;r<i+1;++r)l.add_entry(e[t],e[r],d.entry(t,r)-(t===r?1:0))}
 // 3. Aligning global coordinates
 const{eigenvectors:_}=simultaneous_poweriteration(l,s+1,o);
 // return embedding
@@ -1008,21 +1061,25 @@ return this.Y=Matrix.from(_.slice(1)).transpose(),this.projection}}
      * @param {Number} [parameters.perplexity = 50] - perplexity.
      * @param {Number} [parameters.epsilon = 10] - learning parameter.
      * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
      * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
-constructor(t,e){return super(t,{perplexity:50,epsilon:10,d:2,metric:euclidean,seed:1212},e),[this._N,this._D]=this.X.shape,this._iter=0,this.Y=new Matrix(this._N,this.parameter("d"),(()=>this._randomizer.random)),this}
+constructor(t,e){return super(t,{perplexity:50,epsilon:10,d:2,metric:euclidean_squared,seed:1212},e),[this._N,this._D]=this.X.shape,this._iter=0,this.Y=new Matrix(this._N,this.parameter("d"),(()=>1e-4*this._randomizer.gauss_random())),this}
 /**
      *
      * @returns {TSNE}
      */init(){
 // init
-const t=Math.log(this.parameter("perplexity")),e=this._N,r=this._D,{metric:s}=this._parameters,i=this.X;let n;if("precomputed"==s)n=druid.Matrix.from(i);else{n=new Matrix(e,e);for(let t=0;t<e;++t){const r=i.row(t);for(let o=t+1;o<e;++o){const e=s(r,i.row(o));n.set_entry(t,o,e),n.set_entry(o,t,e)}}}const o=new Matrix(e,e,"zeros");this._ystep=new Matrix(e,r,"zeros"),this._gains=new Matrix(e,r,1);
-// search for fitting sigma
-let a=new Float64Array(e);for(let r=0;r<e;++r){let s=-1/0,i=1/0,h=1,l=!1,_=0;for(;!l;){let o=0;for(let t=0;t<e;++t){let e=Math.exp(-n.entry(r,t)*h);r===t&&(e=0),a[t]=e,o+=e}let c=0;for(let t=0;t<e;++t){let e=0===o?0:a[t]/o;a[t]=e,e>1e-7&&(c-=e*Math.log(e))}c>t?(s=h,h=i===1/0?2*h:(h+i)/2):(i=h,h=s===-1/0?h/2:(h+s)/2),++_,Math.abs(c-t)<1e-4&&(l=!0),_>=50&&(l=!0)}for(let t=0;t<e;++t)o.set_entry(r,t,a[t])}
-//compute probabilities
-const h=new Matrix(e,e,"zeros"),l=2*e;for(let t=0;t<e;++t)for(let r=t;r<e;++r){const e=Math.max((o.entry(t,r)+o.entry(r,t))/l,1e-100);h.set_entry(t,r,e),h.set_entry(r,t,e)}return this._P=h,this}
+const t=Math.log(this.parameter("perplexity")),e=this._N,r=this._D,{metric:s}=this._parameters,i=this.X;let n;if("precomputed"==s)n=druid.Matrix.from(i);else{n=new Matrix(e,e);for(let t=0;t<e;++t){const r=i.row(t);for(let o=t+1;o<e;++o){const e=s(r,i.row(o));n.set_entry(t,o,e),n.set_entry(o,t,e)}}}const o=new Matrix(e,e,0);this._ystep=new Matrix(e,r,0),this._gains=new Matrix(e,r,1);for(let r=0;r<e;++r){const s=n.row(r),i=o.row(r);let a,h=-1/0,l=1/0,_=1,c=50,u=!1;for(;!u&&c--;){
+// compute entropy and kernel row with beta precision
+a=0;let n=0;for(let t=0;t<e;++t){const e=s[t],o=r!==t?Math.exp(-e*_):0;n+=e*o,i[t]=o,a+=o}
+// compute entropy
+const o=a>0?Math.log(a)+_*n/a:0;o>t?(h=_,_=l===1/0?2*_:(_+l)/2):(l=_,_=h===-1/0?_/2:(_+h)/2),u=Math.abs(o-t)<1e-4}
+// normalize p
+for(let t=0;t<e;++t)i[t]/=a}
+// compute probabilities
+const a=2*e;for(let t=0;t<e;++t)for(let r=t;r<e;++r){const e=Math.max((o.entry(t,r)+o.entry(r,t))/a,1e-100);o.set_entry(t,r,e),o.set_entry(r,t,e)}return this._P=o,this}
 /**
      *
      * @param {Number} [iterations=500] - Number of iterations.
@@ -1043,9 +1100,9 @@ const h=t<100?4:1,l=new Matrix(i,i,"zeros");
 // compute Q dist (unnormalized)
 let _=0;for(let t=0;t<i;++t)for(let e=t+1;e<i;++e){let r=0;for(let s=0;s<n;++s){const i=a.entry(t,s)-a.entry(e,s);r+=i*i}const s=1/(1+r);l.set_entry(t,e,s),l.set_entry(e,t,s),_+=2*s}
 // normalize Q dist
-const c=new Matrix(i,i,0);for(let t=0;t<i;++t)for(let e=t+1;e<i;++e){const r=Math.max(l.entry(t,e)/_,1e-100);c.set_entry(t,e,r),c.set_entry(e,t,r)}const u=new Matrix(i,n,"zeros");for(let t=0;t<i;++t)for(let r=0;r<i;++r){const s=4*(h*e.entry(t,r)-c.entry(t,r))*l.entry(t,r);for(let e=0;e<n;++e)u.set_entry(t,e,u.entry(t,e)+s*(a.entry(t,e)-a.entry(r,e)))}
+const c=new Matrix(i,i,0);for(let t=0;t<i;++t)for(let e=t+1;e<i;++e){const r=Math.max(l.entry(t,e)/_,1e-100);c.set_entry(t,e,r),c.set_entry(e,t,r)}const u=new Matrix(i,n,"zeros");for(let t=0;t<i;++t)for(let r=0;r<i;++r){const s=4*(h*e.entry(t,r)-c.entry(t,r))*l.entry(t,r);for(let e=0;e<n;++e)u.add_entry(t,e,s*(a.entry(t,e)-a.entry(r,e)))}
 // perform gradient step
-let d=new Float64Array(n);for(let e=0;e<i;++e)for(let i=0;i<n;++i){const n=u.entry(e,i),h=r.entry(e,i),l=s.entry(e,i);let _=Math.sign(n)===Math.sign(h)?.8*l:l+.2;_<.01&&(_=.01),s.set_entry(e,i,_);const c=(t<250?.5:.8)*h-o*_*n;r.set_entry(e,i,c),a.set_entry(e,i,a.entry(e,i)+c),d[i]+=a.entry(e,i)}for(let t=0;t<i;++t)for(let e=0;e<2;++e)a.set_entry(t,e,a.entry(t,e)-d[e]/i);return this.Y}}
+let d=new Float64Array(n);for(let e=0;e<i;++e)for(let i=0;i<n;++i){const n=u.entry(e,i),h=r.entry(e,i),l=s.entry(e,i);let _=Math.sign(n)===Math.sign(h)?.8*l:l+.2;_<.01&&(_=.01),s.set_entry(e,i,_);const c=(t<250?.5:.8)*h-o*_*n;r.set_entry(e,i,c),a.add_entry(e,i,c),d[i]+=a.entry(e,i)}for(let t=0;t<i;++t)for(let e=0;e<n;++e)a.sub_entry(t,e,d[e]/i);return this.Y}}
 /**
  *
  * @memberof module:optimization
@@ -1099,15 +1156,15 @@ if(super(t,{n_neighbors:15,local_connectivity:1,min_dist:1,d:2,metric:euclidean,
      * @param {Array<Number>} sigmas
      * @param {Array<Number>} rhos
      * @returns {Array}
-     */_compute_membership_strengths(t,e,r){for(let s=0,i=t.length;s<i;++s)for(let i=0,n=t[s].length;i<n;++i){const n=t[s][i].value-r[s];t[s][i].value=n>0?Math.exp(-n/e[s]):1}return t}
+     */_compute_membership_strengths(t,e,r){for(let s=0,i=t.length;s<i;++s){const i=r[s],n=t[s];for(let t=0,r=n.length;t<r;++t){const r=n[t].value-i;n[t].value=r>0?Math.exp(-r/e[s]):1}}return t}
 /**
      * @private
      * @param {KNN|BallTree} knn
      * @param {Number} k
      * @returns {Object}
-     */_smooth_knn_dist(t,e){const r=1e-5,s=.001,{local_connectivity:i,metric:n}=this._parameters,o=Math.log2(e),a=[],h=[],l=this.X,_=l.shape[0],c=[];if("precomputed"===n)for(let r=0;r<_;++r)c.push(t.search(r,e).reverse());else for(const r of l)c.push(t.search(r,e).raw_data().reverse());for(let t=0;t<_;++t){let n=0,l=1/0,_=1;const u=c[t],d=u.filter((t=>t.value>0)),m=d.length;if(m>=i){const e=Math.floor(i),s=i-e;e>0?(a.push(d[e-1]),s>r&&(a[t].value+=s*(d[e].value-d[e-1]))):a[t].value=s*d[0].value}else m>0&&(a[t]=d[m-1].value);for(let s=0;s<64;++s){let s=0;for(let r=0;r<e;++r){const e=u[r].value-a[t];s+=e>0?Math.exp(-e/_):1}if(Math.abs(s-o)<r)break;s>o?[l,_]=[_,(n+l)/2]:[n,_]=l===1/0?[_,2*_]:[_,(n+l)/2]}h[t]=_;const p=u.reduce(((t,e)=>t+e.value),0)/u.length;
+     */_smooth_knn_dist(t,e){const r=1e-5,s=.001,{local_connectivity:i,metric:n}=this._parameters,o=Math.log2(e),a=[],h=[],l=this.X,_=l.shape[0],c=[];if("precomputed"===n)for(let r=0;r<_;++r)c.push(t.search(r,e).reverse());else for(const r of l)c.push(t.search(r,e).raw_data().reverse());const u=Math.floor(i),d=i-u;for(let t=0;t<_;++t){let n=0,l=1/0,_=1,m=0;const f=c[t],p=f.filter((t=>t.value>0)),w=p.length;w>=i?u>0?(m=p[u-1].value,d>r&&(m+=d*(p[u].value-p[u-1].value))):m=d*p[0].value:w>0&&(m=p[w-1].value);for(let t=0;t<64;++t){let t=0;for(let r=0;r<e;++r){const e=f[r].value-m;t+=e>0?Math.exp(-e/_):1}if(Math.abs(t-o)<r)break;t>o?[l,_]=[_,(n+l)/2]:[n,_]=l===1/0?[_,2*_]:[_,(n+l)/2]}
 //let mean_d = null;
-if(a[t]>0)h[t]<s*p&&(h[t]=s*p);else{const e=c.reduce(((t,e)=>t+e.reduce(((t,e)=>t+e.value),0)/e.length));h[t]>s*e&&(h[t]=s*e)}}return{distances:c,sigmas:h,rhos:a}}
+if(m>0){const t=f.reduce(((t,e)=>t+e.value),0)/f.length;_<s*t&&(_=s*t)}else{const t=c.reduce(((t,e)=>t+e.reduce(((t,e)=>t+e.value),0)/e.length));_<s*t&&(_=s*t)}a[t]=m,h[t]=_}return{distances:c,sigmas:h,rhos:a}}
 /**
      * @private
      * @param {Matrix} X
@@ -1118,7 +1175,7 @@ if(a[t]>0)h[t]<s*p&&(h[t]=s*p);else{const e=c.reduce(((t,e)=>t+e.reduce(((t,e)=>
      * @private
      * @param {Number} n_epochs
      * @returns {Array}
-     */_make_epochs_per_sample(t){const e=this._weights,r=new Float32Array(e.length).fill(-1),s=max(e),i=e.map((e=>t*(e/s)));for(let e=0;e<r.length;++e)i[e]>0&&(r[e]=Math.round(t/i[e]));return r}
+     */_make_epochs_per_sample(t){const e=this._weights,r=new Float32Array(e.length).fill(-1),s=t/max(e);return e.forEach(((e,i)=>{const n=e*s;n>0&&(r[i]=Math.round(t/n))})),r}
 /**
      * @private
      * @param {Matrix} graph
@@ -1151,7 +1208,7 @@ if(a[t]>0)h[t]<s*p&&(h[t]=s*p);else{const e=c.reduce(((t,e)=>t+e.reduce(((t,e)=>
      * @param {Matrix} head
      * @param {Matrix} tail
      * @returns {Matrix}
-     */_optimize_layout(t,e,r,s){const i=this._randomizer,{_repulsion_strength:n,d:o}=this._parameters,{_alpha:a,_a:h,_b:l,_epochs_per_sample:_,_epochs_per_negative_sample:c,_epoch_of_next_negative_sample:u,_epoch_of_next_sample:d,_clip:m}=this,p=s.length;for(let f=0,y=_.length;f<y;++f)if(d[f]<=this._iter){const y=r[f],g=s[f],w=t.row(y),x=e.row(g),M=euclidean_squared(w,x);let A=0;M>0&&(A=-2*h*l*Math.pow(M,l-1)/(h*Math.pow(M,l)+1));for(let r=0;r<o;++r){const s=m(A*(w[r]-x[r]))*a,i=w[r]+s,n=x[r]-s;w[r]=i,x[r]=n,t.set_entry(y,r,i),e.set_entry(g,r,n)}d[f]+=_[f];const b=(this._iter-u[f])/c[f];for(let r=0;r<b;++r){const r=i.random_int%p,_=e.row(s[r]),c=euclidean_squared(w,_);let u=0;if(c>0)u=2*n*l/((.01+c)*(h*Math.pow(c,l)+1));else if(y===r)continue;for(let i=0;i<o;++i){const n=m(u*(w[i]-_[i]))*a,o=w[i]+n,h=_[i]-n;w[i]=o,_[i]=h,t.set_entry(y,i,o),e.set_entry(s[r],i,h)}}u[f]+=b*c[f]}return t}
+     */_optimize_layout(t,e,r,s){const i=this._randomizer,{_repulsion_strength:n,d:o}=this._parameters,{_alpha:a,_a:h,_b:l,_epochs_per_sample:_,_epochs_per_negative_sample:c,_epoch_of_next_negative_sample:u,_epoch_of_next_sample:d,_clip:m}=this,f=s.length;for(let p=0,w=_.length;p<w;++p)if(d[p]<=this._iter){const w=r[p],g=s[p],y=t.row(w),M=e.row(g),x=euclidean_squared(y,M);if(x>0){const t=-2*h*l*Math.pow(x,l-1)/(h*Math.pow(x,l)+1);for(let e=0;e<o;++e){const r=m(t*(y[e]-M[e]))*a;y[e]+=r,M[e]-=r}}d[p]+=_[p];const A=(this._iter-u[p])/c[p];for(let t=0;t<A;++t){const t=i.random_int%f,r=e.row(s[t]),_=euclidean_squared(y,r);if(_>0){const t=2*n*l/((.01+_)*(h*Math.pow(_,l)+1));for(let e=0;e<o;++e){const s=m(t*(y[e]-r[e]))*a;y[e]+=s,r[e]-=s}}else if(w===t)continue}u[p]+=A*c[p]}return t}
 /**
      * @private
      * @returns {Matrix}
@@ -1183,7 +1240,7 @@ constructor(t,e){return super(t,{weight_adj:500,c:5,d:2,metric:euclidean,tol:1e-
      *
      * @param {Matrix} [pca = null] - Initial Embedding (if null then PCA gets used).
      * @param {KNN} [knn = null] - KNN Object (if null then BallTree gets used).
-     */init(t=null,e=null){const r=this.X,s=r.shape[0],{d:i,metric:n,c:o}=this._parameters;this.n_inliers=2*o,this.n_outliers=1*o,this.n_random=1*o,this.Y=t||new PCA(r,i).transform(),this.knn=e||new BallTree(r.to2dArray,n);const{triplets:a,weights:h}=this._generate_triplets(this.n_inliers,this.n_outliers,this.n_random);return this.triplets=a,this.weights=h,this.lr=1e3*s/a.shape[0],this.C=1/0,this.vel=new Matrix(s,i,0),this.gain=new Matrix(s,i,1),this}
+     */init(t=null,e=null){const r=this.X,s=r.shape[0],{c:i,d:n,metric:o,seed:a}=this._parameters;this.n_inliers=2*i,this.n_outliers=1*i,this.n_random=1*i,this.Y=t||new PCA(r,{d:n,seed:a}).transform(),this.knn=e||new BallTree(r.to2dArray,o);const{triplets:h,weights:l}=this._generate_triplets(this.n_inliers,this.n_outliers,this.n_random);return this.triplets=h,this.weights=l,this.lr=1e3*s/h.shape[0],this.C=1/0,this.vel=new Matrix(s,n,0),this.gain=new Matrix(s,n,1),this}
 /**
      * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.
      * @param {Number} n_inliers
@@ -1191,7 +1248,7 @@ constructor(t,e){return super(t,{weight_adj:500,c:5,d:2,metric:euclidean,tol:1e-
      * @param {Number} n_random
      */_generate_triplets(t,e,r){const{metric:s,weight_adj:i}=this._parameters,n=this.X,o=n.shape[0],a=this.knn,h=Math.min(t+20,o),l=new Matrix(o,h),_=new Matrix(o,h);for(let t=0;t<o;++t)a.search(n.row(t),h+1).raw_data().filter((t=>0!=t.value)).sort(((t,e)=>t.value-e.value)).forEach(((e,r)=>{l.set_entry(t,r,e.element.index),_.set_entry(t,r,e.value)}));
 // scale parameter
-const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.entry(t,4)+_.entry(t,5)+_.entry(t,6))/4,1e-10);const u=this._find_p(_,c,l);let d=this._sample_knn_triplets(u,l,t,e),m=d.shape[0];const p=new Float64Array(m);for(let t=0;t<m;++t){const e=d.entry(t,0),r=d.entry(t,2);p[t]=s(n.row(e),n.row(r))}let f=this._find_weights(d,u,l,p,c);if(r>0){const{random_triplets:t,random_weights:e}=this._sample_random_triplets(n,r,c);d=d.concat(t,"vertical"),f=Float64Array.from([...f,...e])}m=d.shape[0];let y=-1/0;for(let t=0;t<m;++t)isNaN(f[t])&&(f[t]=0),y<f[t]&&(y=f[t]);let g=-1/0;for(let t=0;t<m;++t)f[t]/=y,f[t]+=1e-4,f[t]=Math.log(1+i*f[t]),g<f[t]&&(g=f[t]);for(let t=0;t<m;++t)f[t]/=g;return{triplets:d,weights:f}}
+const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.entry(t,4)+_.entry(t,5)+_.entry(t,6))/4,1e-10);const u=this._find_p(_,c,l);let d=this._sample_knn_triplets(u,l,t,e),m=d.shape[0];const f=new Float64Array(m);for(let t=0;t<m;++t){const e=d.entry(t,0),r=d.entry(t,2);f[t]=s(n.row(e),n.row(r))}let p=this._find_weights(d,u,l,f,c);if(r>0){const{random_triplets:t,random_weights:e}=this._sample_random_triplets(n,r,c);d=d.concat(t,"vertical"),p=Float64Array.from([...p,...e])}m=d.shape[0];let w=-1/0;for(let t=0;t<m;++t)isNaN(p[t])&&(p[t]=0),w<p[t]&&(w=p[t]);let g=-1/0;for(let t=0;t<m;++t)p[t]/=w,p[t]+=1e-4,p[t]=Math.log(1+i*p[t]),g<p[t]&&(g=p[t]);for(let t=0;t<m;++t)p[t]/=g;return{triplets:d,weights:p}}
 /**
      * Calculates the similarity matrix P
      * @private
@@ -1208,12 +1265,12 @@ const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.en
      * @param {Number} n_inliers - Number of inlier points.
      * @param {Number} n_outliers - Number of outlier points.
      *
-     */_sample_knn_triplets(t,e,r,s){const i=e.shape[0],n=new Matrix(i*r*s,3);for(let o=0;o<i;++o){let a=o*r*s;const h=this.__argsort(t.row(o).map((t=>-t)));for(let t=0;t<r;++t){let r=t*s;const l=e.entry(o,h[t]),_=this._rejection_sample(s,i,h.slice(0,t+1));for(let t=0;t<s;++t){const e=a+r+t,s=_[t];n.set_entry(e,0,o),n.set_entry(e,1,l),n.set_entry(e,2,s)}}}return n}
+     */_sample_knn_triplets(t,e,r,s){const i=e.shape[0],n=new Matrix(i*r*s,3);for(let o=0;o<i;++o){let a=o*r*s;const h=this.__argsort(t.row(o));for(let t=0;t<r;++t){let r=t*s;const l=e.entry(o,h[t]),_=this._rejection_sample(s,i,h.slice(0,t+1));for(let t=0;t<s;++t){const e=a+r+t,s=_[t];n.set_entry(e,0,o),n.set_entry(e,1,l),n.set_entry(e,2,s)}}}return n}
 /**
      * Should do the same as np.argsort()
      * @private
      * @param {Array} A
-     */__argsort(t){return t.map(((t,e)=>({d:t,i:e}))).sort(((t,e)=>t.d-e.d)).map((t=>t.i))}
+     */__argsort(t){return linspace(0,t.length-1).sort(((e,r)=>t[r]-t[e]))}
 /**
      * Samples {@link n_samples} integers from a given interval [0, {@link max_int}] while rejection the values that are in the {@link rejects}.
      * @private
@@ -1240,11 +1297,11 @@ const c=new Float64Array(o);for(let t=0;t<o;++t)c[t]=Math.max((_.entry(t,3)+_.en
 /**
      * Computes the gradient for updating the embedding.
      * @param {Matrix} Y - The embedding
-     */_grad(t){const e=this.n_inliers,r=this.n_outliers,s=this.triplets,i=this.weights,[n,o]=t.shape,a=s.shape[0],h=new Matrix(n,o,0);let l=new Float64Array(o),_=new Float64Array(o),c=1,u=1,d=0,m=0;const p=n*e*r;for(let e=0;e<a;++e){const[n,a,f]=s.row(e);
+     */_grad(t){const e=this.n_inliers,r=this.n_outliers,s=this.triplets,i=this.weights,[n,o]=t.shape,a=s.shape[0],h=new Matrix(n,o,0);let l=new Float64Array(o),_=new Float64Array(o),c=1,u=1,d=0,m=0;const f=n*e*r;for(let e=0;e<a;++e){const[n,a,p]=s.row(e);
 // update y_ij, y_ik, d_ij, d_ik
-if(e%r==0||e>=p){c=1,u=1;for(let e=0;e<o;++e){const r=t.entry(n,e),s=t.entry(a,e),i=t.entry(f,e);l[e]=r-s,_[e]=r-i,c+=l[e]**2,u+=_[e]**2}
+if(e%r==0||e>=f){c=1,u=1;for(let e=0;e<o;++e){const r=t.entry(n,e),s=t.entry(a,e),i=t.entry(p,e);l[e]=r-s,_[e]=r-i,c+=l[e]**2,u+=_[e]**2}
 // update y_ik and d_ik only
-}else{u=1;for(let e=0;e<o;++e){const r=t.entry(n,e),s=t.entry(f,e);_[e]=r-s,u+=_[e]**2}}c>u&&++d,m+=i[e]/(1+u/c);const y=(i[e]/(c+u))**2;for(let t=0;t<o;++t){const e=l[t]*u*y,r=_[t]*c*y;h.set_entry(n,t,h.entry(n,t)+e-r),h.set_entry(a,t,h.entry(a,t)-e),h.set_entry(f,t,h.entry(f,t)+r)}}return{grad:h,loss:m,n_viol:d}}
+}else{u=1;for(let e=0;e<o;++e){const r=t.entry(n,e),s=t.entry(p,e);_[e]=r-s,u+=_[e]**2}}c>u&&++d,m+=i[e]/(1+u/c);const w=(i[e]/(c+u))**2;for(let t=0;t<o;++t){const e=l[t]*u*w,r=_[t]*c*w;h.add_entry(n,t,e-r),h.sub_entry(a,t,e),h.add_entry(p,t,r)}}return{grad:h,loss:m,n_viol:d}}
 /**
      *
      * @param {Number} max_iteration
@@ -1560,11 +1617,11 @@ constructor(t,e){return super(t,{neighbors:void 0,control_points:void 0,d:2,metr
      * @param {DR} DR - method used for position control points.
      * @param {Object} DR_parameters - Object containing parameters for the DR method which projects the control points
      * @returns {LSP}
-     */init(t=MDS,e={},r=BallTree){if(this._is_initialized)return this;const s=this.X,i=this._N,n=this.parameter("neighbors"),o=this.parameter("d"),a=this.parameter("seed"),h=this.parameter("metric");e=Object.assign({d:o,metric:h,seed:a},e);const l=this.parameter("control_points"),_=new KMedoids(s,l,null,h).get_clusters().medoids,c=new Matrix(l,i,"zeros");_.forEach(((t,e)=>{c.set_entry(e,t,1)}));const u=new t(Matrix.from(_.map((t=>s.row(t)))),e).transform(),d=s.to2dArray,m=new r(d,h),p=new Matrix(i,i,"I"),f=-1/n;d.forEach(((t,e)=>{for(const{index:r}of m.search(t,n).iterate())e!==r&&p.set_entry(e,r,f)}));const y=p.concat(c,"vertical"),g=new Matrix(i,o,"zeros").concat(u,"vertical");return this._A=y,this._b=g,this._is_initialized=!0,this}
+     */init(t=MDS,e={},r=BallTree){if(this._is_initialized)return this;const s=this.X,i=this._N,n=this.parameter("neighbors"),o=this.parameter("d"),a=this.parameter("seed"),h=this.parameter("metric");e=Object.assign({d:o,metric:h,seed:a},e);const l=this.parameter("control_points"),_=new KMedoids(s,l,null,h).get_clusters().medoids,c=new Matrix(l,i,"zeros");_.forEach(((t,e)=>{c.set_entry(e,t,1)}));const u=new t(Matrix.from(_.map((t=>s.row(t)))),e).transform(),d=s.to2dArray,m=new r(d,h),f=new Matrix(i,i,"I"),p=-1/n;d.forEach(((t,e)=>{for(const{index:r}of m.search(t,n).iterate())e!==r&&f.set_entry(e,r,p)}));const w=f.concat(c,"vertical"),g=new Matrix(i,o,"zeros").concat(u,"vertical");return this._A=w,this._b=g,this._is_initialized=!0,this}
 /**
      * Computes the projection.
      * @returns {Matrix} Returns the projection.
-     */transform(){this.check_init();const t=this._A,e=t.T,r=this._b,s=e.dot(t),i=e.dot(r);return this.Y=Matrix.solve_CG(s,i,this._randomizer),this.projection}}
+     */transform(){this.check_init();const t=this._A,e=this._b,r=t.transDot(t),s=t.transDot(e);return this.Y=Matrix.solve_CG(r,s,this._randomizer),this.projection}}
 /**
  * @class
  * @alias TopoMap
@@ -1753,13 +1810,13 @@ i(e.row(r),c),i(e.row(s),u),i(e.row(l),d),i(e.row(_),m)}return e}
      * @param {Number[]} quartet - The indices of the quartet.
      * @param {Number[]} D_hd - The high-dimensional distances of the quartet.
      * @returns {Number[][]} the gradients for the quartet.
-     */_compute_quartet_grads(t,e,[r,s,i,n,o,a]){const[h,l,_,c]=e.map((e=>t.row(e))),u=euclidean(h,l)+1e-12,d=euclidean(h,_)+1e-12,m=euclidean(h,c)+1e-12,p=euclidean(l,_)+1e-12,f=euclidean(l,c)+1e-12,y=euclidean(_,c)+1e-12,g=neumair_sum([u,d,m,p,f,y]),[w,x,M,A]=this._ABCD_grads(h,l,_,c,u,d,m,p,f,y,r,g),[b,v,z,D]=this._ABCD_grads(h,_,l,c,d,u,m,p,y,f,s,g),[N,j,E,k]=this._ABCD_grads(h,c,_,l,m,d,u,y,f,p,i,g),[R,S,F,L]=this._ABCD_grads(l,_,h,c,p,u,f,d,y,m,n,g),[X,P,q,T]=this._ABCD_grads(l,c,h,_,f,u,p,m,y,d,o,g),[Y,C,B,K]=this._ABCD_grads(_,c,h,l,y,d,p,m,f,u,a,g),O=this._add;
+     */_compute_quartet_grads(t,e,[r,s,i,n,o,a]){const[h,l,_,c]=e.map((e=>t.row(e))),u=euclidean(h,l)+1e-12,d=euclidean(h,_)+1e-12,m=euclidean(h,c)+1e-12,f=euclidean(l,_)+1e-12,p=euclidean(l,c)+1e-12,w=euclidean(_,c)+1e-12,g=neumair_sum([u,d,m,f,p,w]),[y,M,x,A]=this._ABCD_grads(h,l,_,c,u,d,m,f,p,w,r,g),[b,v,z,D]=this._ABCD_grads(h,_,l,c,d,u,m,f,w,p,s,g),[j,N,E,k]=this._ABCD_grads(h,c,_,l,m,d,u,w,p,f,i,g),[R,S,q,B]=this._ABCD_grads(l,_,h,c,f,u,p,d,w,m,n,g),[L,X,F,P]=this._ABCD_grads(l,c,h,_,p,u,f,m,w,d,o,g),[$,T,Y,C]=this._ABCD_grads(_,c,h,l,w,d,f,m,p,u,a,g),K=this._add;
 // LD distances, add a small number just in case
-return[O(w,b,N,F,q,B),O(x,z,k,R,X,K),O(M,v,E,S,T,Y),O(A,D,j,L,P,C)]}
+return[K(y,b,j,q,F,Y),K(M,z,k,R,L,C),K(x,v,E,S,P,$),K(A,D,N,B,X,T)]}
 /**
      * Gradients for one element of the loss function's sum.
      * @private
-     */_ABCD_grads(t,e,r,s,i,n,o,a,h,l,_,c){const u=i/c,d=(_-u)/c*2,m=this._minus,p=this._add,f=this._mult,y=this._sub_div;return[f(m(f(p(y(t,e,i),y(t,r,n),y(t,s,o)),u),y(t,e,i)),d),f(m(f(p(y(e,t,i),y(e,r,a),y(e,s,h)),u),y(e,t,i)),d),f(p(y(r,t,n),y(r,e,a),y(r,s,l)),u*d),f(p(y(s,t,o),y(s,e,h),y(s,r,l)),u*d)]}
+     */_ABCD_grads(t,e,r,s,i,n,o,a,h,l,_,c){const u=i/c,d=(_-u)/c*2,m=this._minus,f=this._add,p=this._mult,w=this._sub_div;return[p(m(p(f(w(t,e,i),w(t,r,n),w(t,s,o)),u),w(t,e,i)),d),p(m(p(f(w(e,t,i),w(e,r,a),w(e,s,h)),u),w(e,t,i)),d),p(f(w(r,t,n),w(r,e,a),w(r,s,l)),u*d),p(f(w(s,t,o),w(s,e,h),w(s,r,l)),u*d)]}
 /**
      * Inline!
      */__minus(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]-=r[s];return e}}
@@ -1771,5 +1828,5 @@ return[O(w,b,N,F,q,B),O(x,z,k,R,X,K),O(M,v,E,S,T,Y),O(A,D,j,L,P,C)]}
      */__mult(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]*=r;return e}}
 /**
      * Creates a new array <code>(x - y) / div</code>
-     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.2";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.3";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
 //# sourceMappingURL=druid.esm.js.map
