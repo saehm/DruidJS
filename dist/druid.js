@@ -5754,7 +5754,7 @@ class SQDMDS extends DR {
 }
 
 //export { version } from "../package.json" assert { type: "json"};
-const version = "0.6.4";
+const version = "0.7.1";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
