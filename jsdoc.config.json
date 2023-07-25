@@ -2,7 +2,7 @@
     "plugins": ["plugins/markdown"],
     "recurseDepth": 10,
     "source": {
-        "include": ".",
+        "include": "src",
         "exclude": [".vscode", "data\\", "dist", "doc", "node_modules", "test", "*.bak"],
         "includePattern": ".+\\.js(doc|x)?$",
         "excludePattern": "(^|\\/|\\\\)_"

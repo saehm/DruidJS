@@ -1,4 +1,3 @@
-// https://renecutura.eu v0.6.3 Copyright 2022 Rene Cutura
 /**
  * Computes the euclidean distance (<code>l<sub>2</sub></code>) between <code>a</code> and <code>b</code>.
  * @memberof module:metrics
@@ -1108,9 +1107,9 @@ let d=new Float64Array(n);for(let e=0;e<i;++e)for(let i=0;i<n;++i){const n=u.ent
  * @memberof module:optimization
  * @alias powell
  * @param {Function} f
- * @param {Array} x0
- * @param {Number} [max_iter = 300]
- * @returns {Array}
+ * @param {number[]} x0
+ * @param {number} [max_iter = 300]
+ * @returns {number[]}
  * @see http://optimization-js.github.io/optimization-js/optimization.js.html#line438
  */function powell(t,e,r=300){const s=e.length;let i=.001,n=1e4,o=e.slice(),a=t(o),h=!1;for(;r-- >=0&&!h;){h=!0;for(let e=0;e<s;++e){o[e]+=1e-6;let r=t(o);o[e]-=1e-6;let s=(r-a)/1e-6;Math.abs(s)>.01&&(h=!1),o[e]-=i*s,a=t(o)}i*=n>=a?1.05:.4,n=a}return o}
 /**
@@ -1828,5 +1827,5 @@ return[K(y,b,j,q,F,Y),K(M,z,k,R,L,C),K(x,v,E,S,P,$),K(A,D,N,B,X,T)]}
      */__mult(t){return(e,r)=>{for(let s=0;s<t;++s)e[s]*=r;return e}}
 /**
      * Creates a new array <code>(x - y) / div</code>
-     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.3";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
+     */__sub_div(t){return(e,r,s)=>Float64Array.from({length:t},((t,i)=>(e[i]-r[i])/s))}}var t="0.6.4";export{BallTree,DisjointSet,FASTMAP,Heap,Hierarchical_Clustering,ISOMAP,KMeans,KMedoids,KNN,LDA,LLE,LSP,LTSA,MDS,Matrix,OPTICS,PCA,Randomizer,SAMMON,SQDMDS,TSNE,TopoMap,TriMap,UMAP,canberra,chebyshev,cosine,distance_matrix,euclidean,euclidean_squared,hamming,inner_product,jaccard,k_nearest_neighbors,kahan_sum,linspace,manhattan,max,min,neumair_sum,norm,normalize,powell,qr_gramschmidt as qr,qr_householder,simultaneous_poweriteration,sokal_michener,t as version,yule};
 //# sourceMappingURL=druid.esm.js.map

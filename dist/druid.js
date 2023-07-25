@@ -1,4 +1,3 @@
-// https://renecutura.eu v0.6.3 Copyright 2022 Rene Cutura
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -3202,9 +3201,9 @@ class TSNE extends DR {
  * @memberof module:optimization
  * @alias powell
  * @param {Function} f
- * @param {Array} x0
- * @param {Number} [max_iter = 300]
- * @returns {Array}
+ * @param {number[]} x0
+ * @param {number} [max_iter = 300]
+ * @returns {number[]}
  * @see http://optimization-js.github.io/optimization-js/optimization.js.html#line438
  */
 function powell (f, x0, max_iter = 300) {
@@ -5754,7 +5753,8 @@ class SQDMDS extends DR {
     }
 }
 
-var version="0.6.3";
+//export { version } from "../package.json" assert { type: "json"};
+const version = "0.6.4";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
@@ -5805,8 +5805,6 @@ exports.simultaneous_poweriteration = simultaneous_poweriteration;
 exports.sokal_michener = sokal_michener;
 exports.version = version;
 exports.yule = yule;
-
-Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 //# sourceMappingURL=druid.js.map

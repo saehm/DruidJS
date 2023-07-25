@@ -8,4 +8,5 @@ export * from "./linear_algebra/index.js";
 export * from "./dimred/index.js";
 export * from "./optimization/index.js";
 export * from "./clustering/index.js";
-export { version } from "./package.json";
+//export { version } from "../package.json" assert { type: "json"};
+export const version = "0.6.4"

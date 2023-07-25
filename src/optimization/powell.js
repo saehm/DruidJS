@@ -3,9 +3,9 @@
  * @memberof module:optimization
  * @alias powell
  * @param {Function} f
- * @param {Array} x0
- * @param {Number} [max_iter = 300]
- * @returns {Array}
+ * @param {number[]} x0
+ * @param {number} [max_iter = 300]
+ * @returns {number[]}
  * @see http://optimization-js.github.io/optimization-js/optimization.js.html#line438
  */
 export default function (f, x0, max_iter = 300) {
