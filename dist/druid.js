@@ -2253,11 +2253,11 @@ class DR {
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed value for the random number generator.
+     * @param {Matrix|number[][]} X - the high-dimensional data.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed value for the random number generator.
      * @returns {DR}
      */
     constructor(X, default_parameters, parameters) {
@@ -2279,13 +2279,13 @@ class DR {
 
     /**
      * Set and get parameters
-     * @param {String} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
+     * @param {string} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
      * @param {any} [value = null] - Value of the parameter to set. If <code>name</code> is set and <code>value</code> is not given, returns the value of the respective parameter.
-     * @returns {DR|any|Object} 
-     * On setting a parameter, this function returns the DR object. 
+     * @returns {DR|any|object}
+     * On setting a parameter, this function returns the DR object.
      * If <code>name</code> is set and <code>value == null</code> then return actual parameter value.
      * If <code>name</code> is not given, then returns all parameters as an Object.
-     * 
+     *
      * @example
      * '''
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
@@ -2328,7 +2328,7 @@ class DR {
 
     /**
      * Computes the projection.
-     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator() {
         return this.transform();
@@ -2347,7 +2347,7 @@ class DR {
     }
 
     /**
-     * @returns {Matrix|Number[][]} the projection in the type of input <code>X</code>.
+     * @returns {Matrix|number[][]} the projection in the type of input <code>X</code>.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -2361,7 +2361,7 @@ class DR {
     /**
      * Computes the projection.
      * @param  {...unknown} args - Arguments the transform method of the respective DR method takes.
-     * @returns {Promise<Matrix|Number[][]>} the dimensionality reduced dataset.
+     * @returns {Promise<Matrix|number[][]>} the dimensionality reduced dataset.
      */
     async transform_async(...args) {
         return this.transform(...args);
@@ -2371,7 +2371,7 @@ class DR {
      * Computes the projection.
      * @static
      * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Matrix|Array} the dimensionality reduced dataset.
+     * @returns {Matrix|number[][]} the dimensionality reduced dataset.
      */
     static transform(...args) {
         let dr = new this(...args);
@@ -2413,11 +2413,11 @@ class PCA extends DR {
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias PCA
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {Matrix|number[][]} X - the high-dimensional data.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @returns {PCA}
      */
     constructor(X, parameters) {
@@ -2430,8 +2430,8 @@ class PCA extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}. If parameter {@link A} is given, then project {@link A} with the principal components of {@link X}.
-     * @param {null|Matrix|Array} [A = null] - If given, the data to project.
-     * @returns {Matrix|Array} - The projected data.
+     * @param {null|Matrix|number[][]} [A = null] - If given, the data to project.
+     * @returns {Matrix|number[][]} - The projected data.
      */
     transform(A = null) {
         const V = this.principal_components();
@@ -2483,11 +2483,11 @@ class MDS extends DR {
      * @memberof module:dimensionality_reduction
      * @alias MDS
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      */
     constructor(X, parameters) {
         super(X, { d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
@@ -2499,7 +2499,7 @@ class MDS extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}.
-     * @returns {Matrix|Array}
+     * @returns {Matrix|number[][]}
      */
     transform() {
         const X = this.X;
@@ -2520,7 +2520,7 @@ class MDS extends DR {
     }
 
     /**
-     * @returns {Number} - the stress of the projection.
+     * @returns {number} - the stress of the projection.
      */
     stress() {
         const N = this.X.shape[0];
@@ -2558,12 +2558,12 @@ class ISOMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias ISOMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} parameters.neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} parameters.neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://doi.org/10.1126/science.290.5500.2319}
      */
     constructor(X, parameters) {
@@ -2656,10 +2656,10 @@ class FASTMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias FASTMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the dimensionality of the projection.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the dimensionality of the projection.
      * @returns {FASTMAP}
      * @see {@link https://doi.org/10.1145/223784.223812}
      */
@@ -2671,8 +2671,8 @@ class FASTMAP extends DR {
     /**
      * Chooses two points which are the most distant in the actual projection.
      * @private
-     * @param {Function} dist
-     * @returns {Array} An array consisting of first index, second index, and distance between the two points.
+     * @param {function} dist
+     * @returns {number[]} An array consisting of first index, second index, and distance between the two points.
      */
     _choose_distant_objects(dist) {
         const X = this.X;
@@ -2746,11 +2746,11 @@ class LDA extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LDA
      * @param {Matrix} X - The high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Array} parameters.labels - The labels / classes for each data point.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {any[]} parameters.labels - The labels / classes for each data point.
      * @param {number} [parameters.d = 2] - The dimensionality of the projection.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://onlinelibrary.wiley.com/doi/10.1111/j.1469-1809.1936.tb02137.x}
      */
     constructor(X, parameters) {
@@ -2838,17 +2838,17 @@ class LLE extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LLE
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} parameters.neighbors - the label / class of each data point.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the dimensionality of the projection.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://doi.org/10.1126/science.290.5500.2323}
      */
     constructor(X, parameters) {
         super(X, { neighbors: undefined, d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
-        this.parameter("neighbors", Math.min(parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         if (!this._parameters.eig_args.hasOwnProperty("seed")) {
             this._parameters.eig_args.seed = this._randomizer;
         }
@@ -2908,17 +2908,17 @@ class LTSA extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LTSA
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} parameters.neighbors - the number of neighbors {@link LTSA} should use to project the data.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} parameters.neighbors - the number of neighbors {@link LTSA} should use to project the data.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://epubs.siam.org/doi/abs/10.1137/S1064827502419154}
      */
     constructor(X, parameters) {
         super(X, { neighbors: undefined, d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
-        this.parameter("neighbors", Math.min(parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         if (!this._parameters.eig_args.hasOwnProperty("seed")) {
             this._parameters.eig_args.seed = this._randomizer;
         }
@@ -2953,8 +2953,7 @@ class LTSA extends DR {
             //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
             // 2. Constructing alignment matrix
-            const W_i = G_i_t.transDot(G_i_t)
-                .add(1 / Math.sqrt(neighbors + 1));
+            const W_i = G_i_t.transDot(G_i_t).add(1 / Math.sqrt(neighbors + 1));
             for (let i = 0; i < neighbors + 1; ++i) {
                 for (let j = 0; j < neighbors + 1; ++j) {
                     B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
@@ -2983,12 +2982,12 @@ class TSNE extends DR {
      * @memberof module:dimensionality_reduction
      * @alias TSNE
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.perplexity = 50] - perplexity.
-     * @param {Number} [parameters.epsilon = 10] - learning parameter.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.perplexity = 50] - perplexity.
+     * @param {number} [parameters.epsilon = 10] - learning parameter.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
     constructor(X, parameters) {
@@ -3008,10 +3007,10 @@ class TSNE extends DR {
         const Htarget = Math.log(this.parameter("perplexity"));
         const N = this._N;
         const D = this._D;
-        const {metric} = this._parameters;
+        const { metric } = this._parameters;
         const X = this.X;
         let Delta;
-        if (metric =="precomputed") {
+        if (metric == "precomputed") {
             Delta = druid.Matrix.from(X);
         } else {
             Delta = new Matrix(N, N);
@@ -3049,13 +3048,13 @@ class TSNE extends DR {
                 let dp_sum = 0;
                 for (let j = 0; j < N; ++j) {
                     const dist = dist_i[j];
-                    const pj = (i !== j) ? Math.exp(-dist * beta) : 0;
+                    const pj = i !== j ? Math.exp(-dist * beta) : 0;
                     dp_sum += dist * pj;
                     prow[j] = pj;
                     psum += pj;
                 }
                 // compute entropy
-                const H = psum > 0 ? Math.log(psum) + beta * dp_sum / psum : 0;
+                const H = psum > 0 ? Math.log(psum) + (beta * dp_sum) / psum : 0;
                 if (H > Htarget) {
                     betamin = beta;
                     beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
@@ -3086,8 +3085,8 @@ class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - Number of iterations.
-     * @returns {Matrix|Number[][]} the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @returns {Matrix|number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -3099,8 +3098,8 @@ class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Number[][]} - the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @yields {Matrix|number[][]} - the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -3122,7 +3121,7 @@ class TSNE extends DR {
         const ystep = this._ystep;
         const gains = this._gains;
         const N = this._N;
-        const { d: dim, epsilon} = this._parameters;
+        const { d: dim, epsilon } = this._parameters;
         let Y = this.Y;
 
         //calc cost gradient;
@@ -3246,23 +3245,40 @@ class UMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias UMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.n_neighbors = 15] - size of the local neighborhood.
-     * @param {Number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
-     * @param {Number} [parameters.min_dist = 1] - controls how tightly points get packed together.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.
-     * @param {Number} [parameters._spread = 1] - The effective scale of embedded points. (In combination with {@link parameters.min_dist})
-     * @param {Number} [parameters._set_op_mix_ratio = 1] - Interpolate between union and intersection.
-     * @param {Number} [parameters._repulsion_strength = 1]  - Weighting applied to negative samples.
-     * @param {Number} [parameters._negative_sample_rate = 5] - The number of negative samples per positive sample.
-     * @param {Number} [parameters._n_epochs = 350] - The number of training epochs.
-     * @param {Number} [parameter._initial_alpha = 1] - The initial learning rate for the optimization.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.n_neighbors = 15] - size of the local neighborhood.
+     * @param {number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
+     * @param {number} [parameters.min_dist = 1] - controls how tightly points get packed together.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.
+     * @param {number} [parameters._spread = 1] - The effective scale of embedded points. (In combination with {@link parameters.min_dist})
+     * @param {number} [parameters._set_op_mix_ratio = 1] - Interpolate between union and intersection.
+     * @param {number} [parameters._repulsion_strength = 1]  - Weighting applied to negative samples.
+     * @param {number} [parameters._negative_sample_rate = 5] - The number of negative samples per positive sample.
+     * @param {number} [parameters._n_epochs = 350] - The number of training epochs.
+     * @param {number} [parameter._initial_alpha = 1] - The initial learning rate for the optimization.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {UMAP}
      */
     constructor(X, parameters) {
-        super(X, { n_neighbors: 15, local_connectivity: 1, min_dist: 1, d: 2, metric: euclidean, seed: 1212, _spread: 1, _set_op_mix_ratio: 1, _repulsion_strength: 1, _negative_sample_rate: 5, _n_epochs: 350, _initial_alpha: 1 }, parameters);
+        super(
+            X,
+            {
+                n_neighbors: 15,
+                local_connectivity: 1,
+                min_dist: 1,
+                d: 2,
+                metric: euclidean,
+                seed: 1212,
+                _spread: 1,
+                _set_op_mix_ratio: 1,
+                _repulsion_strength: 1,
+                _negative_sample_rate: 5,
+                _n_epochs: 350,
+                _initial_alpha: 1,
+            },
+            parameters
+        );
         [this._N, this._D] = this.X.shape;
         /* let n_neighbors = Math.min(this._N - 1, parameters.n_neighbors);
         this.parameter("n_neighbors", n_neighbors);
@@ -3281,9 +3297,9 @@ class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} spread
-     * @param {Number} min_dist
-     * @returns {Array}
+     * @param {number} spread
+     * @param {number} min_dist
+     * @returns {number[]}
      */
     _find_ab_params(spread, min_dist) {
         const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
@@ -3305,10 +3321,10 @@ class UMAP extends DR {
 
     /**
      * @private
-     * @param {Array<Array>} distances
-     * @param {Array<Number>} sigmas
-     * @param {Array<Number>} rhos
-     * @returns {Array}
+     * @param {number[][]} distances
+     * @param {number[]} sigmas
+     * @param {number[]} rhos
+     * @returns {number[]}
      */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
@@ -3325,8 +3341,8 @@ class UMAP extends DR {
     /**
      * @private
      * @param {KNN|BallTree} knn
-     * @param {Number} k
-     * @returns {Object}
+     * @param {number} k
+     * @returns {object}
      */
     _smooth_knn_dist(knn, k) {
         const SMOOTH_K_TOLERANCE = 1e-5;
@@ -3419,7 +3435,7 @@ class UMAP extends DR {
     /**
      * @private
      * @param {Matrix} X
-     * @param {Number} n_neighbors
+     * @param {number} n_neighbors
      * @returns {Matrix}
      */
     _fuzzy_simplicial_set(X, n_neighbors) {
@@ -3447,16 +3463,16 @@ class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} n_epochs
-     * @returns {Array}
+     * @param {number} n_epochs
+     * @returns {Float32Array}
      */
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
         const weight_scl = n_epochs / max(weights);
         weights.forEach((w, i) => {
-          const sample = w * weight_scl;
-          if (sample > 0) result[i] = Math.round(n_epochs / sample);
+            const sample = w * weight_scl;
+            if (sample > 0) result[i] = Math.round(n_epochs / sample);
         });
         return result;
     }
@@ -3464,7 +3480,7 @@ class UMAP extends DR {
     /**
      * @private
      * @param {Matrix} graph
-     * @returns {Object}
+     * @returns {object}
      */
     _tocoo(graph) {
         const rows = [];
@@ -3516,8 +3532,8 @@ class UMAP extends DR {
 
     /**
      *
-     * @param {Number} [iterations=350] - number of iterations.
-     * @returns {Matrix|Array}
+     * @param {number} [iterations=350] - number of iterations.
+     * @returns {Matrix|number[][]}
      */
     transform(iterations = 350) {
         if (this.parameter("_n_epochs") != iterations) {
@@ -3533,8 +3549,8 @@ class UMAP extends DR {
 
     /**
      *
-     * @param {Number} [iterations=350] - number of iterations.
-     * @returns {Matrix|Array}
+     * @param {number} [iterations=350] - number of iterations.
+     * @returns {Matrix|number[][]}
      */
     *generator(iterations = 350) {
         if (this.parameter("_n_epochs") != iterations) {
@@ -3551,8 +3567,8 @@ class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} x
-     * @returns {Number}
+     * @param {number} x
+     * @returns {number}
      */
     _clip(x) {
         if (x > 4) return 4;
@@ -3572,7 +3588,16 @@ class UMAP extends DR {
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
         const randomizer = this._randomizer;
         const { _repulsion_strength, d: dim } = this._parameters;
-        const { _alpha: alpha, _a: a, _b: b, _epochs_per_sample: epochs_per_sample, _epochs_per_negative_sample: epochs_per_negative_sample, _epoch_of_next_negative_sample: epoch_of_next_negative_sample, _epoch_of_next_sample: epoch_of_next_sample, _clip: clip } = this;
+        const {
+            _alpha: alpha,
+            _a: a,
+            _b: b,
+            _epochs_per_sample: epochs_per_sample,
+            _epochs_per_negative_sample: epochs_per_negative_sample,
+            _epoch_of_next_negative_sample: epoch_of_next_negative_sample,
+            _epoch_of_next_sample: epoch_of_next_sample,
+            _clip: clip,
+        } = this;
         const tail_length = tail.length;
 
         for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {
@@ -3640,13 +3665,13 @@ class TriMap extends DR {
      * @memberof module:dimensionality_reduction
      * @alias TriMap
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.weight_adj = 500] - scaling factor.
-     * @param {Number} [parameters.c = 5] - number of triplets multiplier.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Number} [parameters.tol = 1e-8] -
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.weight_adj = 500] - scaling factor.
+     * @param {number} [parameters.c = 5] - number of triplets multiplier.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {number} [parameters.tol = 1e-8] -
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TriMap}
      * @see {@link https://arxiv.org/pdf/1910.00204v1.pdf}
      * @see {@link https://github.com/eamid/trimap}
@@ -3682,9 +3707,9 @@ class TriMap extends DR {
 
     /**
      * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.
-     * @param {Number} n_inliers
-     * @param {Number} n_outliers
-     * @param {Number} n_random
+     * @param {number} n_inliers
+     * @param {number} n_outliers
+     * @param {number} n_random
      */
     _generate_triplets(n_inliers, n_outliers, n_random) {
         const { metric, weight_adj } = this._parameters;
@@ -3771,8 +3796,8 @@ class TriMap extends DR {
      * @private
      * @param {Matrix} P - Matrix of pairwise similarities between each point and its neighbors given in matrix nbrs.
      * @param {Matrix} nbrs - Nearest neighbors indices for each point. The similarity values are given in matrix {@link P}. Row i corresponds to the i-th point.
-     * @param {Number} n_inliers - Number of inlier points.
-     * @param {Number} n_outliers - Number of outlier points.
+     * @param {number} n_inliers - number of inlier points.
+     * @param {number} n_outliers - number of outlier points.
      *
      */
     _sample_knn_triplets(P, nbrs, n_inliers, n_outliers) {
@@ -3800,7 +3825,7 @@ class TriMap extends DR {
     /**
      * Should do the same as np.argsort()
      * @private
-     * @param {Array} A
+     * @param {number[]} A
      */
     __argsort(A) {
         return linspace(0, A.length - 1).sort((i, j) => A[j] - A[i]);
@@ -3846,7 +3871,7 @@ class TriMap extends DR {
      * Sample uniformly ranom triplets
      * @private
      * @param {Matrix} X - Data matrix.
-     * @param {Number} n_random - Number of random triplets per point
+     * @param {number} n_random - number of random triplets per point
      * @param {Float64Array} sig - Scaling factor for the distances
      */
     _sample_random_triplets(X, n_random, sig) {
@@ -3944,7 +3969,8 @@ class TriMap extends DR {
 
     /**
      *
-     * @param {Number} max_iteration
+     * @param {number} max_iteration
+     * @returns {Matrix|number[][]}
      */
     transform(max_iteration = 400) {
         this.check_init();
@@ -3955,9 +3981,9 @@ class TriMap extends DR {
     }
 
     /**
-     * @param {Number} max_iteration
-     * @yields {Matrix}
-     * @returns {Matrix}
+     * @param {number} max_iteration
+     * @yields {Matrix|number[][]}
+     * @returns {Matrix|number[][]}
      */
     *generator(max_iteration = 800) {
         this.check_init();
@@ -3971,7 +3997,7 @@ class TriMap extends DR {
     /**
      * Does the iteration step.
      * @private
-     * @param {Number} iter
+     * @param {number} iter
      */
     _next(iter) {
         const gamma = iter > 150 ? 0.5 : 0.3;
@@ -3989,7 +4015,7 @@ class TriMap extends DR {
      * Updates the embedding.
      * @private
      * @param {Matrix} Y
-     * @param {Number} iter
+     * @param {number} iter
      * @param {Matrix} grad
      */
     _update_embedding(Y, iter, grad) {
@@ -4927,20 +4953,20 @@ class LSP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LSP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.neighbors = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.
-     * @param {Number} [parameters.control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.neighbors = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.
+     * @param {number} [parameters.control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {LSP}
      * @see {@link https://ieeexplore.ieee.org/document/4378370}
      * @todo accept precomputed distance matrix.
      */
     constructor(X, parameters) {
         super(X, { neighbors: undefined, control_points: undefined, d: 2, metric: euclidean, seed: 1212 }, parameters);
-        this.parameter("neighbors", Math.min(parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        this.parameter("control_points", Math.min(parameters.control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
+        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("control_points", Math.min(this._parameters.control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
         return this;
     }
@@ -4948,7 +4974,7 @@ class LSP extends DR {
     /**
      *
      * @param {DR} DR - method used for position control points.
-     * @param {Object} DR_parameters - Object containing parameters for the DR method which projects the control points
+     * @param {object} DR_parameters - Object containing parameters for the DR method which projects the control points
      * @returns {LSP}
      */
     init(DR = MDS, DR_parameters = {}, KNN = BallTree) {
@@ -4959,7 +4985,7 @@ class LSP extends DR {
         const d = this.parameter("d");
         const seed = this.parameter("seed");
         const metric = this.parameter("metric");
-        DR_parameters = Object.assign({d, metric, seed }, DR_parameters);
+        DR_parameters = Object.assign({ d, metric, seed }, DR_parameters);
         const nc = this.parameter("control_points");
         const control_points = new KMedoids(X, nc, null, metric).get_clusters().medoids;
         const C = new Matrix(nc, N, "zeros");
@@ -5019,7 +5045,7 @@ class TopoMap extends DR {
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TopoMap}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
@@ -5049,7 +5075,7 @@ class TopoMap extends DR {
     /**
      * Computes the minimum spanning tree, using a given metric
      * @private
-     * @param {Function} metric
+     * @param {function} metric
      * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
      */
     _make_minimum_spanning_tree(metric = euclidean) {
@@ -5082,7 +5108,7 @@ class TopoMap extends DR {
      * initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.
      */
     init() {
-        const { metric} = this._parameters;
+        const { metric } = this._parameters;
         this.Y = new Matrix(this._N, 2, 0);
         this._Emst = this._make_minimum_spanning_tree(metric);
         this._is_initialized = true;
@@ -5092,10 +5118,10 @@ class TopoMap extends DR {
     /**
      * Returns true if Point C is left of line AB.
      * @private
-     * @param {Array} PointA - Point A of line AB
-     * @param {Array} PointB - Point B of line AB
-     * @param {Array} PointC - Point C
-     * @returns {Boolean}
+     * @param {number[][]} PointA - Point A of line AB
+     * @param {number[][]} PointB - Point B of line AB
+     * @param {number[][]} PointC - Point C
+     * @returns {boolean}
      */
     __hull_cross([ax, ay], [bx, by], [sx, sy]) {
         return (bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0;
@@ -5104,9 +5130,9 @@ class TopoMap extends DR {
     /**
      * Computes the convex hull of the set of Points S
      * @private
-     * @param {Array} S - Set of Points.
+     * @param {number[][]} S - Set of Points.
      * @see {@link https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#JavaScript}
-     * @returns {Array} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.
+     * @returns {number[][]} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.
      */
     __hull(S) {
         const points = S.sort(([x1, y1], [x2, y2]) => y1 - y2 || x1 - x2);
@@ -5135,9 +5161,9 @@ class TopoMap extends DR {
     /**
      * Finds the angle to rotate Point A and B to lie on a line parallel to the x-axis.
      * @private
-     * @param {Array} PointA
-     * @param {Array} PointB
-     * @return {Object} Object containing the sinus- and cosinus-values for a rotation.
+     * @param {number[]} PointA
+     * @param {number[]} PointB
+     * @return {object} Object containing the sinus- and cosinus-values for a rotation.
      */
     __findAngle([p1x, p1y], [p2x, p2y]) {
         const n = euclidean([p1x, p1y], [p2x, p2y]);
@@ -5158,9 +5184,9 @@ class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} hull
-     * @param {Array} p
-     * @param {Bool} topEdge
+     * @param {number[][]} hull
+     * @param {number[]} p
+     * @param {boolean} topEdge
      */
     __align_hull(hull, p, topEdge) {
         let v = -1;
@@ -5208,8 +5234,8 @@ class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} Point - The point which should get transformed.
-     * @param {Object} Transformation - contains the values for translation and rotation.
+     * @param {number[][]} Point - The point which should get transformed.
+     * @param {object} Transformation - contains the values for translation and rotation.
      */
     __transform([px, py], { tx, ty, sin, cos }) {
         let x = px + tx;
@@ -5222,9 +5248,9 @@ class TopoMap extends DR {
     /**
      * Calls {@link __transform} for each point in Set C
      * @private
-     * @param {Array} C - Set of points.
-     * @param {Object} t - Transform object.
-     * @param {Number} yOffset - value to offset set C.
+     * @param {number[][]} C - Set of points.
+     * @param {object} t - Transform object.
+     * @param {number} yOffset - value to offset set C.
      */
     __transform_component(C, t, yOffset) {
         const N = C.length;
@@ -5238,9 +5264,9 @@ class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} u - point u
-     * @param {Array} v - point v
-     * @param {Number} w - edge weight w
+     * @param {number[]} u - point u
+     * @param {number[]} v - point v
+     * @param {number} w - edge weight w
      */
     __align_components(u, v, w) {
         const points_u = [...u.__disjoint_set.children];
@@ -5280,6 +5306,10 @@ class TopoMap extends DR {
         return this.projection;
     }
 
+    /**
+     * Transforms the inputdata {@link X} to dimensionality 2.
+     * @yields {Matrix|number[][]}
+     */
     *generator() {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;
@@ -5315,12 +5345,13 @@ class SAMMON extends DR {
      * @memberof module:dimensionality_reduction
      * @alias SAMMON
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {"PCA"|"MDS"|"random"} [parameters.init = "random"] - Either "PCA" or "MDS", with which SAMMON initialiates the projection. With "random" a random matrix gets used as starting point.
-     * @param {Object} [parameters.init_parameters] - Parameters for the {@link init}-DR method.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.init_parameters] - Parameters for the {@link init}-DR method.
+     * @param {number} [parameters.magic = 0.1] - learning rate for gradient descent.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {SAMMON}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
@@ -5342,7 +5373,7 @@ class SAMMON extends DR {
         } else if (["PCA", "MDS"].includes(init_DR)) {
             this.Y = Matrix.from(init_DR == "PCA" ? PCA.transform(this.X, DR_parameters) : MDS.transform(this.X, DR_parameters));
         } else {
-            throw new Error('init_DR needs to be either "random" or a DR method!')
+            throw new Error('init_DR needs to be either "random" or a DR method!');
         }
         this.distance_matrix = metric == "precomputed" ? Matrix.from(this.X) : distance_matrix(this.X, metric);
         return this;
@@ -5350,7 +5381,7 @@ class SAMMON extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     * @param {Number} [max_iter=200] - Maximum number of iteration steps.
+     * @param {number} [max_iter=200] - Maximum number of iteration steps.
      * @returns {Matrix|Array} - The projection of {@link X}.
      */
     transform(max_iter = 200) {
@@ -5363,7 +5394,7 @@ class SAMMON extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     * @param {Number} [max_iter=200] - Maximum number of iteration steps.
+     * @param {number} [max_iter=200] - Maximum number of iteration steps.
      * @returns {Generator} - A generator yielding the intermediate steps of the projection of {@link X}.
      */
     *generator(max_iter = 200) {
@@ -5431,13 +5462,13 @@ class SQDMDS extends DR {
      * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE and UMAP.
      * @constructor
      * @memberof module:dimensionality_reduction
-     * @param {Matrix|Number[][]} X
-     * @param {Object} [parameters]
-     * @param {Number} [parameters.d=2]
-     * @param {Function} [parameters.metric = euclidean]
-     * @param {Number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
-     * @param {Number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
-     * @param {Object} [parameters.init_DR]
+     * @param {Matrix|number[][]} X
+     * @param {object} [parameters]
+     * @param {number} [parameters.d=2]
+     * @param {function} [parameters.metric = euclidean]
+     * @param {number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
+     * @param {number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
+     * @param {object} [parameters.init_DR]
      * @returns {SQDMDS}
      * @see {@link https://arxiv.org/pdf/2202.12087.pdf}
      */
@@ -5450,7 +5481,7 @@ class SQDMDS extends DR {
                 seed: 1212,
                 decay_start: 0.1,
                 decay_cte: 0.34, // 0.34
-                init_DR: {type: "random"}
+                init_DR: { type: "random" },
             },
             parameters
         );
@@ -5508,8 +5539,8 @@ class SQDMDS extends DR {
 
     /**
      * Computes the projection.
-     * @param {Number} [iterations=500] - Number of iterations.
-     * @returns {Matrix|Number[][]} the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @returns {Matrix|number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -5522,8 +5553,8 @@ class SQDMDS extends DR {
 
     /**
      * Computes the projection.
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -5538,8 +5569,8 @@ class SQDMDS extends DR {
     /**
      * Performs an optimization step.
      * @private
-     * @param {Number} i - Acutal iteration.
-     * @param {Number} iterations - Number of iterations.
+     * @param {number} i - Acutal iteration.
+     * @param {number} iterations - Number of iterations.
      */
     _step(i, iterations) {
         const decay_start = this._decay_start;
@@ -5558,7 +5589,7 @@ class SQDMDS extends DR {
     /**
      * Creates quartets of non overlapping indices.
      * @private
-     * @returns {Number[][]}
+     * @returns {number[][]}
      */
     __quartets() {
         const N = this._N;
@@ -5575,7 +5606,7 @@ class SQDMDS extends DR {
     /**
      * Computes and applies gradients, and updates momentum.
      * @private
-     * @param {Boolean} distance_exaggeration
+     * @param {boolean} distance_exaggeration
      */
     _nestrov_iteration(distance_exaggeration) {
         const momentums = this._momentums.mult(0.99, { inline: true });
@@ -5599,8 +5630,8 @@ class SQDMDS extends DR {
      * Computes the gradients.
      * @param {Matrix} Y - The Projection.
      * @param {Matrix} grads - The gradients.
-     * @param {Boolean} [exaggeration = false] - Whether or not to use early exaggeration.
-     * @param {Boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
+     * @param {boolean} [exaggeration = false] - Whether or not to use early exaggeration.
+     * @param {boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
      * @returns {Matrix} the gradients.
      */
     _fill_MDS_grads(Y, grads, exaggeration = false, zero_grad = true) {
@@ -5651,9 +5682,9 @@ class SQDMDS extends DR {
      * Quartet gradients for a projection.
      * @private
      * @param {Matrix} Y - The acutal projection.
-     * @param {Number[]} quartet - The indices of the quartet.
-     * @param {Number[]} D_hd - The high-dimensional distances of the quartet.
-     * @returns {Number[][]} the gradients for the quartet.
+     * @param {number[]} quartet - The indices of the quartet.
+     * @param {number[]} D_hd - The high-dimensional distances of the quartet.
+     * @returns {number[][]} the gradients for the quartet.
      */
     _compute_quartet_grads(Y, quartet, [p_ab, p_ac, p_ad, p_bc, p_bd, p_cd]) {
         const [a, b, c, d] = quartet.map((index) => Y.row(index));
@@ -5754,7 +5785,7 @@ class SQDMDS extends DR {
 }
 
 //export { version } from "../package.json" assert { type: "json"};
-const version = "0.7.1";
+const version = "0.7.2";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;

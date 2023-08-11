@@ -1,6 +1,7 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
+
 /**
  * @class
  * @alias FASTMAP
@@ -13,10 +14,10 @@ export class FASTMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias FASTMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the dimensionality of the projection.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the dimensionality of the projection.
      * @returns {FASTMAP}
      * @see {@link https://doi.org/10.1145/223784.223812}
      */
@@ -28,8 +29,8 @@ export class FASTMAP extends DR {
     /**
      * Chooses two points which are the most distant in the actual projection.
      * @private
-     * @param {Function} dist
-     * @returns {Array} An array consisting of first index, second index, and distance between the two points.
+     * @param {function} dist
+     * @returns {number[]} An array consisting of first index, second index, and distance between the two points.
      */
     _choose_distant_objects(dist) {
         const X = this.X;

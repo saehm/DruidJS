@@ -20,23 +20,40 @@ export class UMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias UMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.n_neighbors = 15] - size of the local neighborhood.
-     * @param {Number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
-     * @param {Number} [parameters.min_dist = 1] - controls how tightly points get packed together.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.
-     * @param {Number} [parameters._spread = 1] - The effective scale of embedded points. (In combination with {@link parameters.min_dist})
-     * @param {Number} [parameters._set_op_mix_ratio = 1] - Interpolate between union and intersection.
-     * @param {Number} [parameters._repulsion_strength = 1]  - Weighting applied to negative samples.
-     * @param {Number} [parameters._negative_sample_rate = 5] - The number of negative samples per positive sample.
-     * @param {Number} [parameters._n_epochs = 350] - The number of training epochs.
-     * @param {Number} [parameter._initial_alpha = 1] - The initial learning rate for the optimization.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.n_neighbors = 15] - size of the local neighborhood.
+     * @param {number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
+     * @param {number} [parameters.min_dist = 1] - controls how tightly points get packed together.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.
+     * @param {number} [parameters._spread = 1] - The effective scale of embedded points. (In combination with {@link parameters.min_dist})
+     * @param {number} [parameters._set_op_mix_ratio = 1] - Interpolate between union and intersection.
+     * @param {number} [parameters._repulsion_strength = 1]  - Weighting applied to negative samples.
+     * @param {number} [parameters._negative_sample_rate = 5] - The number of negative samples per positive sample.
+     * @param {number} [parameters._n_epochs = 350] - The number of training epochs.
+     * @param {number} [parameter._initial_alpha = 1] - The initial learning rate for the optimization.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {UMAP}
      */
     constructor(X, parameters) {
-        super(X, { n_neighbors: 15, local_connectivity: 1, min_dist: 1, d: 2, metric: euclidean, seed: 1212, _spread: 1, _set_op_mix_ratio: 1, _repulsion_strength: 1, _negative_sample_rate: 5, _n_epochs: 350, _initial_alpha: 1 }, parameters);
+        super(
+            X,
+            {
+                n_neighbors: 15,
+                local_connectivity: 1,
+                min_dist: 1,
+                d: 2,
+                metric: euclidean,
+                seed: 1212,
+                _spread: 1,
+                _set_op_mix_ratio: 1,
+                _repulsion_strength: 1,
+                _negative_sample_rate: 5,
+                _n_epochs: 350,
+                _initial_alpha: 1,
+            },
+            parameters
+        );
         [this._N, this._D] = this.X.shape;
         /* let n_neighbors = Math.min(this._N - 1, parameters.n_neighbors);
         this.parameter("n_neighbors", n_neighbors);
@@ -55,9 +72,9 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} spread
-     * @param {Number} min_dist
-     * @returns {Array}
+     * @param {number} spread
+     * @param {number} min_dist
+     * @returns {number[]}
      */
     _find_ab_params(spread, min_dist) {
         const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
@@ -79,10 +96,10 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {Array<Array>} distances
-     * @param {Array<Number>} sigmas
-     * @param {Array<Number>} rhos
-     * @returns {Array}
+     * @param {number[][]} distances
+     * @param {number[]} sigmas
+     * @param {number[]} rhos
+     * @returns {number[]}
      */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
@@ -99,8 +116,8 @@ export class UMAP extends DR {
     /**
      * @private
      * @param {KNN|BallTree} knn
-     * @param {Number} k
-     * @returns {Object}
+     * @param {number} k
+     * @returns {object}
      */
     _smooth_knn_dist(knn, k) {
         const SMOOTH_K_TOLERANCE = 1e-5;
@@ -193,7 +210,7 @@ export class UMAP extends DR {
     /**
      * @private
      * @param {Matrix} X
-     * @param {Number} n_neighbors
+     * @param {number} n_neighbors
      * @returns {Matrix}
      */
     _fuzzy_simplicial_set(X, n_neighbors) {
@@ -221,24 +238,24 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} n_epochs
-     * @returns {Array}
+     * @param {number} n_epochs
+     * @returns {Float32Array}
      */
     _make_epochs_per_sample(n_epochs) {
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
         const weight_scl = n_epochs / max(weights);
         weights.forEach((w, i) => {
-          const sample = w * weight_scl;
-          if (sample > 0) result[i] = Math.round(n_epochs / sample);
-        })
+            const sample = w * weight_scl;
+            if (sample > 0) result[i] = Math.round(n_epochs / sample);
+        });
         return result;
     }
 
     /**
      * @private
      * @param {Matrix} graph
-     * @returns {Object}
+     * @returns {object}
      */
     _tocoo(graph) {
         const rows = [];
@@ -290,8 +307,8 @@ export class UMAP extends DR {
 
     /**
      *
-     * @param {Number} [iterations=350] - number of iterations.
-     * @returns {Matrix|Array}
+     * @param {number} [iterations=350] - number of iterations.
+     * @returns {Matrix|number[][]}
      */
     transform(iterations = 350) {
         if (this.parameter("_n_epochs") != iterations) {
@@ -307,8 +324,8 @@ export class UMAP extends DR {
 
     /**
      *
-     * @param {Number} [iterations=350] - number of iterations.
-     * @returns {Matrix|Array}
+     * @param {number} [iterations=350] - number of iterations.
+     * @returns {Matrix|number[][]}
      */
     *generator(iterations = 350) {
         if (this.parameter("_n_epochs") != iterations) {
@@ -325,8 +342,8 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {Number} x
-     * @returns {Number}
+     * @param {number} x
+     * @returns {number}
      */
     _clip(x) {
         if (x > 4) return 4;
@@ -346,7 +363,16 @@ export class UMAP extends DR {
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
         const randomizer = this._randomizer;
         const { _repulsion_strength, d: dim } = this._parameters;
-        const { _alpha: alpha, _a: a, _b: b, _epochs_per_sample: epochs_per_sample, _epochs_per_negative_sample: epochs_per_negative_sample, _epoch_of_next_negative_sample: epoch_of_next_negative_sample, _epoch_of_next_sample: epoch_of_next_sample, _clip: clip } = this;
+        const {
+            _alpha: alpha,
+            _a: a,
+            _b: b,
+            _epochs_per_sample: epochs_per_sample,
+            _epochs_per_negative_sample: epochs_per_negative_sample,
+            _epoch_of_next_negative_sample: epoch_of_next_negative_sample,
+            _epoch_of_next_sample: epoch_of_next_sample,
+            _clip: clip,
+        } = this;
         const tail_length = tail.length;
 
         for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {

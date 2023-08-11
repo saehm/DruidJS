@@ -17,17 +17,17 @@ export class LLE extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LLE
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} neighbors - the label / class of each data point.
-     * @param {Number} [d = 2] - the dimensionality of the projection.
-     * @param {Function} [metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [seed = 1212] - the dimensionality of the projection.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} parameters.neighbors - the label / class of each data point.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the dimensionality of the projection.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://doi.org/10.1126/science.290.5500.2323}
      */
     constructor(X, parameters) {
         super(X, { neighbors: undefined, d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
-        this.parameter("neighbors", Math.min(parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         if (!this._parameters.eig_args.hasOwnProperty("seed")) {
             this._parameters.eig_args.seed = this._randomizer;
         }

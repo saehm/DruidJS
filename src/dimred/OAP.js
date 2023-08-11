@@ -6,7 +6,7 @@ import { Matrix } from "../matrix/index.js";
 import { neumair_sum } from "../numerical/index.js";
 
 /**
- * 
+ *
  */
 export class OAP {
     constructor(X, depth_field_lag, step_size, depth_weight, d = 2, metric = euclidean, seed = 1212) {
@@ -29,7 +29,7 @@ export class OAP {
         const h = new Float32Array(N);
         let deepest_point = 0;
         if (technique === "mdb") {
-            h.fill(1)
+            h.fill(1);
 
             /*
             // Modified Band Depth 
@@ -84,7 +84,6 @@ export class OAP {
         }
         this._h = h;
         this._deepest_point = deepest_point;
-
     }
 
     init() {
@@ -95,15 +94,15 @@ export class OAP {
         this._Y = init_MDS.transform();
 
         // try häääh?
-        this._X_distances = init_MDS._d_X
+        this._X_distances = init_MDS._d_X;
         /*let max = -Infinity
         init_MDS._d_X._data.forEach(dx => max = Math.max(dx, max));
         this._X_distances = init_MDS._d_X.divide(max);*/
         // end try hääääh?
-        
+
         // compute order statistics
         this._data_depth();
-        this._M = this._monotonic_field(this._Y)
+        this._M = this._monotonic_field(this._Y);
         //
         return this;
     }
@@ -139,7 +138,7 @@ export class OAP {
         return this._Y;
     }
 
-    * transform_iter() {
+    *transform_iter() {
         while (true) {
             this.next();
             yield this._Y;
@@ -153,19 +152,19 @@ export class OAP {
         const nn = new BallTree();
         nn.add(Y.to2dArray);
 
-        const N = 5
+        const N = 5;
         let M = (x) => {
             let neighbors = nn.search(x, N).toArray();
-            let d_sum = 0;//neighbors.reduce((a, b) => a + b.value, 0);
-            let m = 0
+            let d_sum = 0; //neighbors.reduce((a, b) => a + b.value, 0);
+            let m = 0;
             for (let i = 0; i < N; ++i) {
-                d_sum += neighbors[i].value
-                m += h[neighbors[i].element.index] * neighbors[i].value
+                d_sum += neighbors[i].value;
+                m += h[neighbors[i].element.index] * neighbors[i].value;
             }
             //console.log(m, d_sum)
             m /= d_sum;
             return m;
-        }
+        };
         return M;
     }
 
@@ -180,10 +179,10 @@ export class OAP {
         const h = this._h;
         let Y = this._Y;
 
-        if ((iter % l) === 1) {
+        if (iter % l === 1) {
             // compute monotonic field
-            this._Y_ = this._Y.clone()
-            this._M = this._monotonic_field(Y)
+            this._Y_ = this._Y.clone();
+            this._M = this._monotonic_field(Y);
         }
         const M = this._M;
         // perform gradient step
@@ -208,17 +207,25 @@ export class OAP {
                 Y.set_entry(i, d, Y.entry(i, d) - step_size * delta_mds_stress[d] / N)
             }
         }*/
-        
+
         // MDS stress step
         const d_Y = new Matrix();
-        d_Y.shape = [N, N, (i, j) => {
-            return i < j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
-        }]
-        const ratio = new Matrix();//d_X.divide(d_Y).mult(-1);
-        ratio.shape = [N, N, (i, j) => {
-            if (i === j) return 1e-8
-            return i < j ? -d_X.entry(i, j) / d_Y.entry(i, j) : ratio.entry(j, i);
-        }]
+        d_Y.shape = [
+            N,
+            N,
+            (i, j) => {
+                return i < j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
+            },
+        ];
+        const ratio = new Matrix(); //d_X.divide(d_Y).mult(-1);
+        ratio.shape = [
+            N,
+            N,
+            (i, j) => {
+                if (i === j) return 1e-8;
+                return i < j ? -d_X.entry(i, j) / d_Y.entry(i, j) : ratio.entry(j, i);
+            },
+        ];
         for (let i = 0; i < N; ++i) {
             ratio.sub_entry(i, i, neumair_sum(ratio.row(i)));
         }
@@ -244,4 +251,4 @@ export class OAP {
     get projection() {
         return this._Y;
     }
-} 
+}

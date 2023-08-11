@@ -12,11 +12,11 @@ export class PCA extends DR {
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias PCA
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {Matrix|number[][]} X - the high-dimensional data.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @returns {PCA}
      */
     constructor(X, parameters) {
@@ -29,8 +29,8 @@ export class PCA extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}. If parameter {@link A} is given, then project {@link A} with the principal components of {@link X}.
-     * @param {null|Matrix|Array} [A = null] - If given, the data to project.
-     * @returns {Matrix|Array} - The projected data.
+     * @param {null|Matrix|number[][]} [A = null] - If given, the data to project.
+     * @returns {Matrix|number[][]} - The projected data.
      */
     transform(A = null) {
         const V = this.principal_components();

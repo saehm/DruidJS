@@ -14,12 +14,12 @@ export class TSNE extends DR {
      * @memberof module:dimensionality_reduction
      * @alias TSNE
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.perplexity = 50] - perplexity.
-     * @param {Number} [parameters.epsilon = 10] - learning parameter.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.perplexity = 50] - perplexity.
+     * @param {number} [parameters.epsilon = 10] - learning parameter.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TSNE}
      */
     constructor(X, parameters) {
@@ -39,10 +39,10 @@ export class TSNE extends DR {
         const Htarget = Math.log(this.parameter("perplexity"));
         const N = this._N;
         const D = this._D;
-        const {metric} = this._parameters;
+        const { metric } = this._parameters;
         const X = this.X;
         let Delta;
-        if (metric =="precomputed") {
+        if (metric == "precomputed") {
             Delta = druid.Matrix.from(X);
         } else {
             Delta = new Matrix(N, N);
@@ -80,13 +80,13 @@ export class TSNE extends DR {
                 let dp_sum = 0;
                 for (let j = 0; j < N; ++j) {
                     const dist = dist_i[j];
-                    const pj = (i !== j) ? Math.exp(-dist * beta) : 0;
+                    const pj = i !== j ? Math.exp(-dist * beta) : 0;
                     dp_sum += dist * pj;
                     prow[j] = pj;
                     psum += pj;
                 }
                 // compute entropy
-                const H = psum > 0 ? Math.log(psum) + beta * dp_sum / psum : 0;
+                const H = psum > 0 ? Math.log(psum) + (beta * dp_sum) / psum : 0;
                 if (H > Htarget) {
                     betamin = beta;
                     beta = betamax === Infinity ? beta * 2 : (beta + betamax) / 2;
@@ -117,8 +117,8 @@ export class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - Number of iterations.
-     * @returns {Matrix|Number[][]} the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @returns {Matrix|number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -130,8 +130,8 @@ export class TSNE extends DR {
 
     /**
      *
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Number[][]} - the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @yields {Matrix|number[][]} - the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -153,7 +153,7 @@ export class TSNE extends DR {
         const ystep = this._ystep;
         const gains = this._gains;
         const N = this._N;
-        const { d: dim, epsilon} = this._parameters;
+        const { d: dim, epsilon } = this._parameters;
         let Y = this.Y;
 
         //calc cost gradient;

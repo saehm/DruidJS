@@ -16,12 +16,13 @@ export class SAMMON extends DR {
      * @memberof module:dimensionality_reduction
      * @alias SAMMON
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
      * @param {"PCA"|"MDS"|"random"} [parameters.init = "random"] - Either "PCA" or "MDS", with which SAMMON initialiates the projection. With "random" a random matrix gets used as starting point.
-     * @param {Object} [parameters.init_parameters] - Parameters for the {@link init}-DR method.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.init_parameters] - Parameters for the {@link init}-DR method.
+     * @param {number} [parameters.magic = 0.1] - learning rate for gradient descent.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {SAMMON}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
@@ -43,7 +44,7 @@ export class SAMMON extends DR {
         } else if (["PCA", "MDS"].includes(init_DR)) {
             this.Y = Matrix.from(init_DR == "PCA" ? PCA.transform(this.X, DR_parameters) : MDS.transform(this.X, DR_parameters));
         } else {
-            throw new Error('init_DR needs to be either "random" or a DR method!')
+            throw new Error('init_DR needs to be either "random" or a DR method!');
         }
         this.distance_matrix = metric == "precomputed" ? Matrix.from(this.X) : distance_matrix(this.X, metric);
         return this;
@@ -51,7 +52,7 @@ export class SAMMON extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     * @param {Number} [max_iter=200] - Maximum number of iteration steps.
+     * @param {number} [max_iter=200] - Maximum number of iteration steps.
      * @returns {Matrix|Array} - The projection of {@link X}.
      */
     transform(max_iter = 200) {
@@ -64,7 +65,7 @@ export class SAMMON extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimenionality 2.
-     * @param {Number} [max_iter=200] - Maximum number of iteration steps.
+     * @param {number} [max_iter=200] - Maximum number of iteration steps.
      * @returns {Generator} - A generator yielding the intermediate steps of the projection of {@link X}.
      */
     *generator(max_iter = 200) {

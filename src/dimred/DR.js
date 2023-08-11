@@ -1,4 +1,3 @@
-import { euclidean } from "../metrics/index.js";
 import { Matrix } from "../matrix/index.js";
 import { Randomizer } from "../util/index.js";
 
@@ -14,11 +13,11 @@ export class DR {
      * @constructor
      * @memberof module:dimensionality_reduction
      * @alias DR
-     * @param {Matrix|Array<Array<Number>>} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed value for the random number generator.
+     * @param {Matrix|number[][]} X - the high-dimensional data.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed value for the random number generator.
      * @returns {DR}
      */
     constructor(X, default_parameters, parameters) {
@@ -40,13 +39,13 @@ export class DR {
 
     /**
      * Set and get parameters
-     * @param {String} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
+     * @param {string} [name = null] - Name of the parameter. If not given then returns all parameters as an Object.
      * @param {any} [value = null] - Value of the parameter to set. If <code>name</code> is set and <code>value</code> is not given, returns the value of the respective parameter.
-     * @returns {DR|any|Object} 
-     * On setting a parameter, this function returns the DR object. 
+     * @returns {DR|any|object}
+     * On setting a parameter, this function returns the DR object.
      * If <code>name</code> is set and <code>value == null</code> then return actual parameter value.
      * If <code>name</code> is not given, then returns all parameters as an Object.
-     * 
+     *
      * @example
      * '''
      * const DR = new druid.TSNE(X, {d: 3}); // creates a new DR object, with parameter for <code>d</code> = 3.
@@ -89,7 +88,7 @@ export class DR {
 
     /**
      * Computes the projection.
-     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator() {
         return this.transform();
@@ -108,7 +107,7 @@ export class DR {
     }
 
     /**
-     * @returns {Matrix|Number[][]} the projection in the type of input <code>X</code>.
+     * @returns {Matrix|number[][]} the projection in the type of input <code>X</code>.
      */
     get projection() {
         if (this.hasOwnProperty("Y")) {
@@ -122,7 +121,7 @@ export class DR {
     /**
      * Computes the projection.
      * @param  {...unknown} args - Arguments the transform method of the respective DR method takes.
-     * @returns {Promise<Matrix|Number[][]>} the dimensionality reduced dataset.
+     * @returns {Promise<Matrix|number[][]>} the dimensionality reduced dataset.
      */
     async transform_async(...args) {
         return this.transform(...args);
@@ -132,7 +131,7 @@ export class DR {
      * Computes the projection.
      * @static
      * @param  {...unknown} args - Takes the same arguments of the constructor of the respective DR method.
-     * @returns {Matrix|Array} the dimensionality reduced dataset.
+     * @returns {Matrix|number[][]} the dimensionality reduced dataset.
      */
     static transform(...args) {
         let dr = new this(...args);

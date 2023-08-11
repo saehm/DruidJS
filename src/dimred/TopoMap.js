@@ -18,7 +18,7 @@ export class TopoMap extends DR {
      * @param {Matrix} X - the high-dimensional data.
      * @param {Object} parameters - Object containing parameterization of the DR method.
      * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TopoMap}
      * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
      */
@@ -48,7 +48,7 @@ export class TopoMap extends DR {
     /**
      * Computes the minimum spanning tree, using a given metric
      * @private
-     * @param {Function} metric
+     * @param {function} metric
      * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
      */
     _make_minimum_spanning_tree(metric = euclidean) {
@@ -81,7 +81,7 @@ export class TopoMap extends DR {
      * initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree.
      */
     init() {
-        const { metric} = this._parameters
+        const { metric } = this._parameters;
         this.Y = new Matrix(this._N, 2, 0);
         this._Emst = this._make_minimum_spanning_tree(metric);
         this._is_initialized = true;
@@ -91,10 +91,10 @@ export class TopoMap extends DR {
     /**
      * Returns true if Point C is left of line AB.
      * @private
-     * @param {Array} PointA - Point A of line AB
-     * @param {Array} PointB - Point B of line AB
-     * @param {Array} PointC - Point C
-     * @returns {Boolean}
+     * @param {number[][]} PointA - Point A of line AB
+     * @param {number[][]} PointB - Point B of line AB
+     * @param {number[][]} PointC - Point C
+     * @returns {boolean}
      */
     __hull_cross([ax, ay], [bx, by], [sx, sy]) {
         return (bx - ax) * (sy - ay) - (by - ay) * (sx - ax) <= 0;
@@ -103,9 +103,9 @@ export class TopoMap extends DR {
     /**
      * Computes the convex hull of the set of Points S
      * @private
-     * @param {Array} S - Set of Points.
+     * @param {number[][]} S - Set of Points.
      * @see {@link https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#JavaScript}
-     * @returns {Array} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.
+     * @returns {number[][]} convex hull of S. Starts at the bottom-most point and continues counter-clockwise.
      */
     __hull(S) {
         const points = S.sort(([x1, y1], [x2, y2]) => y1 - y2 || x1 - x2);
@@ -134,9 +134,9 @@ export class TopoMap extends DR {
     /**
      * Finds the angle to rotate Point A and B to lie on a line parallel to the x-axis.
      * @private
-     * @param {Array} PointA
-     * @param {Array} PointB
-     * @return {Object} Object containing the sinus- and cosinus-values for a rotation.
+     * @param {number[]} PointA
+     * @param {number[]} PointB
+     * @return {object} Object containing the sinus- and cosinus-values for a rotation.
      */
     __findAngle([p1x, p1y], [p2x, p2y]) {
         const n = euclidean([p1x, p1y], [p2x, p2y]);
@@ -157,9 +157,9 @@ export class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} hull
-     * @param {Array} p
-     * @param {Bool} topEdge
+     * @param {number[][]} hull
+     * @param {number[]} p
+     * @param {boolean} topEdge
      */
     __align_hull(hull, p, topEdge) {
         let v = -1;
@@ -207,8 +207,8 @@ export class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} Point - The point which should get transformed.
-     * @param {Object} Transformation - contains the values for translation and rotation.
+     * @param {number[][]} Point - The point which should get transformed.
+     * @param {object} Transformation - contains the values for translation and rotation.
      */
     __transform([px, py], { tx, ty, sin, cos }) {
         let x = px + tx;
@@ -221,9 +221,9 @@ export class TopoMap extends DR {
     /**
      * Calls {@link __transform} for each point in Set C
      * @private
-     * @param {Array} C - Set of points.
-     * @param {Object} t - Transform object.
-     * @param {Number} yOffset - value to offset set C.
+     * @param {number[][]} C - Set of points.
+     * @param {object} t - Transform object.
+     * @param {number} yOffset - value to offset set C.
      */
     __transform_component(C, t, yOffset) {
         const N = C.length;
@@ -237,9 +237,9 @@ export class TopoMap extends DR {
 
     /**
      * @private
-     * @param {Array} u - point u
-     * @param {Array} v - point v
-     * @param {Number} w - edge weight w
+     * @param {number[]} u - point u
+     * @param {number[]} v - point v
+     * @param {number} w - edge weight w
      */
     __align_components(u, v, w) {
         const points_u = [...u.__disjoint_set.children];
@@ -279,6 +279,10 @@ export class TopoMap extends DR {
         return this.projection;
     }
 
+    /**
+     * Transforms the inputdata {@link X} to dimensionality 2.
+     * @yields {Matrix|number[][]}
+     */
     *generator() {
         if (!this._is_initialized) this.init();
         const Emst = this._Emst;

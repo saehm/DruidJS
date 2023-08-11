@@ -16,20 +16,20 @@ export class LSP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias LSP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.neighbors = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.
-     * @param {Number} [parameters.control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.neighbors = Math.max(Math.floor(N / 10), 2)] - number of neighbors to consider.
+     * @param {number} [parameters.control_points = Math.ceil(Math.sqrt(N))] - number of controlpoints
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {LSP}
      * @see {@link https://ieeexplore.ieee.org/document/4378370}
      * @todo accept precomputed distance matrix.
      */
     constructor(X, parameters) {
         super(X, { neighbors: undefined, control_points: undefined, d: 2, metric: euclidean, seed: 1212 }, parameters);
-        this.parameter("neighbors", Math.min(parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        this.parameter("control_points", Math.min(parameters.control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
+        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
+        this.parameter("control_points", Math.min(this._parameters.control_points ?? Math.ceil(Math.sqrt(this._N)), this._N - 1));
         this._is_initialized = false;
         return this;
     }
@@ -37,7 +37,7 @@ export class LSP extends DR {
     /**
      *
      * @param {DR} DR - method used for position control points.
-     * @param {Object} DR_parameters - Object containing parameters for the DR method which projects the control points
+     * @param {object} DR_parameters - Object containing parameters for the DR method which projects the control points
      * @returns {LSP}
      */
     init(DR = MDS, DR_parameters = {}, KNN = BallTree) {
@@ -48,7 +48,7 @@ export class LSP extends DR {
         const d = this.parameter("d");
         const seed = this.parameter("seed");
         const metric = this.parameter("metric");
-        DR_parameters = Object.assign({d, metric, seed }, DR_parameters);
+        DR_parameters = Object.assign({ d, metric, seed }, DR_parameters);
         const nc = this.parameter("control_points");
         const control_points = new KMedoids(X, nc, null, metric).get_clusters().medoids;
         const C = new Matrix(nc, N, "zeros");

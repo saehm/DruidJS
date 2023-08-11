@@ -16,12 +16,12 @@ export class ISOMAP extends DR {
      * @memberof module:dimensionality_reduction
      * @alias ISOMAP
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} parameters.neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} parameters.neighbors - the number of neighbors {@link ISOMAP} should use to project the data.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      * @see {@link https://doi.org/10.1126/science.290.5500.2319}
      */
     constructor(X, parameters) {

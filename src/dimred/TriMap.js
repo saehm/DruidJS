@@ -16,13 +16,13 @@ export class TriMap extends DR {
      * @memberof module:dimensionality_reduction
      * @alias TriMap
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.weight_adj = 500] - scaling factor.
-     * @param {Number} [parameters.c = 5] - number of triplets multiplier.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Number} [parameters.tol = 1e-8] -
-     * @param {Function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.weight_adj = 500] - scaling factor.
+     * @param {number} [parameters.c = 5] - number of triplets multiplier.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {number} [parameters.tol = 1e-8] -
+     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
      * @returns {TriMap}
      * @see {@link https://arxiv.org/pdf/1910.00204v1.pdf}
      * @see {@link https://github.com/eamid/trimap}
@@ -58,9 +58,9 @@ export class TriMap extends DR {
 
     /**
      * Generates {@link n_inliers} x {@link n_outliers} x {@link n_random} triplets.
-     * @param {Number} n_inliers
-     * @param {Number} n_outliers
-     * @param {Number} n_random
+     * @param {number} n_inliers
+     * @param {number} n_outliers
+     * @param {number} n_random
      */
     _generate_triplets(n_inliers, n_outliers, n_random) {
         const { metric, weight_adj } = this._parameters;
@@ -147,8 +147,8 @@ export class TriMap extends DR {
      * @private
      * @param {Matrix} P - Matrix of pairwise similarities between each point and its neighbors given in matrix nbrs.
      * @param {Matrix} nbrs - Nearest neighbors indices for each point. The similarity values are given in matrix {@link P}. Row i corresponds to the i-th point.
-     * @param {Number} n_inliers - Number of inlier points.
-     * @param {Number} n_outliers - Number of outlier points.
+     * @param {number} n_inliers - number of inlier points.
+     * @param {number} n_outliers - number of outlier points.
      *
      */
     _sample_knn_triplets(P, nbrs, n_inliers, n_outliers) {
@@ -176,7 +176,7 @@ export class TriMap extends DR {
     /**
      * Should do the same as np.argsort()
      * @private
-     * @param {Array} A
+     * @param {number[]} A
      */
     __argsort(A) {
         return linspace(0, A.length - 1).sort((i, j) => A[j] - A[i]);
@@ -222,7 +222,7 @@ export class TriMap extends DR {
      * Sample uniformly ranom triplets
      * @private
      * @param {Matrix} X - Data matrix.
-     * @param {Number} n_random - Number of random triplets per point
+     * @param {number} n_random - number of random triplets per point
      * @param {Float64Array} sig - Scaling factor for the distances
      */
     _sample_random_triplets(X, n_random, sig) {
@@ -320,7 +320,8 @@ export class TriMap extends DR {
 
     /**
      *
-     * @param {Number} max_iteration
+     * @param {number} max_iteration
+     * @returns {Matrix|number[][]}
      */
     transform(max_iteration = 400) {
         this.check_init();
@@ -331,9 +332,9 @@ export class TriMap extends DR {
     }
 
     /**
-     * @param {Number} max_iteration
-     * @yields {Matrix}
-     * @returns {Matrix}
+     * @param {number} max_iteration
+     * @yields {Matrix|number[][]}
+     * @returns {Matrix|number[][]}
      */
     *generator(max_iteration = 800) {
         this.check_init();
@@ -347,7 +348,7 @@ export class TriMap extends DR {
     /**
      * Does the iteration step.
      * @private
-     * @param {Number} iter
+     * @param {number} iter
      */
     _next(iter) {
         const gamma = iter > 150 ? 0.5 : 0.3;
@@ -365,7 +366,7 @@ export class TriMap extends DR {
      * Updates the embedding.
      * @private
      * @param {Matrix} Y
-     * @param {Number} iter
+     * @param {number} iter
      * @param {Matrix} grad
      */
     _update_embedding(Y, iter, grad) {

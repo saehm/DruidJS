@@ -15,11 +15,11 @@ export class MDS extends DR {
      * @memberof module:dimensionality_reduction
      * @alias MDS
      * @param {Matrix} X - the high-dimensional data.
-     * @param {Object} parameters - Object containing parameterization of the DR method.
-     * @param {Number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {Function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {Number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {Number} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     * @param {object} parameters - Object containing parameterization of the DR method.
+     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
+     * @param {function|"precomputed"} [parameters.metric = euclidean] - the metric which defines the distance between two points.
+     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
+     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
      */
     constructor(X, parameters) {
         super(X, { d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
@@ -31,7 +31,7 @@ export class MDS extends DR {
 
     /**
      * Transforms the inputdata {@link X} to dimensionality {@link d}.
-     * @returns {Matrix|Array}
+     * @returns {Matrix|number[][]}
      */
     transform() {
         const X = this.X;
@@ -52,7 +52,7 @@ export class MDS extends DR {
     }
 
     /**
-     * @returns {Number} - the stress of the projection.
+     * @returns {number} - the stress of the projection.
      */
     stress() {
         const N = this.X.shape[0];

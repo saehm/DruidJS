@@ -9,13 +9,13 @@ export class SQDMDS extends DR {
      * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE and UMAP.
      * @constructor
      * @memberof module:dimensionality_reduction
-     * @param {Matrix|Number[][]} X
-     * @param {Object} [parameters]
-     * @param {Number} [parameters.d=2]
-     * @param {Function} [parameters.metric = euclidean]
-     * @param {Number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
-     * @param {Number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
-     * @param {Object} [parameters.init_DR]
+     * @param {Matrix|number[][]} X
+     * @param {object} [parameters]
+     * @param {number} [parameters.d=2]
+     * @param {function} [parameters.metric = euclidean]
+     * @param {number} [parameters.decay_start = 0.1] - Percentage of iterations using exaggeration phase. If random init: it is recommended to start the decay later to give the time for the global config to adjust with big steps.
+     * @param {number} [parameters.decay_cte = 0.34] - Controls the decay of the learning parameter.
+     * @param {object} [parameters.init_DR]
      * @returns {SQDMDS}
      * @see {@link https://arxiv.org/pdf/2202.12087.pdf}
      */
@@ -28,7 +28,7 @@ export class SQDMDS extends DR {
                 seed: 1212,
                 decay_start: 0.1,
                 decay_cte: 0.34, // 0.34
-                init_DR: {type: "random"}
+                init_DR: { type: "random" },
             },
             parameters
         );
@@ -86,8 +86,8 @@ export class SQDMDS extends DR {
 
     /**
      * Computes the projection.
-     * @param {Number} [iterations=500] - Number of iterations.
-     * @returns {Matrix|Number[][]} the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @returns {Matrix|number[][]} the projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -100,8 +100,8 @@ export class SQDMDS extends DR {
 
     /**
      * Computes the projection.
-     * @param {Number} [iterations=500] - number of iterations.
-     * @yields {Matrix|Number[][]} the intermediate steps of the projection.
+     * @param {number} [iterations=500] - number of iterations.
+     * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -116,8 +116,8 @@ export class SQDMDS extends DR {
     /**
      * Performs an optimization step.
      * @private
-     * @param {Number} i - Acutal iteration.
-     * @param {Number} iterations - Number of iterations.
+     * @param {number} i - Acutal iteration.
+     * @param {number} iterations - Number of iterations.
      */
     _step(i, iterations) {
         const decay_start = this._decay_start;
@@ -136,7 +136,7 @@ export class SQDMDS extends DR {
     /**
      * Creates quartets of non overlapping indices.
      * @private
-     * @returns {Number[][]}
+     * @returns {number[][]}
      */
     __quartets() {
         const N = this._N;
@@ -153,7 +153,7 @@ export class SQDMDS extends DR {
     /**
      * Computes and applies gradients, and updates momentum.
      * @private
-     * @param {Boolean} distance_exaggeration
+     * @param {boolean} distance_exaggeration
      */
     _nestrov_iteration(distance_exaggeration) {
         const momentums = this._momentums.mult(0.99, { inline: true });
@@ -177,8 +177,8 @@ export class SQDMDS extends DR {
      * Computes the gradients.
      * @param {Matrix} Y - The Projection.
      * @param {Matrix} grads - The gradients.
-     * @param {Boolean} [exaggeration = false] - Whether or not to use early exaggeration.
-     * @param {Boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
+     * @param {boolean} [exaggeration = false] - Whether or not to use early exaggeration.
+     * @param {boolean} [zero_grad = true] - Whether or not to reset the gradient in the beginning.
      * @returns {Matrix} the gradients.
      */
     _fill_MDS_grads(Y, grads, exaggeration = false, zero_grad = true) {
@@ -229,9 +229,9 @@ export class SQDMDS extends DR {
      * Quartet gradients for a projection.
      * @private
      * @param {Matrix} Y - The acutal projection.
-     * @param {Number[]} quartet - The indices of the quartet.
-     * @param {Number[]} D_hd - The high-dimensional distances of the quartet.
-     * @returns {Number[][]} the gradients for the quartet.
+     * @param {number[]} quartet - The indices of the quartet.
+     * @param {number[]} D_hd - The high-dimensional distances of the quartet.
+     * @returns {number[][]} the gradients for the quartet.
      */
     _compute_quartet_grads(Y, quartet, [p_ab, p_ac, p_ad, p_bc, p_bd, p_cd]) {
         const [a, b, c, d] = quartet.map((index) => Y.row(index));
