@@ -91,7 +91,7 @@ export class DR {
      * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator() {
-        return this.transform();
+        yield this.transform();
     }
 
     /**

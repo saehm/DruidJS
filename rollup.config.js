@@ -45,7 +45,7 @@ export default [
             name: "druid",
         },
         onwarn,
-    },/* 
+    } /* 
     {
         input: "index.js",
         plugins: [
@@ -71,5 +71,5 @@ export default [
             name: "druid",
         },
         onwarn,
-    }, */
+    }, */,
 ];

@@ -2331,7 +2331,7 @@ class DR {
      * @yields {Matrix|number[][]} the intermediate steps of the projection.
      */
     *generator() {
-        return this.transform();
+        yield this.transform();
     }
 
     /**
@@ -5785,7 +5785,7 @@ class SQDMDS extends DR {
 }
 
 //export { version } from "../package.json" assert { type: "json"};
-const version = "0.7.2";
+const version = "0.7.3";
 
 exports.BallTree = BallTree;
 exports.DisjointSet = DisjointSet;
