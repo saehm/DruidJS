@@ -36,6 +36,7 @@ export class SAMMON extends DR {
      * @private
      */
     init() {
+        if (this._is_initialized) return this;
         const N = this.X.shape[0];
         const { d, metric, init_DR: init_DR, init_parameters: DR_parameters } = this._parameters;
         if (init_DR === "random") {
@@ -47,6 +48,7 @@ export class SAMMON extends DR {
             throw new Error('init_DR needs to be either "random" or a DR method!');
         }
         this.distance_matrix = metric == "precomputed" ? Matrix.from(this.X) : distance_matrix(this.X, metric);
+        this._is_initialized = true;
         return this;
     }
 

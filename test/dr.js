@@ -243,6 +243,9 @@ describe("DR techniques", () => {
         const dr = new druid.SAMMON(X, { d: 2, metric: druid.manhattan, init_DR: "PCA" });
         assert.ok(dr.para("magic", 0.6));
         assert.ok(dr.p("magic", 0.5));
+        assert.equal(dr._is_initialized, false);
+        assert.ok(dr.init());
+        assert.equal(dr._is_initialized, true);
         assert.ok(dr.transform());
 
         let generator;
