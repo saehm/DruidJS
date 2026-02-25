@@ -1,21 +1,21 @@
 /**
- * Computes the jaccard distance between <code>a</code> and <code>b</code>.
- * @memberof module:metrics
- * @alias jaccard
- * @param {Number[]} a
- * @param {Number[]} b
- * @returns {Number} the jaccard distance between <code>a</code> and <code>b</code>.
+ * Computes the jaccard distance between `a` and `b`.
+ *
+ * @category Metrics
+ * @param {number[] | Float64Array} a
+ * @param {number[] | Float64Array} b
+ * @returns {number} The jaccard distance between `a` and `b`.
  */
-export default function (a, b) {
-    if (a.length != b.length) return undefined;
+export function jaccard(a, b) {
+    if (a.length !== b.length) throw new Error("Vector a and b needs to be of the same length!");
     const n = a.length;
     let num_non_zero = 0;
     let num_equal = 0;
     for (let i = 0; i < n; ++i) {
-        const x = a[i] != 0;
-        const y = b[i] != 0;
-        num_non_zero += x || y;
-        num_equal += x && y;
+        const x = a[i] !== 0;
+        const y = b[i] !== 0;
+        num_non_zero += x || y ? 1 : 0;
+        num_equal += x && y ? 1 : 0;
     }
     return (num_non_zero - num_equal) / num_non_zero;
 }

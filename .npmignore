@@ -5,3 +5,6 @@ data
 *.bak[0-9]*
 test
 .github
+.vitepress
+docs
+benchmark

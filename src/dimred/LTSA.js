@@ -1,47 +1,82 @@
-import { Matrix, k_nearest_neighbors } from "../matrix/index.js";
-import { euclidean } from "../metrics/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
+import { k_nearest_neighbors, Matrix } from "../matrix/index.js";
+import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
+/** @import {InputType} from "../index.js" */
+/** @import {ParametersLTSA} from "./index.js" */
+/** @import {EigenArgs} from "../linear_algebra/index.js" */
+
 /**
+ * Local Tangent Space Alignment (LTSA)
+ *
+ * A nonlinear dimensionality reduction algorithm that represents the local
+ * geometry of the manifold by tangent spaces and then aligns them to reveal
+ * the global structure.
+ *
  * @class
- * @alias LTSA
- * @extends DR
+ * @template {InputType} T
+ * @extends DR<T, ParametersLTSA>
+ * @category Dimensionality Reduction
  */
 export class LTSA extends DR {
     /**
      * Local Tangent Space Alignment
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias LTSA
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {object} parameters - Object containing parameterization of the DR method.
-     * @param {number} parameters.neighbors - the number of neighbors {@link LTSA} should use to project the data.
-     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @param {object} [parameters.eig_args] - Parameters for the eigendecomposition algorithm.
+     *
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersLTSA>} parameters - Object containing parameterization of the DR method.
      * @see {@link https://epubs.siam.org/doi/abs/10.1137/S1064827502419154}
      */
     constructor(X, parameters) {
-        super(X, { neighbors: undefined, d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
-        this.parameter("neighbors", Math.min(this._parameters.neighbors ?? Math.max(Math.floor(this._N / 10), 2), this._N - 1));
-        if (!this._parameters.eig_args.hasOwnProperty("seed")) {
-            this._parameters.eig_args.seed = this._randomizer;
+        super(
+            X,
+            {
+                neighbors: -Infinity,
+                d: 2,
+                metric: euclidean,
+                seed: 1212,
+                eig_args: {},
+            },
+            parameters,
+        );
+        if (this.parameter("neighbors") === -Infinity) {
+            this.parameter("neighbors", Math.min(Math.max(Math.floor(this._N / 10), 2), this._N - 1));
         }
-        if (this._D <= this.parameter("d")) {
-            throw new Error(`Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${this.parameter("d")})!`);
+        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+        if (!Object.hasOwn(eig_args, "seed")) {
+            eig_args.seed = this._randomizer;
         }
-        return this;
+
+        const d = /** @type {number} */ (this.parameter("d"));
+        if (this._D <= d) {
+            throw new Error(
+                `Dimensionality of X (D = ${this._D}) must be greater than the required dimensionality of the result (d = ${d})!`,
+            );
+        }
     }
 
     /**
-     * Transforms the inputdata {@link X} to dimenionality {@link d}.
+     * Transforms the inputdata `X` to dimensionality `d`.
+     *
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    *generator() {
+        yield this.transform();
+        return this.projection;
+    }
+
+    /**
+     * Transforms the inputdata `X` to dimenionality `d`.
+     *
+     * @returns {T}
      */
     transform() {
         const X = this.X;
         const [rows, D] = X.shape;
-        const { d, neighbors, metric, eig_args } = this._parameters;
+        const neighbors = /** @type {number} */ (this.parameter("neighbors"));
+        const d = /** @type {number} */ (this.parameter("d"));
+        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+        const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
         // 1.1 determine k nearest neighbors
         const nN = k_nearest_neighbors(X, neighbors, metric);
         // center matrix
@@ -74,5 +109,39 @@ export class LTSA extends DR {
 
         // return embedding
         return this.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLTSA>} parameters
+     * @returns {T}
+     */
+    static transform(X, parameters) {
+        const dr = new LTSA(X, parameters);
+        return dr.transform();
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLTSA>} parameters
+     * @returns {Generator<T, T, void>}
+     */
+    static *generator(X, parameters) {
+        const dr = new LTSA(X, parameters);
+        yield* dr.generator();
+        return dr.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLTSA>} parameters
+     * @returns {Promise<T>}
+     */
+    static async transform_async(X, parameters) {
+        const dr = new LTSA(X, parameters);
+        return dr.transform_async();
     }
 }

@@ -1,15 +1,15 @@
 /**
- * Computes the chebyshev distance (L<sub>∞</sub>) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias chebyshev
- * @param {Number[]} a
- * @param {Number[]} b
- * @returns {Number} the chebyshev distance between {@link a} and {@link b}.
+ * Computes the chebyshev distance (L<sub>∞</sub>) between `a` and `b`.
+ *
+ * @category Metrics
+ * @param {number[] | Float64Array} a
+ * @param {number[] | Float64Array} b
+ * @returns {number} The chebyshev distance between `a` and `b`.
  */
-export default function (a, b) {
-    if (a.length != b.length) return undefined;
+export function chebyshev(a, b) {
+    if (a.length !== b.length) throw new Error("Vector a and b needs to be of the same length!");
     const n = a.length;
-    let res = [];
+    const res = [];
     for (let i = 0; i < n; ++i) {
         res.push(Math.abs(a[i] - b[i]));
     }

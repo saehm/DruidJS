@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "strict": true,
+        "declaration": true,
+        "declarationMap": true,
+        "isolatedDeclarations": false,
+        "emitDeclarationOnly": true,
+        "outDir": "dist/types",
+        "moduleResolution": "bundler",
+        "module": "ESNext",
+        "target": "ESNext",
+        "stripInternal": true,
+        "rootDir": "src"
+    },
+    "include": ["src/**/*"]
+}

@@ -1,13 +1,24 @@
+/** @category Metrics */
 /**
- * @module metrics
+ * @callback Metric
+ * @param {number[] | Float64Array} a
+ * @param {number[] | Float64Array} b
+ * @returns {number}
  */
-export { default as euclidean } from "./euclidean.js";
-export { default as euclidean_squared } from "./euclidean_squared.js";
-export { default as cosine } from './cosine.js';
-export { default as manhattan } from './manhattan.js';
-export { default as chebyshev } from './chebyshev.js';
-export { default as canberra } from "./canberra.js";
-export { default as jaccard } from './jaccard.js';
-export { default as hamming } from "./hamming.js";
-export { default as sokal_michener } from './sokal_michener.js';
-export { default as yule } from "./yule.js";
+
+/** @module metric */
+
+export { bray_curtis } from "./bray_curtis.js";
+export { canberra } from "./canberra.js";
+export { chebyshev } from "./chebyshev.js";
+export { cosine } from "./cosine.js";
+export { euclidean } from "./euclidean.js";
+export { euclidean_squared } from "./euclidean_squared.js";
+export { goodman_kruskal } from "./goodman_kruskal.js";
+export { hamming } from "./hamming.js";
+export { haversine } from "./haversine.js";
+export { jaccard } from "./jaccard.js";
+export { manhattan } from "./manhattan.js";
+export { sokal_michener } from "./sokal_michener.js";
+export { wasserstein } from "./wasserstein.js";
+export { yule } from "./yule.js";

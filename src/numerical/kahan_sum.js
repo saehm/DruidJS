@@ -1,13 +1,13 @@
 /**
  * Numerical stable summation with the Kahan summation algorithm.
- * @memberof module:numerical
- * @alias kahan_sum
- * @param {Array} summands - Array of values to sum up.
+ *
+ * @category Numerical
+ * @param {number[] | Float64Array} summands - Array of values to sum up.
  * @returns {number} The sum.
  * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm}
  */
-export default function (summands) {
-    let n = summands.length;
+export function kahan_sum(summands) {
+    const n = summands.length;
     let sum = 0;
     let compensation = 0;
     let y, t;

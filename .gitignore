@@ -1,6 +1,10 @@
-node_modules
-data
-.vscode
+node_modules/
+data/
+.vscode/
 *.bak
 *.bak[0-9]*
-.nyc_output
+coverage/
+dist/types
+/.vitepress
+/docs/.vitepress/cache
+/docs/.vitepress/dist

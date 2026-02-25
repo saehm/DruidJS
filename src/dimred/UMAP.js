@@ -1,39 +1,47 @@
-import { Matrix } from "../matrix/index.js";
+import { BallTree, NaiveKNN } from "../knn/index.js";
+import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean, euclidean_squared } from "../metrics/index.js";
-import { BallTree } from "../knn/index.js";
 import { neumair_sum } from "../numerical/index.js";
-import { linspace } from "../matrix/index.js";
 import { powell } from "../optimization/index.js";
-import { DR } from "./DR.js";
 import { max } from "../util/index.js";
-import { KNN } from "../knn/index.js";
+import { DR } from "./DR.js";
+
+/** @import {InputType} from "../index.js" */
+/** @import {Metric} from "../metrics/index.js" */
+/** @import {ParametersUMAP} from "./index.js" */
 
 /**
+ * Uniform Manifold Approximation and Projection (UMAP)
+ *
+ * A novel manifold learning technique for dimensionality reduction. UMAP is constructed
+ * from a theoretical framework based on Riemannian geometry and algebraic topology.
+ * It is often faster than t-SNE while preserving more of the global structure.
+ *
  * @class
- * @alias UMAP
- * @extends DR
+ * @template {InputType} T
+ * @extends DR<T, ParametersUMAP>
+ * @category Dimensionality Reduction
+ * @see {@link https://arxiv.org/abs/1802.03426|UMAP Paper}
+ * @see {@link TSNE} for a similar visualization technique
+ *
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ *
+ * const X = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]];
+ * const umap = new druid.UMAP(X, {
+ *     n_neighbors: 15,
+ *     min_dist: 0.1,
+ *     d: 2,
+ *     seed: 42
+ * });
+ *
+ * const Y = umap.transform(500); // 500 iterations
+ * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 export class UMAP extends DR {
     /**
-     *
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias UMAP
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {object} parameters - Object containing parameterization of the DR method.
-     * @param {number} [parameters.n_neighbors = 15] - size of the local neighborhood.
-     * @param {number} [parameters.local_connectivity = 1] - number of nearest neighbors connected in the local neighborhood.
-     * @param {number} [parameters.min_dist = 1] - controls how tightly points get packed together.
-     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points in the high-dimensional space.
-     * @param {number} [parameters._spread = 1] - The effective scale of embedded points. (In combination with {@link parameters.min_dist})
-     * @param {number} [parameters._set_op_mix_ratio = 1] - Interpolate between union and intersection.
-     * @param {number} [parameters._repulsion_strength = 1]  - Weighting applied to negative samples.
-     * @param {number} [parameters._negative_sample_rate = 5] - The number of negative samples per positive sample.
-     * @param {number} [parameters._n_epochs = 350] - The number of training epochs.
-     * @param {number} [parameter._initial_alpha = 1] - The initial learning rate for the optimization.
-     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @returns {UMAP}
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersUMAP>} [parameters] - Object containing parameterization of the DR method.
      */
     constructor(X, parameters) {
         super(
@@ -52,22 +60,28 @@ export class UMAP extends DR {
                 _n_epochs: 350,
                 _initial_alpha: 1,
             },
-            parameters
+            parameters,
         );
         [this._N, this._D] = this.X.shape;
+        const n_neighbors = /** @type {number} */ (this.parameter("n_neighbors"));
+        const local_connectivity = /** @type {number} */ (this.parameter("local_connectivity"));
+        const d = /** @type {number} */ (this.parameter("d"));
         /* let n_neighbors = Math.min(this._N - 1, parameters.n_neighbors);
         this.parameter("n_neighbors", n_neighbors);
         this.parameter("local_connectivity", Math.min(this.parameter("local_connectivity"), n_neighbors - 1)); */
-        if (this.parameter("n_neighbors") > this._N) {
-            throw new Error(`Parameter n_neighbors (=${this.parameter("n_neighbors")}) needs to be smaller than dataset size (N=${this._N})!`);
+        if (n_neighbors > this._N) {
+            throw new Error(
+                `Parameter n_neighbors (=${n_neighbors}) needs to be smaller than dataset size (N=${this._N})!`,
+            );
         }
-        if (this.parameter("local_connectivity") > this.parameter("n_neighbors")) {
-            throw new Error(`Parameter local_connectivity (=${this.parameter("local_connectivity")}) needs to be smaller than parameter n_neighbors (=${this.parameter("n_neighbors")})`);
+        if (local_connectivity > n_neighbors) {
+            throw new Error(
+                `Parameter local_connectivity (=${local_connectivity}) needs to be smaller than parameter n_neighbors (=${n_neighbors})`,
+            );
         }
         this._iter = 0;
         const randomizer = this._randomizer;
-        this.Y = new Matrix(this._N, this.parameter("d"), () => randomizer.random);
-        return this;
+        this.Y = new Matrix(this._N, d, () => randomizer.random);
     }
 
     /**
@@ -77,7 +91,8 @@ export class UMAP extends DR {
      * @returns {number[]}
      */
     _find_ab_params(spread, min_dist) {
-        const curve = (x, a, b) => 1 / (1 + a * Math.pow(x, 2 * b));
+        /** @type {(x: number, a: number, b: number) => number} */
+        const curve = (x, a, b) => 1 / (1 + a * x ** (2 * b));
         const xv = linspace(0, spread * 3, 300);
         const yv = linspace(0, spread * 3, 300);
 
@@ -86,6 +101,7 @@ export class UMAP extends DR {
             yv[i] = xv_i < min_dist ? 1 : Math.exp(-(xv_i - min_dist) / spread);
         }
 
+        /** @type {(p: [number, number]) => number} */
         const err = (p) => {
             const error = linspace(1, 300).map((_, i) => yv[i] - curve(xv[i], p[0], p[1]));
             return Math.sqrt(neumair_sum(error.map((e) => e * e)));
@@ -96,18 +112,18 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {number[][]} distances
+     * @param {{ element: Float64Array; index: number; distance: number }[][]} distances
      * @param {number[]} sigmas
      * @param {number[]} rhos
-     * @returns {number[]}
+     * @returns {{ element: Float64Array; index: number; distance: number }[][]}
      */
     _compute_membership_strengths(distances, sigmas, rhos) {
         for (let i = 0, n = distances.length; i < n; ++i) {
             const rho = rhos[i];
             const curr_dist = distances[i];
             for (let j = 0, m = curr_dist.length; j < m; ++j) {
-                const v = curr_dist[j].value - rho;
-                curr_dist[j].value = v > 0 ? Math.exp(-v / sigmas[i]) : 1.0;
+                const v = curr_dist[j].distance - rho;
+                curr_dist[j].distance = v > 0 ? Math.exp(-v / sigmas[i]) : 1.0;
             }
         }
         return distances;
@@ -115,15 +131,20 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {KNN|BallTree} knn
+     * @param {NaiveKNN<Float64Array> | BallTree<Float64Array>} knn
      * @param {number} k
-     * @returns {object}
+     * @returns {{
+     *     distances: { element: Float64Array; index: number; distance: number }[][];
+     *     sigmas: number[];
+     *     rhos: number[];
+     * }}
      */
     _smooth_knn_dist(knn, k) {
         const SMOOTH_K_TOLERANCE = 1e-5;
         const MIN_K_DIST_SCALE = 1e-3;
         const n_iter = 64;
-        const { local_connectivity, metric } = this._parameters;
+        const local_connectivity = /** @type {number} */ (this._parameters.local_connectivity);
+        const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const target = Math.log2(k);
         const rhos = [];
         const sigmas = [];
@@ -131,14 +152,15 @@ export class UMAP extends DR {
         const N = X.shape[0];
         //const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
 
+        /** @type {{ element: Float64Array; index: number; distance: number }[][]} */
         const distances = [];
-        if (metric === "precomputed") {
+        if (metric === "precomputed" || knn instanceof NaiveKNN) {
             for (let i = 0; i < N; ++i) {
-                distances.push(knn.search(i, k).reverse());
+                distances.push(knn.search_by_index(i, k).reverse());
             }
         } else {
             for (const x_i of X) {
-                distances.push(knn.search(x_i, k).raw_data().reverse());
+                distances.push(knn.search(x_i, k).reverse());
             }
         }
 
@@ -151,24 +173,24 @@ export class UMAP extends DR {
             let rho = 0;
 
             const search_result = distances[i];
-            const non_zero_dist = search_result.filter((d) => d.value > 0);
+            const non_zero_dist = search_result.filter((d) => d.distance > 0);
             const non_zero_dist_length = non_zero_dist.length;
             if (non_zero_dist_length >= local_connectivity) {
                 if (index > 0) {
-                    rho = non_zero_dist[index - 1].value;
+                    rho = non_zero_dist[index - 1].distance;
                     if (interpolation > SMOOTH_K_TOLERANCE) {
-                        rho += interpolation * (non_zero_dist[index].value - non_zero_dist[index - 1].value);
+                        rho += interpolation * (non_zero_dist[index].distance - non_zero_dist[index - 1].distance);
                     }
                 } else {
-                    rho = interpolation * non_zero_dist[0].value;
+                    rho = interpolation * non_zero_dist[0].distance;
                 }
             } else if (non_zero_dist_length > 0) {
-                rho = non_zero_dist[non_zero_dist_length - 1].value;
+                rho = non_zero_dist[non_zero_dist_length - 1].distance;
             }
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
                 for (let j = 0; j < k; ++j) {
-                    const d = search_result[j].value - rho;
+                    const d = search_result[j].distance - rho;
                     psum += d > 0 ? Math.exp(-(d / mid)) : 1;
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
@@ -187,12 +209,15 @@ export class UMAP extends DR {
 
             //let mean_d = null;
             if (rho > 0) {
-                const mean_ithd = search_result.reduce((a, b) => a + b.value, 0) / search_result.length;
+                const mean_ithd = search_result.reduce((a, b) => a + b.distance, 0) / search_result.length;
                 if (mid < MIN_K_DIST_SCALE * mean_ithd) {
                     mid = MIN_K_DIST_SCALE * mean_ithd;
                 }
             } else {
-                const mean_d = distances.reduce((acc, res) => acc + res.reduce((a, b) => a + b.value, 0) / res.length);
+                const mean_d = distances.reduce(
+                    (acc, res) => acc + res.reduce((a, b) => a + b.distance, 0) / res.length,
+                    0,
+                );
                 if (mid < MIN_K_DIST_SCALE * mean_d) {
                     mid = MIN_K_DIST_SCALE * mean_d;
                 }
@@ -215,15 +240,26 @@ export class UMAP extends DR {
      */
     _fuzzy_simplicial_set(X, n_neighbors) {
         const N = X.shape[0];
-        const { metric, _set_op_mix_ratio } = this._parameters;
-        const knn = metric === "precomputed" ? new KNN(X, "precomputed") : new BallTree(X.to2dArray, metric);
+        const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
+        const _set_op_mix_ratio = /** @type {number} */ (this._parameters._set_op_mix_ratio);
+
+        const knn =
+            metric === "precomputed"
+                ? new NaiveKNN(X.to2dArray(), {
+                      metric: "precomputed",
+                      seed: /** @type {number} */ (this._parameters.seed),
+                  })
+                : new BallTree(X.to2dArray(), {
+                      metric,
+                      seed: /** @type {number} */ (this._parameters.seed),
+                  });
         let { distances, sigmas, rhos } = this._smooth_knn_dist(knn, n_neighbors);
         distances = this._compute_membership_strengths(distances, sigmas, rhos);
         const result = new Matrix(N, N, "zeros");
         for (let i = 0; i < N; ++i) {
             const distances_i = distances[i];
             for (let j = 0; j < distances_i.length; ++j) {
-                result.set_entry(i, distances_i[j].element.index, distances_i[j].value);
+                result.set_entry(i, distances_i[j].index, distances_i[j].distance);
             }
         }
 
@@ -242,6 +278,7 @@ export class UMAP extends DR {
      * @returns {Float32Array}
      */
     _make_epochs_per_sample(n_epochs) {
+        if (!this._weights) throw new Error("Call init() first!");
         const weights = this._weights;
         const result = new Float32Array(weights.length).fill(-1);
         const weight_scl = n_epochs / max(weights);
@@ -255,7 +292,7 @@ export class UMAP extends DR {
     /**
      * @private
      * @param {Matrix} graph
-     * @returns {object}
+     * @returns {{ rows: number[]; cols: number[]; data: number[] }}
      */
     _tocoo(graph) {
         const rows = [];
@@ -281,10 +318,15 @@ export class UMAP extends DR {
 
     /**
      * Computes all necessary
-     * @returns {UMAP}
+     *
+     * @returns {UMAP<T>}
      */
     init() {
-        const { _spread, min_dist, n_neighbors, _n_epochs, _negative_sample_rate } = this._parameters;
+        const _spread = /** @type {number} */ (this._parameters._spread);
+        const min_dist = /** @type {number} */ (this._parameters.min_dist);
+        const n_neighbors = /** @type {number} */ (this._parameters.n_neighbors);
+        const _n_epochs = /** @type {number} */ (this._parameters._n_epochs);
+        const _negative_sample_rate = /** @type {number} */ (this._parameters._negative_sample_rate);
         const [a, b] = this._find_ab_params(_spread, min_dist);
         this._a = a;
         this._b = b;
@@ -306,12 +348,11 @@ export class UMAP extends DR {
     }
 
     /**
-     *
-     * @param {number} [iterations=350] - number of iterations.
-     * @returns {Matrix|number[][]}
+     * @param {number} [iterations=350] - Number of iterations. Default is `350`
+     * @returns {T}
      */
     transform(iterations = 350) {
-        if (this.parameter("_n_epochs") != iterations) {
+        if (this.parameter("_n_epochs") !== iterations) {
             this.parameter("_n_epochs", iterations);
             this.init();
         }
@@ -323,12 +364,11 @@ export class UMAP extends DR {
     }
 
     /**
-     *
-     * @param {number} [iterations=350] - number of iterations.
-     * @returns {Matrix|number[][]}
+     * @param {number} [iterations=350] - Number of iterations. Default is `350`
+     * @returns {Generator<T, T, void>}
      */
     *generator(iterations = 350) {
-        if (this.parameter("_n_epochs") != iterations) {
+        if (this.parameter("_n_epochs") !== iterations) {
             this.parameter("_n_epochs", iterations);
             this.init();
         }
@@ -352,17 +392,19 @@ export class UMAP extends DR {
     }
 
     /**
-     * performs the optimization step.
+     * Performs the optimization step.
+     *
      * @private
      * @param {Matrix} head_embedding
      * @param {Matrix} tail_embedding
-     * @param {Matrix} head
-     * @param {Matrix} tail
+     * @param {number[]} head
+     * @param {number[]} tail
      * @returns {Matrix}
      */
     _optimize_layout(head_embedding, tail_embedding, head, tail) {
         const randomizer = this._randomizer;
-        const { _repulsion_strength, d: dim } = this._parameters;
+        const _repulsion_strength = /** @type {number} */ (this.parameter("_repulsion_strength"));
+        const dim = /** @type {number} */ (this.parameter("d"));
         const {
             _alpha: alpha,
             _a: a,
@@ -373,6 +415,18 @@ export class UMAP extends DR {
             _epoch_of_next_sample: epoch_of_next_sample,
             _clip: clip,
         } = this;
+        if (
+            alpha === undefined ||
+            a === undefined ||
+            b === undefined ||
+            epochs_per_sample === undefined ||
+            epochs_per_negative_sample === undefined ||
+            epoch_of_next_negative_sample === undefined ||
+            epoch_of_next_sample === undefined ||
+            clip === undefined
+        ) {
+            throw new Error("call init() first!");
+        }
         const tail_length = tail.length;
 
         for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {
@@ -383,7 +437,7 @@ export class UMAP extends DR {
                 const other = tail_embedding.row(k);
                 const dist = euclidean_squared(current, other);
                 if (dist > 0) {
-                    const grad_coeff = (-2 * a * b * Math.pow(dist, b - 1)) / (a * Math.pow(dist, b) + 1);
+                    const grad_coeff = (-2 * a * b * dist ** (b - 1)) / (a * dist ** b + 1);
                     for (let d = 0; d < dim; ++d) {
                         const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
                         current[d] += grad_d;
@@ -397,14 +451,13 @@ export class UMAP extends DR {
                     const other = tail_embedding.row(tail[k]);
                     const dist = euclidean_squared(current, other);
                     if (dist > 0) {
-                        const grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * Math.pow(dist, b) + 1));
+                        const grad_coeff = (2 * _repulsion_strength * b) / ((0.01 + dist) * (a * dist ** b + 1));
                         for (let d = 0; d < dim; ++d) {
                             const grad_d = clip(grad_coeff * (current[d] - other[d])) * alpha;
                             current[d] += grad_d;
                             other[d] -= grad_d;
                         }
                     } else if (j === k) {
-                        continue;
                     }
                 }
                 epoch_of_next_negative_sample[i] += n_neg_samples * epochs_per_negative_sample[i];
@@ -418,12 +471,48 @@ export class UMAP extends DR {
      * @returns {Matrix}
      */
     next() {
+        if (!this._head || !this._tail) throw new Error("Call init() first!");
         const iter = ++this._iter;
         const Y = this.Y;
-        const { _initial_alpha, _n_epochs } = this._parameters;
+        const _initial_alpha = /** @type {number} */ (this._parameters._initial_alpha);
+        const _n_epochs = /** @type {number} */ (this._parameters._n_epochs);
         this._alpha = _initial_alpha * (1 - iter / _n_epochs);
         this.Y = this._optimize_layout(Y, Y, this._head, this._tail);
 
         return this.Y;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersUMAP>} [parameters]
+     * @returns {T}
+     */
+    static transform(X, parameters) {
+        const dr = new UMAP(X, parameters);
+        return dr.transform();
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersUMAP>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static *generator(X, parameters) {
+        const dr = new UMAP(X, parameters);
+        yield* dr.generator();
+        return dr.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersUMAP>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static async transform_async(X, parameters) {
+        const dr = new UMAP(X, parameters);
+        return dr.transform_async();
     }
 }

@@ -1,38 +1,41 @@
-import { neumair_sum } from "../numerical/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
+import { neumair_sum } from "../numerical/index.js";
 import { Randomizer } from "../util/index.js";
+
+/** @typedef {(i: number, j: number) => number} Accessor */
+
 /**
  * @class
- * @alias Matrix
- * @requires module:numerical/neumair_sum
+ * @category Matrix
  */
 export class Matrix {
     /**
-     * creates a new Matrix. Entries are stored in a Float64Array.
-     * @memberof module:matrix
+     * Creates a new Matrix. Entries are stored in a Float64Array.
+     *
+     * @example let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random matrix. let B = new
+     * Matrix(3, 3, "I"); // creates a 3 times 3 identity matrix.
+     *
      * @param {number} rows - The amount of rows of the matrix.
      * @param {number} cols - The amount of columns of the matrix.
-     * @param {(function|string|number)} value=0 - Can be a function with row and col as parameters, a number, or "zeros", "identity" or "I", or "center".
-     *  - **function**: for each entry the function gets called with the parameters for the actual row and column.
-     *  - **string**: allowed are
-     *      - "zero", creates a zero matrix.
-     *      - "identity" or "I", creates an identity matrix.
-     *      - "center", creates an center matrix.
-     *  - **number**: create a matrix filled with the given value.
-     * @example
+     * @param {Accessor | string | number} value - Can be a function with row and col as parameters, a number, or
+     *   "zeros", "identity" or "I", or "center".
      *
-     * let A = new Matrix(10, 10, () => Math.random()); //creates a 10 times 10 random matrix.
-     * let B = new Matrix(3, 3, "I"); // creates a 3 times 3 identity matrix.
-     * @returns {Matrix} returns a {@link rows} times {@link cols} Matrix filled with {@link value}.
+     *   - **function**: for each entry the function gets called with the parameters for the actual row and column.
+     *   - **string**: allowed are
+     *
+     *       - "zero", creates a zero matrix.
+     *       - "identity" or "I", creates an identity matrix.
+     *       - "center", creates an center matrix.
+     *   - **number**: create a matrix filled with the given value.
      */
-    constructor(rows = null, cols = null, value = null) {
-        this._rows = rows;
-        this._cols = cols;
-        this._data = null;
+    constructor(rows, cols, value = 0) {
+        /** @type {number} */ this._rows = rows;
+        /** @type {number} */ this._cols = cols;
+        /** @type {Float64Array} */ this._data;
+
         if (rows && cols) {
             if (!value) {
                 this._data = new Float64Array(rows * cols);
-                return this;
             }
             if (typeof value === "function") {
                 this._data = new Float64Array(rows * cols);
@@ -41,20 +44,23 @@ export class Matrix {
                         this._data[row * cols + col] = value(row, col);
                     }
                 }
-                return this;
             }
             if (typeof value === "string") {
                 if (value === "zeros") {
-                    return new Matrix(rows, cols, 0);
+                    this._data = new Float64Array(rows * cols);
+                    for (let row = 0; row < rows; ++row) {
+                        for (let col = 0; col < cols; ++col) {
+                            this._data[row * cols + col] = 0;
+                        }
+                    }
                 }
                 if (value === "identity" || value === "I") {
                     this._data = new Float64Array(rows * cols);
                     for (let row = 0; row < rows; ++row) {
                         this._data[row * cols + row] = 1;
                     }
-                    return this;
                 }
-                if (value === "center" && rows == cols) {
+                if (value === "center" && rows === cols) {
                     this._data = new Float64Array(rows * cols);
                     value = (i, j) => (i === j ? 1 : 0) - 1 / rows;
                     for (let row = 0; row < rows; ++row) {
@@ -62,7 +68,6 @@ export class Matrix {
                             this._data[row * cols + col] = value(row, col);
                         }
                     }
-                    return this;
                 }
             }
             if (typeof value === "number") {
@@ -72,59 +77,77 @@ export class Matrix {
                         this._data[row * cols + col] = value;
                     }
                 }
-                return this;
             }
-        }
-        return this;
-    }
-
-    /**
-     * Creates a Matrix out of {@link A}.
-     * @param {(Matrix|Array|Float64Array|number)} A - The matrix, array, or number, which should converted to a Matrix.
-     * @param {"row"|"col"|"diag"} [type = "row"] - If {@link A} is a Array or Float64Array, then type defines if it is a row- or a column vector.
-     * @returns {Matrix}
-     *
-     * @example
-     * let A = Matrix.from([[1, 0], [0, 1]]); //creates a two by two identity matrix.
-     * let S = Matrix.from([1, 2, 3], "diag"); // creates a 3 by 3 matrix with 1, 2, 3 on its diagonal. [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
-     */
-    static from(A, type = "row") {
-        if (A instanceof Matrix) {
-            return A.clone();
-        } else if (Matrix.isArray(A)) {
-            let m = A.length;
-            if (m === 0) throw new Error("Array is empty");
-            // 1d
-            if (!Matrix.isArray(A[0])) {
-                if (type === "row") {
-                    return new Matrix(1, m, (_, j) => A[j]);
-                } else if (type === "col") {
-                    return new Matrix(m, 1, (i) => A[i]);
-                } else if (type === "diag") {
-                    return new Matrix(m, m, (i, j) => (i == j ? A[i] : 0));
-                } else {
-                    throw new Error("1d array has NaN entries");
-                }
-                // 2d
-            } else {
-                let n = A[0].length;
-                for (let row = 0; row < m; ++row) {
-                    if (A[row].length !== n) {
-                        throw new Error("various array lengths");
+            if (Array.isArray(value)) {
+                this._data = new Float64Array(rows * cols);
+                for (let row = 0; row < rows; ++row) {
+                    for (let col = 0; col < cols; ++col) {
+                        this._data[row * cols + col] = value[row][col];
                     }
                 }
-                return new Matrix(m, n, (i, j) => A[i][j]);
             }
-        } else if (typeof A === "number") {
-            return new Matrix(1, 1, A);
-        } else {
-            throw new Error("error");
         }
     }
 
     /**
-     * Returns the {@link row}<sup>th</sup> row from the Matrix.
-     * @param {Number} row
+     * Creates a Matrix out of `A`.
+     * @param {Matrix | Float64Array[] | number[][]} A - The matrix, array, or number, which should converted to a Matrix.
+     * @returns {Matrix}
+     * @example
+     * let A = Matrix.from([ [1, 0], [0, 1], ]); //creates a two by two identity matrix.
+     */
+    static from(A) {
+        if (A instanceof Matrix) {
+            return A.clone();
+        }
+        if (Matrix.is2dArray(A)) {
+            const m = A.length;
+            const n = A[0].length;
+            for (let row = 0; row < m; ++row) {
+                if (A[row].length !== n) {
+                    throw new Error("various array lengths");
+                }
+            }
+            return new Matrix(m, n, (i, j) => A[i][j]);
+        }
+        throw new Error("error");
+    }
+
+    /**
+     * Creates a Matrix with the diagonal being the values of `v`.
+     *
+     * @example let S = Matrix.from_diag([1, 2, 3]); // creates [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
+     *
+     * @param {number[] | Float64Array} v
+     * @returns {Matrix}
+     */
+    static from_diag(v) {
+        const N = v.length;
+        return new Matrix(N, N, (i, j) => (i === j ? v[i] : 0));
+    }
+
+    /**
+     * Creates a Matrix with the diagonal being the values of `v`.
+     *
+     * @example let S = Matrix.from_diag([1, 2, 3]); // creates [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
+     *
+     * @param {number[] | Float64Array} v
+     * @param {"col" | "row"} type
+     * @returns {Matrix}
+     */
+    static from_vector(v, type) {
+        const N = v.length;
+        if (type === "col") {
+            return new Matrix(N, 1, (i, _) => v[i]);
+        } else {
+            return new Matrix(1, N, (_, j) => v[j]);
+        }
+    }
+
+    /**
+     * Returns the `row`<sup>th</sup> row from the Matrix.
+     *
+     * @param {number} row
      * @returns {Float64Array}
      */
     row(row) {
@@ -135,6 +158,7 @@ export class Matrix {
 
     /**
      * Returns an generator yielding each row of the Matrix.
+     *
      * @yields {Float64Array}
      */
     *iterate_rows() {
@@ -147,7 +171,8 @@ export class Matrix {
     }
 
     /**
-     * Makes a {@link Matrix} object an iterable object.
+     * Makes a `Matrix` object an iterable object.
+     *
      * @yields {Float64Array}
      */
     *[Symbol.iterator]() {
@@ -157,9 +182,10 @@ export class Matrix {
     }
 
     /**
-     * Sets the entries of {@link row}<sup>th</sup> row from the Matrix to the entries from {@link values}.
-     * @param {Number} row
-     * @param {Array} values
+     * Sets the entries of `row`<sup>th</sup> row from the Matrix to the entries from `values`.
+     *
+     * @param {number} row
+     * @param {number[]} values
      * @returns {Matrix}
      */
     set_row(row, values) {
@@ -175,15 +201,16 @@ export class Matrix {
                 this.values[offset + col] = values._data[col];
             }
         } else {
-            throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!")
+            throw new Error("Values not valid! Needs to be either an Array, a Float64Array, or a fitting Matrix!");
         }
         return this;
     }
 
     /**
-     * Swaps the rows {@link row1} and {@link row2} of the Matrix.
-     * @param {Number} row1
-     * @param {Number} row2
+     * Swaps the rows `row1` and `row2` of the Matrix.
+     *
+     * @param {number} row1
+     * @param {number} row2
      * @returns {Matrix}
      */
     swap_rows(row1, row2) {
@@ -194,12 +221,14 @@ export class Matrix {
             data[i] = data[j];
             data[j] = t;
         }
+        return this;
     }
 
     /**
-     * Returns the {@link col}<sup>th</sup> column from the Matrix.
-     * @param {Number} col
-     * @returns {Array}
+     * Returns the col<sup>th</sup> column from the Matrix.
+     *
+     * @param {number} col
+     * @returns {Float64Array}
      */
     col(col) {
         const result_col = new Float64Array(this._rows);
@@ -210,20 +239,23 @@ export class Matrix {
     }
 
     /**
-     * Returns the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
-     * @param {int} row
-     * @param {int} col
-     * @returns {float64}
+     * Returns the `col`<sup>th</sup> entry from the `row`<sup>th</sup> row of the Matrix.
+     *
+     * @param {number} row
+     * @param {number} col
+     * @returns {number}
      */
     entry(row, col) {
         return this.values[row * this._cols + col];
     }
 
     /**
-     * Sets the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix to the given {@link value}.
-     * @param {int} row
-     * @param {int} col
-     * @param {float64} value
+     * Sets the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix to the given
+     * {@link value}.
+     *
+     * @param {number} row
+     * @param {number} col
+     * @param {number} value
      * @returns {Matrix}
      */
     set_entry(row, col, value) {
@@ -232,40 +264,46 @@ export class Matrix {
     }
 
     /**
-     * Adds a given {@link value} to the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
-     * @param {int} row
-     * @param {int} col
-     * @param {float64} value
+     * Adds a given {@link value} to the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the
+     * Matrix.
+     *
+     * @param {number} row
+     * @param {number} col
+     * @param {number} value
      * @returns {Matrix}
      */
     add_entry(row, col, value) {
-      this.values[row * this._cols + col] += value;
-      return this;
+        this.values[row * this._cols + col] += value;
+        return this;
     }
 
     /**
-     * Subtracts a given {@link value} from the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the Matrix.
-     * @param {int} row
-     * @param {int} col
-     * @param {float64} value
+     * Subtracts a given {@link value} from the {@link col}<sup>th</sup> entry from the {@link row}<sup>th</sup> row of the
+     * Matrix.
+     *
+     * @param {number} row
+     * @param {number} col
+     * @param {number} value
      * @returns {Matrix}
      */
     sub_entry(row, col, value) {
-      this.values[row * this._cols + col] -= value;
-      return this;
+        this.values[row * this._cols + col] -= value;
+        return this;
     }
 
     /**
      * Returns a new transposed Matrix.
+     *
      * @returns {Matrix}
      */
     transpose() {
-        let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
+        const B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
         return B;
     }
 
     /**
-     * Returns a new transposed Matrix. Short-form of {@function transpose}.
+     * Returns a new transposed Matrix. Short-form of `transpose`.
+     *
      * @returns {Matrix}
      */
     get T() {
@@ -274,13 +312,14 @@ export class Matrix {
 
     /**
      * Returns the inverse of the Matrix.
+     *
      * @returns {Matrix}
      */
     inverse() {
         const rows = this._rows;
         const cols = this._cols;
         const A = this.clone();
-        const B = new Matrix(rows, cols, 'I');
+        const B = new Matrix(rows, cols, "I");
 
         // foreach column
         for (let col = 0; col < cols; ++col) {
@@ -295,7 +334,7 @@ export class Matrix {
                 }
             }
             if (max_val === 0) {
-                throw new Error('Cannot compute inverse of Matrix, determinant is zero');
+                throw new Error("Cannot compute inverse of Matrix, determinant is zero");
             }
             // Swap maximum row with current row
             if (max_idx !== col) {
@@ -315,10 +354,10 @@ export class Matrix {
                         const f = A_row[col] / A_col[col];
                         // sub (f * row c) from row r to eliminate the value at column c
                         for (let s = col; s < cols; ++s) {
-                            A_row[s] -= (f * A_col[s]);
+                            A_row[s] -= f * A_col[s];
                         }
                         for (let s = 0; s < cols; ++s) {
-                            B_row[s] -= (f * B_col[s]);
+                            B_row[s] -= f * B_col[s];
                         }
                     }
                 } else {
@@ -338,56 +377,65 @@ export class Matrix {
     }
 
     /**
-     * Returns the dot product. If {@link B} is an Array or Float64Array then an Array gets returned. If {@link B} is a Matrix then a Matrix gets returned.
-     * @param {(Matrix|Array|Float64Array)} B the right side
-     * @returns {(Matrix|Array)}
+     * Returns the dot product. If `B` is an Array or Float64Array then an Array gets returned. If `B` is a Matrix then
+     * a Matrix gets returned.
+     *
+     * @param {Matrix | number[] | Float64Array} B The right side
+     * @returns {Matrix}
      */
     dot(B) {
         if (B instanceof Matrix) {
-            let A = this;
-            const [rows_A, cols_A] = A.shape;
+            const [rows_A, cols_A] = this.shape;
             const [rows_B, cols_B] = B.shape;
             if (cols_A !== rows_B) {
-                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
+                throw new Error(`A.dot(B): A is a ${this.shape.join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
                 A has ${cols_A} cols and B ${rows_B} rows.
                 Must be equal!`);
             }
-            const C = new Matrix(rows_A, cols_B, (row, col) => {
-                const A_i = A.row(row);
-                const B_val = B.values;
-                let sum = 0;
-                for (let i = 0, j = col; i < cols_A; ++i, j += cols_B) {
-                    sum += A_i[i] * B_val[j];
+            const C = new Matrix(rows_A, cols_B, 0);
+            const A_val = this.values;
+            const B_val = B.values;
+            const C_val = C.values;
+
+            for (let i = 0; i < rows_A; ++i) {
+                const i_cols_A = i * cols_A;
+                const i_cols_B = i * cols_B;
+                for (let k = 0; k < cols_A; ++k) {
+                    const aik = A_val[i_cols_A + k];
+                    if (aik === 0) continue;
+                    const k_cols_B = k * cols_B;
+                    for (let j = 0; j < cols_B; ++j) {
+                        C_val[i_cols_B + j] += aik * B_val[k_cols_B + j];
+                    }
                 }
-                return sum;
-            });
+            }
             return C;
         } else if (Matrix.isArray(B)) {
-            let rows = this._rows;
+            // TODO: create Matrix directly
+            const rows = this._rows;
             if (B.length !== rows) {
                 throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
             }
-            let C = new Array(rows);
+            const C = new Array(rows);
             for (let row = 0; row < rows; ++row) {
                 C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
             }
-            return C;
+            return Matrix.from(C);
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
     }
 
     /**
-     * Transposes the current matrix and returns the dot product with {@link B}.
-     * If {@link B} is an Array or Float64Array then an Array gets returned.
-     * If {@link B} is a Matrix then a Matrix gets returned.
-     * @param {(Matrix|Array|Float64Array)} B the right side
-     * @returns {(Matrix|Array)}
+     * Transposes the current matrix and returns the dot product with `B`. If `B` is an Array or Float64Array then an
+     * Array gets returned. If `B` is a Matrix then a Matrix gets returned.
+     *
+     * @param {Matrix | number[] | Float64Array} B The right side
+     * @returns {Matrix}
      */
     transDot(B) {
         if (B instanceof Matrix) {
-            let A = this;
-            const [cols_A, rows_A] = A.shape; // transpose matrix
+            const [cols_A, rows_A] = this.shape; // transpose matrix
             const [rows_B, cols_B] = B.shape;
             if (cols_A !== rows_B) {
                 throw new Error(`A.dot(B): A is a ${[rows_A, cols_A].join(" ⨯ ")}-Matrix, B is a ${B.shape.join(" ⨯ ")}-Matrix:
@@ -395,49 +443,57 @@ export class Matrix {
             }
             // let B = new Matrix(this._cols, this._rows, (row, col) => this.entry(col, row));
             // this.values[row * this._cols + col];
-            const C = new Matrix(rows_A, cols_B, (row, col) => {
-                const A_val = A.values;
-                const B_val = B.values;
-                let sum = 0;
-                for (let i = 0, j = row, k = col; i < cols_A; ++i, j += rows_A, k += cols_B) {
-                    sum += A_val[j] * B_val[k];
+            const C = new Matrix(rows_A, cols_B, 0);
+            const A_val = this.values; // A is rows_B x rows_A (transposed)
+            const B_val = B.values;
+            const C_val = C.values;
+
+            for (let k = 0; k < cols_A; ++k) {
+                // cols_A is rows_B
+                const k_rows_A = k * rows_A;
+                const k_cols_B = k * cols_B;
+                for (let i = 0; i < rows_A; ++i) {
+                    const aki = A_val[k_rows_A + i];
+                    if (aki === 0) continue;
+                    for (let j = 0; j < cols_B; ++j) {
+                        C_val[i * cols_B + j] += aki * B_val[k_cols_B + j];
+                    }
                 }
-                return sum;
-            });
+            }
             return C;
         } else if (Matrix.isArray(B)) {
-            let rows = this._cols;
+            // TODO: create Matrix directly
+            const rows = this._cols;
             if (B.length !== rows) {
                 throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
             }
-            let C = new Array(rows);
+            const C = new Array(rows);
             for (let row = 0; row < rows; ++row) {
                 C[row] = neumair_sum(this.col(row).map((e) => e * B[row]));
             }
-            return C;
+            return Matrix.from(C);
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
     }
 
     /**
-     * Returns the dot product with the transposed version of {@link B}.
-     * If {@link B} is an Array or Float64Array then an Array gets returned.
-     * If {@link B} is a Matrix then a Matrix gets returned.
-     * @param {(Matrix|Array|Float64Array)} B the right side
-     * @returns {(Matrix|Array)}
+     * Returns the dot product with the transposed version of `B`. If `B` is an Array or Float64Array then an Array gets
+     * returned. If `B` is a Matrix then a Matrix gets returned.
+     *
+     * @param {Matrix | number[] | Float64Array} B The right side
+     * @returns {Matrix}
      */
     dotTrans(B) {
         if (B instanceof Matrix) {
-            let A = this;
-            const [rows_A, cols_A] = A.shape;
+            const [rows_A, cols_A] = this.shape;
             const [cols_B, rows_B] = B.shape;
             if (cols_A !== rows_B) {
-                throw new Error(`A.dot(B): A is a ${A.shape.join(" ⨯ ")}-Matrix, B is a ${[rows_B, cols_B].join(" ⨯ ")}-Matrix:
+                throw new Error(`A.dot(B): A is a ${this.shape.join(" ⨯ ")}-Matrix, B is a ${[rows_B, cols_B].join(" ⨯ ")}-Matrix:
                 A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
             }
             const C = new Matrix(rows_A, cols_B, (row, col) => {
-                const A_i = A.row(row);
+                const A_i = this.row(row);
                 const B_i = B.row(col);
                 let sum = 0;
                 for (let i = 0; i < cols_A; ++i) {
@@ -447,82 +503,87 @@ export class Matrix {
             });
             return C;
         } else if (Matrix.isArray(B)) {
-            let rows = this._rows;
+            // TODO: create Matrix directly
+            const rows = this._rows;
             if (B.length !== rows) {
                 throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
             }
-            let C = new Array(rows);
+            const C = new Array(rows);
             for (let row = 0; row < rows; ++row) {
                 C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
             }
-            return C;
+            return Matrix.from(C);
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
     }
 
     /**
-     * Computes the outer product from {@link this} and {@link B}.
+     * Computes the outer product from `this` and `B`.
+     *
      * @param {Matrix} B
      * @returns {Matrix}
      */
     outer(B) {
-        let A = this;
-        let l = A._data.length;
-        let r = B._data.length;
-        if (l != r) return undefined;
-        let C = new Matrix();
-        C.shape = [
+        const l = this._data.length;
+        const r = B._data.length;
+        if (l !== r) throw new Error("Matrix A and B needs to be of the same length!");
+        const C = new Matrix(
             l,
             l,
-            (i, j) => {
+            /** @type {Accessor} */ (i, j) => {
                 if (i <= j) {
-                    return A._data[i] * B._data[j];
+                    return this._data[i] * B._data[j];
                 } else {
-                    return C.entry(j, i);
+                    return this.entry(j, i);
                 }
             },
-        ];
+        );
+
         return C;
     }
 
     /**
-     * Appends matrix {@link B} to the matrix.
-     * @param {Matrix} B - matrix to append.
-     * @param {"horizontal"|"vertical"|"diag"} [type = "horizontal"] - type of concatenation.
+     * Appends matrix `B` to the matrix.
+     *
+     * @example let A = Matrix.from([ [1, 1], [1, 1], ]); // 2 by 2 matrix filled with ones. let B = Matrix.from([ [2,
+     * 2], [2, 2], ]); // 2 by 2 matrix filled with twos.
+     *
+     *     A.concat(B, "horizontal"); // 2 by 4 matrix. [[1, 1, 2, 2], [1, 1, 2, 2]]
+     *     A.concat(B, "vertical"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]
+     *     A.concat(B, "diag"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]
+     *
+     * @param {Matrix} B - Matrix to append.
+     * @param {"horizontal" | "vertical" | "diag"} [type="horizontal"] - Type of concatenation. Default is
+     *   `"horizontal"`
      * @returns {Matrix}
-     * @example
-     *
-     * let A = Matrix.from([[1, 1], [1, 1]]); // 2 by 2 matrix filled with ones.
-     * let B = Matrix.from([[2, 2], [2, 2]]); // 2 by 2 matrix filled with twos.
-     *
-     * A.concat(B, "horizontal"); // 2 by 4 matrix. [[1, 1, 2, 2], [1, 1, 2, 2]]
-     * A.concat(B, "vertical"); // 4 by 2 matrix. [[1, 1], [1, 1], [2, 2], [2, 2]]
-     * A.concat(B, "diag"); // 4 by 4 matrix. [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]]
      */
     concat(B, type = "horizontal") {
-        const A = this;
-        const [rows_A, cols_A] = A.shape;
+        const [rows_A, cols_A] = this.shape;
         const [rows_B, cols_B] = B.shape;
-        if (type == "horizontal") {
-            if (rows_A != rows_B) {
-                throw new Error(`A.concat(B, "horizontal"): A and B need same number of rows, A has ${rows_A} rows, B has ${rows_B} rows.`);
+        if (type === "horizontal") {
+            if (rows_A !== rows_B) {
+                throw new Error(
+                    `A.concat(B, "horizontal"): A and B need same number of rows, A has ${rows_A} rows, B has ${rows_B} rows.`,
+                );
             }
             const X = new Matrix(rows_A, cols_A + cols_B, "zeros");
-            X.set_block(0, 0, A);
+            X.set_block(0, 0, this);
             X.set_block(0, cols_A, B);
             return X;
-        } else if (type == "vertical") {
-            if (cols_A != cols_B) {
-                throw new Error(`A.concat(B, "vertical"): A and B need same number of columns, A has ${cols_A} columns, B has ${cols_B} columns.`);
+        } else if (type === "vertical") {
+            if (cols_A !== cols_B) {
+                throw new Error(
+                    `A.concat(B, "vertical"): A and B need same number of columns, A has ${cols_A} columns, B has ${cols_B} columns.`,
+                );
             }
             const X = new Matrix(rows_A + rows_B, cols_A, "zeros");
-            X.set_block(0, 0, A);
+            X.set_block(0, 0, this);
             X.set_block(rows_A, 0, B);
             return X;
-        } else if (type == "diag") {
+        } else if (type === "diag") {
             const X = new Matrix(rows_A + rows_B, cols_A + cols_B, "zeros");
-            X.set_block(0, 0, A);
+            X.set_block(0, 0, this);
             X.set_block(rows_A, cols_A, B);
             return X;
         } else {
@@ -531,9 +592,10 @@ export class Matrix {
     }
 
     /**
-     * Writes the entries of B in A at an offset position given by {@link offset_row} and {@link offset_col}.
-     * @param {int} offset_row
-     * @param {int} offset_col
+     * Writes the entries of B in A at an offset position given by `offset_row` and `offset_col`.
+     *
+     * @param {number} offset_row
+     * @param {number} offset_col
      * @param {Matrix} B
      * @returns {Matrix}
      */
@@ -549,23 +611,25 @@ export class Matrix {
     }
 
     /**
-     * Extracts the entries from the {@link start_row}<sup>th</sup> row to the {@link end_row}<sup>th</sup> row, the {@link start_col}<sup>th</sup> column to the {@link end_col}<sup>th</sup> column of the matrix.
-     * If {@link end_row} or {@link end_col} is empty, the respective value is set to {@link this.rows} or {@link this.cols}.
-     * @param {Number} start_row
-     * @param {Number} start_col
-     * @param {Number} [end_row = null]
-     * @param {Number} [end_col = null]
-     * @returns {Matrix} Returns a end_row - start_row times end_col - start_col matrix, with respective entries from the matrix.
-     * @example
+     * Extracts the entries from the `start_row`<sup>th</sup> row to the `end_row`<sup>th</sup> row, the
+     * `start_col`<sup>th</sup> column to the `end_col`<sup>th</sup> column of the matrix. If `end_row` or `end_col` is
+     * empty, the respective value is set to `this.rows` or `this.cols`.
      *
-     * let A = Matrix.from([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // a 3 by 3 matrix.
+     * @example let A = Matrix.from([ [1, 2, 3], [4, 5, 6], [7, 8, 9], ]); // a 3 by 3 matrix.
      *
-     * A.get_block(1, 1); // [[5, 6], [8, 9]]
-     * A.get_block(0, 0, 1, 1); // [[1]]
-     * A.get_block(1, 1, 2, 2); // [[5]]
-     * A.get_block(0, 0, 2, 2); // [[1, 2], [4, 5]]
+     *     A.get_block(1, 1); // [[5, 6], [8, 9]]
+     *     A.get_block(0, 0, 1, 1); // [[1]]
+     *     A.get_block(1, 1, 2, 2); // [[5]]
+     *     A.get_block(0, 0, 2, 2); // [[1, 2], [4, 5]]
+     *
+     * @param {number} start_row
+     * @param {number} start_col
+     * @param {number | null} [end_row]
+     * @param {number | null} [end_col]
+     * @returns {Matrix} Returns a `end_row` - `start_row` times `end_col` - `start_col` matrix, with respective entries
+     *   from the matrix.
      */
-    get_block(start_row, start_col, end_row = null, end_col = null) {
+    get_block(start_row, start_col, end_row, end_col) {
         const [rows, cols] = this.shape;
         end_row = end_row ?? rows;
         end_col = end_col ?? cols;
@@ -582,13 +646,13 @@ export class Matrix {
             }
         }
         return X;
-        //return new Matrix(end_row - start_row, end_col - start_col, (i, j) => this.entry(i + start_row, j + start_col));
     }
 
     /**
      * Returns a new array gathering entries defined by the indices given by argument.
-     * @param {Array<Number>} row_indices - Array consists of indices of rows for gathering entries of this matrix
-     * @param {Array<Number>} col_indices  - Array consists of indices of cols for gathering entries of this matrix
+     *
+     * @param {number[]} row_indices - Array consists of indices of rows for gathering entries of this matrix
+     * @param {number[]} col_indices - Array consists of indices of cols for gathering entries of this matrix
      * @returns {Matrix}
      */
     gather(row_indices, col_indices) {
@@ -598,7 +662,7 @@ export class Matrix {
         const R = new Matrix(N, D);
         for (let i = 0; i < N; ++i) {
             const row_index = row_indices[i];
-            for (let j = 0; j < N; ++j) {
+            for (let j = 0; j < D; ++j) {
                 const col_index = col_indices[j];
                 R.set_entry(i, j, this.entry(row_index, col_index));
             }
@@ -609,9 +673,13 @@ export class Matrix {
 
     /**
      * Applies a function to each entry of the matrix.
+     *
      * @private
-     * @param {Function} f function takes 2 parameters, the value of the actual entry and a value given by the function {@link v}. The result of {@link f} gets writen to the Matrix.
-     * @param {Function} v function takes 2 parameters for row and col, and returns a value witch should be applied to the colth entry of the rowth row of the matrix.
+     * @param {(d: number, v: number) => number} f Function takes 2 parameters, the value of the actual entry and a
+     *   value given by the function `v`. The result of `f` gets writen to the Matrix.
+     * @param {Accessor} v Function takes 2 parameters for `row` and `col`, and returns a value witch should be applied
+     *   to the `col`<sup>th</sup> entry of the `row`<sup>th</sup> row of the matrix.
+     * @returns {Matrix}
      */
     _apply_array(f, v) {
         const data = this.values;
@@ -624,10 +692,19 @@ export class Matrix {
         return this;
     }
 
+    /**
+     * @param {number[] | Float64Array} values
+     * @param {(d: number, v: number) => number} f
+     * @returns {Matrix}
+     */
     _apply_rowwise_array(values, f) {
         return this._apply_array(f, (_, j) => values[j]);
     }
-
+    /**
+     * @param {number[] | Float64Array} values
+     * @param {(d: number, v: number) => number} f
+     * @returns {Matrix}
+     */
     _apply_colwise_array(values, f) {
         const data = this.values;
         const [rows, cols] = this.shape;
@@ -640,6 +717,11 @@ export class Matrix {
         return this;
     }
 
+    /**
+     * @param {Matrix | number[] | Float64Array | number} value
+     * @param {(d: number, v: number) => number} f
+     * @returns {Matrix}
+     */
     _apply(value, f) {
         const data = this.values;
         const [rows, cols] = this.shape;
@@ -660,12 +742,12 @@ export class Matrix {
                     throw new Error(`rows !== value_rows`);
                 }
                 for (let i = 0, row = 0; row < rows; ++row) {
-                    const v =  values[row];
+                    const v = values[row];
                     for (let col = 0; col < cols; ++col, ++i) {
                         data[i] = f(data[i], v);
                     }
                 }
-            } else if (rows == value_rows && cols == value_cols) {
+            } else if (rows === value_rows && cols === value_cols) {
                 for (let i = 0, n = rows * cols; i < n; ++i) {
                     data[i] = f(data[i], values[i]);
                 }
@@ -689,7 +771,8 @@ export class Matrix {
             } else {
                 throw new Error(`error`);
             }
-        } else { // scalar value
+        } else {
+            // scalar value
             for (let i = 0, n = rows * cols; i < n; ++i) {
                 data[i] = f(data[i], value);
             }
@@ -699,29 +782,32 @@ export class Matrix {
 
     /**
      * Clones the Matrix.
+     *
      * @returns {Matrix}
      */
     clone() {
-        let B = new Matrix();
-        B._rows = this._rows;
-        B._cols = this._cols;
-        B._data = this.values.slice(0);
+        const B = new Matrix(this._rows, this._cols);
+        //B._rows = this._rows;
+        //B._cols = this._cols;
+        if (this._data) {
+            B._data = this._data.slice(0);
+        }
         return B;
     }
 
     /**
-     * Entrywise multiplication with {@link value}.
-     * @param {Matrix|Array|Number} value
+     * Entrywise multiplication with `value`.
+     *
+     * @example let A = Matrix.from([ [1, 2], [3, 4], ]); // a 2 by 2 matrix. let B = A.clone(); // B == A;
+     *
+     *     A.mult(2); // [[2, 4], [6, 8]];
+     *     A.mult(B); // [[1, 4], [9, 16]];
+     *
+     * @param {Matrix | Float64Array | number[] | number} value
      * @param {Object} [options]
-     * @param {Boolean} [options.inline = false]  - If true, applies multiplication to the element, otherwise it creates first a copy and applies the multiplication on the copy.
+     * @param {boolean} [options.inline=false] - If true, applies multiplication to the element, otherwise it creates
+     *   first a copy and applies the multiplication on the copy. Default is `false`
      * @returns {Matrix}
-     * @example
-     *
-     * let A = Matrix.from([[1, 2], [3, 4]]); // a 2 by 2 matrix.
-     * let B = A.clone(); // B == A;
-     *
-     * A.mult(2); // [[2, 4], [6, 8]];
-     * A.mult(B); // [[1, 4], [9, 16]];
      */
     mult(value, { inline = false } = {}) {
         const A = inline ? this : this.clone();
@@ -729,18 +815,18 @@ export class Matrix {
     }
 
     /**
-     * Entrywise division with {@link value}.
-     * @param {Matrix|Array|Number} value
+     * Entrywise division with `value`.
+     *
+     * @example let A = Matrix.from([ [1, 2], [3, 4], ]); // a 2 by 2 matrix. let B = A.clone(); // B == A;
+     *
+     *     A.divide(2); // [[0.5, 1], [1.5, 2]];
+     *     A.divide(B); // [[1, 1], [1, 1]];
+     *
+     * @param {Matrix | Float64Array | number[] | number} value
      * @param {Object} [options]
-     * @param {Boolean} [options.inline = false] - If true, applies division to the element, otherwise it creates first a copy and applies the division on the copy.
+     * @param {Boolean} [options.inline=false] - If true, applies division to the element, otherwise it creates first a
+     *   copy and applies the division on the copy. Default is `false`
      * @returns {Matrix}
-     * @example
-     *
-     * let A = Matrix.from([[1, 2], [3, 4]]); // a 2 by 2 matrix.
-     * let B = A.clone(); // B == A;
-     *
-     * A.divide(2); // [[0.5, 1], [1.5, 2]];
-     * A.divide(B); // [[1, 1], [1, 1]];
      */
     divide(value, { inline = false } = {}) {
         const A = inline ? this : this.clone();
@@ -748,37 +834,37 @@ export class Matrix {
     }
 
     /**
-     * Entrywise addition with {@link value}.
-     * @param {Matrix|Array|Number} value
+     * Entrywise addition with `value`.
+     *
+     * @example let A = Matrix.from([ [1, 2], [3, 4], ]); // a 2 by 2 matrix. let B = A.clone(); // B == A;
+     *
+     *     A.add(2); // [[3, 4], [5, 6]];
+     *     A.add(B); // [[2, 4], [6, 8]];
+     *
+     * @param {Matrix | Float64Array | number[] | number} value
      * @param {Object} [options]
-     * @param {Boolean} [options.inline = false]  - If true, applies addition to the element, otherwise it creates first a copy and applies the addition on the copy.
+     * @param {boolean} [options.inline=false] - If true, applies addition to the element, otherwise it creates first a
+     *   copy and applies the addition on the copy. Default is `false`
      * @returns {Matrix}
-     * @example
-     *
-     * let A = Matrix.from([[1, 2], [3, 4]]); // a 2 by 2 matrix.
-     * let B = A.clone(); // B == A;
-     *
-     * A.add(2); // [[3, 4], [5, 6]];
-     * A.add(B); // [[2, 4], [6, 8]];
      */
-    add(value, {inline = false} = {}) {
+    add(value, { inline = false } = {}) {
         const A = inline ? this : this.clone();
         return A._apply(value, (a, b) => a + b);
     }
 
     /**
-     * Entrywise subtraction with {@link value}.
-     * @param {Matrix|Array|Number} value
+     * Entrywise subtraction with `value`.
+     *
+     * @example let A = Matrix.from([ [1, 2], [3, 4], ]); // a 2 by 2 matrix. let B = A.clone(); // B == A;
+     *
+     *     A.sub(2); // [[-1, 0], [1, 2]];
+     *     A.sub(B); // [[0, 0], [0, 0]];
+     *
+     * @param {Matrix | Float64Array | number[] | number} value
      * @param {Object} [options]
-     * @param {Boolean} [options.inline = false] - If true, applies subtraction to the element, otherwise it creates first a copy and applies the subtraction on the copy.
+     * @param {boolean} [options.inline=false] - If true, applies subtraction to the element, otherwise it creates first
+     *   a copy and applies the subtraction on the copy. Default is `false`
      * @returns {Matrix}
-     * @example
-     *
-     * let A = Matrix.from([[1, 2], [3, 4]]); // a 2 by 2 matrix.
-     * let B = A.clone(); // B == A;
-     *
-     * A.sub(2); // [[-1, 0], [1, 2]];
-     * A.sub(B); // [[0, 0], [0, 0]];
      */
     sub(value, { inline = false } = {}) {
         const A = inline ? this : this.clone();
@@ -787,7 +873,8 @@ export class Matrix {
 
     /**
      * Returns the number of rows and columns of the Matrix.
-     * @returns {Array} An Array in the form [rows, columns].
+     *
+     * @returns {number[]} An Array in the form [rows, columns].
      */
     get shape() {
         return [this._rows, this._cols];
@@ -795,7 +882,10 @@ export class Matrix {
 
     /**
      * Returns the matrix in the given shape with the given function which returns values for the entries of the matrix.
-     * @param {Array} parameter - takes an Array in the form [rows, cols, value], where rows and cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row and col) which has to return a value for the colth entry of the rowth row.
+     *
+     * @param {[number, number, Accessor]} parameter - Takes an Array in the form [rows, cols, value], where rows and
+     *   cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row
+     *   and col) which has to return a value for the colth entry of the rowth row.
      * @returns {Matrix}
      */
     set shape([rows, cols, value = () => 0]) {
@@ -807,14 +897,14 @@ export class Matrix {
                 this._data[i] = value(row, col);
             }
         }
-        return this;
     }
 
     /**
      * Returns the Matrix as a Array of Float64Arrays.
-     * @returns {Array<Float64Array>}
+     *
+     * @returns {Float64Array[]}
      */
-    get to2dArray() {
+    to2dArray() {
         const result = [];
         for (const row of this.iterate_rows()) {
             result.push(row);
@@ -824,9 +914,10 @@ export class Matrix {
 
     /**
      * Returns the Matrix as a Array of Arrays.
-     * @returns {Array<Array>}
+     *
+     * @returns {number[][]}
      */
-    get asArray() {
+    asArray() {
         const result = [];
         for (const row of this.iterate_rows()) {
             result.push(Array.from(row));
@@ -836,13 +927,14 @@ export class Matrix {
 
     /**
      * Returns the diagonal of the Matrix.
+     *
      * @returns {Float64Array}
      */
-    get diag() {
+    diag() {
         const rows = this._rows;
         const cols = this._cols;
         const min_row_col = Math.min(rows, cols);
-        let result = new Float64Array(min_row_col);
+        const result = new Float64Array(min_row_col);
         for (let i = 0; i < min_row_col; ++i) {
             result[i] = this.entry(i, i);
         }
@@ -851,25 +943,28 @@ export class Matrix {
 
     /**
      * Returns the mean of all entries of the Matrix.
-     * @returns {Number}
+     *
+     * @returns {number}
      */
-    get mean() {
-        const sum = this.sum;
+    mean() {
+        const sum = this.sum();
         const n = this._rows * this._cols;
         return sum / n;
     }
 
     /**
      * Returns the sum oof all entries of the Matrix.
-     * @returns {Number}
+     *
+     * @returns {number}
      */
-    get sum() {
+    sum() {
         const data = this.values;
         return neumair_sum(data);
     }
 
     /**
      * Returns the entries of the Matrix.
+     *
      * @returns {Float64Array}
      */
     get values() {
@@ -879,9 +974,10 @@ export class Matrix {
 
     /**
      * Returns the mean of each row of the matrix.
+     *
      * @returns {Float64Array}
      */
-    get meanRows() {
+    meanRows() {
         const data = this.values;
         const rows = this._rows;
         const cols = this._cols;
@@ -896,10 +992,12 @@ export class Matrix {
         return result;
     }
 
-    /** Returns the mean of each column of the matrix.
+    /**
+     * Returns the mean of each column of the matrix.
+     *
      * @returns {Float64Array}
      */
-    get meanCols() {
+    meanCols() {
         const data = this.values;
         const rows = this._rows;
         const cols = this._cols;
@@ -915,25 +1013,28 @@ export class Matrix {
     }
 
     /**
-     * Solves the equation {@link A}x = {@link b} using the conjugate gradient method. Returns the result x.
+     * Solves the equation `Ax = b` using the conjugate gradient method. Returns the result `x`.
+     *
      * @param {Matrix} A - Matrix
      * @param {Matrix} b - Matrix
-     * @param {Randomizer} [randomizer=null]
-     * @param {Number} [tol=1e-3]
+     * @param {Randomizer | null} [randomizer]
+     * @param {number} [tol=1e-3] Default is `1e-3`
      * @returns {Matrix}
      */
     static solve_CG(A, b, randomizer, tol = 1e-3) {
-        if (randomizer === null) {
+        if (!randomizer) {
             randomizer = new Randomizer();
         }
         const rows = A.shape[0];
         const cols = b.shape[1];
         let result = new Matrix(rows, 0);
         for (let i = 0; i < cols; ++i) {
-            const b_i = Matrix.from(b.col(i)).T;
+            const b_i = Matrix.from_vector(b.col(i), "col");
             let x = new Matrix(rows, 1, () => randomizer.random);
             let r = b_i.sub(A.dot(x));
             let d = r.clone();
+            let iter = 0;
+            const max_iter = rows * 10; // Prevent infinite loops
             do {
                 const z = A.dot(d);
                 const alpha = r.transDot(r).entry(0, 0) / d.transDot(z).entry(0, 0);
@@ -942,27 +1043,29 @@ export class Matrix {
                 const beta = r_next.transDot(r_next).entry(0, 0) / r.transDot(r).entry(0, 0);
                 d = r_next.add(d.mult(beta));
                 r = r_next;
-            } while (Math.abs(r.mean) > tol);
+                iter++;
+            } while (Math.abs(r.mean()) > tol && iter < max_iter);
             result = result.concat(x, "horizontal");
         }
         return result;
     }
 
     /**
-     * Solves the equation {@link A}x = {@link b}. Returns the result x.
-     * @param {Matrix} A - Matrix or LU Decomposition
+     * Solves the equation `Ax = b`. Returns the result `x`.
+     *
+     * @param {Matrix | { L: Matrix; U: Matrix }} A - Matrix or LU Decomposition
      * @param {Matrix} b - Matrix
      * @returns {Matrix}
      */
     static solve(A, b) {
-        let { L: L, U: U } = "L" in A && "U" in A ? A : Matrix.LU(A);
-        let rows = L.shape[0];
-        let x = b.clone();
+        const { L, U } = "L" in A && "U" in A ? A : Matrix.LU(A);
+        const rows = L.shape[0];
+        const x = b.clone();
 
         // forward
         for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < row - 1; ++col) {
-                x.sub_entry(0, row, L.entry(row, col) * x.entry(1, col));
+            for (let col = 0; col < row; ++col) {
+                x.sub_entry(0, row, L.entry(row, col) * x.entry(0, col));
             }
             x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
         }
@@ -979,9 +1082,10 @@ export class Matrix {
     }
 
     /**
-     * {@link L}{@link U} decomposition of the Matrix {@link A}. Creates two matrices, so that the dot product LU equals A.
+     * `LU` decomposition of the Matrix `A`. Creates two matrices, so that the dot product `LU` equals `A`.
+     *
      * @param {Matrix} A
-     * @returns {{L: Matrix, U: Matrix}} result - Returns the left triangle matrix {@link L} and the upper triangle matrix {@link U}.
+     * @returns {{ L: Matrix; U: Matrix }} The left triangle matrix `L` and the upper triangle matrix `U`.
      */
     static LU(A) {
         const rows = A.shape[0];
@@ -998,7 +1102,7 @@ export class Matrix {
             }
             for (let i = j; i < rows; ++i) {
                 if (L.entry(j, j) === 0) {
-                    return undefined;
+                    throw new Error("L's diagonal not supposed to be 0!");
                 }
                 let sum = 0;
                 for (let k = 0; k < j; ++k) {
@@ -1008,19 +1112,37 @@ export class Matrix {
             }
         }
 
-        return { L: L, U: U };
+        return { L, U };
     }
 
     /**
-     * Computes the determinante of {@link A}, by using the LU decomposition of {@link A}.
+     * Computes the determinante of `A`, by using the `LU` decomposition of `A`.
+     *
      * @param {Matrix} A
-     * @returns {Number} det - Returns the determinate of the Matrix {@link A}.
+     * @returns {number} The determinate of the Matrix `A`.
      */
     static det(A) {
-        const rows = A.shape[0];
+        const [rows, cols] = A.shape;
+
+        if (rows === 2 && cols === 2) {
+            return A.entry(0, 0) * A.entry(1, 1) - A.entry(0, 1) * A.entry(1, 0);
+        }
+        if (rows === 3 && cols === 3) {
+            const a = A.entry(0, 0);
+            const b = A.entry(0, 1);
+            const c = A.entry(0, 2);
+            const d = A.entry(1, 0);
+            const e = A.entry(1, 1);
+            const f = A.entry(1, 2);
+            const g = A.entry(2, 0);
+            const h = A.entry(2, 1);
+            const i = A.entry(2, 2);
+            return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+        }
+
         const { L, U } = Matrix.LU(A);
-        const L_diag = L.diag;
-        const U_diag = U.diag;
+        const L_diag = L.diag();
+        const U_diag = U.diag();
         let det = L_diag[0] * U_diag[0];
         for (let row = 1; row < rows; ++row) {
             det *= L_diag[row] * U_diag[row];
@@ -1029,16 +1151,17 @@ export class Matrix {
     }
 
     /**
-     * Computes the {@link k} components of the SVD decomposition of the matrix {@link M}
+     * Computes the `k` components of the SVD decomposition of the matrix `M`.
+     *
      * @param {Matrix} M
-     * @param {int} [k=2]
-     * @returns {{U: Matrix, Sigma: Matrix, V: Matrix}}
+     * @param {number} [k=2] Default is `2`
+     * @returns {{ U: Float64Array[]; Sigma: Float64Array; V: Float64Array[] }}
      */
     static SVD(M, k = 2) {
-        let MtM = M.transDot(M);
-        let MMt = M.dotTrans(M);
-        let { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
-        let { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
+        const MtM = M.transDot(M);
+        const MMt = M.dotTrans(M);
+        const { eigenvectors: V, eigenvalues: Sigma } = simultaneous_poweriteration(MtM, k);
+        const { eigenvectors: U } = simultaneous_poweriteration(MMt, k);
         return { U: U, Sigma: Sigma.map((sigma) => Math.sqrt(sigma)), V: V };
 
         //Algorithm 1a: Householder reduction to bidiagonal form:
@@ -1052,7 +1175,31 @@ export class Matrix {
         return { U: U, "Sigma": B, V: V }; */
     }
 
+    /**
+     * @param {unknown} A
+     * @returns {A is unknown[]|number[]|Float64Array|Float32Array}
+     */
     static isArray(A) {
-      return Array.isArray(A) || A instanceof Float64Array || A instanceof Float32Array;
+        return Array.isArray(A) || A instanceof Float64Array || A instanceof Float32Array;
+    }
+
+    /**
+     * @param {any[]} A
+     * @returns {A is number[][]|Float64Array[]}
+     */
+    static is2dArray(A) {
+        if (!Array.isArray(A) || A.length === 0) {
+            return false;
+        }
+        const n = A[0].length;
+        for (let i = 0; i < A.length; ++i) {
+            if (!Array.isArray(A[i]) && !(A[i] instanceof Float64Array)) {
+                return false;
+            }
+            if (A[i].length !== n) {
+                return false;
+            }
+        }
+        return true;
     }
 }

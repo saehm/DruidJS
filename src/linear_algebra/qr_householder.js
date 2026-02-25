@@ -1,21 +1,21 @@
 import { Matrix, norm } from "../matrix/index.js";
 
 /**
- * Computes the QR Decomposition of the Matrix {@link A} with householder transformations.
- * @memberof module:linear_algebra
- * @alias qr_householder
+ * Computes the QR Decomposition of the Matrix `A` with householder transformations.
+ *
+ * @category Linear Algebra
  * @param {Matrix} A
- * @returns {{R: Matrix, Q: Matrix}}
+ * @returns {{ R: Matrix; Q: Matrix }}
  * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections}
  * @see {@link http://mlwiki.org/index.php/Householder_Transformation}
  */
-export default function (A) {
+export function qr_householder(A) {
     const [rows, cols] = A.shape;
     const Q = new Matrix(rows, rows, "I");
     const R = A.clone();
 
     for (let j = 0; j < cols; ++j) {
-        const x = Matrix.from(R.col(j).slice(j));
+        const x = Matrix.from_vector(R.col(j).slice(j), "row");
         const x_norm = norm(x);
         const x0 = x.entry(0, 0);
         const rho = -Math.sign(x0);

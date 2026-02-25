@@ -4,19 +4,19 @@ import { neumair_sum } from "../numerical/index.js";
 
 /**
  * Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
- * @memberof module:linear_algebra
- * @alias qr
+ *
+ * @category Linear Algebra
  * @param {Matrix} A
- * @returns {{R: Matrix, Q: Matrix}}
+ * @returns {{ R: Matrix; Q: Matrix }}
  * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process}
  */
-export default function (A) {
+export function qr(A) {
     const [rows, cols] = A.shape;
     const Q = new Matrix(rows, cols, "identity");
     const R = new Matrix(cols, cols, 0);
 
     for (let j = 0; j < cols; ++j) {
-        let v = A.col(j);
+        const v = A.col(j);
         for (let i = 0; i < j; ++i) {
             const q = Q.col(i);
             const q_dot_v = neumair_sum(q.map((q_, k) => q_ * v[k]));

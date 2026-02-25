@@ -1,0 +1,47 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "correctness": {
+                "noUnusedImports": "off",
+                "noUnusedFunctionParameters": "off"
+            },
+            "suspicious": {
+                "useAdjacentOverloadSignatures": "off"
+            }
+        }
+    },
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120
+    },
+    "json": {
+        "formatter": {
+            "trailingCommas": "none"
+        }
+    },
+    "files": {
+        "includes": [
+            "*.{mjs|js}",
+            "src/**/*.js",
+            "test/**/*.js",
+            "docs/**/*.{vue|js|ts}"
+        ]
+    }
+}

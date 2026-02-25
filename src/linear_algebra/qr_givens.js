@@ -1,14 +1,14 @@
 import { Matrix } from "../matrix/index.js";
 
 /**
- * Computes the QR Decomposition of the Matrix {@link A} with givens rotation.
- * @memberof module:linear_algebra
- * @alias qr_givens
+ * Computes the QR Decomposition of the Matrix `A` with givens rotation.
+ *
+ * @category Linear Algebra
  * @param {Matrix} A
- * @returns {{R: Matrix, Q: Matrix}}
+ * @returns {{ R: Matrix; Q: Matrix }}
  * @see {@link https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations}
  */
-export default function (A) {
+export function qr_givens(A) {
     const [rows, cols] = A.shape;
     let Q = new Matrix(rows, rows, "I");
     let R = A.clone();
@@ -16,7 +16,7 @@ export default function (A) {
     for (let j = 0; j < cols; ++j) {
         for (let i = rows - 1; i > j; --i) {
             const [c, s] = givensrotation(R.entry(i - 1, j), R.entry(i, j));
-            if (c == 1 && s == 0) continue;
+            if (c === 1 && s === 0) continue;
             const Gji = new Matrix(rows, rows, "I");
             Gji.set_entry(i - 1, i - 1, c);
             Gji.set_entry(i - 1, i, -s);
@@ -29,8 +29,13 @@ export default function (A) {
     return { R, Q };
 }
 
+/**
+ * @param {number} a
+ * @param {number} b
+ * @returns {[number, number]}
+ */
 function givensrotation(a, b) {
-    if (b == 0) {
+    if (b === 0) {
         return [1, 0];
     } else {
         if (Math.abs(b) > Math.abs(a)) {

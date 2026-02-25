@@ -1,2 +1,2 @@
 /** @module optimization */
-export { default as powell } from "./powell.js";
+export { powell } from "./powell.js";

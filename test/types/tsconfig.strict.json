@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "checkJs": false,
+    "allowJs": false,
+    "types": [],
+    "moduleResolution": "bundler",
+    "skipLibCheck": false
+  },
+  "include": ["index.ts"]
+}

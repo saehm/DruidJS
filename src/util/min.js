@@ -1,14 +1,14 @@
 /**
- * Returns maximum in Array {@link values}.
- * @memberof module:utils
- * @alias min
- * @param {Array} values
- * @returns {Number}
+ * Returns maximum in Array `values`.
+ *
+ * @category Utils
+ * @param {Iterable<number | null>} values
+ * @returns {number}
  */
-export default function (values) {
-    let min;
+export function min(values) {
+    let min = Infinity;
     for (const value of values) {
-        if (value != null && (min > value || (min === undefined && value <= value))) {
+        if (value !== null && min > value) {
             min = value;
         }
     }

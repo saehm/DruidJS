@@ -1,80 +1,58 @@
-import { euclidean } from "../metrics/index.js";
-import { Heap } from "../datastructure/index.js";
-import { distance_matrix, Matrix } from "../matrix/index.js";
-
 /**
+ * Base class for all K-Nearest Neighbors (KNN) search algorithms.
+ *
+ * Provides a common interface for elements management and search operations.
+ *
+ * @abstract
+ * @category KNN
+ * @template {number[] | Float64Array} T - Type of elements
+ * @template {Object} Para - Type of parameters
  * @class
- * @alias KNN
  */
 export class KNN {
+    /** @type {T[]} */
+    _elements;
+    /** @type {Para} */
+    _parameters;
+    /** @type {"typed" | "array"} */
+    _type;
+
     /**
-     * Generates a KNN list with given {@link elements}.
-     * @constructor
-     * @memberof module:knn
-     * @alias KNN
-     * @param {Array=} elements - Elements which should be added to the KNN list
-     * @param {Function|"precomputed"} [metric = euclidean] metric is either precomputed or a function to use: (a, b) => distance
-     * @returns {KNN}
+     * @param {T[]} elements
+     * @param {Para} parameters
      */
-    constructor(elements=null, metric=euclidean) {
-        this._metric = metric;
-        this._elements = elements instanceof Matrix ? elements : Matrix.from(elements);
-        const N = this._elements.shape[0];
-        if (metric === "precomputed") {
-            this._D = this._elements.clone();
+    constructor(elements, parameters) {
+        if (elements.length === 0) throw new Error("Elements needs to contain at least one element!");
+        if (elements[0] instanceof Float64Array) {
+            this._type = "typed";
         } else {
-            this._D = distance_matrix(this._elements, metric);
+            this._type = "array";
         }
-        this.KNN = [];
-        for (let row = 0; row < N; ++row) {
-            const distances = this._D.row(row);
-            const H = new Heap(null, d => d.value, "min");
-            for (let j = 0; j < N; ++j) {
-                H.push({
-                    value: distances[j],
-                    index: j,
-                });
-            }
-            this.KNN.push(H);
-        }
+        this._parameters = parameters;
+        this._elements = elements;
     }
 
     /**
-     * 
-     * @param {Array|Number} t - query element or index.
-     * @param {Number} [k = 5] - number of nearest neighbors to return.
-     * @returns {Heap} - Heap consists of the {@link k} nearest neighbors.
+     * @abstract
+     * @param {T} t
+     * @param {number} k
+     * @returns {{ element: T; index: number; distance: number }[]}
      */
-    search(t, k = 5) {
-        const metric = this._metric;
-        const KNN = this.KNN;
-        let H;
-        if (Array.isArray(t)) {
-            if (this._metric == "precomputed") {
-                throw "Search by query element is only possible when not using a precomputed distance matrix!"
-            } 
-            const elements = this._elements;
-            const N = KNN.length;
-            let nearest_element_index = null;
-            let nearest_dist = Infinity;
-            for (let i = 0; i < N; ++i) {
-                const element = elements.row(i);
-                const dist = metric(t, element);
-                if (dist < nearest_dist) {
-                    nearest_element_index = i;
-                    nearest_dist = dist;
-                }
-            }
-            H = KNN[nearest_element_index];
-        } else if (Number.isInteger(t)) {
-            H = KNN[t]
-        }
+    search(t, k) {
+        t;
+        k;
+        throw new Error("The function search must be implemented!");
+    }
 
-        let result = []
-        for (let i = 0; i < k; ++i) {
-            result.push(H.pop())
-        }
-        result.forEach(res => H.push(res.element))
-        return result
-    }    
+    /**
+     * @abstract
+     * @param {number} i
+     * @param {number} k
+     * @returns {{ element: T; index: number; distance: number }[]}
+     */
+    search_by_index(i, k) {
+        i;
+        k;
+        throw new Error("The function search_by_index must be implemented!");
+    }
 }

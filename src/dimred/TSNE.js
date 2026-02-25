@@ -2,48 +2,71 @@ import { Matrix } from "../matrix/index.js";
 import { euclidean_squared } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
+/** @import {InputType} from "../index.js" */
+/** @import {Metric} from "../metrics/index.js" */
+/** @import {ParametersTSNE} from "./index.js" */
 /**
+ * t-SNE (t-Distributed Stochastic Neighbor Embedding)
+ *
+ * A nonlinear dimensionality reduction technique particularly well-suited
+ * for visualizing high-dimensional data in 2D or 3D. Preserves local
+ * structure while revealing global patterns.
+ *
  * @class
- * @alias TSNE
- * @extends DR
+ * @template {InputType} T
+ * @extends DR<T, ParametersTSNE>
+ * @category Dimensionality Reduction
+ * @see {@link https://lvdmaaten.github.io/tsne/|t-SNE Paper}
+ * @see {@link UMAP} for faster alternative with similar results
+ *
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ *
+ * const X = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]];
+ * const tsne = new druid.TSNE(X, {
+ *     perplexity: 30,
+ *     epsilon: 10,
+ *     d: 2,
+ *     seed: 42
+ * });
+ *
+ * const Y = tsne.transform(500); // 500 iterations
+ * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 export class TSNE extends DR {
     /**
-     *
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias TSNE
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {object} parameters - Object containing parameterization of the DR method.
-     * @param {number} [parameters.perplexity = 50] - perplexity.
-     * @param {number} [parameters.epsilon = 10] - learning parameter.
-     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {function|"precomputed"} [parameters.metric = euclidean_squared] - the metric which defines the distance between two points.
-     * @param {number} [parameters.seed = 1212] - the seed for the random number generator.
-     * @returns {TSNE}
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersTSNE>} [parameters] - Object containing parameterization of the DR method.
      */
     constructor(X, parameters) {
-        super(X, { perplexity: 50, epsilon: 10, d: 2, metric: euclidean_squared, seed: 1212 }, parameters);
+        super(
+            X,
+            {
+                perplexity: 50,
+                epsilon: 10,
+                d: 2,
+                metric: euclidean_squared,
+                seed: 1212,
+            },
+            parameters,
+        );
         [this._N, this._D] = this.X.shape;
         this._iter = 0;
-        this.Y = new Matrix(this._N, this.parameter("d"), () => this._randomizer.gauss_random() * 1e-4);
-        return this;
+        const d = /** @type {number} */ (this.parameter("d"));
+        this.Y = new Matrix(this._N, d, () => this._randomizer.gauss_random() * 1e-4);
     }
 
-    /**
-     *
-     * @returns {TSNE}
-     */
     init() {
         // init
-        const Htarget = Math.log(this.parameter("perplexity"));
+        const perplexity = /** @type {number} */ (this.parameter("perplexity"));
+        const Htarget = Math.log(perplexity);
         const N = this._N;
         const D = this._D;
-        const { metric } = this._parameters;
+        const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const X = this.X;
         let Delta;
-        if (metric == "precomputed") {
-            Delta = druid.Matrix.from(X);
+        if (metric === "precomputed") {
+            Delta = Matrix.from(X);
         } else {
             Delta = new Matrix(N, N);
             for (let i = 0; i < N; ++i) {
@@ -72,7 +95,7 @@ export class TSNE extends DR {
             let beta = 1;
             let cnt = maxtries;
             let done = false;
-            let psum;
+            let psum = 0;
 
             while (!done && cnt--) {
                 // compute entropy and kernel row with beta precision
@@ -116,9 +139,8 @@ export class TSNE extends DR {
     }
 
     /**
-     *
-     * @param {number} [iterations=500] - number of iterations.
-     * @returns {Matrix|number[][]} the projection.
+     * @param {number} [iterations=500] - Number of iterations. Default is `500`
+     * @returns {T} The projection.
      */
     transform(iterations = 500) {
         this.check_init();
@@ -129,9 +151,8 @@ export class TSNE extends DR {
     }
 
     /**
-     *
-     * @param {number} [iterations=500] - number of iterations.
-     * @yields {Matrix|number[][]} - the projection.
+     * @param {number} [iterations=500] - Number of iterations. Default is `500`
+     * @returns {Generator<T, T, void>} - The projection.
      */
     *generator(iterations = 500) {
         this.check_init();
@@ -143,18 +164,21 @@ export class TSNE extends DR {
     }
 
     /**
-     * performs a optimization step
+     * Performs a optimization step
+     *
      * @private
      * @returns {Matrix}
      */
     next() {
         const iter = ++this._iter;
+        if (!this._P || !this._ystep || !this._gains) throw new Error("Call init() first!");
         const P = this._P;
         const ystep = this._ystep;
         const gains = this._gains;
         const N = this._N;
-        const { d: dim, epsilon } = this._parameters;
-        let Y = this.Y;
+        const dim = /** @type {number} */ (this._parameters.d);
+        const epsilon = /** @type {number} */ (this._parameters.epsilon);
+        const Y = this.Y;
 
         //calc cost gradient;
         const pmul = iter < 100 ? 4 : 1;
@@ -197,7 +221,7 @@ export class TSNE extends DR {
         }
 
         // perform gradient step
-        let ymean = new Float64Array(dim);
+        const ymean = new Float64Array(dim);
         for (let i = 0; i < N; ++i) {
             for (let d = 0; d < dim; ++d) {
                 const gid = grad.entry(i, d);
@@ -224,5 +248,39 @@ export class TSNE extends DR {
         }
 
         return this.Y;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersTSNE>} [parameters]
+     * @returns {T}
+     */
+    static transform(X, parameters) {
+        const dr = new TSNE(X, parameters);
+        return dr.transform();
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersTSNE>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static *generator(X, parameters) {
+        const dr = new TSNE(X, parameters);
+        yield* dr.generator();
+        return dr.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersTSNE>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static async transform_async(X, parameters) {
+        const dr = new TSNE(X, parameters);
+        return dr.transform_async();
     }
 }

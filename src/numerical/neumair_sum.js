@@ -1,12 +1,12 @@
 /**
  * Numerical stable summation with the Neumair summation algorithm.
- * @memberof module:numerical
- * @alias neumair_sum
- * @param {Number[]} summands - Array of values to sum up.
- * @returns {Number} The sum.
+ *
+ * @category Numerical
+ * @param {number[] | Float64Array} summands - Array of values to sum up.
+ * @returns {number} The sum.
  * @see {@link https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements}
  */
-export default function (summands) {
+export function neumair_sum(summands) {
     const n = summands.length;
     let sum = 0;
     let compensation = 0;

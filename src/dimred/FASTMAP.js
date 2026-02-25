@@ -2,40 +2,45 @@ import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
+/** @import { InputType } from "../index.js" */
+/** @import { ParametersFASTMAP } from "./index.js"; */
+
 /**
+ * FastMap algorithm for dimensionality reduction.
+ *
+ * A very fast algorithm for projecting high-dimensional data into a lower-dimensional
+ * space while preserving pairwise distances. It works similarly to PCA but uses
+ * only a subset of the data to find projection axes.
+ *
  * @class
- * @alias FASTMAP
- * @extends DR
+ * @template {InputType} T
+ * @extends DR<T, ParametersFASTMAP>
+ * @category Dimensionality Reduction
  */
 export class FASTMAP extends DR {
     /**
-     * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets
-     * @constructor
-     * @memberof module:dimensionality_reduction
-     * @alias FASTMAP
-     * @param {Matrix} X - the high-dimensional data.
-     * @param {object} parameters - Object containing parameterization of the DR method.
-     * @param {number} [parameters.d = 2] - the dimensionality of the projection.
-     * @param {function} [parameters.metric = euclidean] - the metric which defines the distance between two points.
-     * @param {number} [parameters.seed = 1212] - the dimensionality of the projection.
-     * @returns {FASTMAP}
+     * FastMap: a fast algorithm for indexing, data-mining and visualization of traditional and multimedia datasets.
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersFASTMAP>} parameters - Object containing parameterization of the DR method.
      * @see {@link https://doi.org/10.1145/223784.223812}
      */
     constructor(X, parameters) {
         super(X, { d: 2, metric: euclidean, seed: 1212 }, parameters);
-        return this;
     }
 
     /**
      * Chooses two points which are the most distant in the actual projection.
+     *
      * @private
-     * @param {function} dist
-     * @returns {number[]} An array consisting of first index, second index, and distance between the two points.
+     * @param {(a: number, b: number) => number} dist
+     * @returns {[number, number, number]} An array consisting of first index, second index, and distance between the
+     *   two points.
      */
     _choose_distant_objects(dist) {
         const X = this.X;
         const N = X.shape[0];
-        let a_index = (this._randomizer.random_int % N) - 1;
+        let a_index = this._randomizer.random_int % N;
+        /** @type {number | null} */
         let b_index = null;
         let max_dist = -Infinity;
         for (let i = 0; i < N; ++i) {
@@ -45,6 +50,7 @@ export class FASTMAP extends DR {
                 b_index = i;
             }
         }
+        if (b_index === null) throw new Error("should not happen!");
         max_dist = -Infinity;
         for (let i = 0; i < N; ++i) {
             const d_bi = dist(b_index, i);
@@ -58,17 +64,20 @@ export class FASTMAP extends DR {
 
     /**
      * Computes the projection.
-     * @returns {Matrix} The {@link d}-dimensional projection of the data matrix {@link X}.
+     *
+     * @returns {T} The `d`-dimensional projection of the data matrix `X`.
      */
     transform() {
         const X = this.X;
         const N = X.shape[0];
-        const { d, metric } = this._parameters;
+        const d = /** @type {number} */ (this._parameters.d);
+        const metric = /** @type {typeof euclidean} */ (this._parameters.metric);
         const Y = new Matrix(N, d, 0);
+        /** @type {(a: number, b: number) => number} */
         let dist = (a, b) => metric(X.row(a), X.row(b));
 
         for (let _col = 0; _col < d; ++_col) {
-            let old_dist = dist;
+            const old_dist = dist;
             // choose pivot objects
             const [a_index, b_index, d_ab] = this._choose_distant_objects(dist);
             if (d_ab !== 0) {
@@ -89,5 +98,44 @@ export class FASTMAP extends DR {
         // return embedding.
         this.Y = Y;
         return this.projection;
+    }
+
+    *generator() {
+        yield this.transform();
+        return this.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersFASTMAP>} parameters
+     * @returns {T}
+     */
+    static transform(X, parameters) {
+        const dr = new FASTMAP(X, parameters);
+        return dr.transform();
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersFASTMAP>} parameters
+     * @returns {Generator<T, T, void>}
+     */
+    static *generator(X, parameters) {
+        const dr = new FASTMAP(X, parameters);
+        yield* dr.generator();
+        return dr.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersFASTMAP>} parameters
+     * @returns {Promise<T>}
+     */
+    static async transform_async(X, parameters) {
+        const dr = new FASTMAP(X, parameters);
+        return dr.transform_async();
     }
 }

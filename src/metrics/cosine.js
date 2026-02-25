@@ -1,20 +1,19 @@
 /**
- * Computes the cosine distance (not similarity) between {@link a} and {@link b}.
- * @memberof module:metrics
- * @alias cosine
- * @param {Number[]} a
- * @param {Number[]} b
- * @returns {Number} The cosine distance between {@link a} and {@link b}.
- * 
+ * Computes the cosine distance (not similarity) between `a` and `b`.
+ *
+ * @category Metrics
+ * @param {number[] | Float64Array} a
+ * @param {number[] | Float64Array} b
+ * @returns {number} The cosine distance between `a` and `b`.
  * @example
- * import * as druid from "@saehrimnir/druidjs";
- * 
- * druid.cosine([1,0],[1,1]) == 0.7853981633974484 == π/4;
- * 
+ * import { cosine } from "@saehrimnir/druidjs";
+ * const a = [1, 2, 3];
+ * const b = [4, 5, 6];
+ * const distance = cosine(a, b); // 0.9746318461970762
  */
-export default function (a, b) {
-    if (a.length !== b.length) return undefined;
-    let n = a.length;
+export function cosine(a, b) {
+    if (a.length !== b.length) throw new Error("Vector a and b needs to be of the same length!");
+    const n = a.length;
     let sum = 0;
     let sum_a = 0;
     let sum_b = 0;
