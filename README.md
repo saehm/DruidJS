@@ -12,7 +12,7 @@ DruidJS makes it easy to project a dataset with the implemented dimensionality r
 ![NPM Downloads](https://img.shields.io/npm/dw/%40saehrimnir%2Fdruidjs)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/saehm/DruidJS/release.yml?event=build-and-test)
 [![License](https://img.shields.io/github/license/saehm/DruidJS)](LICENSE)
-
+[![DOI:10.1109/VIS47514.2020.00029](https://img.shields.io/badge/DOI-10.1109%2FVIS47514.2020.00029-blue)](https://doi.org/10.1109/VIS47514.2020.00029)
 ### Resources
 
 ```
