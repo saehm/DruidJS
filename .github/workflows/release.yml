@@ -30,6 +30,14 @@ jobs:
         
       - name: Run tests
         run: pnpm test
+
+      - name: Run coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
         
       - name: Build
         run: pnpm build
