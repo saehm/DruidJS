@@ -49,7 +49,7 @@
         "tsdocs": "typedoc",
         "test:types": "tsc --project test/types/tsconfig.json",
         "test:types:strict": "tsc --project test/types/tsconfig.strict.json",
-        "test:coverage": "vitest run --coverage",
+        "test:coverage": "vitest run --coverage --project node",
         "lint": "biome lint  ./src",
         "format": "biome format ./src --write & biome format ./test --write",
         "check": "biome check --write ./src",
