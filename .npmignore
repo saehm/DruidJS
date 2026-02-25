@@ -8,3 +8,4 @@ test
 .vitepress
 docs
 benchmark
+dist/types/**/*
