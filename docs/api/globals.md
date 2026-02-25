@@ -45,41 +45,41 @@
 
 ## Linear Algebra
 
-- [inner_product](functions/inner_product.md)
+- [inner\_product](functions/inner_product.md)
 - [qr](functions/qr.md)
-- [qr_householder](functions/qr_householder.md)
-- [simultaneous_poweriteration](functions/simultaneous_poweriteration.md)
+- [qr\_householder](functions/qr_householder.md)
+- [simultaneous\_poweriteration](functions/simultaneous_poweriteration.md)
 
 ## Matrix
 
 - [Matrix](classes/Matrix.md)
-- [distance_matrix](functions/distance_matrix.md)
-- [k_nearest_neighbors](functions/k_nearest_neighbors.md)
+- [distance\_matrix](functions/distance_matrix.md)
+- [k\_nearest\_neighbors](functions/k_nearest_neighbors.md)
 - [linspace](functions/linspace.md)
 - [norm](functions/norm.md)
 - [normalize](functions/normalize.md)
 
 ## Metrics
 
-- [bray_curtis](functions/bray_curtis.md)
+- [bray\_curtis](functions/bray_curtis.md)
 - [canberra](functions/canberra.md)
 - [chebyshev](functions/chebyshev.md)
 - [cosine](functions/cosine.md)
 - [euclidean](functions/euclidean.md)
-- [euclidean_squared](functions/euclidean_squared.md)
-- [goodman_kruskal](functions/goodman_kruskal.md)
+- [euclidean\_squared](functions/euclidean_squared.md)
+- [goodman\_kruskal](functions/goodman_kruskal.md)
 - [hamming](functions/hamming.md)
 - [haversine](functions/haversine.md)
 - [jaccard](functions/jaccard.md)
 - [manhattan](functions/manhattan.md)
-- [sokal_michener](functions/sokal_michener.md)
+- [sokal\_michener](functions/sokal_michener.md)
 - [wasserstein](functions/wasserstein.md)
 - [yule](functions/yule.md)
 
 ## Numerical
 
-- [kahan_sum](functions/kahan_sum.md)
-- [neumair_sum](functions/neumair_sum.md)
+- [kahan\_sum](functions/kahan_sum.md)
+- [neumair\_sum](functions/neumair_sum.md)
 
 ## Optimization
 

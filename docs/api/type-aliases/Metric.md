@@ -4,7 +4,7 @@
 
 > **Metric**\<\> = (`a`, `b`) => `number`
 
-Defined in: [metrics/index.js:3](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/metrics/index.js#L3)
+Defined in: [metrics/index.js:3](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/metrics/index.js#L3)
 
 ## Type Parameters
 

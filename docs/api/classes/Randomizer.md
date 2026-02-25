@@ -2,7 +2,7 @@
 
 # Class: Randomizer
 
-Defined in: [util/randomizer.js:7](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L7)
+Defined in: [util/randomizer.js:7](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L7)
 
 ## Constructors
 
@@ -10,7 +10,7 @@ Defined in: [util/randomizer.js:7](https://github.com/saehm/DruidJS/blob/a8c3d97
 
 > **new Randomizer**(`_seed?`): `Randomizer`
 
-Defined in: [util/randomizer.js:28](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L28)
+Defined in: [util/randomizer.js:28](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L28)
 
 Mersenne Twister random number generator.
 
@@ -21,7 +21,7 @@ Mersenne Twister random number generator.
 `number`
 
 The seed for the random number generator. If `_seed == null` then
-the actual time gets used as seed. Default is `new Date().getTime()`
+  the actual time gets used as seed. Default is `new Date().getTime()`
 
 #### Returns
 
@@ -33,75 +33,75 @@ https://github.com/bmurray7/mersenne-twister-examples/blob/master/javascript-mer
 
 ## Properties
 
-### \_LOWER_MASK
+### \_LOWER\_MASK
 
-> **\_LOWER_MASK**: `number` = `0x7fffffff`
+> **\_LOWER\_MASK**: `number` = `0x7fffffff`
 
-Defined in: [util/randomizer.js:12](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L12)
+Defined in: [util/randomizer.js:12](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L12)
 
----
+***
 
 ### \_M
 
 > **\_M**: `number` = `397`
 
-Defined in: [util/randomizer.js:9](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L9)
+Defined in: [util/randomizer.js:9](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L9)
 
----
+***
 
-### \_MATRIX_A
+### \_MATRIX\_A
 
-> **\_MATRIX_A**: `number` = `0x9908b0df`
+> **\_MATRIX\_A**: `number` = `0x9908b0df`
 
-Defined in: [util/randomizer.js:10](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L10)
+Defined in: [util/randomizer.js:10](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L10)
 
----
+***
 
 ### \_mt
 
 > **\_mt**: `number`[]
 
-Defined in: [util/randomizer.js:15](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L15)
+Defined in: [util/randomizer.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L15)
 
----
+***
 
 ### \_mti
 
 > **\_mti**: `number`
 
-Defined in: [util/randomizer.js:17](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L17)
+Defined in: [util/randomizer.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L17)
 
----
+***
 
 ### \_N
 
 > **\_N**: `number` = `624`
 
-Defined in: [util/randomizer.js:8](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L8)
+Defined in: [util/randomizer.js:8](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L8)
 
----
+***
 
 ### \_seed
 
 > **\_seed**: `number`
 
-Defined in: [util/randomizer.js:19](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L19)
+Defined in: [util/randomizer.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L19)
 
----
+***
 
-### \_UPPER_MASK
+### \_UPPER\_MASK
 
-> **\_UPPER_MASK**: `number` = `0x80000000`
+> **\_UPPER\_MASK**: `number` = `0x80000000`
 
-Defined in: [util/randomizer.js:11](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L11)
+Defined in: [util/randomizer.js:11](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L11)
 
----
+***
 
 ### \_val
 
 > **\_val**: `number` \| `null` \| `undefined`
 
-Defined in: [util/randomizer.js:113](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L113)
+Defined in: [util/randomizer.js:113](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L113)
 
 ## Accessors
 
@@ -111,7 +111,7 @@ Defined in: [util/randomizer.js:113](https://github.com/saehm/DruidJS/blob/a8c3d
 
 > **get** **random**(): `number`
 
-Defined in: [util/randomizer.js:63](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L63)
+Defined in: [util/randomizer.js:63](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L63)
 
 Returns a float between 0 and 1.
 
@@ -121,15 +121,15 @@ Returns a float between 0 and 1.
 
 - A random number between [0, 1]
 
----
+***
 
-### random_int
+### random\_int
 
 #### Get Signature
 
-> **get** **random_int**(): `number`
+> **get** **random\_int**(): `number`
 
-Defined in: [util/randomizer.js:72](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L72)
+Defined in: [util/randomizer.js:72](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L72)
 
 Returns an integer between 0 and MAX_INTEGER.
 
@@ -139,7 +139,7 @@ Returns an integer between 0 and MAX_INTEGER.
 
 - A random integer.
 
----
+***
 
 ### seed
 
@@ -147,7 +147,7 @@ Returns an integer between 0 and MAX_INTEGER.
 
 > **get** **seed**(): `number`
 
-Defined in: [util/randomizer.js:54](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L54)
+Defined in: [util/randomizer.js:54](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L54)
 
 Returns the seed of the random number generator.
 
@@ -161,7 +161,7 @@ Returns the seed of the random number generator.
 
 > **set** **seed**(`_seed`): `void`
 
-Defined in: [util/randomizer.js:36](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L36)
+Defined in: [util/randomizer.js:36](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L36)
 
 ##### Parameters
 
@@ -179,7 +179,7 @@ Defined in: [util/randomizer.js:36](https://github.com/saehm/DruidJS/blob/a8c3d9
 
 > **choice**\<`T`\>(`A`, `n`): `T`[]
 
-Defined in: [util/randomizer.js:132](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L132)
+Defined in: [util/randomizer.js:132](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L132)
 
 #### Type Parameters
 
@@ -209,25 +209,25 @@ The number of samples.
 
 A random selection form `A` of `n` samples.
 
----
+***
 
-### gauss_random()
+### gauss\_random()
 
-> **gauss_random**(): `number`
+> **gauss\_random**(): `number`
 
-Defined in: [util/randomizer.js:109](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L109)
+Defined in: [util/randomizer.js:109](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L109)
 
 #### Returns
 
 `number`
 
----
+***
 
 ### choice()
 
 > `static` **choice**\<`T`\>(`A`, `n`, `seed?`): `T`[]
 
-Defined in: [util/randomizer.js:171](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/util/randomizer.js#L171)
+Defined in: [util/randomizer.js:171](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/util/randomizer.js#L171)
 
 #### Type Parameters
 

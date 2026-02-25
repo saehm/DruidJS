@@ -2,7 +2,7 @@
 
 # Interface: ParametersHierarchicalClustering
 
-Defined in: [clustering/index.js:15](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/index.js#L15)
+Defined in: [clustering/index.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/index.js#L15)
 
 ## Properties
 
@@ -10,12 +10,12 @@ Defined in: [clustering/index.js:15](https://github.com/saehm/DruidJS/blob/a8c3d
 
 > **linkage**: `"complete"` \| `"single"` \| `"average"`
 
-Defined in: [clustering/index.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/index.js#L16)
+Defined in: [clustering/index.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/index.js#L16)
 
----
+***
 
 ### metric
 
 > **metric**: [`Metric`](../type-aliases/Metric.md) \| `"precomputed"`
 
-Defined in: [clustering/index.js:17](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/index.js#L17)
+Defined in: [clustering/index.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/index.js#L17)

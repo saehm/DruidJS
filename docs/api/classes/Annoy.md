@@ -2,7 +2,7 @@
 
 # Class: Annoy\<T\>
 
-Defined in: knn/Annoy.js:45
+Defined in: [knn/Annoy.js:45](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L45)
 
 Annoy-style (Approximate Nearest Neighbors Oh Yeah) implementation using Random Projection Trees.
 
@@ -10,14 +10,12 @@ This implementation builds multiple random projection trees where each tree rand
 two points and splits the space based on a hyperplane equidistant between them.
 
 Key features:
-
 - Multiple random projection trees for better recall
 - Each tree uses random hyperplanes for splitting
 - Priority queue search for better recall
 - Combines results from all trees
 
 Best suited for:
-
 - High-dimensional data
 - Approximate nearest neighbor search
 - Large datasets
@@ -27,8 +25,8 @@ Best suited for:
 
 ## See
 
-- [https://github.com/spotify/annoy](https://github.com/spotify/annoy)
-- [https://erikbern.com/2015/09/24/nearest-neighbors-and-vector-models-epilogue-curse-of-dimensionality.html](https://erikbern.com/2015/09/24/nearest-neighbors-and-vector-models-epilogue-curse-of-dimensionality.html)
+ - [https://github.com/spotify/annoy](https://github.com/spotify/annoy)
+ - [https://erikbern.com/2015/09/24/nearest-neighbors-and-vector-models-epilogue-curse-of-dimensionality.html](https://erikbern.com/2015/09/24/nearest-neighbors-and-vector-models-epilogue-curse-of-dimensionality.html)
 
 ## Extends
 
@@ -38,7 +36,7 @@ Best suited for:
 
 ### T
 
-`T` _extends_ `number`[] \| `Float64Array`
+`T` *extends* `number`[] \| `Float64Array`
 
 ## Constructors
 
@@ -46,7 +44,7 @@ Best suited for:
 
 > **new Annoy**\<`T`\>(`elements`, `parameters?`): `Annoy`\<`T`\>
 
-Defined in: knn/Annoy.js:52
+Defined in: [knn/Annoy.js:52](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L52)
 
 Creates a new Annoy-style index with random projection trees.
 
@@ -78,71 +76,71 @@ Configuration parameters
 
 > **\_elements**: `T`[]
 
-Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L14)
+Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L14)
 
 #### Inherited from
 
 `KNN._elements`
 
----
+***
 
 ### \_maxPointsPerLeaf
 
 > **\_maxPointsPerLeaf**: `number`
 
-Defined in: knn/Annoy.js:69
+Defined in: [knn/Annoy.js:69](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L69)
 
----
+***
 
 ### \_metric
 
 > **\_metric**: [`Metric`](../type-aliases/Metric.md)
 
-Defined in: knn/Annoy.js:67
+Defined in: [knn/Annoy.js:67](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L67)
 
----
+***
 
 ### \_numTrees
 
 > **\_numTrees**: `number`
 
-Defined in: knn/Annoy.js:68
+Defined in: [knn/Annoy.js:68](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L68)
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersAnnoy`](../interfaces/ParametersAnnoy.md)
 
-Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L16)
+Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L16)
 
 #### Inherited from
 
 `KNN._parameters`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: knn/Annoy.js:71
+Defined in: [knn/Annoy.js:71](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L71)
 
----
+***
 
 ### \_seed
 
 > **\_seed**: `number`
 
-Defined in: knn/Annoy.js:70
+Defined in: [knn/Annoy.js:70](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L70)
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"typed"`
 
-Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L18)
+Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L18)
 
 #### Inherited from
 
@@ -150,13 +148,13 @@ Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d42706
 
 ## Accessors
 
-### num_nodes
+### num\_nodes
 
 #### Get Signature
 
-> **get** **num_nodes**(): `number`
+> **get** **num\_nodes**(): `number`
 
-Defined in: knn/Annoy.js:101
+Defined in: [knn/Annoy.js:101](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L101)
 
 Get the total number of nodes in all trees.
 
@@ -164,15 +162,15 @@ Get the total number of nodes in all trees.
 
 `number`
 
----
+***
 
-### num_trees
+### num\_trees
 
 #### Get Signature
 
-> **get** **num_trees**(): `number`
+> **get** **num\_trees**(): `number`
 
-Defined in: knn/Annoy.js:93
+Defined in: [knn/Annoy.js:93](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L93)
 
 Get the number of trees in the index.
 
@@ -186,7 +184,7 @@ Get the number of trees in the index.
 
 > **add**(`elements`): `Annoy`\<`T`\>
 
-Defined in: knn/Annoy.js:124
+Defined in: [knn/Annoy.js:124](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L124)
 
 Add elements to the Annoy index.
 
@@ -200,13 +198,13 @@ Add elements to the Annoy index.
 
 `Annoy`\<`T`\>
 
----
+***
 
 ### search()
 
 > **search**(`query`, `k?`): `object`[]
 
-Defined in: knn/Annoy.js:279
+Defined in: [knn/Annoy.js:279](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L279)
 
 Search for k approximate nearest neighbors.
 
@@ -228,13 +226,13 @@ Search for k approximate nearest neighbors.
 
 `KNN.search`
 
----
+***
 
-### search_by_index()
+### search\_by\_index()
 
-> **search_by_index**(`i`, `k?`): `object`[]
+> **search\_by\_index**(`i`, `k?`): `object`[]
 
-Defined in: knn/Annoy.js:398
+Defined in: [knn/Annoy.js:398](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L398)
 
 #### Parameters
 
@@ -254,13 +252,13 @@ Defined in: knn/Annoy.js:398
 
 `KNN.search_by_index`
 
----
+***
 
-### search_index()
+### search\_index()
 
-> **search_index**(`i`, `k?`): `object`[]
+> **search\_index**(`i`, `k?`): `object`[]
 
-Defined in: knn/Annoy.js:410
+Defined in: [knn/Annoy.js:410](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/Annoy.js#L410)
 
 Alias for search_by_index for backward compatibility.
 

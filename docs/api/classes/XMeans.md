@@ -2,7 +2,7 @@
 
 # Class: XMeans
 
-Defined in: [clustering/XMeans.js:34](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L34)
+Defined in: [clustering/XMeans.js:34](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L34)
 
 X-Means Clustering
 
@@ -19,7 +19,7 @@ using the Bayesian Information Criterion (BIC).
 
 > **new XMeans**(`points`, `parameters?`): `XMeans`
 
-Defined in: [clustering/XMeans.js:54](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L54)
+Defined in: [clustering/XMeans.js:54](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L54)
 
 XMeans clustering algorithm that automatically determines the optimal number of clusters.
 
@@ -27,7 +27,6 @@ X-Means extends K-Means by starting with a minimum number of clusters and iterat
 splitting clusters to improve the Bayesian Information Criterion (BIC).
 
 Algorithm:
-
 1. Start with K_min clusters using KMeans
 2. For each cluster, try splitting it into 2 sub-clusters
 3. If BIC improves after splitting, keep the split
@@ -54,9 +53,9 @@ Configuration parameters
 
 #### See
 
-- [https://www.cs.cmu.edu/~dpelleg/download/xmeans.pdf](https://www.cs.cmu.edu/~dpelleg/download/xmeans.pdf)
-- [https://github.com/annoviko/pyclustering/blob/master/pyclustering/cluster/xmeans.py](https://github.com/annoviko/pyclustering/blob/master/pyclustering/cluster/xmeans.py)
-- [https://github.com/haifengl/smile/blob/master/core/src/main/java/smile/clustering/XMeans.java](https://github.com/haifengl/smile/blob/master/core/src/main/java/smile/clustering/XMeans.java)
+ - [https://www.cs.cmu.edu/~dpelleg/download/xmeans.pdf](https://www.cs.cmu.edu/~dpelleg/download/xmeans.pdf)
+ - [https://github.com/annoviko/pyclustering/blob/master/pyclustering/cluster/xmeans.py](https://github.com/annoviko/pyclustering/blob/master/pyclustering/cluster/xmeans.py)
+ - [https://github.com/haifengl/smile/blob/master/core/src/main/java/smile/clustering/XMeans.java](https://github.com/haifengl/smile/blob/master/core/src/main/java/smile/clustering/XMeans.java)
 
 #### Overrides
 
@@ -64,79 +63,79 @@ Configuration parameters
 
 ## Properties
 
-### \_best_kmeans
+### \_best\_kmeans
 
-> **\_best_kmeans**: [`KMeans`](KMeans.md) \| `null`
+> **\_best\_kmeans**: [`KMeans`](KMeans.md) \| `null`
 
-Defined in: [clustering/XMeans.js:67](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L67)
+Defined in: [clustering/XMeans.js:67](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L67)
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: clustering/Clustering.js:19
+Defined in: [clustering/Clustering.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L19)
 
 #### Inherited from
 
 `Clustering._D`
 
----
+***
 
 ### \_matrix
 
 > **\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: clustering/Clustering.js:15
+Defined in: [clustering/Clustering.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L15)
 
 #### Inherited from
 
 `Clustering._matrix`
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: clustering/Clustering.js:17
+Defined in: [clustering/Clustering.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L17)
 
 #### Inherited from
 
 `Clustering._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersXMeans`](../interfaces/ParametersXMeans.md)
 
-Defined in: clustering/Clustering.js:13
+Defined in: [clustering/Clustering.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L13)
 
 #### Inherited from
 
 `Clustering._parameters`
 
----
+***
 
 ### \_points
 
 > **\_points**: [`InputType`](../type-aliases/InputType.md)
 
-Defined in: clustering/Clustering.js:11
+Defined in: [clustering/Clustering.js:11](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L11)
 
 #### Inherited from
 
 `Clustering._points`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [clustering/XMeans.js:64](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L64)
+Defined in: [clustering/XMeans.js:64](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L64)
 
 ## Accessors
 
@@ -146,7 +145,7 @@ Defined in: [clustering/XMeans.js:64](https://github.com/saehm/DruidJS/blob/a8c3
 
 > **get** **centroids**(): `Float64Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [clustering/XMeans.js:344](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L344)
+Defined in: [clustering/XMeans.js:344](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L344)
 
 Get the final centroids
 
@@ -156,7 +155,7 @@ Get the final centroids
 
 Array of centroids
 
----
+***
 
 ### k
 
@@ -164,7 +163,7 @@ Array of centroids
 
 > **get** **k**(): `number`
 
-Defined in: [clustering/XMeans.js:356](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L356)
+Defined in: [clustering/XMeans.js:356](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L356)
 
 Get the optimal number of clusters found
 
@@ -176,11 +175,11 @@ The number of clusters
 
 ## Methods
 
-### get_cluster_list()
+### get\_cluster\_list()
 
-> **get_cluster_list**(): `number`[]
+> **get\_cluster\_list**(): `number`[]
 
-Defined in: [clustering/XMeans.js:332](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L332)
+Defined in: [clustering/XMeans.js:332](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L332)
 
 #### Returns
 
@@ -192,13 +191,13 @@ The cluster list
 
 `Clustering.get_cluster_list`
 
----
+***
 
-### get_clusters()
+### get\_clusters()
 
-> **get_clusters**(): `number`[][]
+> **get\_clusters**(): `number`[][]
 
-Defined in: [clustering/XMeans.js:324](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/XMeans.js#L324)
+Defined in: [clustering/XMeans.js:324](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/XMeans.js#L324)
 
 Get the computed clusters
 

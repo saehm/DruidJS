@@ -2,7 +2,7 @@
 
 # Class: MeanShift
 
-Defined in: clustering/MeanShift.js:18
+Defined in: [clustering/MeanShift.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L18)
 
 Mean Shift Clustering
 
@@ -19,7 +19,7 @@ number of clusters. It identifies centers of density in the data.
 
 > **new MeanShift**(`points`, `parameters?`): `MeanShift`
 
-Defined in: clustering/MeanShift.js:38
+Defined in: [clustering/MeanShift.js:38](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L38)
 
 #### Parameters
 
@@ -45,43 +45,43 @@ Defined in: clustering/MeanShift.js:38
 
 > **\_bandwidth**: `number`
 
-Defined in: clustering/MeanShift.js:20
+Defined in: [clustering/MeanShift.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L20)
 
----
+***
 
-### \_cluster_list
+### \_cluster\_list
 
-> **\_cluster_list**: `number`[][] \| `undefined`
+> **\_cluster\_list**: `number`[][] \| `undefined`
 
-Defined in: clustering/MeanShift.js:32
+Defined in: [clustering/MeanShift.js:32](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L32)
 
----
+***
 
 ### \_clusters
 
 > **\_clusters**: `number`[] \| `undefined`
 
-Defined in: clustering/MeanShift.js:30
+Defined in: [clustering/MeanShift.js:30](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L30)
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: clustering/Clustering.js:19
+Defined in: [clustering/Clustering.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L19)
 
 #### Inherited from
 
 `Clustering._D`
 
----
+***
 
 ### \_kernel()
 
 > **\_kernel**: (`dist`) => `number`
 
-Defined in: clustering/MeanShift.js:26
+Defined in: [clustering/MeanShift.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L26)
 
 #### Parameters
 
@@ -93,89 +93,89 @@ Defined in: clustering/MeanShift.js:26
 
 `number`
 
----
+***
 
 ### \_matrix
 
 > **\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: clustering/Clustering.js:15
+Defined in: [clustering/Clustering.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L15)
 
 #### Inherited from
 
 `Clustering._matrix`
 
----
+***
 
-### \_max_iter
+### \_max\_iter
 
-> **\_max_iter**: `number`
+> **\_max\_iter**: `number`
 
-Defined in: clustering/MeanShift.js:22
+Defined in: [clustering/MeanShift.js:22](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L22)
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: clustering/Clustering.js:17
+Defined in: [clustering/Clustering.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L17)
 
 #### Inherited from
 
 `Clustering._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersMeanShift`](../interfaces/ParametersMeanShift.md)
 
-Defined in: clustering/Clustering.js:13
+Defined in: [clustering/Clustering.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L13)
 
 #### Inherited from
 
 `Clustering._parameters`
 
----
+***
 
 ### \_points
 
 > **\_points**: [`Matrix`](Matrix.md)
 
-Defined in: clustering/MeanShift.js:28
+Defined in: [clustering/MeanShift.js:28](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L28)
 
 #### Overrides
 
 `Clustering._points`
 
----
+***
 
 ### \_tolerance
 
 > **\_tolerance**: `number`
 
-Defined in: clustering/MeanShift.js:24
+Defined in: [clustering/MeanShift.js:24](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L24)
 
 ## Methods
 
-### \_assign_clusters()
+### \_assign\_clusters()
 
-> **\_assign_clusters**(): `void`
+> **\_assign\_clusters**(): `void`
 
-Defined in: clustering/MeanShift.js:156
+Defined in: [clustering/MeanShift.js:156](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L156)
 
 #### Returns
 
 `void`
 
----
+***
 
-### \_compute_bandwidth()
+### \_compute\_bandwidth()
 
-> **\_compute_bandwidth**(`matrix`): `number`
+> **\_compute\_bandwidth**(`matrix`): `number`
 
-Defined in: clustering/MeanShift.js:76
+Defined in: [clustering/MeanShift.js:76](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L76)
 
 #### Parameters
 
@@ -187,13 +187,13 @@ Defined in: clustering/MeanShift.js:76
 
 `number`
 
----
+***
 
-### \_kernel_weight()
+### \_kernel\_weight()
 
-> **\_kernel_weight**(`dist`): `number`
+> **\_kernel\_weight**(`dist`): `number`
 
-Defined in: clustering/MeanShift.js:99
+Defined in: [clustering/MeanShift.js:99](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L99)
 
 #### Parameters
 
@@ -205,25 +205,25 @@ Defined in: clustering/MeanShift.js:99
 
 `number`
 
----
+***
 
-### \_mean_shift()
+### \_mean\_shift()
 
-> **\_mean_shift**(): `void`
+> **\_mean\_shift**(): `void`
 
-Defined in: clustering/MeanShift.js:104
+Defined in: [clustering/MeanShift.js:104](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L104)
 
 #### Returns
 
 `void`
 
----
+***
 
-### get_cluster_list()
+### get\_cluster\_list()
 
-> **get_cluster_list**(): `number`[]
+> **get\_cluster\_list**(): `number`[]
 
-Defined in: clustering/MeanShift.js:224
+Defined in: [clustering/MeanShift.js:224](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L224)
 
 #### Returns
 
@@ -233,13 +233,13 @@ Defined in: clustering/MeanShift.js:224
 
 `Clustering.get_cluster_list`
 
----
+***
 
-### get_clusters()
+### get\_clusters()
 
-> **get_clusters**(): `number`[][]
+> **get\_clusters**(): `number`[][]
 
-Defined in: clustering/MeanShift.js:211
+Defined in: [clustering/MeanShift.js:211](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/MeanShift.js#L211)
 
 #### Returns
 

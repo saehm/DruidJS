@@ -2,7 +2,7 @@
 
 # Class: KDTree\<T\>
 
-Defined in: knn/KDTree.js:36
+Defined in: [knn/KDTree.js:36](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KDTree.js#L36)
 
 KD-Tree (K-dimensional Tree) for efficient nearest neighbor search.
 
@@ -11,7 +11,6 @@ At each level, the tree splits points based on the median of the coordinate with
 This creates a balanced binary tree structure that enables efficient O(log n) search on average.
 
 Best suited for:
-
 - Low to moderate dimensional data (d < 20-30)
 - When exact nearest neighbors are needed
 - When dimensionality is not too high
@@ -23,7 +22,7 @@ methods like HNSW or LSH become more effective.
 
 ## See
 
-[https://en.wikipedia.org/wiki/K-d_tree](https://en.wikipedia.org/wiki/K-d_tree)
+[https://en.wikipedia.org/wiki/K-d\_tree](https://en.wikipedia.org/wiki/K-d_tree)
 
 ## Extends
 
@@ -33,7 +32,7 @@ methods like HNSW or LSH become more effective.
 
 ### T
 
-`T` _extends_ `number`[] \| `Float64Array`
+`T` *extends* `number`[] \| `Float64Array`
 
 ## Constructors
 
@@ -41,7 +40,7 @@ methods like HNSW or LSH become more effective.
 
 > **new KDTree**\<`T`\>(`elements`, `parameters?`): `KDTree`\<`T`\>
 
-Defined in: knn/KDTree.js:43
+Defined in: [knn/KDTree.js:43](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KDTree.js#L43)
 
 Generates a KD-Tree with given `elements`.
 
@@ -73,31 +72,31 @@ Default is `{metric: euclidean}`
 
 > **\_elements**: `T`[]
 
-Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L14)
+Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L14)
 
 #### Inherited from
 
 `KNN._elements`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersKDTree`](../interfaces/ParametersKDTree.md)
 
-Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L16)
+Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L16)
 
 #### Inherited from
 
 `KNN._parameters`
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"typed"`
 
-Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L18)
+Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L18)
 
 #### Inherited from
 
@@ -111,7 +110,7 @@ Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d42706
 
 > **get** **\_metric**(): [`Metric`](../type-aliases/Metric.md)
 
-Defined in: knn/KDTree.js:56
+Defined in: [knn/KDTree.js:56](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KDTree.js#L56)
 
 ##### Returns
 
@@ -123,7 +122,7 @@ Defined in: knn/KDTree.js:56
 
 > **search**(`t`, `k?`): `object`[]
 
-Defined in: knn/KDTree.js:106
+Defined in: [knn/KDTree.js:106](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KDTree.js#L106)
 
 #### Parameters
 
@@ -149,13 +148,13 @@ Number of nearest neighbors to return. Default is `5`
 
 `KNN.search`
 
----
+***
 
-### search_by_index()
+### search\_by\_index()
 
-> **search_by_index**(`i`, `k?`): `object`[]
+> **search\_by\_index**(`i`, `k?`): `object`[]
 
-Defined in: knn/KDTree.js:97
+Defined in: [knn/KDTree.js:97](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KDTree.js#L97)
 
 #### Parameters
 

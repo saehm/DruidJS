@@ -2,7 +2,7 @@
 
 # Class: UMAP\<T\>
 
-Defined in: [dimred/UMAP.js:41](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L41)
+Defined in: [dimred/UMAP.js:41](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L41)
 
 Uniform Manifold Approximation and Projection (UMAP)
 
@@ -14,24 +14,20 @@ It is often faster than t-SNE while preserving more of the global structure.
 
 ## See
 
-- [Paper](https://arxiv.org/abs/1802.03426|UMAP)
-- [TSNE](TSNE.md) for a similar visualization technique
+ - [Paper](https://arxiv.org/abs/1802.03426|UMAP)
+ - [TSNE](TSNE.md) for a similar visualization technique
 
 ## Example
 
 ```ts
 import * as druid from "@saehrimnir/druidjs";
 
-const X = [
-  [1, 2, 3, 4],
-  [5, 6, 7, 8],
-  [9, 10, 11, 12],
-];
+const X = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]];
 const umap = new druid.UMAP(X, {
-  n_neighbors: 15,
-  min_dist: 0.1,
-  d: 2,
-  seed: 42,
+    n_neighbors: 15,
+    min_dist: 0.1,
+    d: 2,
+    seed: 42
 });
 
 const Y = umap.transform(500); // 500 iterations
@@ -46,7 +42,7 @@ const Y = umap.transform(500); // 500 iterations
 
 ### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 ## Constructors
 
@@ -54,7 +50,7 @@ const Y = umap.transform(500); // 500 iterations
 
 > **new UMAP**\<`T`\>(`X`, `parameters?`): `UMAP`\<`T`\>
 
-Defined in: [dimred/UMAP.js:46](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L46)
+Defined in: [dimred/UMAP.js:46](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L46)
 
 #### Parameters
 
@@ -84,199 +80,199 @@ Object containing parameterization of the DR method.
 
 > **\_\_input**: `T`
 
-Defined in: [dimred/DR.js:38](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L38)
+Defined in: [dimred/DR.js:38](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L38)
 
 #### Inherited from
 
 `DR.__input`
 
----
+***
 
 ### \_a
 
 > **\_a**: `number` \| `undefined`
 
-Defined in: [dimred/UMAP.js:328](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L328)
+Defined in: [dimred/UMAP.js:331](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L331)
 
----
+***
 
 ### \_alpha
 
 > **\_alpha**: `number` \| `undefined`
 
-Defined in: [dimred/UMAP.js:476](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L476)
+Defined in: [dimred/UMAP.js:479](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L479)
 
----
+***
 
 ### \_b
 
 > **\_b**: `number` \| `undefined`
 
-Defined in: [dimred/UMAP.js:329](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L329)
+Defined in: [dimred/UMAP.js:332](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L332)
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: [dimred/DR.js:20](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L20)
+Defined in: [dimred/DR.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L20)
 
 #### Inherited from
 
 `DR._D`
 
----
+***
 
-### \_epoch_of_next_negative_sample
+### \_epoch\_of\_next\_negative\_sample
 
-> **\_epoch_of_next_negative_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
+> **\_epoch\_of\_next\_negative\_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
 
-Defined in: [dimred/UMAP.js:338](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L338)
+Defined in: [dimred/UMAP.js:341](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L341)
 
----
+***
 
-### \_epoch_of_next_sample
+### \_epoch\_of\_next\_sample
 
-> **\_epoch_of_next_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
+> **\_epoch\_of\_next\_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
 
-Defined in: [dimred/UMAP.js:337](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L337)
+Defined in: [dimred/UMAP.js:340](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L340)
 
----
+***
 
-### \_epochs_per_negative_sample
+### \_epochs\_per\_negative\_sample
 
-> **\_epochs_per_negative_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
+> **\_epochs\_per\_negative\_sample**: `Float32Array`\<`ArrayBuffer`\> \| `undefined`
 
-Defined in: [dimred/UMAP.js:336](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L336)
+Defined in: [dimred/UMAP.js:339](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L339)
 
----
+***
 
-### \_epochs_per_sample
+### \_epochs\_per\_sample
 
-> **\_epochs_per_sample**: `Float32Array`\<`ArrayBufferLike`\> \| `undefined`
+> **\_epochs\_per\_sample**: `Float32Array`\<`ArrayBufferLike`\> \| `undefined`
 
-Defined in: [dimred/UMAP.js:335](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L335)
+Defined in: [dimred/UMAP.js:338](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L338)
 
----
+***
 
 ### \_graph
 
 > **\_graph**: [`Matrix`](Matrix.md) \| `undefined`
 
-Defined in: [dimred/UMAP.js:330](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L330)
+Defined in: [dimred/UMAP.js:333](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L333)
 
----
+***
 
 ### \_head
 
 > **\_head**: `number`[] \| `undefined`
 
-Defined in: [dimred/UMAP.js:332](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L332)
+Defined in: [dimred/UMAP.js:335](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L335)
 
----
+***
 
-### \_is_initialized
+### \_is\_initialized
 
-> **\_is_initialized**: `boolean`
+> **\_is\_initialized**: `boolean`
 
-Defined in: [dimred/DR.js:26](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L26)
+Defined in: [dimred/DR.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L26)
 
 #### Inherited from
 
 `DR._is_initialized`
 
----
+***
 
 ### \_iter
 
 > **\_iter**: `number`
 
-Defined in: [dimred/UMAP.js:82](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L82)
+Defined in: [dimred/UMAP.js:82](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L82)
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: [dimred/DR.js:22](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L22)
+Defined in: [dimred/DR.js:22](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L22)
 
 #### Inherited from
 
 `DR._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
 
-Defined in: [dimred/DR.js:41](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L41)
+Defined in: [dimred/DR.js:41](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L41)
 
 #### Inherited from
 
 `DR._parameters`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [dimred/DR.js:24](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L24)
+Defined in: [dimred/DR.js:24](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L24)
 
 #### Inherited from
 
 `DR._randomizer`
 
----
+***
 
 ### \_tail
 
 > **\_tail**: `number`[] \| `undefined`
 
-Defined in: [dimred/UMAP.js:333](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L333)
+Defined in: [dimred/UMAP.js:336](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L336)
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"matrix"` \| `"typed"`
 
-Defined in: [dimred/DR.js:46](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L46)
+Defined in: [dimred/DR.js:46](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L46)
 
 #### Inherited from
 
 `DR._type`
 
----
+***
 
 ### \_weights
 
 > **\_weights**: `number`[] \| `undefined`
 
-Defined in: [dimred/UMAP.js:334](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L334)
+Defined in: [dimred/UMAP.js:337](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L337)
 
----
+***
 
 ### X
 
 > **X**: [`Matrix`](Matrix.md)
 
-Defined in: [dimred/DR.js:48](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L48)
+Defined in: [dimred/DR.js:48](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L48)
 
 #### Inherited from
 
 `DR.X`
 
----
+***
 
 ### Y
 
 > **Y**: [`Matrix`](Matrix.md)
 
-Defined in: [dimred/UMAP.js:84](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L84)
+Defined in: [dimred/UMAP.js:84](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L84)
 
 #### Inherited from
 
@@ -290,7 +286,7 @@ Defined in: [dimred/UMAP.js:84](https://github.com/saehm/DruidJS/blob/a8c3d973d4
 
 > **get** **projection**(): `T`
 
-Defined in: [dimred/DR.js:211](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L211)
+Defined in: [dimred/DR.js:211](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L211)
 
 ##### Returns
 
@@ -304,11 +300,11 @@ The projection in the type of input `X`.
 
 ## Methods
 
-### check_init()
+### check\_init()
 
-> **check_init**(): `DR`\<`T`, [`ParametersUMAP`](../interfaces/ParametersUMAP.md)\>
+> **check\_init**(): `DR`\<`T`, [`ParametersUMAP`](../interfaces/ParametersUMAP.md)\>
 
-Defined in: [dimred/DR.js:202](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L202)
+Defined in: [dimred/DR.js:202](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L202)
 
 If the respective DR method has an `init` function, call it before `transform`.
 
@@ -320,13 +316,13 @@ If the respective DR method has an `init` function, call it before `transform`.
 
 `DR.check_init`
 
----
+***
 
 ### generator()
 
 > **generator**(`iterations?`): `Generator`\<`T`, `T`, `void`\>
 
-Defined in: [dimred/UMAP.js:367](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L367)
+Defined in: [dimred/UMAP.js:370](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L370)
 
 #### Parameters
 
@@ -344,13 +340,13 @@ Number of iterations. Default is `350`
 
 `DR.generator`
 
----
+***
 
 ### graph()
 
 > **graph**(): `object`
 
-Defined in: [dimred/UMAP.js:342](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L342)
+Defined in: [dimred/UMAP.js:345](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L345)
 
 #### Returns
 
@@ -368,13 +364,13 @@ Defined in: [dimred/UMAP.js:342](https://github.com/saehm/DruidJS/blob/a8c3d973d
 
 > **weights**: `number`[] \| `undefined`
 
----
+***
 
 ### init()
 
 > **init**(): `UMAP`\<`T`\>
 
-Defined in: [dimred/UMAP.js:321](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L321)
+Defined in: [dimred/UMAP.js:324](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L324)
 
 Computes all necessary
 
@@ -386,7 +382,7 @@ Computes all necessary
 
 `DR.init`
 
----
+***
 
 ### parameter()
 
@@ -394,7 +390,7 @@ Computes all necessary
 
 > **parameter**(): [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
 
-Defined in: [dimred/DR.js:74](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L74)
+Defined in: [dimred/DR.js:74](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L74)
 
 Get all Parameters.
 
@@ -410,7 +406,7 @@ Get all Parameters.
 
 > **parameter**\<`K`\>(`name`): [`ParametersUMAP`](../interfaces/ParametersUMAP.md)\[`K`\]
 
-Defined in: [dimred/DR.js:80](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L80)
+Defined in: [dimred/DR.js:80](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L80)
 
 Get value of given parameter.
 
@@ -418,7 +414,7 @@ Get value of given parameter.
 
 ###### K
 
-`K` _extends_ keyof [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
+`K` *extends* keyof [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
 
 ##### Parameters
 
@@ -440,7 +436,7 @@ Name of the parameter.
 
 > **parameter**\<`K`\>(`name`, `value`): `UMAP`\<`T`\>
 
-Defined in: [dimred/DR.js:87](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L87)
+Defined in: [dimred/DR.js:87](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L87)
 
 Set value of given parameter.
 
@@ -448,7 +444,7 @@ Set value of given parameter.
 
 ###### K
 
-`K` _extends_ keyof [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
+`K` *extends* keyof [`ParametersUMAP`](../interfaces/ParametersUMAP.md)
 
 ##### Parameters
 
@@ -472,13 +468,13 @@ Value of the parameter to set.
 
 `DR.parameter`
 
----
+***
 
 ### transform()
 
 > **transform**(`iterations?`): `T`
 
-Defined in: [dimred/UMAP.js:351](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L351)
+Defined in: [dimred/UMAP.js:354](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L354)
 
 #### Parameters
 
@@ -496,13 +492,13 @@ Number of iterations. Default is `350`
 
 `DR.transform`
 
----
+***
 
-### transform_async()
+### transform\_async()
 
-> **transform_async**(...`args`): `Promise`\<`T`\>
+> **transform\_async**(...`args`): `Promise`\<`T`\>
 
-Defined in: [dimred/DR.js:233](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L233)
+Defined in: [dimred/DR.js:233](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L233)
 
 Computes the projection.
 
@@ -524,19 +520,19 @@ The dimensionality reduced dataset.
 
 `DR.transform_async`
 
----
+***
 
 ### generator()
 
 > `static` **generator**\<`T`\>(`X`, `parameters?`): `Generator`\<`T`, `T`, `void`\>
 
-Defined in: [dimred/UMAP.js:499](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L499)
+Defined in: [dimred/UMAP.js:502](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L502)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 
@@ -556,19 +552,19 @@ Defined in: [dimred/UMAP.js:499](https://github.com/saehm/DruidJS/blob/a8c3d973d
 
 `DR.generator`
 
----
+***
 
 ### transform()
 
 > `static` **transform**\<`T`\>(`X`, `parameters?`): `T`
 
-Defined in: [dimred/UMAP.js:488](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L488)
+Defined in: [dimred/UMAP.js:491](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L491)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 
@@ -588,19 +584,19 @@ Defined in: [dimred/UMAP.js:488](https://github.com/saehm/DruidJS/blob/a8c3d973d
 
 `DR.transform`
 
----
+***
 
-### transform_async()
+### transform\_async()
 
-> `static` **transform_async**\<`T`\>(`X`, `parameters?`): `Promise`\<`T`\>
+> `static` **transform\_async**\<`T`\>(`X`, `parameters?`): `Promise`\<`T`\>
 
-Defined in: [dimred/UMAP.js:511](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/UMAP.js#L511)
+Defined in: [dimred/UMAP.js:514](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/UMAP.js#L514)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 

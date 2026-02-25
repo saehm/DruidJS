@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "DruidJS"
   text: "Documentation"
-  tagline: My great project tagline
+  tagline: A JavaScript Library for Dimensionality Reduction
   actions:
     - theme: brand
       text: Showcases

@@ -2,7 +2,7 @@
 
 # Class: HNSW\<T\>
 
-Defined in: [knn/HNSW.js:61](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L61)
+Defined in: [knn/HNSW.js:61](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L61)
 
 Hierarchical Navigable Small World (HNSW) graph for approximate nearest neighbor search.
 
@@ -11,13 +11,11 @@ The top layers serve as "highways" for fast traversal, while lower layers provid
 Each element is assigned to a random level, allowing logarithmic search complexity.
 
 Key parameters:
-
 - `m`: Controls the number of connections per element (affects accuracy/memory)
 - `ef_construction`: Controls the quality of the graph during construction (higher = better but slower)
 - `ef`: Controls the quality of search (higher = better recall but slower)
 
 Based on:
-
 - "Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs"
   by Malkov & Yashunin (2016)
 - "Approximate Nearest Neighbor Search on High Dimensional Data"
@@ -30,16 +28,11 @@ Based on:
 ```ts
 import * as druid from "@saehrimnir/druidjs";
 
-const points = [
-  [1, 2],
-  [3, 4],
-  [5, 6],
-  [7, 8],
-];
+const points = [[1, 2], [3, 4], [5, 6], [7, 8]];
 const hnsw = new druid.HNSW(points, {
-  metric: druid.euclidean,
-  m: 16,
-  ef_construction: 200,
+    metric: druid.euclidean,
+    m: 16,
+    ef_construction: 200
 });
 
 const query = [2, 3];
@@ -55,7 +48,7 @@ const neighbors = hnsw.search(query, 2);
 
 ### T
 
-`T` _extends_ `number`[] \| `Float64Array`
+`T` *extends* `number`[] \| `Float64Array`
 
 ## Constructors
 
@@ -63,7 +56,7 @@ const neighbors = hnsw.search(query, 2);
 
 > **new HNSW**\<`T`\>(`points`, `parameters?`): `HNSW`\<`T`\>
 
-Defined in: [knn/HNSW.js:68](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L68)
+Defined in: [knn/HNSW.js:68](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L68)
 
 Creates a new HNSW index.
 
@@ -95,119 +88,119 @@ Configuration parameters
 
 > **\_ef**: `number`
 
-Defined in: [knn/HNSW.js:142](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L142)
+Defined in: [knn/HNSW.js:142](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L142)
 
----
+***
 
-### \_ef_construction
+### \_ef\_construction
 
-> **\_ef_construction**: `number`
+> **\_ef\_construction**: `number`
 
-Defined in: [knn/HNSW.js:135](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L135)
+Defined in: [knn/HNSW.js:135](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L135)
 
----
+***
 
 ### \_elements
 
 > **\_elements**: `T`[]
 
-Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L14)
+Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L14)
 
 #### Inherited from
 
 `KNN._elements`
 
----
+***
 
 ### \_ep
 
 > **\_ep**: `number`[] \| `null`
 
-Defined in: [knn/HNSW.js:161](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L161)
+Defined in: [knn/HNSW.js:161](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L161)
 
----
+***
 
 ### \_L
 
 > **\_L**: `number`
 
-Defined in: [knn/HNSW.js:158](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L158)
+Defined in: [knn/HNSW.js:158](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L158)
 
----
+***
 
 ### \_m
 
 > **\_m**: `number`
 
-Defined in: [knn/HNSW.js:128](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L128)
+Defined in: [knn/HNSW.js:128](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L128)
 
----
+***
 
 ### \_m0
 
 > **\_m0**: `number`
 
-Defined in: [knn/HNSW.js:149](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L149)
+Defined in: [knn/HNSW.js:149](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L149)
 
----
+***
 
 ### \_metric
 
 > **\_metric**: [`Metric`](../type-aliases/Metric.md)
 
-Defined in: [knn/HNSW.js:108](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L108)
+Defined in: [knn/HNSW.js:108](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L108)
 
----
+***
 
 ### \_mL
 
 > **\_mL**: `number`
 
-Defined in: [knn/HNSW.js:152](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L152)
+Defined in: [knn/HNSW.js:152](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L152)
 
----
+***
 
-### \_next_index
+### \_next\_index
 
-> **\_next_index**: `number`
+> **\_next\_index**: `number`
 
-Defined in: [knn/HNSW.js:120](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L120)
+Defined in: [knn/HNSW.js:120](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L120)
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersHNSW`](../interfaces/ParametersHNSW.md)
 
-Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L16)
+Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L16)
 
 #### Inherited from
 
 `KNN._parameters`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [knn/HNSW.js:155](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L155)
+Defined in: [knn/HNSW.js:155](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L155)
 
----
+***
 
 ### \_select
 
 > **\_select**: `Function`
 
-Defined in: [knn/HNSW.js:111](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L111)
+Defined in: [knn/HNSW.js:111](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L111)
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"typed"`
 
-Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L18)
+Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L18)
 
 #### Inherited from
 
@@ -215,13 +208,13 @@ Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d42706
 
 ## Accessors
 
-### num_layers
+### num\_layers
 
 #### Get Signature
 
-> **get** **num_layers**(): `number`
+> **get** **num\_layers**(): `number`
 
-Defined in: [knn/HNSW.js:710](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L710)
+Defined in: [knn/HNSW.js:710](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L710)
 
 Get the number of layers in the graph.
 
@@ -231,7 +224,7 @@ Get the number of layers in the graph.
 
 Number of layers
 
----
+***
 
 ### size
 
@@ -239,7 +232,7 @@ Number of layers
 
 > **get** **size**(): `number`
 
-Defined in: [knn/HNSW.js:701](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L701)
+Defined in: [knn/HNSW.js:701](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L701)
 
 Get the number of elements in the index.
 
@@ -255,13 +248,13 @@ Number of elements
 
 > **add**(`new_elements`): `HNSW`\<`T`\>
 
-Defined in: [knn/HNSW.js:185](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L185)
+Defined in: [knn/HNSW.js:185](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L185)
 
 Add multiple elements to the index.
 
 #### Parameters
 
-##### new_elements
+##### new\_elements
 
 `T`[]
 
@@ -273,13 +266,13 @@ Elements to add
 
 This instance for chaining
 
----
+***
 
 ### addOne()
 
 > **addOne**(`element`): `HNSW`\<`T`\>
 
-Defined in: [knn/HNSW.js:175](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L175)
+Defined in: [knn/HNSW.js:175](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L175)
 
 Add a single element to the index.
 
@@ -297,13 +290,13 @@ Element to add
 
 This instance for chaining
 
----
+***
 
-### get_element()
+### get\_element()
 
-> **get_element**(`index`): `T`
+> **get\_element**(`index`): `T`
 
-Defined in: [knn/HNSW.js:720](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L720)
+Defined in: [knn/HNSW.js:720](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L720)
 
 Get an element by its index.
 
@@ -321,13 +314,13 @@ Element index
 
 The element at the given index
 
----
+***
 
 ### search()
 
 > **search**(`q`, `K`): `Candidate`\<`T`\>[]
 
-Defined in: [knn/HNSW.js:578](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L578)
+Defined in: [knn/HNSW.js:578](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L578)
 
 Searches for the K nearest neighbors to a query element in the HNSW graph.
 
@@ -358,13 +351,13 @@ K nearest neighbors with their distances
 
 `KNN.search`
 
----
+***
 
-### search_by_index()
+### search\_by\_index()
 
-> **search_by_index**(`i`, `K?`): `Candidate`\<`T`\>[]
+> **search\_by\_index**(`i`, `K?`): `Candidate`\<`T`\>[]
 
-Defined in: [knn/HNSW.js:731](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L731)
+Defined in: [knn/HNSW.js:731](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L731)
 
 Search for nearest neighbors using an element index as the query.
 
@@ -392,13 +385,13 @@ K nearest neighbors
 
 `KNN.search_by_index`
 
----
+***
 
-### search_iter()
+### search\_iter()
 
-> **search_iter**(`q`, `K`, `ef?`): `Generator`\<\{ `candidates`: `object`[]; `layer`: `number`; \}, `void`, `unknown`\>
+> **search\_iter**(`q`, `K`, `ef?`): `Generator`\<\{ `candidates`: `object`[]; `layer`: `number`; \}, `void`, `unknown`\>
 
-Defined in: [knn/HNSW.js:660](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/HNSW.js#L660)
+Defined in: [knn/HNSW.js:660](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/HNSW.js#L660)
 
 Iterator for searching the HNSW graph layer by layer.
 

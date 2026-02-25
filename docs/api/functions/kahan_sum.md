@@ -1,10 +1,10 @@
-[@saehrimnir/druidjs](../globals.md) / kahan_sum
+[@saehrimnir/druidjs](../globals.md) / kahan\_sum
 
-# Function: kahan_sum()
+# Function: kahan\_sum()
 
-> **kahan_sum**(`summands`): `number`
+> **kahan\_sum**(`summands`): `number`
 
-Defined in: [numerical/kahan_sum.js:9](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/numerical/kahan_sum.js#L9)
+Defined in: [numerical/kahan\_sum.js:9](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/numerical/kahan_sum.js#L9)
 
 Numerical stable summation with the Kahan summation algorithm.
 
@@ -24,4 +24,4 @@ The sum.
 
 ## See
 
-[https://en.wikipedia.org/wiki/Kahan_summation_algorithm](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)
+[https://en.wikipedia.org/wiki/Kahan\_summation\_algorithm](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)

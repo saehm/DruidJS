@@ -1,10 +1,10 @@
-[@saehrimnir/druidjs](../globals.md) / neumair_sum
+[@saehrimnir/druidjs](../globals.md) / neumair\_sum
 
-# Function: neumair_sum()
+# Function: neumair\_sum()
 
-> **neumair_sum**(`summands`): `number`
+> **neumair\_sum**(`summands`): `number`
 
-Defined in: [numerical/neumair_sum.js:9](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/numerical/neumair_sum.js#L9)
+Defined in: [numerical/neumair\_sum.js:9](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/numerical/neumair_sum.js#L9)
 
 Numerical stable summation with the Neumair summation algorithm.
 
@@ -24,4 +24,4 @@ The sum.
 
 ## See
 
-[https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements)
+[https://en.wikipedia.org/wiki/Kahan\_summation\_algorithm#Further\_enhancements](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements)

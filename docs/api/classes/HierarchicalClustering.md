@@ -2,7 +2,7 @@
 
 # Class: HierarchicalClustering
 
-Defined in: [clustering/Hierarchical_Clustering.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L18)
+Defined in: [clustering/Hierarchical\_Clustering.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L18)
 
 Hierarchical Clustering
 
@@ -19,7 +19,7 @@ Supports different linkage criteria: single, complete, and average.
 
 > **new HierarchicalClustering**(`points`, `parameters?`): `HierarchicalClustering`
 
-Defined in: [clustering/Hierarchical_Clustering.js:26](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L26)
+Defined in: [clustering/Hierarchical\_Clustering.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L26)
 
 #### Parameters
 
@@ -43,119 +43,119 @@ Data or distance matrix if metric is 'precomputed'
 
 ## Properties
 
-### \_c_size
+### \_c\_size
 
-> **\_c_size**: `Uint16Array`\<`ArrayBuffer`\>
+> **\_c\_size**: `Uint16Array`\<`ArrayBuffer`\>
 
-Defined in: [clustering/Hierarchical_Clustering.js:85](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L85)
+Defined in: [clustering/Hierarchical\_Clustering.js:85](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L85)
 
----
+***
 
 ### \_clusters
 
 > **\_clusters**: `any`[]
 
-Defined in: [clustering/Hierarchical_Clustering.js:83](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L83)
+Defined in: [clustering/Hierarchical\_Clustering.js:83](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L83)
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: clustering/Clustering.js:19
+Defined in: [clustering/Clustering.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L19)
 
 #### Inherited from
 
 `Clustering._D`
 
----
+***
 
-### \_d_min
+### \_d\_min
 
-> **\_d_min**: `Float64Array`\<`ArrayBuffer`\>
+> **\_d\_min**: `Float64Array`\<`ArrayBuffer`\>
 
-Defined in: [clustering/Hierarchical_Clustering.js:41](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L41)
+Defined in: [clustering/Hierarchical\_Clustering.js:41](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L41)
 
----
+***
 
-### \_distance_matrix
+### \_distance\_matrix
 
-> **\_distance_matrix**: [`Matrix`](Matrix.md)
+> **\_distance\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: [clustering/Hierarchical_Clustering.js:82](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L82)
+Defined in: [clustering/Hierarchical\_Clustering.js:82](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L82)
 
----
+***
 
 ### \_id
 
 > **\_id**: `number`
 
-Defined in: [clustering/Hierarchical_Clustering.js:33](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L33)
+Defined in: [clustering/Hierarchical\_Clustering.js:33](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L33)
 
----
+***
 
 ### \_matrix
 
 > **\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: clustering/Clustering.js:15
+Defined in: [clustering/Clustering.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L15)
 
 #### Inherited from
 
 `Clustering._matrix`
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: clustering/Clustering.js:17
+Defined in: [clustering/Clustering.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L17)
 
 #### Inherited from
 
 `Clustering._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersHierarchicalClustering`](../interfaces/ParametersHierarchicalClustering.md)
 
-Defined in: clustering/Clustering.js:13
+Defined in: [clustering/Clustering.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L13)
 
 #### Inherited from
 
 `Clustering._parameters`
 
----
+***
 
 ### \_points
 
 > **\_points**: [`InputType`](../type-aliases/InputType.md)
 
-Defined in: clustering/Clustering.js:11
+Defined in: [clustering/Clustering.js:11](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L11)
 
 #### Inherited from
 
 `Clustering._points`
 
----
+***
 
 ### root
 
 > **root**: `Cluster` \| `null` = `null`
 
-Defined in: [clustering/Hierarchical_Clustering.js:20](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L20)
+Defined in: [clustering/Hierarchical\_Clustering.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L20)
 
 ## Methods
 
-### get_cluster_list()
+### get\_cluster\_list()
 
-> **get_cluster_list**(`value`, `type?`): `number`[]
+> **get\_cluster\_list**(`value`, `type?`): `number`[]
 
-Defined in: [clustering/Hierarchical_Clustering.js:228](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L228)
+Defined in: [clustering/Hierarchical\_Clustering.js:228](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L228)
 
 #### Parameters
 
@@ -181,13 +181,13 @@ Type of value. Default is `"distance"`
 
 `Clustering.get_cluster_list`
 
----
+***
 
-### get_clusters()
+### get\_clusters()
 
-> **get_clusters**(`value`, `type?`): `number`[][]
+> **get\_clusters**(`value`, `type?`): `number`[][]
 
-Defined in: [clustering/Hierarchical_Clustering.js:204](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L204)
+Defined in: [clustering/Hierarchical\_Clustering.js:204](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L204)
 
 #### Parameters
 
@@ -213,13 +213,13 @@ Type of value. Default is `"distance"`
 
 `Clustering.get_clusters`
 
----
+***
 
-### get_clusters_raw()
+### get\_clusters\_raw()
 
-> **get_clusters_raw**(`value`, `type?`): `Cluster`[][]
+> **get\_clusters\_raw**(`value`, `type?`): `Cluster`[][]
 
-Defined in: [clustering/Hierarchical_Clustering.js:180](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/Hierarchical_Clustering.js#L180)
+Defined in: [clustering/Hierarchical\_Clustering.js:180](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Hierarchical_Clustering.js#L180)
 
 #### Parameters
 

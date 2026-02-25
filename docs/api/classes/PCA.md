@@ -2,7 +2,7 @@
 
 # Class: PCA\<T\>
 
-Defined in: [dimred/PCA.js:29](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L29)
+Defined in: [dimred/PCA.js:29](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L29)
 
 Principal Component Analysis (PCA)
 
@@ -20,11 +20,7 @@ along which the variance of the data is maximized.
 ```ts
 import * as druid from "@saehrimnir/druidjs";
 
-const X = [
-  [1, 2],
-  [3, 4],
-  [5, 6],
-];
+const X = [[1, 2], [3, 4], [5, 6]];
 const pca = new druid.PCA(X, { d: 2 });
 const Y = pca.transform();
 // [[x1, y1], [x2, y2], [x3, y3]]
@@ -38,7 +34,7 @@ const Y = pca.transform();
 
 ### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 ## Constructors
 
@@ -46,7 +42,7 @@ const Y = pca.transform();
 
 > **new PCA**\<`T`\>(`X`, `parameters?`): `PCA`\<`T`\>
 
-Defined in: [dimred/PCA.js:34](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L34)
+Defined in: [dimred/PCA.js:34](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L34)
 
 #### Parameters
 
@@ -76,111 +72,111 @@ Object containing parameterization of the DR method.
 
 > **\_\_input**: `T`
 
-Defined in: [dimred/DR.js:38](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L38)
+Defined in: [dimred/DR.js:38](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L38)
 
 #### Inherited from
 
 `DR.__input`
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: [dimred/DR.js:20](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L20)
+Defined in: [dimred/DR.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L20)
 
 #### Inherited from
 
 `DR._D`
 
----
+***
 
-### \_is_initialized
+### \_is\_initialized
 
-> **\_is_initialized**: `boolean`
+> **\_is\_initialized**: `boolean`
 
-Defined in: [dimred/DR.js:26](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L26)
+Defined in: [dimred/DR.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L26)
 
 #### Inherited from
 
 `DR._is_initialized`
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: [dimred/DR.js:22](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L22)
+Defined in: [dimred/DR.js:22](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L22)
 
 #### Inherited from
 
 `DR._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersPCA`](../interfaces/ParametersPCA.md)
 
-Defined in: [dimred/DR.js:41](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L41)
+Defined in: [dimred/DR.js:41](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L41)
 
 #### Inherited from
 
 `DR._parameters`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [dimred/DR.js:24](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L24)
+Defined in: [dimred/DR.js:24](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L24)
 
 #### Inherited from
 
 `DR._randomizer`
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"matrix"` \| `"typed"`
 
-Defined in: [dimred/DR.js:46](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L46)
+Defined in: [dimred/DR.js:46](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L46)
 
 #### Inherited from
 
 `DR._type`
 
----
+***
 
 ### V
 
 > **V**: [`Matrix`](Matrix.md) \| `undefined`
 
-Defined in: [dimred/PCA.js:90](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L90)
+Defined in: [dimred/PCA.js:90](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L90)
 
----
+***
 
 ### X
 
 > **X**: [`Matrix`](Matrix.md)
 
-Defined in: [dimred/DR.js:48](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L48)
+Defined in: [dimred/DR.js:48](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L48)
 
 #### Inherited from
 
 `DR.X`
 
----
+***
 
 ### Y
 
 > **Y**: [`Matrix`](Matrix.md)
 
-Defined in: [dimred/DR.js:50](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L50)
+Defined in: [dimred/DR.js:50](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L50)
 
 #### Inherited from
 
@@ -194,7 +190,7 @@ Defined in: [dimred/DR.js:50](https://github.com/saehm/DruidJS/blob/a8c3d973d427
 
 > **get** **projection**(): `T`
 
-Defined in: [dimred/DR.js:211](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L211)
+Defined in: [dimred/DR.js:211](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L211)
 
 ##### Returns
 
@@ -208,11 +204,11 @@ The projection in the type of input `X`.
 
 ## Methods
 
-### check_init()
+### check\_init()
 
-> **check_init**(): `DR`\<`T`, [`ParametersPCA`](../interfaces/ParametersPCA.md)\>
+> **check\_init**(): `DR`\<`T`, [`ParametersPCA`](../interfaces/ParametersPCA.md)\>
 
-Defined in: [dimred/DR.js:202](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L202)
+Defined in: [dimred/DR.js:202](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L202)
 
 If the respective DR method has an `init` function, call it before `transform`.
 
@@ -224,13 +220,13 @@ If the respective DR method has an `init` function, call it before `transform`.
 
 `DR.check_init`
 
----
+***
 
 ### generator()
 
 > **generator**(): `Generator`\<`T`, `T`, `void`\>
 
-Defined in: [dimred/PCA.js:47](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L47)
+Defined in: [dimred/PCA.js:47](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L47)
 
 Transforms the inputdata `X` to dimensionality `d`.
 
@@ -244,13 +240,13 @@ A generator yielding the intermediate steps of the projection.
 
 `DR.generator`
 
----
+***
 
 ### init()
 
 > `abstract` **init**(...`args`): `void`
 
-Defined in: [dimred/DR.js:193](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L193)
+Defined in: [dimred/DR.js:193](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L193)
 
 #### Parameters
 
@@ -266,7 +262,7 @@ Defined in: [dimred/DR.js:193](https://github.com/saehm/DruidJS/blob/a8c3d973d42
 
 `DR.init`
 
----
+***
 
 ### parameter()
 
@@ -274,7 +270,7 @@ Defined in: [dimred/DR.js:193](https://github.com/saehm/DruidJS/blob/a8c3d973d42
 
 > **parameter**(): [`ParametersPCA`](../interfaces/ParametersPCA.md)
 
-Defined in: [dimred/DR.js:74](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L74)
+Defined in: [dimred/DR.js:74](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L74)
 
 Get all Parameters.
 
@@ -290,7 +286,7 @@ Get all Parameters.
 
 > **parameter**\<`K`\>(`name`): [`ParametersPCA`](../interfaces/ParametersPCA.md)\[`K`\]
 
-Defined in: [dimred/DR.js:80](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L80)
+Defined in: [dimred/DR.js:80](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L80)
 
 Get value of given parameter.
 
@@ -298,7 +294,7 @@ Get value of given parameter.
 
 ###### K
 
-`K` _extends_ keyof [`ParametersPCA`](../interfaces/ParametersPCA.md)
+`K` *extends* keyof [`ParametersPCA`](../interfaces/ParametersPCA.md)
 
 ##### Parameters
 
@@ -320,7 +316,7 @@ Name of the parameter.
 
 > **parameter**\<`K`\>(`name`, `value`): `PCA`\<`T`\>
 
-Defined in: [dimred/DR.js:87](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L87)
+Defined in: [dimred/DR.js:87](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L87)
 
 Set value of given parameter.
 
@@ -328,7 +324,7 @@ Set value of given parameter.
 
 ###### K
 
-`K` _extends_ keyof [`ParametersPCA`](../interfaces/ParametersPCA.md)
+`K` *extends* keyof [`ParametersPCA`](../interfaces/ParametersPCA.md)
 
 ##### Parameters
 
@@ -352,13 +348,13 @@ Value of the parameter to set.
 
 `DR.parameter`
 
----
+***
 
-### principal_components()
+### principal\_components()
 
-> **principal_components**(): [`Matrix`](Matrix.md)
+> **principal\_components**(): [`Matrix`](Matrix.md)
 
-Defined in: [dimred/PCA.js:80](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L80)
+Defined in: [dimred/PCA.js:80](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L80)
 
 Computes the `d` principal components of Matrix `X`.
 
@@ -366,13 +362,13 @@ Computes the `d` principal components of Matrix `X`.
 
 [`Matrix`](Matrix.md)
 
----
+***
 
 ### transform()
 
 > **transform**(): `T`
 
-Defined in: [dimred/PCA.js:57](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L57)
+Defined in: [dimred/PCA.js:57](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L57)
 
 Transforms the inputdata `X` to dimensionality `d`.
 
@@ -386,13 +382,13 @@ Transforms the inputdata `X` to dimensionality `d`.
 
 `DR.transform`
 
----
+***
 
-### transform_async()
+### transform\_async()
 
-> **transform_async**(...`args`): `Promise`\<`T`\>
+> **transform\_async**(...`args`): `Promise`\<`T`\>
 
-Defined in: [dimred/DR.js:233](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/DR.js#L233)
+Defined in: [dimred/DR.js:233](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/DR.js#L233)
 
 Computes the projection.
 
@@ -414,19 +410,19 @@ The dimensionality reduced dataset.
 
 `DR.transform_async`
 
----
+***
 
 ### generator()
 
 > `static` **generator**\<`T`\>(`X`, `parameters?`): `Generator`\<`T`, `T`, `void`\>
 
-Defined in: [dimred/PCA.js:111](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L111)
+Defined in: [dimred/PCA.js:111](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L111)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 
@@ -446,19 +442,19 @@ Defined in: [dimred/PCA.js:111](https://github.com/saehm/DruidJS/blob/a8c3d973d4
 
 `DR.generator`
 
----
+***
 
-### principal_components()
+### principal\_components()
 
-> `static` **principal_components**\<`T`\>(`X`, `parameters`): [`Matrix`](Matrix.md)
+> `static` **principal\_components**\<`T`\>(`X`, `parameters`): [`Matrix`](Matrix.md)
 
-Defined in: [dimred/PCA.js:100](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L100)
+Defined in: [dimred/PCA.js:100](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L100)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 
@@ -474,19 +470,19 @@ Defined in: [dimred/PCA.js:100](https://github.com/saehm/DruidJS/blob/a8c3d973d4
 
 [`Matrix`](Matrix.md)
 
----
+***
 
 ### transform()
 
 > `static` **transform**\<`T`\>(`X`, `parameters`): `T`
 
-Defined in: [dimred/PCA.js:70](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L70)
+Defined in: [dimred/PCA.js:70](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L70)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 
@@ -506,19 +502,19 @@ Defined in: [dimred/PCA.js:70](https://github.com/saehm/DruidJS/blob/a8c3d973d42
 
 `DR.transform`
 
----
+***
 
-### transform_async()
+### transform\_async()
 
-> `static` **transform_async**\<`T`\>(`X`, `parameters?`): `Promise`\<`T`\>
+> `static` **transform\_async**\<`T`\>(`X`, `parameters?`): `Promise`\<`T`\>
 
-Defined in: [dimred/PCA.js:123](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/dimred/PCA.js#L123)
+Defined in: [dimred/PCA.js:123](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/dimred/PCA.js#L123)
 
 #### Type Parameters
 
 ##### T
 
-`T` _extends_ [`InputType`](../type-aliases/InputType.md)
+`T` *extends* [`InputType`](../type-aliases/InputType.md)
 
 #### Parameters
 

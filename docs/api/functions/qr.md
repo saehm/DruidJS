@@ -4,7 +4,7 @@
 
 > **qr**(`A`): `object`
 
-Defined in: [linear_algebra/qr.js:13](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/linear_algebra/qr.js#L13)
+Defined in: [linear\_algebra/qr.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/linear_algebra/qr.js#L13)
 
 Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
 
@@ -28,4 +28,4 @@ Computes the QR Decomposition of the Matrix `A` using Gram-Schmidt process.
 
 ## See
 
-[https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process](https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process)
+[https://en.wikipedia.org/wiki/QR\_decomposition#Using\_the\_Gram%E2%80%93Schmidt\_process](https://en.wikipedia.org/wiki/QR_decomposition#Using_the_Gram%E2%80%93Schmidt_process)

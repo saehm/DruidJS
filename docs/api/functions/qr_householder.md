@@ -1,10 +1,10 @@
-[@saehrimnir/druidjs](../globals.md) / qr_householder
+[@saehrimnir/druidjs](../globals.md) / qr\_householder
 
-# Function: qr_householder()
+# Function: qr\_householder()
 
-> **qr_householder**(`A`): `object`
+> **qr\_householder**(`A`): `object`
 
-Defined in: [linear_algebra/qr_householder.js:12](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/linear_algebra/qr_householder.js#L12)
+Defined in: [linear\_algebra/qr\_householder.js:12](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/linear_algebra/qr_householder.js#L12)
 
 Computes the QR Decomposition of the Matrix `A` with householder transformations.
 
@@ -28,5 +28,5 @@ Computes the QR Decomposition of the Matrix `A` with householder transformations
 
 ## See
 
-- [https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections](https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections)
-- [http://mlwiki.org/index.php/Householder_Transformation](http://mlwiki.org/index.php/Householder_Transformation)
+ - [https://en.wikipedia.org/wiki/QR\_decomposition#Using\_Householder\_reflections](https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections)
+ - [http://mlwiki.org/index.php/Householder\_Transformation](http://mlwiki.org/index.php/Householder_Transformation)

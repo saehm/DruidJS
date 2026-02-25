@@ -2,13 +2,13 @@
 
 # Class: DisjointSet\<T\>
 
-Defined in: [datastructure/DisjointSet.js:15](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/DisjointSet.js#L15)
+Defined in: [datastructure/DisjointSet.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/DisjointSet.js#L15)
 
 ## Template
 
 ## See
 
-[https://en.wikipedia.org/wiki/Disjoint-set_data_structure](https://en.wikipedia.org/wiki/Disjoint-set_data_structure)
+[https://en.wikipedia.org/wiki/Disjoint-set\_data\_structure](https://en.wikipedia.org/wiki/Disjoint-set_data_structure)
 
 ## Type Parameters
 
@@ -22,7 +22,7 @@ Defined in: [datastructure/DisjointSet.js:15](https://github.com/saehm/DruidJS/b
 
 > **new DisjointSet**\<`T`\>(`elements?`): `DisjointSet`\<`T`\>
 
-Defined in: [datastructure/DisjointSet.js:19](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/DisjointSet.js#L19)
+Defined in: [datastructure/DisjointSet.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/DisjointSet.js#L19)
 
 #### Parameters
 
@@ -40,7 +40,7 @@ Defined in: [datastructure/DisjointSet.js:19](https://github.com/saehm/DruidJS/b
 
 > **find**(`x`): `T` \| `null`
 
-Defined in: [datastructure/DisjointSet.js:49](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/DisjointSet.js#L49)
+Defined in: [datastructure/DisjointSet.js:49](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/DisjointSet.js#L49)
 
 #### Parameters
 
@@ -52,13 +52,13 @@ Defined in: [datastructure/DisjointSet.js:49](https://github.com/saehm/DruidJS/b
 
 `T` \| `null`
 
----
+***
 
-### get_children()
+### get\_children()
 
-> **get_children**(`x`): `Set`\<`T`\> \| `null`
+> **get\_children**(`x`): `Set`\<`T`\> \| `null`
 
-Defined in: [datastructure/DisjointSet.js:98](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/DisjointSet.js#L98)
+Defined in: [datastructure/DisjointSet.js:98](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/DisjointSet.js#L98)
 
 #### Parameters
 
@@ -70,13 +70,13 @@ Defined in: [datastructure/DisjointSet.js:98](https://github.com/saehm/DruidJS/b
 
 `Set`\<`T`\> \| `null`
 
----
+***
 
 ### union()
 
 > **union**(`x`, `y`): `DisjointSet`\<`T`\>
 
-Defined in: [datastructure/DisjointSet.js:72](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/DisjointSet.js#L72)
+Defined in: [datastructure/DisjointSet.js:72](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/DisjointSet.js#L72)
 
 #### Parameters
 

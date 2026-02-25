@@ -2,7 +2,7 @@
 
 # Class: NaiveKNN\<T\>
 
-Defined in: knn/NaiveKNN.js:20
+Defined in: [knn/NaiveKNN.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L20)
 
 Naive KNN implementation using a distance matrix.
 
@@ -20,7 +20,7 @@ matrix is already available.
 
 ### T
 
-`T` _extends_ `number`[] \| `Float64Array`
+`T` *extends* `number`[] \| `Float64Array`
 
 ## Constructors
 
@@ -28,7 +28,7 @@ matrix is already available.
 
 > **new NaiveKNN**\<`T`\>(`elements`, `parameters?`): `NaiveKNN`\<`T`\>
 
-Defined in: knn/NaiveKNN.js:27
+Defined in: [knn/NaiveKNN.js:27](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L27)
 
 Generates a KNN list with given `elements`.
 
@@ -58,51 +58,51 @@ Elements which should be added to the KNN list
 
 > **\_D**: [`Matrix`](Matrix.md)
 
-Defined in: knn/NaiveKNN.js:33
+Defined in: [knn/NaiveKNN.js:33](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L33)
 
----
+***
 
 ### \_elements
 
 > **\_elements**: `T`[]
 
-Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L14)
+Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L14)
 
 #### Inherited from
 
 `KNN._elements`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersNaiveKNN`](../interfaces/ParametersNaiveKNN.md)
 
-Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L16)
+Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L16)
 
 #### Inherited from
 
 `KNN._parameters`
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"typed"`
 
-Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L18)
+Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L18)
 
 #### Inherited from
 
 `KNN._type`
 
----
+***
 
 ### KNN
 
 > **KNN**: [`Heap`](Heap.md)\<\{ `index`: `number`; `value`: `number`; \}\>[]
 
-Defined in: knn/NaiveKNN.js:42
+Defined in: [knn/NaiveKNN.js:42](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L42)
 
 ## Methods
 
@@ -110,7 +110,7 @@ Defined in: knn/NaiveKNN.js:42
 
 > **search**(`t`, `k?`): `object`[]
 
-Defined in: knn/NaiveKNN.js:98
+Defined in: [knn/NaiveKNN.js:98](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L98)
 
 #### Parameters
 
@@ -136,13 +136,13 @@ Number of nearest neighbors to return. Default is `5`
 
 `KNN.search`
 
----
+***
 
-### search_by_index()
+### search\_by\_index()
 
-> **search_by_index**(`i`, `k?`): `object`[]
+> **search\_by\_index**(`i`, `k?`): `object`[]
 
-Defined in: knn/NaiveKNN.js:61
+Defined in: [knn/NaiveKNN.js:61](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NaiveKNN.js#L61)
 
 #### Parameters
 

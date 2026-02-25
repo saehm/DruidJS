@@ -2,7 +2,7 @@
 
 # Class: KMedoids
 
-Defined in: [clustering/KMedoids.js:20](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L20)
+Defined in: [clustering/KMedoids.js:20](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L20)
 
 K-Medoids (PAM - Partitioning Around Medoids)
 
@@ -23,7 +23,7 @@ as cluster centers and can work with any distance metric.
 
 > **new KMedoids**(`points`, `parameters?`): `KMedoids`
 
-Defined in: [clustering/KMedoids.js:26](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L26)
+Defined in: [clustering/KMedoids.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L26)
 
 #### Parameters
 
@@ -43,7 +43,7 @@ Data matrix
 
 #### See
 
-[https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16](https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16) Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms
+[https://link.springer.com/chapter/10.1007/978-3-030-32047-8\_16](https://link.springer.com/chapter/10.1007/978-3-030-32047-8_16) Faster k-Medoids Clustering: Improving the PAM, CLARA, and CLARANS Algorithms
 
 #### Overrides
 
@@ -55,115 +55,115 @@ Data matrix
 
 > **\_A**: `Float64Array`\<`ArrayBufferLike`\>[]
 
-Defined in: [clustering/KMedoids.js:28](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L28)
+Defined in: [clustering/KMedoids.js:28](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L28)
 
----
+***
 
-### \_cluster_medoids
+### \_cluster\_medoids
 
-> **\_cluster_medoids**: `number`[]
+> **\_cluster\_medoids**: `number`[]
 
-Defined in: [clustering/KMedoids.js:39](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L39)
+Defined in: [clustering/KMedoids.js:39](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L39)
 
----
+***
 
 ### \_clusters
 
 > **\_clusters**: `any`[]
 
-Defined in: [clustering/KMedoids.js:38](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L38)
+Defined in: [clustering/KMedoids.js:38](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L38)
 
----
+***
 
 ### \_D
 
 > **\_D**: `number`
 
-Defined in: clustering/Clustering.js:19
+Defined in: [clustering/Clustering.js:19](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L19)
 
 #### Inherited from
 
 `Clustering._D`
 
----
+***
 
-### \_distance_matrix
+### \_distance\_matrix
 
-> **\_distance_matrix**: [`Matrix`](Matrix.md)
+> **\_distance\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: [clustering/KMedoids.js:32](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L32)
+Defined in: [clustering/KMedoids.js:32](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L32)
 
----
+***
 
-### \_is_initialized
+### \_is\_initialized
 
-> **\_is_initialized**: `boolean`
+> **\_is\_initialized**: `boolean`
 
-Defined in: [clustering/KMedoids.js:40](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L40)
+Defined in: [clustering/KMedoids.js:40](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L40)
 
----
+***
 
 ### \_matrix
 
 > **\_matrix**: [`Matrix`](Matrix.md)
 
-Defined in: clustering/Clustering.js:15
+Defined in: [clustering/Clustering.js:15](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L15)
 
 #### Inherited from
 
 `Clustering._matrix`
 
----
+***
 
-### \_max_iter
+### \_max\_iter
 
-> **\_max_iter**: `number`
+> **\_max\_iter**: `number`
 
-Defined in: [clustering/KMedoids.js:31](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L31)
+Defined in: [clustering/KMedoids.js:31](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L31)
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: clustering/Clustering.js:17
+Defined in: [clustering/Clustering.js:17](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L17)
 
 #### Inherited from
 
 `Clustering._N`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersKMedoids`](../interfaces/ParametersKMedoids.md)
 
-Defined in: clustering/Clustering.js:13
+Defined in: [clustering/Clustering.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L13)
 
 #### Inherited from
 
 `Clustering._parameters`
 
----
+***
 
 ### \_points
 
 > **\_points**: [`InputType`](../type-aliases/InputType.md)
 
-Defined in: clustering/Clustering.js:11
+Defined in: [clustering/Clustering.js:11](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/Clustering.js#L11)
 
 #### Inherited from
 
 `Clustering._points`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [clustering/KMedoids.js:37](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L37)
+Defined in: [clustering/KMedoids.js:37](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L37)
 
 ## Accessors
 
@@ -173,13 +173,13 @@ Defined in: [clustering/KMedoids.js:37](https://github.com/saehm/DruidJS/blob/a8
 
 > **get** **k**(): `number`
 
-Defined in: [clustering/KMedoids.js:71](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L71)
+Defined in: [clustering/KMedoids.js:71](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L71)
 
 ##### Returns
 
 `number`
 
----
+***
 
 ### medoids
 
@@ -187,7 +187,7 @@ Defined in: [clustering/KMedoids.js:71](https://github.com/saehm/DruidJS/blob/a8
 
 > **get** **medoids**(): `number`[]
 
-Defined in: [clustering/KMedoids.js:76](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L76)
+Defined in: [clustering/KMedoids.js:76](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L76)
 
 ##### Returns
 
@@ -195,11 +195,11 @@ Defined in: [clustering/KMedoids.js:76](https://github.com/saehm/DruidJS/blob/a8
 
 ## Methods
 
-### \_get_distance()
+### \_get\_distance()
 
-> **\_get_distance**(`i`, `j`, `x_i?`, `x_j?`): `number`
+> **\_get\_distance**(`i`, `j`, `x_i?`, `x_j?`): `number`
 
-Defined in: [clustering/KMedoids.js:231](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L231)
+Defined in: [clustering/KMedoids.js:231](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L231)
 
 #### Parameters
 
@@ -211,11 +211,11 @@ Defined in: [clustering/KMedoids.js:231](https://github.com/saehm/DruidJS/blob/a
 
 `number`
 
-##### x_i?
+##### x\_i?
 
 `Float64Array`\<`ArrayBufferLike`\> | `null`
 
-##### x_j?
+##### x\_j?
 
 `Float64Array`\<`ArrayBufferLike`\> | `null`
 
@@ -223,13 +223,13 @@ Defined in: [clustering/KMedoids.js:231](https://github.com/saehm/DruidJS/blob/a
 
 `number`
 
----
+***
 
-### \_get_random_medoids()
+### \_get\_random\_medoids()
 
-> **\_get_random_medoids**(`K`): `number`[]
+> **\_get\_random\_medoids**(`K`): `number`[]
 
-Defined in: [clustering/KMedoids.js:322](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L322)
+Defined in: [clustering/KMedoids.js:322](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L322)
 
 Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
 
@@ -245,13 +245,13 @@ Number of clusters
 
 `number`[]
 
----
+***
 
 ### \_iteration()
 
 > **\_iteration**(): `boolean`
 
-Defined in: [clustering/KMedoids.js:161](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L161)
+Defined in: [clustering/KMedoids.js:161](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L161)
 
 FastPAM1: One best swap per iteration
 
@@ -259,17 +259,17 @@ FastPAM1: One best swap per iteration
 
 `boolean`
 
----
+***
 
-### \_nearest_medoid()
+### \_nearest\_medoid()
 
-> **\_nearest_medoid**(`x_j`, `j`): `object`
+> **\_nearest\_medoid**(`x_j`, `j`): `object`
 
-Defined in: [clustering/KMedoids.js:251](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L251)
+Defined in: [clustering/KMedoids.js:251](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L251)
 
 #### Parameters
 
-##### x_j
+##### x\_j
 
 `Float64Array`\<`ArrayBufferLike`\>
 
@@ -281,53 +281,53 @@ Defined in: [clustering/KMedoids.js:251](https://github.com/saehm/DruidJS/blob/a
 
 `object`
 
-##### distance_nearest
+##### distance\_nearest
 
-> **distance_nearest**: `number` = `d_n`
+> **distance\_nearest**: `number` = `d_n`
 
-##### distance_second
+##### distance\_second
 
-> **distance_second**: `number` = `d_s`
+> **distance\_second**: `number` = `d_s`
 
-##### index_nearest
+##### index\_nearest
 
-> **index_nearest**: `number` = `n`
+> **index\_nearest**: `number` = `n`
 
-##### index_second
+##### index\_second
 
-> **index_second**: `number` = `s`
+> **index\_second**: `number` = `s`
 
----
+***
 
-### \_update_clusters()
+### \_update\_clusters()
 
-> **\_update_clusters**(): `void`
+> **\_update\_clusters**(): `void`
 
-Defined in: [clustering/KMedoids.js:287](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L287)
+Defined in: [clustering/KMedoids.js:287](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L287)
 
 #### Returns
 
 `void`
 
----
+***
 
 ### generator()
 
 > **generator**(): `AsyncGenerator`\<`number`[][], `void`, `unknown`\>
 
-Defined in: [clustering/KMedoids.js:89](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L89)
+Defined in: [clustering/KMedoids.js:89](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L89)
 
 #### Returns
 
 `AsyncGenerator`\<`number`[][], `void`, `unknown`\>
 
----
+***
 
-### get_cluster_list()
+### get\_cluster\_list()
 
-> **get_cluster_list**(): `number`[]
+> **get\_cluster\_list**(): `number`[]
 
-Defined in: [clustering/KMedoids.js:44](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L44)
+Defined in: [clustering/KMedoids.js:44](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L44)
 
 #### Returns
 
@@ -339,13 +339,13 @@ The cluster list
 
 `Clustering.get_cluster_list`
 
----
+***
 
-### get_clusters()
+### get\_clusters()
 
-> **get_clusters**(): `number`[][]
+> **get\_clusters**(): `number`[][]
 
-Defined in: [clustering/KMedoids.js:52](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L52)
+Defined in: [clustering/KMedoids.js:52](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L52)
 
 #### Returns
 
@@ -357,25 +357,25 @@ Defined in: [clustering/KMedoids.js:52](https://github.com/saehm/DruidJS/blob/a8
 
 `Clustering.get_clusters`
 
----
+***
 
-### get_medoids()
+### get\_medoids()
 
-> **get_medoids**(): `number`[]
+> **get\_medoids**(): `number`[]
 
-Defined in: [clustering/KMedoids.js:81](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L81)
+Defined in: [clustering/KMedoids.js:81](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L81)
 
 #### Returns
 
 `number`[]
 
----
+***
 
 ### init()
 
 > **init**(`K`, `cluster_medoids`): `KMedoids`
 
-Defined in: [clustering/KMedoids.js:301](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/clustering/KMedoids.js#L301)
+Defined in: [clustering/KMedoids.js:301](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/clustering/KMedoids.js#L301)
 
 Computes `K` clusters out of the `matrix`.
 
@@ -387,7 +387,7 @@ Computes `K` clusters out of the `matrix`.
 
 Number of clusters.
 
-##### cluster_medoids
+##### cluster\_medoids
 
 `number`[]
 

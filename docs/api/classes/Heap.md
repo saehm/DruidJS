@@ -2,7 +2,7 @@
 
 # Class: Heap\<T\>
 
-Defined in: [datastructure/Heap.js:8](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L8)
+Defined in: [datastructure/Heap.js:8](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L8)
 
 ## Template
 
@@ -18,7 +18,7 @@ Defined in: [datastructure/Heap.js:8](https://github.com/saehm/DruidJS/blob/a8c3
 
 > **new Heap**\<`T`\>(`elements?`, `accessor`, `comparator?`): `Heap`\<`T`\>
 
-Defined in: [datastructure/Heap.js:26](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L26)
+Defined in: [datastructure/Heap.js:26](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L26)
 
 A heap is a datastructure holding its elements in a specific way, so that the top element would be the first
 entry of an ordered list.
@@ -40,8 +40,8 @@ Function returns the value of the element.
 ##### comparator?
 
 Function returning true or false
-defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a
-Max_heap). Default is `"min"`
+  defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a
+  Max_heap). Default is `"min"`
 
 `"max"` | `"min"` | [`Comparator`](../type-aliases/Comparator.md)
 
@@ -51,7 +51,7 @@ Max_heap). Default is `"min"`
 
 #### See
 
-[https://en.wikipedia.org/wiki/Binary_heap](https://en.wikipedia.org/wiki/Binary_heap)
+[https://en.wikipedia.org/wiki/Binary\_heap](https://en.wikipedia.org/wiki/Binary_heap)
 
 ## Properties
 
@@ -59,7 +59,7 @@ Max_heap). Default is `"min"`
 
 > **\_accessor**: (`d`) => `number`
 
-Defined in: [datastructure/Heap.js:28](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L28)
+Defined in: [datastructure/Heap.js:28](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L28)
 
 #### Parameters
 
@@ -71,21 +71,21 @@ Defined in: [datastructure/Heap.js:28](https://github.com/saehm/DruidJS/blob/a8c
 
 `number`
 
----
+***
 
 ### \_comparator
 
 > **\_comparator**: [`Comparator`](../type-aliases/Comparator.md)
 
-Defined in: [datastructure/Heap.js:13](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L13)
+Defined in: [datastructure/Heap.js:13](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L13)
 
----
+***
 
 ### \_container
 
 > **\_container**: `object`[]
 
-Defined in: [datastructure/Heap.js:10](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L10)
+Defined in: [datastructure/Heap.js:10](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L10)
 
 #### element
 
@@ -103,7 +103,7 @@ Defined in: [datastructure/Heap.js:10](https://github.com/saehm/DruidJS/blob/a8c
 
 > **get** **empty**(): `boolean`
 
-Defined in: [datastructure/Heap.js:227](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L227)
+Defined in: [datastructure/Heap.js:227](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L227)
 
 Returns false if the the heap has entries, true if the heap has no entries.
 
@@ -111,7 +111,7 @@ Returns false if the the heap has entries, true if the heap has no entries.
 
 `boolean`
 
----
+***
 
 ### first
 
@@ -119,7 +119,7 @@ Returns false if the the heap has entries, true if the heap has no entries.
 
 > **get** **first**(): \{ `element`: `T`; `value`: `number`; \} \| `null`
 
-Defined in: [datastructure/Heap.js:171](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L171)
+Defined in: [datastructure/Heap.js:171](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L171)
 
 Returns the top entry of the heap without removing it.
 
@@ -128,9 +128,9 @@ Returns the top entry of the heap without removing it.
 \{ `element`: `T`; `value`: `number`; \} \| `null`
 
 Object consists of the element and its value (computed by
-`accessor`).
+  `accessor`).
 
----
+***
 
 ### length
 
@@ -138,7 +138,7 @@ Object consists of the element and its value (computed by
 
 > **get** **length**(): `number`
 
-Defined in: [datastructure/Heap.js:218](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L218)
+Defined in: [datastructure/Heap.js:218](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L218)
 
 The size of the heap.
 
@@ -152,7 +152,7 @@ The size of the heap.
 
 > **data**(): `T`[]
 
-Defined in: [datastructure/Heap.js:200](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L200)
+Defined in: [datastructure/Heap.js:200](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L200)
 
 Returns elements of container array.
 
@@ -162,13 +162,13 @@ Returns elements of container array.
 
 Array consisting the elements.
 
----
+***
 
 ### iterate()
 
 > **iterate**(): `Generator`\<`T`, `void`, `unknown`\>
 
-Defined in: [datastructure/Heap.js:180](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L180)
+Defined in: [datastructure/Heap.js:180](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L180)
 
 Yields the raw data
 
@@ -180,13 +180,13 @@ Yields the raw data
 
 Object consists of the element and its value (computed by `accessor`}).
 
----
+***
 
 ### pop()
 
 > **pop**(): \{ `element`: `T`; `value`: `number`; \} \| `null`
 
-Defined in: [datastructure/Heap.js:150](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L150)
+Defined in: [datastructure/Heap.js:150](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L150)
 
 Removes and returns the top entry of the heap.
 
@@ -195,15 +195,15 @@ Removes and returns the top entry of the heap.
 \{ `element`: `T`; `value`: `number`; \} \| `null`
 
 Object consists of the element and its value (computed by
-`accessor`}).
+  `accessor`}).
 
----
+***
 
 ### push()
 
 > **push**(`element`): `Heap`\<`T`\>
 
-Defined in: [datastructure/Heap.js:111](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L111)
+Defined in: [datastructure/Heap.js:111](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L111)
 
 Pushes the element to the heap.
 
@@ -217,13 +217,13 @@ Pushes the element to the heap.
 
 `Heap`\<`T`\>
 
----
+***
 
-### raw_data()
+### raw\_data()
 
-> **raw_data**(): `object`[]
+> **raw\_data**(): `object`[]
 
-Defined in: [datastructure/Heap.js:209](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L209)
+Defined in: [datastructure/Heap.js:209](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L209)
 
 Returns the container array.
 
@@ -233,13 +233,13 @@ Returns the container array.
 
 The container array.
 
----
+***
 
 ### toArray()
 
 > **toArray**(): `T`[]
 
-Defined in: [datastructure/Heap.js:191](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L191)
+Defined in: [datastructure/Heap.js:191](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L191)
 
 Returns the heap as ordered array.
 
@@ -249,13 +249,13 @@ Returns the heap as ordered array.
 
 Array consisting the elements ordered by `comparator`.
 
----
+***
 
 ### heapify()
 
 > `static` **heapify**\<`T`\>(`elements`, `accessor`, `comparator?`): `Heap`\<`T`\>
 
-Defined in: [datastructure/Heap.js:62](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/datastructure/Heap.js#L62)
+Defined in: [datastructure/Heap.js:62](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/datastructure/Heap.js#L62)
 
 Creates a Heap from an Array
 
@@ -282,8 +282,8 @@ Function returns the value of the element.
 ##### comparator?
 
 Function returning true or false
-defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a
-Max_heap). Default is `"min"`
+  defining the wished order of the Heap, or String for predefined function. ("min" for a Min-Heap, "max" for a
+  Max_heap). Default is `"min"`
 
 `"max"` | `"min"` | [`Comparator`](../type-aliases/Comparator.md)
 

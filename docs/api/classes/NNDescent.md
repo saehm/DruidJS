@@ -2,7 +2,7 @@
 
 # Class: NNDescent\<T\>
 
-Defined in: [knn/NNDescent.js:38](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L38)
+Defined in: [knn/NNDescent.js:38](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L38)
 
 NN-Descent
 
@@ -24,7 +24,7 @@ It works by iteratively improving a neighbor graph using the fact that
 
 ### T
 
-`T` _extends_ `number`[] \| `Float64Array`
+`T` *extends* `number`[] \| `Float64Array`
 
 ## Constructors
 
@@ -32,7 +32,7 @@ It works by iteratively improving a neighbor graph using the fact that
 
 > **new NNDescent**\<`T`\>(`elements`, `parameters?`): `NNDescent`\<`T`\>
 
-Defined in: [knn/NNDescent.js:55](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L55)
+Defined in: [knn/NNDescent.js:55](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L55)
 
 #### Parameters
 
@@ -64,27 +64,27 @@ Called V in paper.
 
 > **\_elements**: `T`[]
 
-Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L14)
+Defined in: [knn/KNN.js:14](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L14)
 
 #### Inherited from
 
 `KNN._elements`
 
----
+***
 
 ### \_N
 
 > **\_N**: `number`
 
-Defined in: [knn/NNDescent.js:62](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L62)
+Defined in: [knn/NNDescent.js:62](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L62)
 
----
+***
 
-### \_nndescent_elements
+### \_nndescent\_elements
 
-> **\_nndescent_elements**: `object`[]
+> **\_nndescent\_elements**: `object`[]
 
-Defined in: [knn/NNDescent.js:66](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L66)
+Defined in: [knn/NNDescent.js:66](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L66)
 
 #### flag
 
@@ -98,41 +98,41 @@ Defined in: [knn/NNDescent.js:66](https://github.com/saehm/DruidJS/blob/a8c3d973
 
 > **value**: `T` = `e`
 
----
+***
 
 ### \_parameters
 
 > **\_parameters**: [`ParametersNNDescent`](../interfaces/ParametersNNDescent.md)
 
-Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L16)
+Defined in: [knn/KNN.js:16](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L16)
 
 #### Inherited from
 
 `KNN._parameters`
 
----
+***
 
 ### \_randomizer
 
 > **\_randomizer**: [`Randomizer`](Randomizer.md)
 
-Defined in: [knn/NNDescent.js:63](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L63)
+Defined in: [knn/NNDescent.js:63](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L63)
 
----
+***
 
-### \_sample_size
+### \_sample\_size
 
-> **\_sample_size**: `number`
+> **\_sample\_size**: `number`
 
-Defined in: [knn/NNDescent.js:64](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L64)
+Defined in: [knn/NNDescent.js:64](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L64)
 
----
+***
 
 ### \_type
 
 > **\_type**: `"array"` \| `"typed"`
 
-Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/KNN.js#L18)
+Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/KNN.js#L18)
 
 #### Inherited from
 
@@ -144,7 +144,7 @@ Defined in: [knn/KNN.js:18](https://github.com/saehm/DruidJS/blob/a8c3d973d42706
 
 > **add**(`elements`): `NNDescent`\<`T`\>
 
-Defined in: [knn/NNDescent.js:152](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L152)
+Defined in: [knn/NNDescent.js:152](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L152)
 
 #### Parameters
 
@@ -156,13 +156,13 @@ Defined in: [knn/NNDescent.js:152](https://github.com/saehm/DruidJS/blob/a8c3d97
 
 `NNDescent`\<`T`\>
 
----
+***
 
 ### search()
 
 > **search**(`x`, `k?`): `object`[]
 
-Defined in: [knn/NNDescent.js:236](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L236)
+Defined in: [knn/NNDescent.js:236](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L236)
 
 #### Parameters
 
@@ -184,13 +184,13 @@ Default is `5`
 
 `KNN.search`
 
----
+***
 
-### search_by_index()
+### search\_by\_index()
 
-> **search_by_index**(`i`, `k?`): `object`[]
+> **search\_by\_index**(`i`, `k?`): `object`[]
 
-Defined in: [knn/NNDescent.js:325](https://github.com/saehm/DruidJS/blob/a8c3d973d427068e4ee01a4685c87a4d0f8b20c6/src/knn/NNDescent.js#L325)
+Defined in: [knn/NNDescent.js:325](https://github.com/saehm/DruidJS/blob/dcefb767556f3c4cf43bdeb36d2750ae8d5ef93c/src/knn/NNDescent.js#L325)
 
 #### Parameters
 
