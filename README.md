@@ -8,6 +8,9 @@ DruidJS makes it easy to project a dataset with the implemented dimensionality r
 
 <br>
 
+![Codecov](https://img.shields.io/codecov/c/github/saehm/DruidJS)
+
+
 ### Resources
 
 ```
