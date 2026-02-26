@@ -49,10 +49,10 @@ Otherwise download the files [here](https://github.com/saehm/DruidJS/releases/la
 DruidJS uses internally the Matrix class for storing data. You can use it by creating a `druid.Matrix` object for instance with the function `from`, in example:
 
 ```js
-    import * as druid from '@saehrimnir/druidjs';
+import * as druid from '@saehrimnir/druidjs';
 
-    let data = [[...], [...], ...];
-    let matrix = druid.Matrix.from(data);
+let data = [[...], [...], ...];
+let matrix = druid.Matrix.from(data);
 ```
 
 You can create a `druid.Matrix` object programmatically by:

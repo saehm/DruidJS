@@ -8,3 +8,4 @@ dist/types
 /.vitepress
 /docs/.vitepress/cache
 /docs/.vitepress/dist
+/docs/api

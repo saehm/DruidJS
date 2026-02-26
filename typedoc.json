@@ -1,23 +1,29 @@
 {
-  "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": [
-    "src/index.js"
-  ],
-  "jsDocCompatibility": true,
-  "plugin": [
-    "typedoc-plugin-markdown",
-    "typedoc-vitepress-theme",
-    "typedoc-plugin-llms-txt"
-  ],
-  "out": "./docs/api",
-  "docsRoot": "./docs",
-  "excludeExternals": true,
-  "excludeInternal": true,
-  "categorizeByGroup": false,
-  "navigation": {
-    "includeFolders": true,
-    "compactFolders": false,
-    "includeCategories": true,
-    "includeGroups": true
-  }
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": ["src/index.js"],
+    "jsDocCompatibility": true,
+    "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme", "typedoc-plugin-llms-txt"],
+    "out": "./docs/api",
+    "docsRoot": "./docs",
+    "excludeExternals": true,
+    "excludeInternal": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludePrivateClassFields": true,
+    "categorizeByGroup": false,
+    "navigation": {
+        "includeFolders": true,
+        "compactFolders": false,
+        "includeCategories": true,
+        "includeGroups": true
+    },
+    "indexFormat": "table",
+    "parametersFormat": "table",
+    "propertiesFormat": "table",
+    "enumMembersFormat": "table",
+    "interfacePropertiesFormat": "table",
+    "typeDeclarationFormat": "table",
+    "expandObjects": true,
+    "expandParameters": true,
+    "useCodeBlocks": true
 }

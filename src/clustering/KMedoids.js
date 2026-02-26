@@ -157,7 +157,11 @@ export class KMedoids extends Clustering {
         return false
     } */
 
-    /** FastPAM1: One best swap per iteration */
+    /**
+     * FastPAM1: One best swap per iteration
+     * @private
+     * @returns {boolean}
+     */
     _iteration() {
         const A = this._A;
         const K = this._parameters.K;
@@ -221,12 +225,13 @@ export class KMedoids extends Clustering {
     }
 
     /**
-     *
+     * @private
+     * Get distance between two points
      * @param {number} i
      * @param {number} j
      * @param {Float64Array?} x_i
      * @param {Float64Array?} x_j
-     * @returns
+     * @returns {number}
      */
     _get_distance(i, j, x_i = null, x_j = null) {
         if (i === j) return 0;
@@ -243,7 +248,7 @@ export class KMedoids extends Clustering {
     }
 
     /**
-     *
+     * @private
      * @param {Float64Array} x_j
      * @param {number} j
      * @returns
@@ -284,6 +289,9 @@ export class KMedoids extends Clustering {
         };
     }
 
+    /**
+     * @private
+     */
     _update_clusters() {
         const N = this._N;
         const A = this._A;
@@ -315,7 +323,7 @@ export class KMedoids extends Clustering {
 
     /**
      * Algorithm 3. FastPAM LAB: Linear Approximate BUILD initialization.
-     *
+     * @private
      * @param {number} K - Number of clusters
      * @returns {number[]}
      */

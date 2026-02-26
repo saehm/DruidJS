@@ -16,20 +16,41 @@ import { Clustering } from "./Clustering.js";
  * @category Clustering
  */
 export class MeanShift extends Clustering {
-    /** @type {number} */
+    /**
+     * @private
+     * @type {number}
+     */
     _bandwidth;
-    /** @type {number} */
+    /**
+     * @private
+     * @type {number}
+     */
     _max_iter;
-    /** @type {number} */
+    /**
+     * @private
+     * @type {number}
+     */
     _tolerance;
-    /** @type {(dist: number) => number} */
+    /**
+     * @private
+     * @type {(dist: number) => number}
+     */
     _kernel;
-    /** @type {Matrix} */
+    /**
+     * @type {Matrix}
+     */
     _points;
-    /** @type {number[] | undefined} */
+    /**
+     * @private
+     * @type {number[] | undefined}
+     */
     _clusters;
-    /** @type {number[][] | undefined} */
+    /**
+     * @private
+     * @type {number[][] | undefined}
+     */
     _cluster_list;
+
     /**
      *
      * @param {InputType} points
@@ -68,8 +89,9 @@ export class MeanShift extends Clustering {
         this._assign_clusters();
     }
 
-    // Helper to compute bandwidth if not provided
     /**
+     * Helper to compute bandwidth if not provided
+     * @private
      * @param {Matrix} matrix
      * @returns {number}
      */
@@ -91,8 +113,9 @@ export class MeanShift extends Clustering {
         return avgDist / 2;
     }
 
-    // Compute kernel weight
     /**
+     * Compute kernel weight
+     * @private
      * @param {number} dist
      * @returns {number}
      */
@@ -100,7 +123,10 @@ export class MeanShift extends Clustering {
         return this._kernel(dist);
     }
 
-    // Perform mean shift iterations
+    /**
+     * Perform mean shift iterations
+     * @private
+     */
     _mean_shift() {
         const N = this._N;
         const D = this._D;
@@ -152,7 +178,10 @@ export class MeanShift extends Clustering {
         }
     }
 
-    // After convergence, assign clusters based on nearest mode
+    /**
+     * After convergence, assign clusters based on nearest mode
+     * @private
+     */
     _assign_clusters() {
         const N = this._N;
         const metric = this._parameters.metric;

@@ -29,6 +29,7 @@
     "type": "module",
     "main": "./dist/druid.cjs",
     "module": "./dist/druid.js",
+    "browser": "./dist/druid.js",
     "types": "./dist/druid.d.ts",
     "exports": {
         ".": {
