@@ -1,6 +1,6 @@
 # Clustering Pipelines
 
-A frequent task in data science is identifying clusters in high-dimensional space and then visualizing the learned structural manifolds. This showcase allows you to run multiple clustering algorithms—such as [**K-Means**](/api/classes/KMeans), [**OPTICS**](/api/classes/OPTICS), [**CURE**](/api/classes/CURE), and [**Hierarchical Clustering**](/api/classes/HierarchicalClustering)—on various datasets. It computes the assignments intrinsically and then uses [**UMAP**](/api/classes/UMAP) for the 2D visual projection.
+A frequent task in data science is identifying clusters in high-dimensional space and then visualizing the learned structural manifolds. This showcase allows you to run multiple clustering algorithms—such as [**K-Means**](/api/classes/KMeans), [**OPTICS**](/api/classes/OPTICS), [**CURE**](/api/classes/CURE), and [**Hierarchical Clustering**](/api/classes/HierarchicalClustering)—on various datasets. It computes the assignments intrinsically and then uses [**UMAP**](/api/classes/UMAP), [**PaCMAP**](/api/classes/PaCMAP), or [**LocalMAP**](/api/classes/LocalMAP) for the 2D visual projection.
 
 <script setup>
 import ClusteringPipeline from '../components/ClusteringPipeline.vue'
@@ -10,7 +10,7 @@ import ClusteringPipeline from '../components/ClusteringPipeline.vue'
 
 ## How-to (Code)
 
-Combining clustering and dimensionality reduction is a common pattern for exploratory data analysis. You can use any of DruidJS's clustering algorithms for the assignments and a technique like UMAP for visualization.
+Combining clustering and dimensionality reduction is a common pattern for exploratory data analysis. You can use any of DruidJS's clustering algorithms for the assignments and a technique like UMAP, PaCMAP, or LocalMAP for visualization.
 
 ```javascript
 import * as druid from "@saehrimnir/druidjs";
