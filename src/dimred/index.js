@@ -2,6 +2,8 @@
  * @module dimred
  */
 export { FASTMAP } from "./FASTMAP.js";
+export { LocalMAP } from "./LocalMAP.js";
+export { PaCMAP } from "./PaCMAP.js";
 export { ISOMAP } from "./ISOMAP.js";
 export { LDA } from "./LDA.js";
 export { LLE } from "./LLE.js";
@@ -143,6 +145,31 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [d=2] - the dimensionality of the projection.
  * @property {Metric | "precomputed"} [metric=euclidean_squared] - the metric which defines the distance between two points.
  * @property {number} [seed=1212] - the seed for the random number generator.
+ */
+
+/**
+ * @typedef {Object} ParametersPaCMAP
+ * @property {number} [n_neighbors=10] - Number of nearest neighbors for NN pairs.
+ * @property {number} [MN_ratio=0.5] - Ratio of mid-near pairs to n_neighbors.
+ * @property {number} [FP_ratio=2.0] - Ratio of further pairs to n_neighbors.
+ * @property {number} [d=2] - The dimensionality of the projection.
+ * @property {Metric} [metric=euclidean] - The metric which defines the distance between two points.
+ * @property {number} [lr=1.0] - Learning rate for the Adam optimizer.
+ * @property {number[]} [num_iters=[100,100,250]] - Number of iterations for each of the three phases.
+ * @property {number} [seed=1212] - The seed for the random number generator.
+ */
+
+/**
+ * @typedef {Object} ParametersLocalMAP
+ * @property {number} [n_neighbors=10] - Number of nearest neighbors for NN pairs.
+ * @property {number} [MN_ratio=0.5] - Ratio of mid-near pairs to n_neighbors.
+ * @property {number} [FP_ratio=2.0] - Ratio of further pairs to n_neighbors.
+ * @property {number} [d=2] - The dimensionality of the projection.
+ * @property {Metric} [metric=euclidean] - The metric which defines the distance between two points.
+ * @property {number} [lr=1.0] - Learning rate for the Adam optimizer.
+ * @property {number[]} [num_iters=[100,100,250]] - Number of iterations for each of the three phases.
+ * @property {number} [low_dist_thres=10] - Distance threshold for local FP pair resampling in phase 3.
+ * @property {number} [seed=1212] - The seed for the random number generator.
  */
 
 /**
