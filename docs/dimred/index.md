@@ -18,6 +18,7 @@ Real-world data is rarely a straight line; it's often twisted and curved (like a
 
 - **t-SNE (t-Distributed Stochastic Neighbor Embedding):** This is excellent for **visualization**. It focuses on keeping similar data points close together in the new lower-dimensional space. It's famous for taking complex high-dimensional data (like pixels of handwritten digits) and clustering them perfectly in 2D.
 - **UMAP (Uniform Manifold Approximation and Projection):** Similar to t-SNE but generally faster and better at preserving the "global structure" (the relationship between distant clusters), not just local neighbors.
+- **PaCMAP / LocalMAP:** Newer alternatives that use explicit pair types (nearest-neighbor, mid-near, and further pairs) with a three-phase optimization schedule, often producing cleaner cluster separation than UMAP with less hyperparameter sensitivity.
 
 ## Why Focus on Extraction?
 

@@ -19,7 +19,7 @@ Uniform Manifold Approximation and Projection (UMAP) constructs a high-dimension
 
 ## Why or When to Use
 
-An excellent, fast alternative to t-SNE that scales well to large datasets and tends to preserve both local and global data structures effectively.
+An excellent, fast alternative to t-SNE that scales well to large datasets and tends to preserve both local and global data structures effectively. For a more recent alternative with explicit global structure control, see [PaCMAP](/dimred/pacmap) and [LocalMAP](/dimred/localmap).
 
 ## Example
 
