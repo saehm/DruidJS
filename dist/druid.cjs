@@ -7897,9 +7897,11 @@ class PaCMAP extends DR {
 /**
  * LocalMAP
  *
- * A variant of PaCMAP that improves local cluster separation by dynamically
- * resampling further pairs (FP) in phase 3 using nearby points in the current
- * low-dimensional embedding space, rather than randomly sampled non-neighbors.
+ * A variant of PaCMAP that improves local cluster separation in phase 3 by:
+ * 1. Applying a local scaling factor (nn_scale / sqrt(d_ij)) to NN gradients,
+ *    amplifying attraction for already-close NN pairs and dampening it for far ones.
+ * 2. Periodically resampling FP pairs from random candidates within a distance
+ *    threshold in the current embedding, rather than using static random pairs.
  *
  * @class
  * @template {InputType} T
@@ -7935,8 +7937,8 @@ class LocalMAP extends PaCMAP {
 
     /**
      * Performs one optimization step.
-     * In phase 3, resamples FP pairs from the current embedding space
-     * and applies distance-based weight scaling.
+     * In phase 3, applies local NN scaling and resamples FP pairs every 10 iterations
+     * from random candidates within the distance threshold.
      *
      * @returns {import("../matrix/index.js").Matrix}
      */
@@ -7950,62 +7952,40 @@ class LocalMAP extends PaCMAP {
             return super.next();
         }
 
-        // Phase 3: resample FP pairs from embedding neighbors
+        // TODO: The canonical LocalMAP implementation (YingfanWang/PaCMAP pacmap.py)
+        // uses a strictly-greater-than condition (`itr > phase1 + phase2`) to switch
+        // to the local NN gradient, meaning the very first phase 3 step still runs
+        // the standard PaCMAP gradient. We currently enter the local branch at
+        // this._iter === phase3_start (i.e., one step earlier).
+        //
+        // The second reference implementation (hanxiao/mlx-vis pacmap.py) does NOT
+        // share this off-by-one — it switches to the local gradient at the first
+        // phase 3 step, matching our current behaviour.
+        //
+        // The practical impact is likely negligible (one iteration out of 250 in
+        // phase 3), but it's worth verifying empirically whether aligning with the
+        // canonical (`this._iter <= phase3_start` → super.next()) produces
+        // meaningfully different results.
+
+        // Phase 3: local NN scaling + periodic FP resampling within distance threshold
         const N = this._N;
         const d = /** @type {number} */ (this.parameter("d"));
-        const low_dist_thres = /** @type {number} */ (this._low_dist_thres ?? 10);
-        const low_dist_thres_sq = low_dist_thres * low_dist_thres;
         const { w_nn, w_mn, w_fp } = this._get_weights(this._iter);
-        const Y = this.Y;
+        const nn_scale = (this._low_dist_thres ?? 10) / 2;
 
-        // Build a KNN structure on the current embedding to find nearby pairs
-        const y_array = Y.to2dArray();
-        const seed = /** @type {number} */ (this.parameter("seed"));
-        const emb_knn = new BallTree(y_array, { metric: euclidean_squared, seed });
-        const n_FP = /** @type {number} */ (this.parameter("FP_ratio")) *
-            /** @type {number} */ (this.parameter("n_neighbors"));
-        const n_FP_int = Math.max(1, Math.round(n_FP));
-
-        // Build local FP pairs by finding nearby embedding neighbors
-        // (these are not NN neighbors in high-dim space but nearby in low-dim)
-        const nn_sets = this._nn_sets_cache;
-        /** @type {Int32Array} */
-        let local_fp_pairs;
-
-        if (nn_sets) {
-            const pair_buf = new Int32Array(N * n_FP_int * 2);
-            let idx = 0;
-            for (let i = 0; i < N; ++i) {
-                const nn_set = nn_sets[i];
-                // Search for nearby points in embedding space
-                const neighbors = emb_knn.search(y_array[i], Math.min(n_FP_int * 3 + 1, N));
-                let count = 0;
-                for (const nb of neighbors) {
-                    if (nb.index === i || (nn_set && nn_set.has(nb.index))) continue;
-                    pair_buf[idx++] = i;
-                    pair_buf[idx++] = nb.index;
-                    count++;
-                    if (count >= n_FP_int) break;
-                }
-            }
-            local_fp_pairs = pair_buf.slice(0, idx);
-        } else {
-            local_fp_pairs = /** @type {Int32Array} */ (this._fp_pairs);
+        // Resample FP pairs from random embedding-local candidates every 10 iterations
+        // (skip the very first phase 3 step to match reference behaviour)
+        if (this._iter > phase3_start && this._iter % 10 === 0) {
+            this._resample_local_fp_pairs();
         }
 
-        // Accumulate gradients with local weight scaling for FP pairs
         const grad_flat = new Float64Array(N * d);
-        this._accumulate_gradients(grad_flat, /** @type {Int32Array} */ (this._nn_pairs), w_nn, 10, false);
+        // Local NN: attractive with nn_scale/sqrt(d_ij) distance-based scaling
+        this._accumulate_gradients_local_nn(grad_flat, /** @type {Int32Array} */ (this._nn_pairs), w_nn, nn_scale);
+        // MN: no-op in phase 3 (w_mn = 0), kept for correctness
         this._accumulate_gradients(grad_flat, /** @type {Int32Array} */ (this._mn_pairs), w_mn, 10000, false);
-
-        // FP pairs with local distance-based weight scaling
-        this._accumulate_gradients_local_fp(
-            grad_flat,
-            local_fp_pairs,
-            w_fp,
-            low_dist_thres,
-            low_dist_thres_sq,
-        );
+        // FP: standard repulsive on (periodically resampled) local pairs
+        this._accumulate_gradients(grad_flat, /** @type {Int32Array} */ (this._fp_pairs), w_fp, 0, true);
 
         this._adam_update(grad_flat);
         this._iter++;
@@ -8013,18 +7993,17 @@ class LocalMAP extends PaCMAP {
     }
 
     /**
-     * Accumulates FP gradients with LocalMAP's distance-based weight scaling.
-     * For pairs within low_dist_thres, scales w_fp by low_dist_thres / (2 * sqrt(d_ij)).
+     * Accumulates NN gradients with LocalMAP's local scaling: nn_scale / sqrt(d_ij).
+     * Amplifies attraction for NN pairs already close in embedding; dampens it for far pairs.
      *
      * @private
      * @param {Float64Array} grad_flat - Flat N×d gradient accumulator (modified in place)
      * @param {Int32Array} pairs - Flat [i, j, i, j, ...] pair array
-     * @param {number} w_fp - Base FP weight
-     * @param {number} low_dist_thres - Distance threshold
-     * @param {number} low_dist_thres_sq - Squared distance threshold
+     * @param {number} w_nn - NN weight
+     * @param {number} nn_scale - low_dist_thres / 2
      */
-    _accumulate_gradients_local_fp(grad_flat, pairs, w_fp, low_dist_thres, low_dist_thres_sq) {
-        if (w_fp === 0) return;
+    _accumulate_gradients_local_nn(grad_flat, pairs, w_nn, nn_scale) {
+        if (w_nn === 0) return;
         const Y = this.Y;
         const d = /** @type {number} */ (this.parameter("d"));
         const n_pairs = pairs.length / 2;
@@ -8042,14 +8021,9 @@ class LocalMAP extends PaCMAP {
             }
             const d_ij = 1 + sq_dist;
 
-            // Apply local weight scaling when pair is within distance threshold
-            let w = w_fp;
-            if (sq_dist < low_dist_thres_sq) {
-                w *= low_dist_thres / (2 * Math.sqrt(d_ij));
-            }
-
-            // FP loss: 1/(1+d_ij), gradient: -2/(1+d_ij)²
-            const coeff = (-w * 2) / (d_ij * d_ij);
+            // NN loss gradient scaled by nn_scale / sqrt(d_ij)
+            const denom = 10 + d_ij;
+            const coeff = (w_nn * 20 * nn_scale) / (denom * denom * Math.sqrt(d_ij));
 
             const base_i = i * d;
             const base_j = j * d;
@@ -8063,7 +8037,49 @@ class LocalMAP extends PaCMAP {
     }
 
     /**
-     * Initializes LocalMAP (same as PaCMAP, but caches nn_sets for phase 3 resampling).
+     * Resamples FP pairs in place using random candidates within the embedding distance
+     * threshold. For each pair (i, j), tries up to 64 random points; if one falls within
+     * low_dist_thres and is not a high-dim neighbor of i, it replaces j. Otherwise j is kept.
+     *
+     * @private
+     */
+    _resample_local_fp_pairs() {
+        const N = this._N;
+        const d = /** @type {number} */ (this.parameter("d"));
+        const low_dist_thres = this._low_dist_thres ?? 10;
+        const threshold_sq = low_dist_thres * low_dist_thres;
+        const nn_sets = this._nn_sets_cache;
+        const fp_pairs = /** @type {Int32Array} */ (this._fp_pairs);
+        const n_pairs = fp_pairs.length / 2;
+        const Y = this.Y;
+        const randomizer = this._randomizer;
+
+        for (let p = 0; p < n_pairs; ++p) {
+            const i = fp_pairs[p * 2];
+            const nn_set = nn_sets ? nn_sets[i] : null;
+            const y_i = Y.row(i);
+
+            for (let s = 0; s < 64; ++s) {
+                const j = randomizer.random_int % N;
+                if (j === i || (nn_set && nn_set.has(j))) continue;
+
+                const y_j = Y.row(j);
+                let sq_dist = 0;
+                for (let k = 0; k < d; ++k) {
+                    const diff = y_i[k] - y_j[k];
+                    sq_dist += diff * diff;
+                }
+                if (sq_dist <= threshold_sq) {
+                    fp_pairs[p * 2 + 1] = j;
+                    break;
+                }
+            }
+            // If no valid candidate found, keep the existing pair
+        }
+    }
+
+    /**
+     * Initializes LocalMAP (same as PaCMAP, but caches nn_sets for phase 3 FP resampling).
      *
      * @returns {LocalMAP<T>}
      */
@@ -8072,7 +8088,6 @@ class LocalMAP extends PaCMAP {
         // Cache low_dist_thres from sealed parameters (avoids type indexing issues)
         this._low_dist_thres = /** @type {number} */ (/** @type {any} */ (this._parameters)["low_dist_thres"] ?? 10);
         // Cache nn_sets for use in phase 3 FP resampling
-        // We rebuild them from _nn_pairs
         const N = this._N;
         const nn_pairs = this._nn_pairs;
         if (!nn_pairs) return this;

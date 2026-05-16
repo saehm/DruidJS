@@ -2040,9 +2040,11 @@ declare class PaCMAP<T extends InputType> extends DR<T, ParametersPaCMAP> {
 /**
  * LocalMAP
  *
- * A variant of PaCMAP that improves local cluster separation by dynamically
- * resampling further pairs (FP) in phase 3 using nearby points in the current
- * low-dimensional embedding space, rather than randomly sampled non-neighbors.
+ * A variant of PaCMAP that improves local cluster separation in phase 3 by:
+ * 1. Applying a local scaling factor (nn_scale / sqrt(d_ij)) to NN gradients,
+ *    amplifying attraction for already-close NN pairs and dampening it for far ones.
+ * 2. Periodically resampling FP pairs from random candidates within a distance
+ *    threshold in the current embedding, rather than using static random pairs.
  *
  * @class
  * @template {InputType} T
@@ -2092,19 +2094,26 @@ declare class LocalMAP<T extends InputType> extends PaCMAP<T> {
      */
     constructor(X: T, parameters?: Partial<ParametersLocalMAP>);
     /**
-     * Accumulates FP gradients with LocalMAP's distance-based weight scaling.
-     * For pairs within low_dist_thres, scales w_fp by low_dist_thres / (2 * sqrt(d_ij)).
+     * Accumulates NN gradients with LocalMAP's local scaling: nn_scale / sqrt(d_ij).
+     * Amplifies attraction for NN pairs already close in embedding; dampens it for far pairs.
      *
      * @private
      * @param {Float64Array} grad_flat - Flat N×d gradient accumulator (modified in place)
      * @param {Int32Array} pairs - Flat [i, j, i, j, ...] pair array
-     * @param {number} w_fp - Base FP weight
-     * @param {number} low_dist_thres - Distance threshold
-     * @param {number} low_dist_thres_sq - Squared distance threshold
+     * @param {number} w_nn - NN weight
+     * @param {number} nn_scale - low_dist_thres / 2
      */
-    private _accumulate_gradients_local_fp;
+    private _accumulate_gradients_local_nn;
     /**
-     * Initializes LocalMAP (same as PaCMAP, but caches nn_sets for phase 3 resampling).
+     * Resamples FP pairs in place using random candidates within the embedding distance
+     * threshold. For each pair (i, j), tries up to 64 random points; if one falls within
+     * low_dist_thres and is not a high-dim neighbor of i, it replaces j. Otherwise j is kept.
+     *
+     * @private
+     */
+    private _resample_local_fp_pairs;
+    /**
+     * Initializes LocalMAP (same as PaCMAP, but caches nn_sets for phase 3 FP resampling).
      *
      * @returns {LocalMAP<T>}
      */
