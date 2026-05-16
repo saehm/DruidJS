@@ -61,6 +61,21 @@ export class LocalMAP extends PaCMAP {
             return super.next();
         }
 
+        // TODO: The canonical LocalMAP implementation (YingfanWang/PaCMAP pacmap.py)
+        // uses a strictly-greater-than condition (`itr > phase1 + phase2`) to switch
+        // to the local NN gradient, meaning the very first phase 3 step still runs
+        // the standard PaCMAP gradient. We currently enter the local branch at
+        // this._iter === phase3_start (i.e., one step earlier).
+        //
+        // The second reference implementation (hanxiao/mlx-vis pacmap.py) does NOT
+        // share this off-by-one — it switches to the local gradient at the first
+        // phase 3 step, matching our current behaviour.
+        //
+        // The practical impact is likely negligible (one iteration out of 250 in
+        // phase 3), but it's worth verifying empirically whether aligning with the
+        // canonical (`this._iter <= phase3_start` → super.next()) produces
+        // meaningfully different results.
+
         // Phase 3: local NN scaling + periodic FP resampling within distance threshold
         const N = this._N;
         const d = /** @type {number} */ (this.parameter("d"));
