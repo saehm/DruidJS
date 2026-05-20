@@ -76,4 +76,13 @@ describe("PaCMAP", () => {
         const data = generateTestData(10, 4);
         expect(() => new PaCMAP(data, { n_neighbors: 10 })).toThrow();
     });
+
+    it("should work with knn_backend='hnsw'", () => {
+        const data = generateTestData(15, 4);
+        const pacmap = new PaCMAP(data, { n_neighbors: 4, seed: 42, knn_backend: "hnsw" });
+        const result = pacmap.transform(50);
+        expect(result).toHaveLength(15);
+        expect(result[0]).toHaveLength(2);
+        expect(result.flat().every(Number.isFinite)).toBe(true);
+    });
 });

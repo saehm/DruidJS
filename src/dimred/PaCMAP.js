@@ -1,4 +1,4 @@
-import { BallTree } from "../knn/index.js";
+import { Annoy, HNSW } from "../knn/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean, euclidean_squared } from "../metrics/index.js";
 import { DR } from "./DR.js";
@@ -55,6 +55,7 @@ export class PaCMAP extends DR {
                 metric: euclidean,
                 lr: 1.0,
                 num_iters: [100, 100, 250],
+                knn_backend: "annoy",
                 seed: 1212,
             },
             parameters,
@@ -279,7 +280,10 @@ export class PaCMAP extends DR {
         this.Y = new Matrix(N, d, (i, j) => pca_init.entry(i, j) * 0.01);
 
         // 2. Build KNN graph for NN pairs
-        const knn = new BallTree(X.to2dArray(), { metric, seed });
+        const knn_backend = /** @type {string} */ (this.parameter("knn_backend"));
+        const knn = knn_backend === "hnsw"
+            ? new HNSW(X.to2dArray(), { metric, seed })
+            : new Annoy(X.to2dArray(), { metric, numTrees: 20, seed });
         const n_MN = Math.max(1, Math.round(n_neighbors * MN_ratio));
         const n_FP = Math.max(1, Math.round(n_neighbors * FP_ratio));
 
