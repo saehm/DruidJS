@@ -3851,6 +3851,10 @@ type ParametersPaCMAP = {
      */
     num_iters?: number[] | undefined;
     /**
+     * - KNN backend for nearest-neighbor search.
+     */
+    knn_backend?: "annoy" | "hnsw" | undefined;
+    /**
      * - The seed for the random number generator.
      */
     seed?: number | undefined;
@@ -3888,6 +3892,10 @@ type ParametersLocalMAP = {
      * - Distance threshold for local FP pair resampling in phase 3.
      */
     low_dist_thres?: number | undefined;
+    /**
+     * - KNN backend for nearest-neighbor search.
+     */
+    knn_backend?: "annoy" | "hnsw" | undefined;
     /**
      * - The seed for the random number generator.
      */

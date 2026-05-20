@@ -282,8 +282,8 @@ export class PaCMAP extends DR {
         // 2. Build KNN graph for NN pairs
         const knn_backend = /** @type {string} */ (this.parameter("knn_backend"));
         const knn = knn_backend === "hnsw"
-            ? new HNSW(X.to2dArray(), { metric, seed })
-            : new Annoy(X.to2dArray(), { metric, numTrees: 20, seed });
+            ? new HNSW(X.to2dArray(), { metric, heuristic: true, m: 16, ef_construction: 200, m0: null, mL: null, ef: 50, seed })
+            : new Annoy(X.to2dArray(), { metric, numTrees: 20, maxPointsPerLeaf: 10, seed });
         const n_MN = Math.max(1, Math.round(n_neighbors * MN_ratio));
         const n_FP = Math.max(1, Math.round(n_neighbors * FP_ratio));
 
