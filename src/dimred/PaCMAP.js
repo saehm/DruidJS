@@ -56,6 +56,7 @@ export class PaCMAP extends DR {
                 lr: 1.0,
                 num_iters: [100, 100, 250],
                 knn_backend: "annoy",
+                knn_params: {},
                 apply_pca: true,
                 seed: 1212,
             },
@@ -299,9 +300,10 @@ export class PaCMAP extends DR {
 
         // 3. Build KNN graph for NN pairs (on X_knn)
         const knn_backend = /** @type {string} */ (this.parameter("knn_backend"));
+        const knn_params = /** @type {Object} */ (this.parameter("knn_params"));
         const knn = knn_backend === "hnsw"
-            ? new HNSW(X_knn.to2dArray(), { metric, heuristic: true, m: 16, ef_construction: 200, m0: null, mL: null, ef: 50, seed })
-            : new Annoy(X_knn.to2dArray(), { metric, numTrees: 20, maxPointsPerLeaf: 10, seed });
+            ? new HNSW(X_knn.to2dArray(), { metric, heuristic: true, m: 16, ef_construction: 200, m0: null, mL: null, ef: 50, seed, ...knn_params })
+            : new Annoy(X_knn.to2dArray(), { metric, numTrees: 20, maxPointsPerLeaf: 10, seed, ...knn_params });
         const n_MN = Math.max(1, Math.round(n_neighbors * MN_ratio));
         const n_FP = Math.max(1, Math.round(n_neighbors * FP_ratio));
 

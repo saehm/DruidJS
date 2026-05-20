@@ -3856,6 +3856,10 @@ type ParametersPaCMAP = {
      */
     knn_backend?: "annoy" | "hnsw" | undefined;
     /**
+     * - Extra options forwarded to the KNN backend constructor (merged with defaults).
+     */
+    knn_params?: Object | undefined;
+    /**
      * - If true and input has >100 dimensions, reduce to 100 dims via PCA before KNN and initialization.
      */
     apply_pca?: boolean | undefined;
@@ -3901,6 +3905,10 @@ type ParametersLocalMAP = {
      * - KNN backend for nearest-neighbor search.
      */
     knn_backend?: "annoy" | "hnsw" | undefined;
+    /**
+     * - Extra options forwarded to the KNN backend constructor (merged with defaults).
+     */
+    knn_params?: Object | undefined;
     /**
      * - If true and input has >100 dimensions, reduce to 100 dims via PCA before KNN and initialization.
      */
