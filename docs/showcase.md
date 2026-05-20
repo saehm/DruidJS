@@ -5,15 +5,15 @@ Explore the capabilities of DruidJS through our interactive showcases. We've org
 ## Explore by Category
 
 - [**Standard Projections**](/showcase/projections)  
-  A gallery of classic dimensionality reduction algorithms on the Iris dataset. Include methods like [PCA](/dimred/pca), [t-SNE](/dimred/tsne), [UMAP](/dimred/umap), [MDS](/dimred/mds), [TriMap](/dimred/trimap), [ISOMAP](/dimred/isomap), [TopoMap](/dimred/topomap), [Sammon](/dimred/sammon), [LLE](/dimred/lle), [FastMap](/dimred/fastmap), [SMACOF](/dimred/smacof), [LDA](/dimred/lda), [LSP](/dimred/lsp), [LTSA](/dimred/ltsa), [SQDMDS](/dimred/sqdmds).
+  A gallery of classic dimensionality reduction algorithms on the Iris dataset. Include methods like [PCA](/dimred/pca), [t-SNE](/dimred/tsne), [UMAP](/dimred/umap), [PaCMAP](/dimred/pacmap), [LocalMAP](/dimred/localmap), [MDS](/dimred/mds), [TriMap](/dimred/trimap), [ISOMAP](/dimred/isomap), [TopoMap](/dimred/topomap), [Sammon](/dimred/sammon), [LLE](/dimred/lle), [FastMap](/dimred/fastmap), [SMACOF](/dimred/smacof), [LDA](/dimred/lda), [LSP](/dimred/lsp), [LTSA](/dimred/ltsa), [SQDMDS](/dimred/sqdmds).
 
 - [**Clustering Pipelines**](/showcase/clustering)  
-  Learn how to build pipelines using powerful clustering algorithms (including K-Means, OPTICS, CURE, and Hierarchical Clustering) combined with UMAP to project high-dimensional structure.
+  Learn how to build pipelines using powerful clustering algorithms (including K-Means, OPTICS, CURE, and Hierarchical Clustering) combined with UMAP, PaCMAP, or LocalMAP to project high-dimensional structure.
 - [**Hierarchical Dendrograms**](/showcase/dendrogram)  
   A visual interactive representation of the internal recursive nested-cluster logic powering the [**Hierarchical Clustering**](/api/classes/HierarchicalClustering) algorithm, rendered natively in D3.
 
 - [**Interactive Optimization**](/showcase/optimization)  
-  Watch iterative algorithms (t-SNE, UMAP, TriMap, Sammon, SMACOF, SQDMDS) in action on synthetic and real datasets, and see how they optimize embeddings over time.
+  Watch iterative algorithms (t-SNE, UMAP, PaCMAP, LocalMAP, TriMap, Sammon, SMACOF, SQDMDS) in action on synthetic and real datasets, and see how they optimize embeddings over time.
 
 - [**Metric Sensitivity**](/showcase/metrics)  
   Discover how the choice of distance metrics (Euclidean, Cosine, Manhattan, Chebyshev) influences the final spatial layout in a Sammon projection.

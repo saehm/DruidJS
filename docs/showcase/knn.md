@@ -1,6 +1,6 @@
 # K-Nearest Neighbors
 
-K-Nearest Neighbors (KNN) algorithms are a fundamental building block for many complex Dimensionality Reduction and Clustering algorithms (such as UMAP, t-SNE, and OPTICS). DruidJS provides extremely fast web-native implementations of multiple exact and approximate KNN algorithms to find local neighborhoods efficiently.
+K-Nearest Neighbors (KNN) algorithms are a fundamental building block for many complex Dimensionality Reduction and Clustering algorithms (such as UMAP, PaCMAP, LocalMAP, t-SNE, and OPTICS). DruidJS provides extremely fast web-native implementations of multiple exact and approximate KNN algorithms to find local neighborhoods efficiently.
 
 This showcase allows you to interactively explore various KNN algorithms on synthetic datasets:
 

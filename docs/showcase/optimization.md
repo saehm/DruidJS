@@ -1,6 +1,6 @@
 # Interactive Optimization
 
-Many modern DR algorithms ([t-SNE](/api/classes/TSNE), [UMAP](/api/classes/UMAP), [TriMap](/api/classes/TriMap), [Sammon](/api/classes/SAMMON), [SMACOF](/api/classes/SMACOF), [SQDMDS](/api/classes/SQDMDS)) are iterative. DruidJS provides `generator` support, allowing you to observe the optimization process as it happens. Watch how clusters form and separate over time.
+Many modern DR algorithms ([t-SNE](/api/classes/TSNE), [UMAP](/api/classes/UMAP), [PaCMAP](/api/classes/PaCMAP), [LocalMAP](/api/classes/LocalMAP), [TriMap](/api/classes/TriMap), [Sammon](/api/classes/SAMMON), [SMACOF](/api/classes/SMACOF), [SQDMDS](/api/classes/SQDMDS)) are iterative. DruidJS provides `generator` support, allowing you to observe the optimization process as it happens. Watch how clusters form and separate over time.
 
 <script setup>
 import AnimatedProjection from '../components/AnimatedProjection.vue'

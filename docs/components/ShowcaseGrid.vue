@@ -10,6 +10,8 @@ const methods = [
   { name: "MDS", class: "MDS" },
   { name: "t-SNE", class: "TSNE", iterations: 1000 },
   { name: "UMAP", class: "UMAP", iterations: 350 },
+  { name: "PaCMAP", class: "PaCMAP" },
+  { name: "LocalMAP", class: "LocalMAP" },
   { name: "TriMap", class: "TriMap", iterations: 1000 },
   { name: "ISOMAP", class: "ISOMAP" },
   { name: "TopoMap", class: "TopoMap" },
