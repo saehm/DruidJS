@@ -2012,6 +2012,7 @@ declare class PaCMAP<T extends InputType> extends DR<T, ParametersPaCMAP> {
      * @returns {PaCMAP<T>}
      */
     init(): PaCMAP<T>;
+    _X_knn: Matrix | undefined;
     _nn_pairs: Int32Array<ArrayBuffer> | undefined;
     _mn_pairs: Int32Array<ArrayBufferLike> | undefined;
     _fp_pairs: Int32Array<ArrayBufferLike> | undefined;
@@ -3855,6 +3856,10 @@ type ParametersPaCMAP = {
      */
     knn_backend?: "annoy" | "hnsw" | undefined;
     /**
+     * - If true and input has >100 dimensions, reduce to 100 dims via PCA before KNN and initialization.
+     */
+    apply_pca?: boolean | undefined;
+    /**
      * - The seed for the random number generator.
      */
     seed?: number | undefined;
@@ -3896,6 +3901,10 @@ type ParametersLocalMAP = {
      * - KNN backend for nearest-neighbor search.
      */
     knn_backend?: "annoy" | "hnsw" | undefined;
+    /**
+     * - If true and input has >100 dimensions, reduce to 100 dims via PCA before KNN and initialization.
+     */
+    apply_pca?: boolean | undefined;
     /**
      * - The seed for the random number generator.
      */

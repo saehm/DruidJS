@@ -7541,6 +7541,7 @@ class PaCMAP extends DR {
                 lr: 1.0,
                 num_iters: [100, 100, 250],
                 knn_backend: "annoy",
+                apply_pca: true,
                 seed: 1212,
             },
             parameters,
@@ -7567,7 +7568,7 @@ class PaCMAP extends DR {
      */
     _sample_mn_pairs(nn_sets, n_MN) {
         const N = this._N;
-        const X = this.X;
+        const X = this._X_knn ?? this.X;
         const randomizer = this._randomizer;
         const pairs = new Int32Array(N * n_MN * 2);
         let idx = 0;
@@ -7759,16 +7760,33 @@ class PaCMAP extends DR {
         const n_neighbors = /** @type {number} */ (this.parameter("n_neighbors"));
         const MN_ratio = /** @type {number} */ (this.parameter("MN_ratio"));
         const FP_ratio = /** @type {number} */ (this.parameter("FP_ratio"));
+        const apply_pca = /** @type {boolean} */ (this.parameter("apply_pca"));
 
-        // 1. PCA initialization scaled by 0.01 (X is always Matrix here)
-        const pca_init = /** @type {Matrix} */ (PCA.transform(X, { d, seed }));
-        this.Y = new Matrix(N, d, (i, j) => pca_init.entry(i, j) * 0.01);
+        // 1. High-dim preprocessing: if D > 100 and apply_pca, reduce to 100 dims first.
+        // Mean-centering + TruncatedSVD in the reference is equivalent to PCA.
+        // The reduced matrix is used for KNN, MN distance calculations, and Y init.
+        let X_knn = X;
+        let pca_solution = false;
+        if (this._D > 100 && apply_pca) {
+            X_knn = /** @type {Matrix} */ (PCA.transform(X, { d: 100, seed }));
+            pca_solution = true;
+        }
+        this._X_knn = X_knn;
 
-        // 2. Build KNN graph for NN pairs
+        // 2. PCA initialization scaled by 0.01
+        if (pca_solution) {
+            // Reuse first d columns of the 100-dim reduction (matches reference)
+            this.Y = new Matrix(N, d, (i, j) => X_knn.entry(i, j) * 0.01);
+        } else {
+            const pca_init = /** @type {Matrix} */ (PCA.transform(X, { d, seed }));
+            this.Y = new Matrix(N, d, (i, j) => pca_init.entry(i, j) * 0.01);
+        }
+
+        // 3. Build KNN graph for NN pairs (on X_knn)
         const knn_backend = /** @type {string} */ (this.parameter("knn_backend"));
         const knn = knn_backend === "hnsw"
-            ? new HNSW(X.to2dArray(), { metric, heuristic: true, m: 16, ef_construction: 200, m0: null, mL: null, ef: 50, seed })
-            : new Annoy(X.to2dArray(), { metric, numTrees: 20, maxPointsPerLeaf: 10, seed });
+            ? new HNSW(X_knn.to2dArray(), { metric, heuristic: true, m: 16, ef_construction: 200, m0: null, mL: null, ef: 50, seed })
+            : new Annoy(X_knn.to2dArray(), { metric, numTrees: 20, maxPointsPerLeaf: 10, seed });
         const n_MN = Math.max(1, Math.round(n_neighbors * MN_ratio));
         const n_FP = Math.max(1, Math.round(n_neighbors * FP_ratio));
         /** @type {Set<number>[]} */
@@ -7778,7 +7796,7 @@ class PaCMAP extends DR {
         let nn_idx = 0;
 
         for (let i = 0; i < N; ++i) {
-            const neighbors = knn.search(X.row(i), n_neighbors + 1);
+            const neighbors = knn.search(X_knn.row(i), n_neighbors + 1);
             /** @type {number[]} */
             const idxs = [];
             for (const nb of neighbors) {
