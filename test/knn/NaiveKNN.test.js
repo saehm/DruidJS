@@ -80,4 +80,47 @@ describe("NaiveKNN", () => {
     it("should throw error if elements are empty", () => {
         expect(() => new NaiveKNN([])).toThrow("Elements needs to contain at least one element!");
     });
+
+    it("should return the k nearest in ascending order, matching a brute force scan", () => {
+        const data = generateTestData(60, 3);
+        const knn = new NaiveKNN(data, { metric: euclidean, seed: 42 });
+        const expected = data
+            .map((p, index) => ({ index, distance: euclidean(data[7], p) }))
+            .sort((a, b) => a.distance - b.distance || a.index - b.index)
+            .slice(0, 9);
+
+        for (const result of [knn.search(data[7], 9), knn.search_by_index(7, 9)]) {
+            expect(result.map((r) => r.index)).toEqual(expected.map((r) => r.index));
+            result.forEach((r, i) => {
+                expect(r.distance).toBeCloseTo(expected[i].distance, 12);
+            });
+        }
+    });
+
+    it("should clamp k to the number of elements", () => {
+        const data = generateTestData(6, 2);
+        const knn = new NaiveKNN(data, { metric: euclidean });
+        expect(knn.search(data[0], 100)).toHaveLength(6);
+        expect(knn.search(data[0], 0)).toHaveLength(0);
+    });
+
+    it("should break ties deterministically by index", () => {
+        const identical = Array.from({ length: 20 }, () => [1, 1]);
+        const knn = new NaiveKNN(identical, { metric: euclidean });
+        expect(knn.search([0, 0], 4).map((r) => r.index)).toEqual([0, 1, 2, 3]);
+        expect(knn.search([0, 0], 4).map((r) => r.index)).toEqual([0, 1, 2, 3]);
+    });
+
+    it("should not build the distance matrix unless search_by_index is used", () => {
+        const data = generateTestData(20, 3);
+        const knn = new NaiveKNN(data, { metric: euclidean });
+        // @ts-ignore - private
+        expect(knn._D).toBeNull();
+        knn.search(data[0], 5);
+        // @ts-ignore - private
+        expect(knn._D).toBeNull();
+        knn.search_by_index(0, 5);
+        // @ts-ignore - private
+        expect(knn._D).toBeInstanceOf(Matrix);
+    });
 });
