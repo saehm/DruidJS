@@ -1,6 +1,7 @@
 import { linspace, Matrix, norm } from "../matrix/index.js";
 import { euclidean, euclidean_squared } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
+import { wasmSqdmdsFillGrads, wasmSqdmdsNestrovStep } from "../wasm/index.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
@@ -62,6 +63,10 @@ export class SQDMDS extends DR {
         this._momentums = new Matrix(N, d, 0);
         this._grads = new Matrix(N, d, 0);
         this._indices = linspace(0, N - 1);
+        // Scratch buffer handed to the WASM kernel. The quartet count only depends on `N`, so it is
+        // allocated once here rather than per iteration.
+        /** @type {Uint32Array} */
+        this._flat_quartets = new Uint32Array(N - (N % 4));
         // initialize projection.
         const R = this._randomizer;
         this.Y = new Matrix(N, d, () => R.random - 0.5);
@@ -175,11 +180,44 @@ export class SQDMDS extends DR {
      * @param {boolean} distance_exaggeration
      */
     _nestrov_iteration(distance_exaggeration) {
-        if (!this._momentums || !this._grads || this._LR === undefined) throw new Error("Call init() first!");
-        const momentums = this._momentums.mult(0.99, { inline: true });
+        if (!this._momentums || !this._grads || this._LR === undefined || !this._flat_quartets)
+            throw new Error("Call init() first!");
         const LR = this._LR;
-        const grads = this._fill_MDS_grads(this.Y.add(momentums), this._grads, distance_exaggeration);
-        const [n, d] = momentums.shape;
+        const [n, d] = this.Y.shape;
+        const d_hd = this.X.shape[1];
+        const is_precomputed = this.parameter("metric") === "precomputed";
+
+        // Drawn exactly once per iteration. `__quartets` consumes the seeded randomizer, so drawing
+        // separately for the WASM and the JS path would advance the RNG at different rates and make
+        // the two paths diverge for the same seed.
+        const quartets = this.__quartets();
+        const flatQuartets = this._flat_quartets;
+        for (let q = 0; q < quartets.length; ++q) {
+            flatQuartets.set(quartets[q], q * 4);
+        }
+
+        // Try WASM Nesterov iteration
+        const Y_next = this.Y.add(this._momentums.mult(0.99, { inline: true }));
+        if (
+            wasmSqdmdsFillGrads(
+                Y_next.values,
+                this.X.values,
+                flatQuartets,
+                this._grads.values,
+                n,
+                d,
+                d_hd,
+                distance_exaggeration,
+                is_precomputed,
+            ) &&
+            wasmSqdmdsNestrovStep(this.Y.values, this._momentums.values, this._grads.values, n, d, LR)
+        ) {
+            return;
+        }
+
+        // JS fallback
+        const momentums = this._momentums;
+        const grads = this._fill_MDS_grads(Y_next, this._grads, distance_exaggeration, true, quartets);
         for (let i = 0; i < n; ++i) {
             const g_i = grads.row(i);
             const g_i_norm = norm(g_i);
@@ -189,7 +227,7 @@ export class SQDMDS extends DR {
             for (let j = 0; j < d; ++j) {
                 m_i[j] -= mul * g_i[j];
             }
-        } // momentums -= (LR / norm) * grads
+        }
         this.Y.add(momentums, { inline: true });
     }
 
@@ -200,9 +238,11 @@ export class SQDMDS extends DR {
      * @param {Matrix} grads - The gradients.
      * @param {boolean} [exaggeration=false] - Whether or not to use early exaggeration. Default is `false`
      * @param {boolean} [zero_grad=true] - Whether or not to reset the gradient in the beginning. Default is `true`
+     * @param {Uint32Array[]} [quartets] - Quartets to accumulate over. Pass the ones already drawn for this
+     *   iteration; omitting them draws a fresh set, which advances the seeded randomizer.
      * @returns {Matrix} The gradients.
      */
-    _fill_MDS_grads(Y, grads, exaggeration = false, zero_grad = true) {
+    _fill_MDS_grads(Y, grads, exaggeration = false, zero_grad = true, quartets = this.__quartets()) {
         if (!this._HD_metric || !this._HD_metric_exaggeration || !this._add) throw new Error("Call init() first!");
         if (zero_grad) {
             // compute new gradients
@@ -218,7 +258,6 @@ export class SQDMDS extends DR {
         }
 
         const D_quartet = new Float64Array(6);
-        const quartets = this.__quartets();
         for (const [i, j, k, l] of quartets) {
             // compute quartet's HD distances.
             D_quartet[0] = HD_metric(i, j, X);

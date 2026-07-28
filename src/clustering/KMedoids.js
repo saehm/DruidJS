@@ -1,6 +1,7 @@
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { Randomizer } from "../util/index.js";
+import { wasmKMedoidsAssign } from "../wasm/index.js";
 import { Clustering } from "./Clustering.js";
 
 /** @import {InputType} from "../index.js" */
@@ -295,6 +296,20 @@ export class KMedoids extends Clustering {
     _update_clusters() {
         const N = this._N;
         const A = this._A;
+        const K = this._parameters.K;
+        const medoids = this._cluster_medoids;
+
+        if (this._distance_matrix && medoids && medoids.length > 0) {
+            const medoidsArr = new Int32Array(medoids);
+            const assignArr = new Int32Array(N);
+            if (wasmKMedoidsAssign(this._distance_matrix.values, medoidsArr, assignArr, N, K)) {
+                for (let j = 0; j < N; j++) {
+                    this._clusters[j] = assignArr[j];
+                }
+                return;
+            }
+        }
+
         for (let j = 0; j < N; j++) {
             const nearest = this._nearest_medoid(A[j], j);
             this._clusters[j] = nearest.index_nearest;

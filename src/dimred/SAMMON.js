@@ -1,5 +1,7 @@
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { wasmSammonStep } from "../wasm/index.js";
+import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
 import { MDS, PCA } from "./index.js";
 
@@ -14,6 +16,11 @@ import { MDS, PCA } from "./index.js";
  *
  * A nonlinear dimensionality reduction technique that minimizes a stress
  * function based on the ratio of pairwise distances in high and low dimensional spaces.
+ *
+ * A given `seed` reproduces a layout exactly within one engine and library build, but not across
+ * browsers or Node versions: the gradient step is chaotic, so a last-bit difference grows into a
+ * visibly different — though equally valid — layout. See {@link DR} for why, and {@link SMACOF}
+ * for a stable alternative.
  *
  * @class
  * @template {InputType} T
@@ -116,6 +123,12 @@ export class SAMMON extends DR {
         const Y = this.Y;
 
         const G = new Matrix(N, d, 0);
+
+        if (N >= WASM_MIN_ROWS) {
+            if (wasmSammonStep(Y.values, D.values, G.values, N, d, MAGIC)) {
+                return Y;
+            }
+        }
 
         const sum = new Float64Array(d);
         for (let i = 0; i < N; ++i) {

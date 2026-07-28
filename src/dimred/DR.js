@@ -13,6 +13,13 @@ import { Randomizer } from "../util/index.js";
  * Provides a common interface for parameters management, data initialization,
  * and transformation (both synchronous and asynchronous).
  *
+ * Randomness always comes from a seeded {@link Randomizer}, never from `Math.random`, so the same
+ * `seed` reproduces a result exactly within one engine and library build. Across engines it does
+ * not: ECMAScript leaves `Math.pow`, `Math.exp` and `Math.log` *implementation-approximated*, so
+ * two engines — or a WASM kernel and its JS fallback (see {@link setWasmEnabled}) — may differ in
+ * the last bit. That is invisible for most methods, but {@link UMAP} and {@link SAMMON} are chaotic
+ * enough to turn it into a visibly different, equally valid layout.
+ *
  * @class
  */
 export class DR {

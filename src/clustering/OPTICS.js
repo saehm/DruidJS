@@ -1,5 +1,6 @@
 import { Heap } from "../datastructure/index.js";
 import { euclidean } from "../metrics/index.js";
+import { quickselect, Randomizer } from "../util/index.js";
 import { Clustering } from "./Clustering.js";
 
 /** @import { InputType } from "../index.js" */
@@ -36,9 +37,16 @@ export class OPTICS extends Clustering {
         super(
             points,
             /** @type {ParametersOptics} */ (
-                Object.assign({ epsilon: 1, min_points: 4, metric: euclidean }, parameters)
+                Object.assign({ epsilon: 1, min_points: 4, metric: euclidean, seed: 1212 }, parameters)
             ),
         );
+        /**
+         * Feeds the quickselect used to find core distances, so that seed alone determines the run.
+         *
+         * @private
+         * @type {Randomizer}
+         */
+        this._randomizer = new Randomizer(this._parameters.seed);
         const matrix = this._matrix;
         /**
          * @private
@@ -117,12 +125,16 @@ export class OPTICS extends Clustering {
         if (!p.neighbors || p.neighbors.length < min_points - 1) {
             return undefined;
         }
-        // Sort neighbors by distance to find the MinPts-th closest
-        const sortedNeighbors = p.neighbors.toSorted(
+        // Use O(K) QuickSelect to find the MinPts-th closest neighbor
+        const targetIndex = min_points - 2;
+        const neighborCopies = p.neighbors.slice();
+        const kthNeighbor = quickselect(
+            neighborCopies,
+            this._randomizer,
+            targetIndex,
             (a, b) => metric(p.element, a.element) - metric(p.element, b.element),
         );
-        // MinPts-th closest is at index min_points - 2 (0-indexed, excluding p itself)
-        return metric(p.element, sortedNeighbors[min_points - 2].element);
+        return metric(p.element, kthNeighbor.element);
     }
 
     /**

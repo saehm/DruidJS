@@ -36,6 +36,7 @@ export { XMeans } from "./XMeans.js";
  * @property {number} epsilon - The minimum distance which defines whether a point is a neighbor or not.
  * @property {number} min_points - The minimum number of points which a point needs to create a cluster. (Should be higher than 1, else each point creates a cluster.)
  * @property {Metric} metric - The distance metric which defines the distance between two points of the points. Default is `euclidean`
+ * @property {number} seed - Seed for the random number generator used to select core distances. Default is `1212`
  */
 
 /**

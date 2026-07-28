@@ -1,6 +1,7 @@
-import { BallTree } from "../knn/index.js";
+import { spatial_tree } from "../knn/index.js";
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { wasmTriMapGrad, wasmTriMapUpdate } from "../wasm/index.js";
 import { DR } from "./DR.js";
 import { PCA } from "./PCA.js";
 
@@ -47,7 +48,7 @@ export class TriMap extends DR {
 
     /**
      * @param {Matrix | null} [pca=null] - Initial Embedding (if null then PCA gets used). Default is `null`
-     * @param {import("../knn/KNN.js").KNN<number[] | Float64Array, any> | null} [knn=null] - KNN Object (if null then BallTree gets used). Default is `null`
+     * @param {import("../knn/KNN.js").KNN<number[] | Float64Array, any> | null} [knn=null] - KNN Object (if null then a KDTree or BallTree gets used, depending on the metric). Default is `null`
      */
     init(pca = null, knn = null) {
         const X = this.X;
@@ -60,10 +61,14 @@ export class TriMap extends DR {
         this.n_outliers = /** @type {number} */ (this._parameters.n_outliers);
         this.n_random = /** @type {number} */ (this._parameters.n_random);
         this.Y = pca ?? PCA.transform(X, { d, seed });
-        this.knn = knn ?? new BallTree(X.to2dArray(), { metric, seed });
+        this.knn = knn ?? spatial_tree(X.to2dArray(), { metric, seed });
         const { triplets, weights } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
         this.triplets = triplets;
         this.weights = weights;
+        // Triplets are point indices held in a Float64 Matrix; the WASM kernel wants them as i32.
+        // They never change after init, so convert once instead of on every gradient step.
+        /** @type {Int32Array} */
+        this._triplets_int32 = Int32Array.from(triplets.values);
         this.lr = (1000 * N) / triplets.shape[0];
         this.C = Infinity;
         this.vel = new Matrix(N, d, 0);
@@ -290,28 +295,43 @@ export class TriMap extends DR {
      * Computes the gradient for updating the embedding.
      *
      * @param {Matrix} Y - The embedding
+     * @returns {{ grad: Matrix; loss: number }} The gradient and the current loss.
      */
     _grad(Y) {
         const n_inliers = this.n_inliers;
         const n_outliers = this.n_outliers;
         const triplets = this.triplets;
         const weights = this.weights;
-        if (!triplets || n_inliers === undefined || n_outliers === undefined || !weights)
+        if (!triplets || n_inliers === undefined || n_outliers === undefined || !weights || !this._triplets_int32)
             throw new Error("Call init() first!");
         const [N, dim] = Y.shape;
-        const n_triplets = triplets.shape[0];
+
         const grad = new Matrix(N, dim, 0);
+        const loss = wasmTriMapGrad(
+            Y.values,
+            this._triplets_int32,
+            weights,
+            grad.values,
+            N,
+            dim,
+            n_inliers,
+            n_outliers,
+        );
+
+        if (loss !== null) {
+            return { grad, loss };
+        }
+
+        const n_triplets = triplets.shape[0];
         const y_ij = new Float64Array(dim);
         const y_ik = new Float64Array(dim);
         let d_ij = 1;
         let d_ik = 1;
-        let n_viol = 0;
-        let loss = 0;
+        let js_loss = 0;
         const n_knn_triplets = N * n_inliers * n_outliers;
 
         for (let t = 0; t < n_triplets; ++t) {
             const [i, j, k] = triplets.row(t);
-            // update y_ij, y_ik, d_ij, d_ik
             if (t % n_outliers === 0 || t >= n_knn_triplets) {
                 d_ij = 1;
                 d_ik = 1;
@@ -324,7 +344,6 @@ export class TriMap extends DR {
                     d_ij += y_ij[d] ** 2;
                     d_ik += y_ik[d] ** 2;
                 }
-                // update y_ik and d_ik only
             } else {
                 d_ik = 1;
                 for (let d = 0; d < dim; ++d) {
@@ -335,8 +354,7 @@ export class TriMap extends DR {
                 }
             }
 
-            if (d_ij > d_ik) ++n_viol;
-            loss += weights[t] / (1 + d_ik / d_ij);
+            js_loss += weights[t] / (1 + d_ik / d_ij);
             const w = weights[t] / (d_ij + d_ik) ** 2;
             for (let d = 0; d < dim; ++d) {
                 const gs = y_ij[d] * d_ik * w;
@@ -346,7 +364,7 @@ export class TriMap extends DR {
                 grad.add_entry(k, d, go);
             }
         }
-        return { grad, loss, n_viol };
+        return { grad, loss: js_loss };
     }
 
     /**
@@ -405,11 +423,16 @@ export class TriMap extends DR {
     _update_embedding(Y, iter, grad) {
         const [N, dim] = Y.shape;
         const gamma = iter > 250 ? 0.8 : 0.5; // moment parameter
-        const min_gain = 0.01;
         const gain = this.gain;
         const vel = this.vel;
         const lr = this.lr;
         if (!vel || !gain || lr === undefined) throw new Error("Call init() first!");
+
+        if (wasmTriMapUpdate(Y.values, grad.values, vel.values, gain.values, N, dim, gamma, lr)) {
+            return Y;
+        }
+
+        const min_gain = 0.01;
         for (let i = 0; i < N; ++i) {
             for (let d = 0; d < dim; ++d) {
                 const new_gain =

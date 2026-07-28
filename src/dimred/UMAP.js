@@ -1,9 +1,11 @@
-import { BallTree, NaiveKNN } from "../knn/index.js";
+import { BallTree, KDTree, NaiveKNN, spatial_tree } from "../knn/index.js";
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean, euclidean_squared } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
 import { powell } from "../optimization/index.js";
 import { max } from "../util/index.js";
+import { isWasmAvailable, wasmUmapOptimizeEpoch } from "../wasm/index.js";
+import { WASM_MIN_UMAP_EDGES } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
@@ -16,6 +18,10 @@ import { DR } from "./DR.js";
  * A novel manifold learning technique for dimensionality reduction. UMAP is constructed
  * from a theoretical framework based on Riemannian geometry and algebraic topology.
  * It is often faster than t-SNE while preserving more of the global structure.
+ *
+ * A given `seed` reproduces an embedding exactly within one engine and library build, but not
+ * across browsers or Node versions: the gradient descent is chaotic, so a last-bit difference
+ * grows into a visibly different — though equally valid — layout. See {@link DR} for why.
  *
  * @class
  * @template {InputType} T
@@ -131,7 +137,7 @@ export class UMAP extends DR {
 
     /**
      * @private
-     * @param {NaiveKNN<Float64Array> | BallTree<Float64Array>} knn
+     * @param {NaiveKNN<Float64Array> | KDTree<Float64Array> | BallTree<Float64Array>} knn
      * @param {number} k
      * @returns {{
      *     distances: { element: Float64Array; index: number; distance: number }[][];
@@ -244,7 +250,7 @@ export class UMAP extends DR {
                       metric: "precomputed",
                       seed: /** @type {number} */ (this._parameters.seed),
                   })
-                : new BallTree(X.to2dArray(), {
+                : spatial_tree(X.to2dArray(), {
                       metric,
                       seed: /** @type {number} */ (this._parameters.seed),
                   });
@@ -424,6 +430,10 @@ export class UMAP extends DR {
         }
         const tail_length = tail.length;
 
+        if (this._optimize_layout_wasm(head_embedding, head, tail, dim, a, b, _repulsion_strength, alpha)) {
+            return head_embedding;
+        }
+
         for (let i = 0, n = epochs_per_sample.length; i < n; ++i) {
             if (epoch_of_next_sample[i] <= this._iter) {
                 const j = head[i];
@@ -459,6 +469,81 @@ export class UMAP extends DR {
             }
         }
         return head_embedding;
+    }
+
+    /**
+     * WASM path for {@link _optimize_layout}.
+     *
+     * Only the forces run in WASM. The negative samples are drawn here first, in the edge order the
+     * kernel walks, so both paths consume the seeded randomizer identically — moving the generator
+     * into WASM would break that. The kernel updates one embedding in place, which holds because the
+     * sole caller passes the same matrix as head and tail.
+     *
+     * @private
+     * @param {Matrix} embedding
+     * @param {number[]} head
+     * @param {number[]} tail
+     * @param {number} dim
+     * @param {number} a
+     * @param {number} b
+     * @param {number} gamma
+     * @param {number} alpha
+     * @returns {boolean} True if the epoch was executed in WASM.
+     */
+    _optimize_layout_wasm(embedding, head, tail, dim, a, b, gamma, alpha) {
+        if (!isWasmAvailable()) return false;
+        const epochs_per_sample = this._epochs_per_sample;
+        const epoch_of_next_sample = this._epoch_of_next_sample;
+        const epochs_per_negative_sample = this._epochs_per_negative_sample;
+        const epoch_of_next_negative_sample = this._epoch_of_next_negative_sample;
+        if (
+            !epochs_per_sample ||
+            !epoch_of_next_sample ||
+            !epochs_per_negative_sample ||
+            !epoch_of_next_negative_sample
+        ) {
+            return false;
+        }
+
+        const n_edges = epochs_per_sample.length;
+        if (n_edges < WASM_MIN_UMAP_EDGES) return false;
+
+        // Index buffers are rebuilt only when the edge list changes, which it never does after init.
+        if (!this._head_int32 || this._head_int32.length !== n_edges) {
+            this._head_int32 = Int32Array.from(head);
+            this._tail_int32 = Int32Array.from(tail);
+        }
+
+        const iter = this._iter;
+        const randomizer = this._randomizer;
+        const tail_length = tail.length;
+
+        // Draw the negative samples in edge order, matching the JS loop draw for draw.
+        const negative_samples = [];
+        for (let i = 0; i < n_edges; ++i) {
+            if (epoch_of_next_sample[i] > iter) continue;
+            const n_neg_samples = (iter - epoch_of_next_negative_sample[i]) / epochs_per_negative_sample[i];
+            for (let p = 0; p < n_neg_samples; ++p) {
+                negative_samples.push(tail[randomizer.random_int % tail_length]);
+            }
+        }
+
+        return wasmUmapOptimizeEpoch(
+            embedding.values,
+            this._head_int32,
+            /** @type {Int32Array} */ (this._tail_int32),
+            epochs_per_sample,
+            epoch_of_next_sample,
+            epochs_per_negative_sample,
+            epoch_of_next_negative_sample,
+            Int32Array.from(negative_samples),
+            dim,
+            iter,
+            a,
+            b,
+            gamma,
+            alpha,
+        );
     }
 
     /**

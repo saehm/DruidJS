@@ -1,5 +1,8 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { wasmMeanShiftStep } from "../wasm/index.js";
+import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
+import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
 import { Clustering } from "./Clustering.js";
 
 /** @import { ParametersMeanShift } from "./index.js" */
@@ -124,6 +127,46 @@ export class MeanShift extends Clustering {
     }
 
     /**
+     * Runs one mean shift step across the worker pool, updating `_points` in place.
+     *
+     * @private
+     * @param {number} N
+     * @param {number} D
+     * @param {boolean} use_gaussian
+     * @returns {number | null} The largest shift of the step, or null if the pool did not run it.
+     */
+    _mean_shift_parallel(N, D, use_gaussian) {
+        if (N < WASM_MIN_PARALLEL_ROWS || !parallel_available()) return null;
+        try {
+            const points = this._points;
+            const shared = new Float64Array(new SharedArrayBuffer(N * D * 8));
+            const shifts = new Float64Array(new SharedArrayBuffer(64));
+            const inputs = /** @type {{ data: Float64Array | Int32Array; kind: "f64" | "i32" }[]} */ ([
+                { data: points.values, kind: "f64" },
+            ]);
+            const ran = run_row_range(
+                "meanshift_step_range_f64",
+                inputs,
+                shared,
+                [N, D, this._bandwidth, use_gaussian ? 1 : 0],
+                N,
+                D,
+                shifts,
+            );
+            if (!ran) return null;
+            points.values.set(shared);
+            // Each worker reports the largest shift over its own rows.
+            let max_shift = 0;
+            for (let i = 0; i < shifts.length; ++i) {
+                if (shifts[i] > max_shift) max_shift = shifts[i];
+            }
+            return max_shift;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * Perform mean shift iterations
      * @private
      */
@@ -132,13 +175,28 @@ export class MeanShift extends Clustering {
         const D = this._D;
         const points = this._points;
         const metric = this._parameters.metric;
-        //const bandwidth = this._bandwidth;
-        const kernel = this._kernel_weight.bind(this);
         const tolerance = this._tolerance;
+        const use_gaussian = this._parameters.kernel !== "flat";
+        const is_euclidean = metric === euclidean;
 
         for (let iter = 0; iter < this._max_iter; ++iter) {
+            if (is_euclidean) {
+                const parallel_shift = this._mean_shift_parallel(N, D, use_gaussian);
+                if (parallel_shift !== null) {
+                    if (parallel_shift < tolerance) break;
+                    continue;
+                }
+                const nextPoints = new Float64Array(N * D);
+                const max_shift = wasmMeanShiftStep(points.values, nextPoints, N, D, this._bandwidth, use_gaussian);
+                if (max_shift !== null) {
+                    points.values.set(nextPoints);
+                    if (max_shift < tolerance) break;
+                    continue;
+                }
+            }
+
             let max_shift = 0;
-            // For each point compute shift
+            const kernel = this._kernel_weight.bind(this);
             for (let i = 0; i < N; ++i) {
                 const row_i = points.row(i);
                 let sum_weights = 0;
@@ -153,9 +211,6 @@ export class MeanShift extends Clustering {
                     }
                 }
                 if (sum_weights === 0) {
-                    // No neighbors within kernel, shift is zero
-                    //const shift = new Float64Array(D);
-                    // Compute shift magnitude
                     const shift_norm = Math.sqrt(weighted_sum.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
                 } else {
@@ -165,14 +220,12 @@ export class MeanShift extends Clustering {
                     }
                     const shift_norm = Math.sqrt(shift.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
-                    // Update point
                     for (let d = 0; d < D; ++d) {
                         row_i[d] += shift[d];
                     }
                 }
             }
             if (max_shift < tolerance) {
-                // Converged
                 break;
             }
         }

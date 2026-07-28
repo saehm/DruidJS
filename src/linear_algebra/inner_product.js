@@ -1,3 +1,6 @@
+import { wasmInnerProduct } from "../wasm/index.js";
+import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+
 /**
  * Computes the inner product between two arrays of the same length.
  *
@@ -10,6 +13,12 @@ export function inner_product(a, b) {
     const N = a.length;
     if (N !== b.length) {
         throw new Error("Array a and b must have the same length!");
+    }
+    if (N >= WASM_MIN_SIMPLE_VECTOR_LENGTH) {
+        const wasmRes = wasmInnerProduct(a, b);
+        if (wasmRes !== null) {
+            return wasmRes;
+        }
     }
     let sum = 0;
     for (let i = 0; i < N; ++i) {

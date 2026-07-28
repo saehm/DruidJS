@@ -329,3 +329,46 @@ describe("goodman_kruskal", () => {
         expect(goodman_kruskal(c, d)).not.toBeNaN();
     });
 });
+
+describe("cosine degenerate inputs", () => {
+    // https://github.com/saehm/DruidJS/issues/39 — the similarity can round marginally above 1,
+    // which used to make `Math.acos` return NaN. Sizes below and above the WASM threshold are both
+    // checked, because each takes a different code path.
+    const sizes = [3, 8, 64, 2048];
+
+    for (const n of sizes) {
+        // The rounding error flips sign depending on the values, so several shapes are checked:
+        // a constant vector drifts the similarity below 1, a ramp drifts it above.
+        const shapes = {
+            ones: () => Float64Array.from({ length: n }, () => 1),
+            ramp: () => Float64Array.from({ length: n }, (_, i) => (i % 7) + 1),
+            large: () => Float64Array.from({ length: n }, (_, i) => (i + 1) * 1e6),
+            small: () => Float64Array.from({ length: n }, (_, i) => (i + 1) * 1e-6),
+        };
+
+        for (const [shape, build] of Object.entries(shapes)) {
+            it(`returns exactly 0 for identical ${shape} vectors of length ${n}`, () => {
+                const a = build();
+                expect(cosine(a, a)).toBe(0);
+                expect(cosine(a, build())).toBe(0);
+            });
+        }
+
+        it(`returns exactly π for opposite vectors of length ${n}`, () => {
+            const a = Float64Array.from({ length: n }, (_, i) => (i % 7) + 1);
+            const b = a.map((v) => -v);
+            expect(cosine(a, b)).toBe(Math.PI);
+        });
+
+        it(`treats a zero vector of length ${n} as orthogonal rather than NaN`, () => {
+            const zeros = new Float64Array(n);
+            const a = Float64Array.from({ length: n }, (_, i) => i + 1);
+            expect(cosine(zeros, a)).toBe(Math.PI / 2);
+            expect(cosine(zeros, zeros)).toBe(Math.PI / 2);
+        });
+    }
+
+    it("stays finite for a constant vector, the original issue report", () => {
+        expect(cosine([1, 1, 1], [1, 1, 1])).toBe(0);
+    });
+});

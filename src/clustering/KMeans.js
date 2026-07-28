@@ -2,6 +2,8 @@ import { Heap } from "../datastructure/index.js";
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { Randomizer } from "../util/index.js";
+import { wasmKMeansAssign } from "../wasm/index.js";
+import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { Clustering } from "./Clustering.js";
 
 /** @import { InputType } from "../index.js" */
@@ -185,6 +187,28 @@ export class KMeans extends Clustering {
         let clusters_changed = false;
 
         // Find nearest cluster centroid for each point
+        if (metric === euclidean && N >= WASM_MIN_ROWS) {
+            const D = this._D;
+            const C_flat = new Float64Array(K * D);
+            for (let j = 0; j < K; ++j) {
+                C_flat.set(cluster_centroids[j], j * D);
+            }
+            const assignments = new Int32Array(N);
+            if (wasmKMeansAssign(A.values, C_flat, assignments, N, K, D)) {
+                for (let i = 0; i < N; ++i) {
+                    if (clusters[i] !== assignments[i]) {
+                        clusters_changed = true;
+                        clusters[i] = assignments[i];
+                    }
+                }
+                const new_centroids = this._compute_centroid(K);
+                return {
+                    clusters_changed: clusters_changed,
+                    cluster_centroids: new_centroids,
+                };
+            }
+        }
+
         for (let i = 0; i < N; ++i) {
             const Ai = A.row(i);
             let min_dist = Infinity;

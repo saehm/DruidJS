@@ -1,5 +1,5 @@
 import { KMedoids } from "../clustering/index.js";
-import { BallTree } from "../knn/index.js";
+import { spatial_tree } from "../knn/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
@@ -52,11 +52,10 @@ export class LSP extends DR {
     /**
      * @returns {LSP<T>}
      */
-    //	init(DR = MDS, DR_parameters = {}, KNN = BallTree) {
+    //	init(DR = MDS, DR_parameters = {}) {
     init() {
         const DR = MDS;
         let DR_parameters = {};
-        const KNN = BallTree;
         if (this._is_initialized) return this;
         const X = this.X;
         const N = this._N;
@@ -76,7 +75,7 @@ export class LSP extends DR {
         const Y_C = new DR(control_points_matrix, DR_parameters).transform();
 
         const XA = X.to2dArray();
-        const knn = new KNN(XA, { metric, seed });
+        const knn = spatial_tree(XA, { metric, seed });
         const L = new Matrix(N, N, "I");
         const alpha = -1 / K;
         XA.forEach((_x_i, i) => {

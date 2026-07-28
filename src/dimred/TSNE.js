@@ -1,5 +1,7 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean_squared } from "../metrics/index.js";
+import { isWasmAvailable, wasmTsneStep } from "../wasm/index.js";
+import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
@@ -182,6 +184,35 @@ export class TSNE extends DR {
 
         //calc cost gradient;
         const pmul = iter < 100 ? 4 : 1;
+        const momval = iter < 250 ? 0.5 : 0.8;
+
+        // The scratch matrices below are N ⨯ N, so they are only allocated once it is known that the
+        // kernel will actually run — otherwise every iteration of the JS path would throw away two
+        // full distance matrices before doing the same work again.
+        if (N >= WASM_MIN_ROWS && isWasmAvailable()) {
+            const Qu = new Matrix(N, N, "zeros");
+            const Q = new Matrix(N, N, 0);
+            const grad = new Matrix(N, dim, "zeros");
+
+            if (
+                wasmTsneStep(
+                    Y.values,
+                    P.values,
+                    Qu.values,
+                    Q.values,
+                    grad.values,
+                    ystep.values,
+                    gains.values,
+                    N,
+                    dim,
+                    pmul,
+                    epsilon,
+                    momval,
+                )
+            ) {
+                return this.Y;
+            }
+        }
 
         // compute Q dist (unnormalized)
         const Qu = new Matrix(N, N, "zeros");

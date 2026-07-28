@@ -1,6 +1,7 @@
 import pkg from "../package.json" with { type: "json" };
 
 const version = pkg.version;
+
 export { version };
 
 /** @import {Matrix} from "./matrix/index.js" */
@@ -17,3 +18,7 @@ export * from "./metrics/index.js";
 export * from "./numerical/index.js";
 export * from "./optimization/index.js";
 export * from "./util/index.js";
+// Only the control surface is public — the individual `wasm*` kernels are an implementation detail
+// of the accelerated functions and are not part of the API.
+export { isWasmAvailable, isWasmThreadsSupported, setWasmEnabled } from "./wasm/index.js";
+export { parallel_available, terminate_pool } from "./wasm/worker_pool.js";

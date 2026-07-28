@@ -1,4 +1,6 @@
 import { euclidean } from "../metrics/index.js";
+import { wasmDistanceMatrix } from "../wasm/index.js";
+import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { Matrix } from "./index.js";
 
 /** @import { Metric } from "../metrics/index.js" */
@@ -20,13 +22,20 @@ function isMatrix(A) {
  * @returns {Matrix} The distance matrix of `A`.
  */
 export function distance_matrix(A, metric = euclidean) {
-    /** @type {number} */
-    const n = isMatrix(A) ? A.shape[0] : A.length;
+    const mat = isMatrix(A) ? A : Matrix.from(A);
+    const [n, d] = mat.shape;
     const D = new Matrix(n, n);
+
+    if (metric === euclidean && n >= WASM_MIN_ROWS) {
+        if (wasmDistanceMatrix(mat.values, n, d, D.values)) {
+            return D;
+        }
+    }
+
     for (let i = 0; i < n; ++i) {
-        const A_i = isMatrix(A) ? A.row(i) : A[i];
+        const A_i = mat.row(i);
         for (let j = i + 1; j < n; ++j) {
-            const dist = metric(A_i, isMatrix(A) ? A.row(j) : A[j]);
+            const dist = metric(A_i, mat.row(j));
             D.set_entry(i, j, dist);
             D.set_entry(j, i, dist);
         }

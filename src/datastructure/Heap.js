@@ -83,8 +83,9 @@ export class Heap {
      */
     _swap(index_a, index_b) {
         const container = this._container;
-        [container[index_b], container[index_a]] = [container[index_a], container[index_b]];
-        return;
+        const temp = container[index_a];
+        container[index_a] = container[index_b];
+        container[index_b] = temp;
     }
 
     /** @private */
@@ -110,7 +111,6 @@ export class Heap {
      */
     push(element) {
         const value = this._accessor(element);
-        //const node = new Node(element, value);
         const node = { element: element, value: value };
         this._container.push(node);
         this._heapify_up();
@@ -118,26 +118,36 @@ export class Heap {
     }
 
     /**
+     * Non-recursive sift-down implementation.
+     *
      * @private
-     * @param {Number} [start_index=0] Default is `0`
+     * @param {number} [start_index=0] Default is `0`
      */
     _heapify_down(start_index = 0) {
         const container = this._container;
         const comparator = this._comparator;
         const length = container.length;
-        const left = 2 * start_index + 1;
-        const right = 2 * start_index + 2;
+        if (start_index >= length) return;
+
         let index = start_index;
-        if (index >= length) throw "index higher than length";
-        if (left < length && comparator(container[left].value, container[index].value)) {
-            index = left;
-        }
-        if (right < length && comparator(container[right].value, container[index].value)) {
-            index = right;
-        }
-        if (index !== start_index) {
-            this._swap(start_index, index);
-            this._heapify_down(index);
+        while (true) {
+            let smallest = index;
+            const left = 2 * index + 1;
+            const right = 2 * index + 2;
+
+            if (left < length && comparator(container[left].value, container[smallest].value)) {
+                smallest = left;
+            }
+            if (right < length && comparator(container[right].value, container[smallest].value)) {
+                smallest = right;
+            }
+
+            if (smallest !== index) {
+                this._swap(index, smallest);
+                index = smallest;
+            } else {
+                break;
+            }
         }
     }
 

@@ -1,9 +1,10 @@
 import { DisjointSet } from "../datastructure/index.js";
-import { Matrix } from "../matrix/index.js";
+import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
+/** @import {Metric} from "../metrics/index.js" */
 /** @import {ParametersTopoMap} from "./index.js" */
 
 /**
@@ -29,27 +30,6 @@ export class TopoMap extends DR {
     constructor(X, parameters) {
         super(X, { metric: euclidean, seed: 1212 }, parameters);
         [this._N, this._D] = this.X.shape;
-        this._distance_matrix = new Matrix(this._N, this._N, -1);
-    }
-
-    /**
-     * @private
-     * @param {number} i
-     * @param {number} j
-     * @param {import("../metrics/index.js").Metric} metric
-     * @returns {number}
-     */
-    __lazy_distance_matrix(i, j, metric) {
-        const D = this._distance_matrix;
-        const X = this.X;
-        const D_ij = D.entry(i, j);
-        if (D_ij === -1 && i !== j) {
-            const dist = metric(X.row(i), X.row(j));
-            D.set_entry(i, j, dist);
-            D.set_entry(j, i, dist);
-            return dist;
-        }
-        return i === j ? 0 : D_ij;
     }
 
     /**
@@ -66,10 +46,17 @@ export class TopoMap extends DR {
         this._disjoint_set = new DisjointSet(X);
         const disjoint_set = this._disjoint_set;
         const F = [];
+        // Local to the spanning tree construction: the N ⨯ N distances are only needed to weight the
+        // edges below, so they are not kept alive on the instance after `transform` returns.
+        const D =
+            /** @type {any} */ (metric) === "precomputed"
+                ? Matrix.from(this.X)
+                : distance_matrix(this.X, /** @type {Metric} */ (metric));
+
         let E = [];
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
-                E.push([i, j, this.__lazy_distance_matrix(i, j, metric)]);
+                E.push([i, j, D.entry(i, j)]);
             }
         }
         E = E.sort((a, b) => a[2] - b[2]);

@@ -1,3 +1,6 @@
+import { wasmCanberraDistance } from "../wasm/index.js";
+import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+
 /**
  * Computes the canberra distance between `a` and `b`.
  *
@@ -9,6 +12,12 @@
  */
 export function canberra(a, b) {
     if (a.length !== b.length) throw new Error("Vector a and b needs to be of the same length!");
+    if (a.length >= WASM_MIN_SIMPLE_VECTOR_LENGTH) {
+        const wasmRes = wasmCanberraDistance(a, b);
+        if (wasmRes !== null) {
+            return wasmRes;
+        }
+    }
     const n = a.length;
     let sum = 0;
     for (let i = 0; i < n; ++i) {

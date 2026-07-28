@@ -1,8 +1,11 @@
 import { Heap } from "../datastructure/index.js";
-import { BallTree } from "../knn/index.js";
+import { spatial_tree } from "../knn/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { wasmDijkstraAPSP } from "../wasm/index.js";
+import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
+import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
 import { DR } from "./DR.js";
 import { SMACOF } from "./SMACOF.js";
 
@@ -56,6 +59,36 @@ export class ISOMAP extends DR {
     }
 
     /**
+     * Runs the all-pairs geodesic step across the worker pool.
+     *
+     * The pool needs a `SharedArrayBuffer` to write into, so the result is copied into `out` rather
+     * than computed in place. That copy is far cheaper than the Dijkstra runs it parallelizes.
+     *
+     * @private
+     * @param {Int32Array} neighbors
+     * @param {Float64Array} distances
+     * @param {Float64Array} out
+     * @param {number} rows
+     * @param {number} maxK
+     * @returns {boolean} True if the pool produced the distances.
+     */
+    _dijkstra_parallel(neighbors, distances, out, rows, maxK) {
+        if (rows < WASM_MIN_PARALLEL_ROWS || !parallel_available()) return false;
+        try {
+            const shared = new Float64Array(new SharedArrayBuffer(rows * rows * 8));
+            const inputs = /** @type {{ data: Float64Array | Int32Array; kind: "f64" | "i32" }[]} */ ([
+                { data: neighbors, kind: "i32" },
+                { data: distances, kind: "f64" },
+            ]);
+            if (!run_row_range("dijkstra_apsp_range_f64", inputs, shared, [rows, maxK], rows, rows)) return false;
+            out.set(shared);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
      * Computes the projection.
      *
      * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
@@ -82,7 +115,7 @@ export class ISOMAP extends DR {
 
         /** @type {{ index: number; distance: number }[][]} */
         const kNearestNeighbors = [];
-        const tree = new BallTree(X.to2dArray(), {
+        const tree = spatial_tree(X.to2dArray(), {
             metric,
             seed: /** @type {number} */ (this.parameter("seed")),
         });
@@ -113,25 +146,48 @@ export class ISOMAP extends DR {
         // TODO: make extern
         const G = new Matrix(rows, rows, Infinity);
 
+        // Convert kNearestNeighbors list into flattened arrays for WASM Dijkstra execution
+        let maxK = 0;
         for (let i = 0; i < rows; ++i) {
-            G.set_entry(i, i, 0);
-            const H = new Heap([{ index: i, distance: 0 }], (d) => d.distance, "min");
+            if (kNearestNeighbors[i].length > maxK) maxK = kNearestNeighbors[i].length;
+        }
 
-            while (!H.empty) {
-                const item = H.pop();
-                if (!item) break;
+        const flatNeighbors = new Int32Array(rows * maxK).fill(-1);
+        const flatDistances = new Float64Array(rows * maxK).fill(Infinity);
+        for (let i = 0; i < rows; ++i) {
+            const list = kNearestNeighbors[i];
+            const i_k = i * maxK;
+            for (let idx = 0; idx < list.length; ++idx) {
+                flatNeighbors[i_k + idx] = list[idx].index;
+                flatDistances[i_k + idx] = list[idx].distance;
+            }
+        }
 
-                const u = item.element.index;
-                const dist_u = item.element.distance;
+        if (
+            !this._dijkstra_parallel(flatNeighbors, flatDistances, G.values, rows, maxK) &&
+            !wasmDijkstraAPSP(flatNeighbors, flatDistances, G.values, rows, maxK)
+        ) {
+            // JS fallback using Heap
+            for (let i = 0; i < rows; ++i) {
+                G.set_entry(i, i, 0);
+                const H = new Heap([{ index: i, distance: 0 }], (d) => d.distance, "min");
 
-                if (dist_u > G.entry(i, u)) continue;
+                while (!H.empty) {
+                    const item = H.pop();
+                    if (!item) break;
 
-                for (const neighbor of kNearestNeighbors[u]) {
-                    const v = neighbor.index;
-                    const alt = dist_u + neighbor.distance;
-                    if (alt < G.entry(i, v)) {
-                        G.set_entry(i, v, alt);
-                        H.push({ index: v, distance: alt });
+                    const u = item.element.index;
+                    const dist_u = item.element.distance;
+
+                    if (dist_u > G.entry(i, u)) continue;
+
+                    for (const neighbor of kNearestNeighbors[u]) {
+                        const v = neighbor.index;
+                        const alt = dist_u + neighbor.distance;
+                        if (alt < G.entry(i, v)) {
+                            G.set_entry(i, v, alt);
+                            H.push({ index: v, distance: alt });
+                        }
                     }
                 }
             }

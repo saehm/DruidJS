@@ -1,5 +1,7 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { wasmNorm } from "../wasm/index.js";
+import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
 
 /** @import { Metric } from "../metrics/index.js" */
 
@@ -21,6 +23,14 @@ export function norm(v, metric = euclidean) {
     } else {
         vector = v;
     }
+
+    if (metric === euclidean && vector.length >= WASM_MIN_SIMPLE_VECTOR_LENGTH) {
+        const wasmRes = wasmNorm(vector);
+        if (wasmRes !== null) {
+            return wasmRes;
+        }
+    }
+
     const n = vector.length;
     const zeros = new Float64Array(n);
     return metric(vector, zeros);
