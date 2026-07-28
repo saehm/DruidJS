@@ -320,7 +320,7 @@ topomap.init();
 const topomapResult: Matrix = topomap.transform();
 
 // TriMap
-const trimap = new TriMap(drData, { d: 2, c: 5 });
+const trimap = new TriMap(drData, { d: 2, n_inliers: 10 });
 trimap.init();
 const trimapResult: Matrix = trimap.transform(400);
 
@@ -476,14 +476,14 @@ const nnDescent = new NNDescent(
   knnData.map((a) => Array.from(a)),
   {
     metric: customMetric,
-    K: 3,
+    samples: 3,
     rho: 0.8,
     delta: 0.0001,
     seed: 42,
   },
 );
 const nnDescentResults = nnDescent.search([2, 3], 2);
-const nnDescentByIndex = nnDescent.search_index(0, 2);
+const nnDescentByIndex = nnDescent.search_by_index(0, 2);
 
 // ============================================
 // Linear Algebra Tests

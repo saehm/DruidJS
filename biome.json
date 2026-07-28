@@ -41,7 +41,8 @@
             "*.{mjs|js}",
             "src/**/*.js",
             "test/**/*.js",
-            "docs/**/*.{vue|js|ts}"
+            "docs/**/*.{vue|js|ts}",
+            "!src/wasm/wasm_bytes.js"
         ]
     }
 }

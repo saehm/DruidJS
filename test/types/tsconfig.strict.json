@@ -5,6 +5,7 @@
     "checkJs": false,
     "allowJs": false,
     "types": [],
+    "rootDir": "../../",
     "moduleResolution": "bundler",
     "skipLibCheck": false
   },
