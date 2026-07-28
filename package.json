@@ -1,6 +1,6 @@
 {
     "name": "@saehrimnir/druidjs",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "description": "A JavaScript Library for Dimensionality Reduction.",
     "keywords": [
         "dimensionality reduction",
@@ -44,7 +44,8 @@
         }
     },
     "scripts": {
-        "build": "tsc && rollup -c rollup.config.mjs",
+        "asbuild": "node scripts/build-wasm.js",
+        "build": "pnpm asbuild && tsc && rollup -c rollup.config.mjs",
         "dev": "rollup -c rollup.config.mjs -w",
         "test": "vitest",
         "tsdocs": "typedoc",
@@ -60,30 +61,31 @@
         "docs:preview": "vitepress preview docs"
     },
     "devDependencies": {
-        "@biomejs/biome": "2.4.4",
+        "@biomejs/biome": "2.5.5",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
-        "@saehrimnir/mistle": "^0.2.4",
-        "@vitest/browser-playwright": "^4.0.18",
-        "@vitest/coverage-v8": "^4.0.18",
+        "@saehrimnir/mistle": "^0.3.0",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "assemblyscript": "^0.28.20",
         "d3": "^7.9.0",
         "markdown-it-mathjax3": "^5.2.0",
-        "playwright": "^1.58.2",
+        "playwright": "^1.62.0",
         "rimraf": "^6.1.3",
-        "rollup": "^4.59.0",
-        "rollup-plugin-dts": "^6.3.0",
-        "typedoc": "^0.28.17",
+        "rollup": "^4.62.3",
+        "rollup-plugin-dts": "^6.4.1",
+        "typedoc": "^0.28.20",
         "typedoc-plugin-llms-txt": "^0.1.2",
-        "typedoc-plugin-markdown": "^4.10.0",
-        "typedoc-plugin-missing-exports": "^4.1.2",
-        "typedoc-vitepress-theme": "^1.1.2",
-        "typescript": "^5.9.3",
+        "typedoc-plugin-markdown": "^4.12.0",
+        "typedoc-plugin-missing-exports": "^4.1.4",
+        "typedoc-vitepress-theme": "^1.1.3",
+        "typescript": "^6.0.3",
         "vitepress": "2.0.0-alpha.16",
-        "vitest": "^4.0.18",
-        "vue": "^3.5.29"
+        "vitest": "^4.1.10",
+        "vue": "^3.5.40"
     },
     "engines": {
         "node": ">=20"
     },
-    "packageManager": "pnpm@10.30.2"
+    "packageManager": "pnpm@11.17.0"
 }
