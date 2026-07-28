@@ -1,37 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { KMeans } from "../../src/clustering/KMeans.js";
+import { wasmKMeansAssign } from "../../src/clustering/KMeans.wasm.js";
 import { KMedoids } from "../../src/clustering/KMedoids.js";
+import { wasmKMedoidsAssign } from "../../src/clustering/KMedoids.wasm.js";
 import { SAMMON } from "../../src/dimred/SAMMON.js";
+import { wasmSammonStep } from "../../src/dimred/SAMMON.wasm.js";
 import { TSNE } from "../../src/dimred/TSNE.js";
 import { inner_product } from "../../src/linear_algebra/inner_product.js";
+import { wasmInnerProduct } from "../../src/linear_algebra/inner_product.wasm.js";
 import { distance_matrix } from "../../src/matrix/distance_matrix.js";
+import { wasmDistanceMatrix } from "../../src/matrix/distance_matrix.wasm.js";
 import { Matrix } from "../../src/matrix/Matrix.js";
+import { wasmDotTrans, wasmMatMul, wasmMatVecMul, wasmOuter, wasmTransDot } from "../../src/matrix/Matrix.wasm.js";
 import { norm } from "../../src/matrix/norm.js";
+import { wasmNorm } from "../../src/matrix/norm.wasm.js";
 import { normalize } from "../../src/matrix/normalize.js";
+import { wasmNormalize } from "../../src/matrix/normalize.wasm.js";
 import { bray_curtis } from "../../src/metrics/bray_curtis.js";
 import { canberra } from "../../src/metrics/canberra.js";
 import { chebyshev } from "../../src/metrics/chebyshev.js";
+import { wasmChebyshevDistance } from "../../src/metrics/chebyshev.wasm.js";
 import { cosine } from "../../src/metrics/cosine.js";
 import { manhattan } from "../../src/metrics/manhattan.js";
+import { wasmManhattanDistance } from "../../src/metrics/manhattan.wasm.js";
 import { neumair_sum } from "../../src/numerical/neumair_sum.js";
-import {
-    isWasmAvailable,
-    wasmChebyshevDistance,
-    wasmDistanceMatrix,
-    wasmDotTrans,
-    wasmInnerProduct,
-    wasmKMeansAssign,
-    wasmKMedoidsAssign,
-    wasmManhattanDistance,
-    wasmMatMul,
-    wasmMatVecMul,
-    wasmNeumaierSum,
-    wasmNorm,
-    wasmNormalize,
-    wasmOuter,
-    wasmSammonStep,
-    wasmTransDot,
-} from "../../src/wasm/index.js";
+import { wasmNeumaierSum } from "../../src/numerical/neumair_sum.wasm.js";
+import { isWasmAvailable } from "../../src/wasm/index.js";
 
 describe("WASM Acceleration Kernels", () => {
     it("should report WASM availability", () => {

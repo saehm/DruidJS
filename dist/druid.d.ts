@@ -4810,6 +4810,20 @@ declare function isWasmAvailable(): boolean;
  * @returns {boolean}
  */
 declare function isWasmThreadsSupported(): boolean;
+/**
+ * Releases the buffers the iterative kernels hold between calls.
+ *
+ * The t-SNE session keeps three N ⨯ N buffers alive so they are not reallocated and recopied every
+ * iteration, which at N = 2000 is around 96 MB retained after a run finishes. Nothing needs to call
+ * this — the next run at a different size replaces them — but a caller that is done projecting and
+ * wants the memory back can.
+ *
+ * @returns {void}
+ * @example
+ * import { release_wasm_buffers } from "@saehrimnir/druidjs";
+ * release_wasm_buffers();
+ */
+declare function release_wasm_buffers(): void;
 
 /**
  * Whether row-range kernels can be split across workers in this environment.
@@ -4830,6 +4844,6 @@ declare function terminate_pool(): void;
 type InputType = Matrix | Float64Array[] | number[][];
 declare const version: string;
 
-export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, MDS, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, Randomizer, SAMMON, SMACOF, SQDMDS, TSNE, TopoMap, TriMap, UMAP, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
+export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, MDS, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, Randomizer, SAMMON, SMACOF, SQDMDS, TSNE, TopoMap, TriMap, UMAP, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, release_wasm_buffers, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
 export type { Comparator, EigenArgs, InputType, Metric, ParametersAnnoy, ParametersBallTree, ParametersCURE, ParametersFASTMAP, ParametersHNSW, ParametersHierarchicalClustering, ParametersISOMAP, ParametersKDTree, ParametersKMeans, ParametersKMedoids, ParametersLDA, ParametersLLE, ParametersLSH, ParametersLSP, ParametersLTSA, ParametersMDS, ParametersMeanShift, ParametersNNDescent, ParametersNaiveKNN, ParametersOptics, ParametersPCA, ParametersSAMMON, ParametersSMACOF, ParametersSQDMDS, ParametersTSNE, ParametersTopoMap, ParametersTriMap, ParametersUMAP, ParametersXMeans, QRDecomposition };
 //# sourceMappingURL=druid.d.ts.map

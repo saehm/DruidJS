@@ -1,8 +1,8 @@
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { neumair_sum } from "../numerical/index.js";
 import { Randomizer } from "../util/index.js";
-import { wasmDotTrans, wasmMatMul, wasmMatVecMul, wasmOuter, wasmTransDot } from "../wasm/index.js";
 import { WASM_MIN_MATMUL_OPS } from "../wasm/thresholds.js";
+import { wasmDotTrans, wasmMatMul, wasmMatVecMul, wasmOuter, wasmTransDot } from "./Matrix.wasm.js";
 
 /** @typedef {(i: number, j: number) => number} Accessor */
 

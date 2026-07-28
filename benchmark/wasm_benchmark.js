@@ -5,16 +5,14 @@ import { norm } from "../src/matrix/norm.js";
 import { bray_curtis } from "../src/metrics/bray_curtis.js";
 import { canberra } from "../src/metrics/canberra.js";
 import { neumair_sum } from "../src/numerical/neumair_sum.js";
-import {
-    wasmBrayCurtisDistance,
-    wasmCanberraDistance,
-    wasmDistanceMatrix,
-    wasmInnerProduct,
-    wasmMatMul,
-    wasmNeumaierSum,
-    wasmNorm,
-    wasmNormalize,
-} from "../src/wasm/index.js";
+import { wasmInnerProduct } from "../src/linear_algebra/inner_product.wasm.js";
+import { wasmMatMul } from "../src/matrix/Matrix.wasm.js";
+import { wasmDistanceMatrix } from "../src/matrix/distance_matrix.wasm.js";
+import { wasmNorm } from "../src/matrix/norm.wasm.js";
+import { wasmNormalize } from "../src/matrix/normalize.wasm.js";
+import { wasmBrayCurtisDistance } from "../src/metrics/bray_curtis.wasm.js";
+import { wasmCanberraDistance } from "../src/metrics/canberra.wasm.js";
+import { wasmNeumaierSum } from "../src/numerical/neumair_sum.wasm.js";
 
 console.log("==========================================");
 console.log("DruidJS WASM SIMD Acceleration Benchmark");

@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, it } from "vitest";
+import { wasmDijkstraAPSP } from "../../src/dimred/ISOMAP.wasm.js";
 import { ISOMAP } from "../../src/dimred/index.js";
+import { wasmDistanceMatrix } from "../../src/matrix/distance_matrix.wasm.js";
 import { Matrix } from "../../src/matrix/index.js";
-import { wasmDijkstraAPSP, wasmDistanceMatrix } from "../../src/wasm/index.js";
 import { parallel_available, run_row_range, terminate_pool } from "../../src/wasm/worker_pool.js";
 
 /**

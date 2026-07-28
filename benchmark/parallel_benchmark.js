@@ -4,14 +4,9 @@ import { fileURLToPath } from "node:url";
 import { Matrix } from "../src/matrix/Matrix.js";
 import { BallTree } from "../src/knn/BallTree.js";
 import { euclidean } from "../src/metrics/euclidean.js";
-import {
-    wasmDijkstraAPSP,
-    wasmDijkstraAPSPRange,
-    wasmDistanceMatrix,
-    wasmDistanceMatrixRange,
-    wasmMatMul,
-    wasmMatMulRange,
-} from "../src/wasm/index.js";
+import { wasmDijkstraAPSP, wasmDijkstraAPSPRange } from "../src/dimred/ISOMAP.wasm.js";
+import { wasmMatMul, wasmMatMulRange } from "../src/matrix/Matrix.wasm.js";
+import { wasmDistanceMatrix, wasmDistanceMatrixRange } from "../src/matrix/distance_matrix.wasm.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -141,7 +136,7 @@ if (!isMainThread) {
 
         const kNN = [];
         for (let i = 0; i < n; ++i) {
-            kNN.push(tree.search_by_index(i, k + 1).slice(1).map((n) => ({ index: n.index, distance: n.distance })));
+            kNN.push(tree.search_by_index(i, k).map((n) => ({ index: n.index, distance: n.distance })));
         }
         for (let i = 0; i < n; ++i) {
             for (const neighbor of kNN[i]) {

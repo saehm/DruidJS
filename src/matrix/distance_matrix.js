@@ -1,6 +1,6 @@
 import { euclidean } from "../metrics/index.js";
-import { wasmDistanceMatrix } from "../wasm/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
+import { wasmDistanceMatrix } from "./distance_matrix.wasm.js";
 import { Matrix } from "./index.js";
 
 /** @import { Metric } from "../metrics/index.js" */

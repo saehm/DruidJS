@@ -8,7 +8,8 @@ import { SMACOF } from "../src/dimred/SMACOF.js";
 import { TSNE } from "../src/dimred/TSNE.js";
 import { UMAP } from "../src/dimred/UMAP.js";
 import { Matrix } from "../src/matrix/Matrix.js";
-import { wasmDistanceMatrix, wasmMatMul } from "../src/wasm/index.js";
+import { wasmMatMul } from "../src/matrix/Matrix.wasm.js";
+import { wasmDistanceMatrix } from "../src/matrix/distance_matrix.wasm.js";
 
 console.log("==========================================");
 console.log("DruidJS DR Algorithms WASM Benchmark");

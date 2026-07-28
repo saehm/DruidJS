@@ -1,8 +1,8 @@
 import { linspace, Matrix, norm } from "../matrix/index.js";
 import { euclidean, euclidean_squared } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
-import { wasmSqdmdsFillGrads, wasmSqdmdsNestrovStep } from "../wasm/index.js";
 import { DR } from "./DR.js";
+import { wasmSqdmdsFillGrads, wasmSqdmdsNestrovStep } from "./SQDMDS.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {Metric} from "../metrics/index.js" */
@@ -20,6 +20,11 @@ import { DR } from "./DR.js";
  * @category Dimensionality Reduction
  */
 export class SQDMDS extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["sqdmds_fill_grads", "sqdmds_nestrov"];
+    }
+
     /**
      * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE
      * and UMAP.
@@ -99,10 +104,14 @@ export class SQDMDS extends DR {
         this.check_init();
         const decay_start = /** @type {number} */ (this.parameter("decay_start"));
         this._decay_start = Math.round(decay_start * iterations);
-        for (let i = 0; i < iterations; ++i) {
-            this._step(i, iterations);
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this._step(i, iterations);
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -115,12 +124,16 @@ export class SQDMDS extends DR {
         this.check_init();
         const decay_start = /** @type {number} */ (this.parameter("decay_start"));
         this._decay_start = Math.round(decay_start * iterations);
-        for (let i = 0; i < iterations; ++i) {
-            this._step(i, iterations);
-            yield this.projection;
-        }
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this._step(i, iterations);
+                yield this.projection;
+            }
 
-        return this.projection;
+            return this.projection;
+        } finally {
+            this._release_wasm();
+        }
     }
 
     /**

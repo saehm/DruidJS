@@ -1,5 +1,6 @@
 import { Matrix } from "../matrix/index.js";
 import { Randomizer } from "../util/index.js";
+import { release_sessions } from "../wasm/index.js";
 
 /** @import {InputType} from "../index.js" */
 
@@ -252,5 +253,71 @@ export class DR {
      */
     static async transform_async(X, parameters, ...args) {
         return DR.transform(X, parameters, ...args);
+    }
+
+    /**
+     * WASM buffer sessions this method keeps alive between iterations, released when a run ends.
+     *
+     * Empty for methods with no accelerated iteration step, which is most of them. The accelerated
+     * optimisers override it — see {@link TSNE}.
+     *
+     * @protected
+     * @returns {string[]}
+     */
+    get _wasm_session_keys() {
+        return [];
+    }
+
+    /**
+     * Releases the WASM buffers this run is holding.
+     *
+     * Called from a `finally` around every iteration loop, so the memory does not outlive the
+     * projection. Freeing early is never a correctness problem — the next call reallocates — so
+     * this is safe to call at any point, including when WASM never ran.
+     *
+     * @protected
+     * @returns {void}
+     */
+    _release_wasm() {
+        const keys = this._wasm_session_keys;
+        if (keys.length > 0) release_sessions(keys);
+    }
+
+    /**
+     * Hands back the WASM buffers this instance is holding.
+     *
+     * Only needed after driving `generator()` by hand and stopping early — a plain `transform()`,
+     * or a `for…of` over `generator()` (including one you `break`), already releases when it ends.
+     * It frees only this method's buffers, never another running instance's, and the next run simply
+     * reallocates, so it is safe to call at any time, more than once, and while other instances are
+     * mid-run.
+     *
+     * @returns {this}
+     * @example
+     * const tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next();
+     * tsne.release(); // stop early and give the buffers back
+     */
+    release() {
+        this._release_wasm();
+        return this;
+    }
+
+    /**
+     * Alias of {@link release} for the `using` declaration, so a hand-driven run frees its buffers
+     * when the block exits. Note that {@link transform} and a completed or `break`-ed `generator()`
+     * already release on their own — this only matters for a generator abandoned part way.
+     *
+     * ```js
+     * using tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next(); // buffers released when the enclosing block exits
+     * ```
+     *
+     * @returns {void}
+     */
+    [Symbol.dispose]() {
+        this.release();
     }
 }

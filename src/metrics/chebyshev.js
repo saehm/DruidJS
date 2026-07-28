@@ -1,5 +1,5 @@
-import { wasmChebyshevDistance } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmChebyshevDistance } from "./chebyshev.wasm.js";
 
 /**
  * Computes the chebyshev distance (L<sub>∞</sub>) between `a` and `b`.

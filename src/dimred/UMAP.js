@@ -4,9 +4,10 @@ import { euclidean, euclidean_squared } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
 import { powell } from "../optimization/index.js";
 import { max } from "../util/index.js";
-import { isWasmAvailable, wasmUmapOptimizeEpoch } from "../wasm/index.js";
+import { isWasmAvailable } from "../wasm/index.js";
 import { WASM_MIN_UMAP_EDGES } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
+import { wasmUmapOptimizeEpoch } from "./UMAP.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {Metric} from "../metrics/index.js" */
@@ -45,6 +46,11 @@ import { DR } from "./DR.js";
  * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 export class UMAP extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["umap_epoch", "umap_neg"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersUMAP>} [parameters] - Object containing parameterization of the DR method.
@@ -358,10 +364,14 @@ export class UMAP extends DR {
             this.init();
         }
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -374,11 +384,15 @@ export class UMAP extends DR {
             this.init();
         }
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-            yield this.projection;
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**

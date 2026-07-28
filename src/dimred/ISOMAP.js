@@ -3,10 +3,10 @@ import { spatial_tree } from "../knn/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
-import { wasmDijkstraAPSP } from "../wasm/index.js";
 import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
 import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
 import { DR } from "./DR.js";
+import { wasmDijkstraAPSP } from "./ISOMAP.wasm.js";
 import { SMACOF } from "./SMACOF.js";
 
 /** @import {InputType} from "../index.js" */

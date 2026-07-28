@@ -11,14 +11,12 @@
  */
 
 import { euclidean } from "../src/metrics/index.js";
-import {
-    isWasmAvailable,
-    wasmCosineDistance,
-    wasmDistanceMatrix,
-    wasmManhattanDistance,
-    wasmMatMul,
-    wasmNeumaierSum,
-} from "../src/wasm/index.js";
+import { wasmMatMul } from "../src/matrix/Matrix.wasm.js";
+import { wasmDistanceMatrix } from "../src/matrix/distance_matrix.wasm.js";
+import { wasmCosineDistance } from "../src/metrics/cosine.wasm.js";
+import { wasmManhattanDistance } from "../src/metrics/manhattan.wasm.js";
+import { wasmNeumaierSum } from "../src/numerical/neumair_sum.wasm.js";
+import { isWasmAvailable } from "../src/wasm/index.js";
 
 if (!isWasmAvailable()) {
     console.error("WASM is unavailable in this environment; nothing to calibrate.");

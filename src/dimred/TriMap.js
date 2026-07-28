@@ -1,9 +1,9 @@
 import { spatial_tree } from "../knn/index.js";
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
-import { wasmTriMapGrad, wasmTriMapUpdate } from "../wasm/index.js";
 import { DR } from "./DR.js";
 import { PCA } from "./PCA.js";
+import { wasmTriMapGrad, wasmTriMapUpdate } from "./TriMap.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {Metric} from "../metrics/index.js" */
@@ -23,6 +23,11 @@ import { PCA } from "./PCA.js";
  * @category Dimensionality Reduction
  */
 export class TriMap extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["trimap_grad", "trimap_update"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersTriMap>} [parameters] - Object containing parameterization of the DR method.
@@ -373,10 +378,14 @@ export class TriMap extends DR {
      */
     transform(max_iteration = 800) {
         this.check_init();
-        for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter);
+        try {
+            for (let iter = 0; iter < max_iteration; ++iter) {
+                this._next(iter);
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -385,11 +394,15 @@ export class TriMap extends DR {
      */
     *generator(max_iteration = 800) {
         this.check_init();
-        for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter);
-            yield this.projection;
+        try {
+            for (let iter = 0; iter < max_iteration; ++iter) {
+                this._next(iter);
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**

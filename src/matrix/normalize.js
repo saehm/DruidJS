@@ -1,7 +1,7 @@
 import { euclidean } from "../metrics/index.js";
-import { wasmNormalize } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
 import { norm } from "./index.js";
+import { wasmNormalize } from "./normalize.wasm.js";
 
 /** @import { Metric } from "../metrics/index.js" */
 

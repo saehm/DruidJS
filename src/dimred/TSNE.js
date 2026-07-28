@@ -1,8 +1,9 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean_squared } from "../metrics/index.js";
-import { isWasmAvailable, wasmTsneStep } from "../wasm/index.js";
+import { isWasmAvailable } from "../wasm/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
+import { wasmTsneStep } from "./TSNE.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {Metric} from "../metrics/index.js" */
@@ -36,6 +37,11 @@ import { DR } from "./DR.js";
  * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 export class TSNE extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["tsne"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersTSNE>} [parameters] - Object containing parameterization of the DR method.
@@ -146,10 +152,14 @@ export class TSNE extends DR {
      */
     transform(iterations = 500) {
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -158,11 +168,17 @@ export class TSNE extends DR {
      */
     *generator(iterations = 500) {
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-            yield this.projection;
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            // Runs on completion and on early `return()` — which `for…of` issues when the consumer
+            // breaks. A consumer abandoning manual `next()` calls keeps the buffers, as before.
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -186,30 +202,11 @@ export class TSNE extends DR {
         const pmul = iter < 100 ? 4 : 1;
         const momval = iter < 250 ? 0.5 : 0.8;
 
-        // The scratch matrices below are N ⨯ N, so they are only allocated once it is known that the
-        // kernel will actually run — otherwise every iteration of the JS path would throw away two
-        // full distance matrices before doing the same work again.
+        // The kernel holds its own N ⨯ N scratch between iterations and never reads it from JS, so
+        // the WASM path allocates nothing here. It used to build two N ⨯ N matrices per iteration
+        // purely to hand over their sizes.
         if (N >= WASM_MIN_ROWS && isWasmAvailable()) {
-            const Qu = new Matrix(N, N, "zeros");
-            const Q = new Matrix(N, N, 0);
-            const grad = new Matrix(N, dim, "zeros");
-
-            if (
-                wasmTsneStep(
-                    Y.values,
-                    P.values,
-                    Qu.values,
-                    Q.values,
-                    grad.values,
-                    ystep.values,
-                    gains.values,
-                    N,
-                    dim,
-                    pmul,
-                    epsilon,
-                    momval,
-                )
-            ) {
+            if (wasmTsneStep(Y.values, P.values, ystep.values, gains.values, N, dim, pmul, epsilon, momval)) {
                 return this.Y;
             }
         }

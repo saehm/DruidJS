@@ -1,8 +1,8 @@
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { Randomizer } from "../util/index.js";
-import { wasmKMedoidsAssign } from "../wasm/index.js";
 import { Clustering } from "./Clustering.js";
+import { wasmKMedoidsAssign } from "./KMedoids.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import { ParametersKMedoids } from "./index.js" */

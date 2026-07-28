@@ -1,9 +1,9 @@
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
-import { wasmMeanShiftStep } from "../wasm/index.js";
 import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
 import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
 import { Clustering } from "./Clustering.js";
+import { wasmMeanShiftStep } from "./MeanShift.wasm.js";
 
 /** @import { ParametersMeanShift } from "./index.js" */
 /** @import { InputType } from "../index.js" */

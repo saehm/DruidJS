@@ -1,5 +1,5 @@
-import { wasmManhattanDistance } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmManhattanDistance } from "./manhattan.wasm.js";
 
 /**
  * Computes the manhattan distance (`l_1`) between `a` and `b`.

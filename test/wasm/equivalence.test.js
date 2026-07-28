@@ -5,6 +5,7 @@ import { SMACOF } from "../../src/dimred/SMACOF.js";
 import { SQDMDS } from "../../src/dimred/SQDMDS.js";
 import { TriMap } from "../../src/dimred/TriMap.js";
 import { TSNE } from "../../src/dimred/TSNE.js";
+import { wasmUmapOptimizeEpoch } from "../../src/dimred/UMAP.wasm.js";
 import { inner_product } from "../../src/linear_algebra/inner_product.js";
 import { distance_matrix } from "../../src/matrix/distance_matrix.js";
 import { Matrix } from "../../src/matrix/Matrix.js";
@@ -16,7 +17,7 @@ import { chebyshev } from "../../src/metrics/chebyshev.js";
 import { cosine } from "../../src/metrics/cosine.js";
 import { manhattan } from "../../src/metrics/manhattan.js";
 import { Randomizer } from "../../src/util/randomizer.js";
-import { isWasmAvailable, setWasmEnabled, wasmUmapOptimizeEpoch } from "../../src/wasm/index.js";
+import { isWasmAvailable, setWasmEnabled } from "../../src/wasm/index.js";
 import { WASM_MIN_UMAP_EDGES } from "../../src/wasm/thresholds.js";
 
 /**

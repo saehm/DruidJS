@@ -1,5 +1,5 @@
-import { wasmCosineDistance } from "../wasm/index.js";
 import { WASM_MIN_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmCosineDistance } from "./cosine.wasm.js";
 
 /**
  * Turns a cosine similarity into an angular distance.

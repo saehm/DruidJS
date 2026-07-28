@@ -2,9 +2,9 @@ import { Heap } from "../datastructure/index.js";
 import { linspace, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { Randomizer } from "../util/index.js";
-import { wasmKMeansAssign } from "../wasm/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { Clustering } from "./Clustering.js";
+import { wasmKMeansAssign } from "./KMeans.wasm.js";
 
 /** @import { InputType } from "../index.js" */
 /** @import { ParametersKMeans } from "./index.js" */

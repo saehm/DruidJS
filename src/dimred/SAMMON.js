@@ -1,9 +1,9 @@
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
-import { wasmSammonStep } from "../wasm/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
 import { MDS, PCA } from "./index.js";
+import { wasmSammonStep } from "./SAMMON.wasm.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersPCA, ParametersMDS, ParametersSAMMON} from "./index.js" */
@@ -28,6 +28,11 @@ import { MDS, PCA } from "./index.js";
  * @category Dimensionality Reduction
  */
 export class SAMMON extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["sammon"];
+    }
+
     /** @type {Matrix | undefined} */
     distance_matrix;
 
@@ -89,10 +94,14 @@ export class SAMMON extends DR {
     transform(max_iter = 200) {
         this.check_init();
         if (!this.distance_matrix) this.init(this.distance_matrix);
-        for (let j = 0; j < max_iter; ++j) {
-            this._step();
+        try {
+            for (let j = 0; j < max_iter; ++j) {
+                this._step();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -106,12 +115,16 @@ export class SAMMON extends DR {
         this.check_init();
         if (!this.distance_matrix) this.init(this.distance_matrix);
 
-        for (let j = 0; j < max_iter; ++j) {
-            this._step();
-            yield this.projection;
-        }
+        try {
+            for (let j = 0; j < max_iter; ++j) {
+                this._step();
+                yield this.projection;
+            }
 
-        return this.projection;
+            return this.projection;
+        } finally {
+            this._release_wasm();
+        }
     }
 
     _step() {
@@ -122,14 +135,15 @@ export class SAMMON extends DR {
         const d = /** @type {number} */ (this.parameter("d"));
         const Y = this.Y;
 
-        const G = new Matrix(N, d, 0);
-
+        // The kernel holds its own gradient scratch between iterations, so `G` is built only for
+        // the JS path below rather than allocated per iteration regardless of which path runs.
         if (N >= WASM_MIN_ROWS) {
-            if (wasmSammonStep(Y.values, D.values, G.values, N, d, MAGIC)) {
+            if (wasmSammonStep(Y.values, D.values, N, d, MAGIC)) {
                 return Y;
             }
         }
 
+        const G = new Matrix(N, d, 0);
         const sum = new Float64Array(d);
         for (let i = 0; i < N; ++i) {
             const e1 = new Float64Array(d);

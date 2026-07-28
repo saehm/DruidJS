@@ -2,7 +2,7 @@ import { BallTree } from "../src/knn/BallTree.js";
 import { HNSW } from "../src/knn/HNSW.js";
 import { NaiveKNN } from "../src/knn/NaiveKNN.js";
 import { euclidean } from "../src/metrics/euclidean.js";
-import { wasmDistanceMatrix } from "../src/wasm/index.js";
+import { wasmDistanceMatrix } from "../src/matrix/distance_matrix.wasm.js";
 
 // Pure JS Naive KNN distance matrix calculation (bypassing WASM for benchmarking)
 function pureJsNaiveKnn(points, K) {

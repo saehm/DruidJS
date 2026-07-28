@@ -1,5 +1,5 @@
-import { wasmInnerProduct } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmInnerProduct } from "./inner_product.wasm.js";
 
 /**
  * Computes the inner product between two arrays of the same length.

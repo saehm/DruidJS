@@ -1,5 +1,5 @@
-import { wasmCanberraDistance } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmCanberraDistance } from "./canberra.wasm.js";
 
 /**
  * Computes the canberra distance between `a` and `b`.

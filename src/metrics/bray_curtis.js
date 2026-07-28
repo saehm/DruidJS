@@ -1,5 +1,5 @@
-import { wasmBrayCurtisDistance } from "../wasm/index.js";
 import { WASM_MIN_SIMPLE_VECTOR_LENGTH } from "../wasm/thresholds.js";
+import { wasmBrayCurtisDistance } from "./bray_curtis.wasm.js";
 
 /**
  * Computes the Bray-Curtis distance between `a` and `b`.
