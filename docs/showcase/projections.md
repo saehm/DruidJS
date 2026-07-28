@@ -1,10 +1,10 @@
-# Standard Projections
-
-The following grid shows several dimensionality reduction techniques applied to the classic Iris dataset. Each method attempts to project the 4D data into 2D while preserving different aspects of the original structure.
-
 <script setup>
 import ShowcaseGrid from '../components/ShowcaseGrid.vue'
 </script>
+
+# Standard Projections
+
+The following grid shows several dimensionality reduction techniques applied to the classic Iris dataset. Each method attempts to project the 4D data into 2D while preserving different aspects of the original structure.
 
 <ShowcaseGrid />
 

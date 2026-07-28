@@ -40,3 +40,15 @@ const sammon = new druid.SAMMON(data);
 // 2. Compute the projection
 const projection = sammon.transform();
 ```
+
+## Reproducibility
+
+Passing a `seed` pins the result **for a given engine and library build**, but not across
+environments: the gradient step is chaotic, so a difference in the last bit — between two JavaScript
+engines, or between the WASM kernel and its JS fallback — grows into a visibly different layout
+within a few dozen iterations. ECMAScript specifies `Math.pow` and `Math.exp` as
+*implementation-approximated*, so such differences cannot be ruled out.
+
+The effect is equivalent to changing the seed rather than a loss of quality; see
+[UMAP](./umap#reproducibility) for the measured detail. [MDS](./mds) and [SMACOF](./smacof) are
+stable alternatives when a layout has to reproduce everywhere.

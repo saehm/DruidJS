@@ -1,3 +1,7 @@
+<script setup>
+import GeospatialProjection from '../components/GeospatialProjection.vue'
+</script>
+
 # Global Spatial Projections
 
 This example demonstrates how dimensionality reduction can be used for **geospatial analysis** by using a specialized metric.
@@ -5,10 +9,6 @@ This example demonstrates how dimensionality reduction can be used for **geospat
 Most dimensionality reduction techniques use `euclidean` distance by default, which works fine for flat planes. However, when working with coordinates on the Earth's surface, the Curvature of the Earth becomes significant.
 
 Using the **Haversine Distance** (Great-Circle Distance) ensures that the distance between two points is calculated correctly along the sphere.
-
-<script setup>
-import GeospatialProjection from '../components/GeospatialProjection.vue'
-</script>
 
 <GeospatialProjection />
 

@@ -1,10 +1,10 @@
-# Metric Sensitivity
-
-The choice of distance metric (how "distance" is calculated) can drastically change the resulting projection. Each metric defines "distance" differently, leading to varied cluster shapes and separations.
-
 <script setup>
 import MetricComparison from '../components/MetricComparison.vue'
 </script>
+
+# Metric Sensitivity
+
+The choice of distance metric (how "distance" is calculated) can drastically change the resulting projection. Each metric defines "distance" differently, leading to varied cluster shapes and separations.
 
 <MetricComparison />
 

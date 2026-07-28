@@ -1,12 +1,12 @@
+<script setup>
+import TopologyComparison from '../components/TopologyComparison.vue'
+</script>
+
 # Shape Preserver
 
 This example illustrates the difference between algorithms that focus on **Local Probabilities** vs. **Topological Preservation**.
 
 When visualizing complex, disjoint, or non-convex manifolds (like the "Two Moons" dataset), standard techniques like t-SNE can sometimes "shatter" the continuous structure as they try to flatten the points into 2D based on local similarity.
-
-<script setup>
-import TopologyComparison from '../components/TopologyComparison.vue'
-</script>
 
 <TopologyComparison />
 

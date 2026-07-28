@@ -1,3 +1,7 @@
+<script setup>
+import KNNDemo from '../components/KNNDemo.vue'
+</script>
+
 # K-Nearest Neighbors
 
 K-Nearest Neighbors (KNN) algorithms are a fundamental building block for many complex Dimensionality Reduction and Clustering algorithms (such as UMAP, t-SNE, and OPTICS). DruidJS provides extremely fast web-native implementations of multiple exact and approximate KNN algorithms to find local neighborhoods efficiently.
@@ -7,10 +11,6 @@ This showcase allows you to interactively explore various KNN algorithms on synt
 - **Uniform Data Generation**: Adjust the number of points (up to 5,000) to generate a 2D uniform distribution.
 - **Real-time Pointer Queries**: Move your mouse over the scatterplot to perform instantaneous KNN searches at your cursor's position.
 - **Algorithm Comparison**: Switch between different exact and approximate methods to observe their build and search times.
-
-<script setup>
-import KNNDemo from '../components/KNNDemo.vue'
-</script>
 
 <KNNDemo />
 

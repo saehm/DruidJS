@@ -1,10 +1,10 @@
-# Clustering Pipelines
-
-A frequent task in data science is identifying clusters in high-dimensional space and then visualizing the learned structural manifolds. This showcase allows you to run multiple clustering algorithms—such as [**K-Means**](/api/classes/KMeans), [**OPTICS**](/api/classes/OPTICS), [**CURE**](/api/classes/CURE), and [**Hierarchical Clustering**](/api/classes/HierarchicalClustering)—on various datasets. It computes the assignments intrinsically and then uses [**UMAP**](/api/classes/UMAP) for the 2D visual projection.
-
 <script setup>
 import ClusteringPipeline from '../components/ClusteringPipeline.vue'
 </script>
+
+# Clustering Pipelines
+
+A frequent task in data science is identifying clusters in high-dimensional space and then visualizing the learned structural manifolds. This showcase allows you to run multiple clustering algorithms—such as [**K-Means**](/api/classes/KMeans), [**OPTICS**](/api/classes/OPTICS), [**CURE**](/api/classes/CURE), and [**Hierarchical Clustering**](/api/classes/HierarchicalClustering)—on various datasets. It computes the assignments intrinsically and then uses [**UMAP**](/api/classes/UMAP) for the 2D visual projection.
 
 <ClusteringPipeline />
 

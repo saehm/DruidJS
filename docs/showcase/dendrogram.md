@@ -1,12 +1,12 @@
+<script setup>
+import DendrogramShowcase from '../components/DendrogramShowcase.vue'
+</script>
+
 # Hierarchical Tree (Dendrogram)
 
 Hierarchical clustering builds a recursive tree structure called a Dendrogram. The length of the branches represents the distance at which groups merge, and the leaves represent individual data points.
 
-Unlike partitioning algorithms like K-Means, which just group points into $K$ buckets, hierarchical methods give you a full multiscale representation of cluster relationships.
-
-<script setup>
-import DendrogramShowcase from '../components/DendrogramShowcase.vue'
-</script>
+Unlike partitioning algorithms like K-Means, which just group points into K buckets, hierarchical methods give you a full multiscale representation of cluster relationships.
 
 <DendrogramShowcase />
 

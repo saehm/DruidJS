@@ -1,18 +1,18 @@
+<script setup>
+import ImageSearch from '../components/ImageSearch.vue'
+</script>
+
 # KNN Image Search
 
 This example demonstrates how DruidJS can be used for fast similarity search in high-dimensional datasets.
 
 Instead of dimensionality reduction, we use a **Hierarchical Navigable Small World (HNSW)** index to find similar images in a dataset of handwritten digits (MNIST).
 
-<script setup>
-import ImageSearch from '../components/ImageSearch.vue'
-</script>
-
 <ImageSearch />
 
 ## Why use HNSW for Search?
 
-- **High Dimensionality**: Each image is a $28 \times 28$ grid, resulting in a 784-dimensional vector. Traditional search is slow in such spaces (the "Curse of Dimensionality").
+- **High Dimensionality**: Each image is a 28 × 28 grid, resulting in a 784-dimensional vector. Traditional search is slow in such spaces (the "Curse of Dimensionality").
 - **Efficient Retrieval**: HNSW is an approximate nearest neighbor algorithm that builds a multi-layer graph, allowing for sub-millisecond search times even in large datasets.
 - **Off-Thread Performance**: The index is built and searched inside a **Web Worker**, ensuring the main UI thread never hitches while processing the 784-D comparisons.
 

@@ -1,3 +1,7 @@
+<script setup>
+import DistributionMDS from '../components/DistributionMDS.vue'
+</script>
+
 # Earth Mover Analysis
 
 This example demonstrates using the **Wasserstein Distance** (also known as Earth Mover's Distance) to compare probability distributions.
@@ -5,10 +9,6 @@ This example demonstrates using the **Wasserstein Distance** (also known as Eart
 Unlike Euclidean distance, which compares values bin-by-bin, Wasserstein distance measures the minimum "work" required to transform one distribution into another. This makes it ideal for comparing histograms where peaks might be shifted.
 
 In the visualization below, we generate several synthetic 1D distributions (histograms) and use **Multi-Dimensional Scaling ([MDS](/api/classes/MDS))** with the `wasserstein` metric to project them into 2D space.
-
-<script setup>
-import DistributionMDS from '../components/DistributionMDS.vue'
-</script>
 
 <DistributionMDS />
 

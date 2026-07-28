@@ -43,3 +43,29 @@ const projection = umap.transform(500);
 // Alternatively, use a generator for animation:
 // for (const proj of umap.generator(500)) { ... }
 ```
+
+## Reproducibility
+
+Passing a `seed` pins the result **for a given engine and library build** — re-running the same code
+in the same browser or Node version always produces the same embedding.
+
+It does not pin it *across* environments. UMAP's stochastic gradient descent is chaotic: an epoch
+chains thousands of edge updates, and the repulsive term's stiff `1 / (0.01 + d)` factor lets a
+difference in the final bit grow into a visible one within two epochs. Such differences are
+unavoidable, because ECMAScript specifies `Math.pow` and `Math.exp` as *implementation-approximated*
+— two engines may legitimately disagree in the last bit, as may the WASM kernel and its JS fallback.
+
+In practice this behaves like changing the seed, not like a loss of quality. On well-separated
+clusters:
+
+| comparison | shared 10-nearest-neighbours | cluster purity |
+| :--- | ---: | ---: |
+| WASM vs JS fallback, same seed | 65.8% | 100% / 100% |
+| seed 1 vs seed 2, same path | 56.9% | 100% |
+
+The two code paths differ *less* from each other than two seeds do, and the cluster structure is
+preserved either way.
+
+If you need a byte-identical picture, pin the engine and the library version, or store the resulting
+coordinates rather than recomputing them. [t-SNE](./tsne) and [TriMap](./trimap) are not chaotic and
+do reproduce bit-identically across paths; [SAMMON](./sammon) behaves like UMAP.
