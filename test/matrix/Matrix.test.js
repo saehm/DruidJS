@@ -236,6 +236,40 @@ describe("Matrix", () => {
             expect(c.entry(0, 0)).toBe(4);
             expect(c.entry(2, 2)).toBe(18);
         });
+
+        test("outer mirrors the upper triangle into the lower one", () => {
+            // `outer` symmetrises: the lower triangle is a copy of the upper, not a[i] * b[j].
+            // The lower triangle used to be read off the source vector rather than the result.
+            const a = Matrix.from_vector([1, 2, 3, 4], "col");
+            const b = Matrix.from_vector([5, 6, 7, 8], "col");
+            const c = a.outer(b);
+            for (let i = 0; i < 4; ++i) {
+                for (let j = i; j < 4; ++j) {
+                    expect(c.entry(i, j)).toBe(a.entry(i, 0) * b.entry(j, 0));
+                    expect(c.entry(j, i)).toBe(c.entry(i, j));
+                }
+            }
+        });
+
+        test("outer is consistent above and below the WASM threshold", () => {
+            // Large enough to cross WASM_MIN_MATMUL_OPS, so both implementations are exercised.
+            const build = (/** @type {number} */ n) =>
+                Matrix.from_vector(
+                    Float64Array.from({ length: n }, (_, i) => Math.sin(i) + 2),
+                    "col",
+                );
+            for (const n of [4, 64]) {
+                const v = build(n);
+                const c = v.outer(v);
+                expect(c.shape).toEqual([n, n]);
+                for (let i = 0; i < n; ++i) {
+                    for (let j = i; j < n; ++j) {
+                        expect(c.entry(i, j)).toBeCloseTo(v.entry(i, 0) * v.entry(j, 0), 12);
+                        expect(c.entry(j, i)).toBe(c.entry(i, j));
+                    }
+                }
+            }
+        });
     });
 
     describe("Concatenation", () => {

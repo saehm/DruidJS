@@ -1,6 +1,8 @@
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { neumair_sum } from "../numerical/index.js";
 import { Randomizer } from "../util/index.js";
+import { wasmDotTrans, wasmMatMul, wasmMatVecMul, wasmOuter, wasmTransDot } from "../wasm/index.js";
+import { WASM_MIN_MATMUL_OPS } from "../wasm/thresholds.js";
 
 /** @typedef {(i: number, j: number) => number} Accessor */
 
@@ -397,6 +399,12 @@ export class Matrix {
             const B_val = B.values;
             const C_val = C.values;
 
+            if (rows_A * cols_A * cols_B >= WASM_MIN_MATMUL_OPS) {
+                if (wasmMatMul(A_val, rows_A, cols_A, B_val, cols_B, C_val)) {
+                    return C;
+                }
+            }
+
             for (let i = 0; i < rows_A; ++i) {
                 const i_cols_A = i * cols_A;
                 const i_cols_B = i * cols_B;
@@ -411,16 +419,34 @@ export class Matrix {
             }
             return C;
         } else if (Matrix.isArray(B)) {
-            // TODO: create Matrix directly
-            const rows = this._rows;
-            if (B.length !== rows) {
-                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            const [rows, cols] = this.shape;
+            if (B.length !== cols) {
+                throw new Error(
+                    `A.dot(B): A is a ${rows} ⨯ ${cols}-Matrix and B has ${B.length} entries. A's cols and B's length must be equal!`,
+                );
             }
-            const C = new Array(rows);
-            for (let row = 0; row < rows; ++row) {
-                C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
+            const C = new Matrix(rows, 1, 0);
+            const x = B instanceof Float64Array ? B : Float64Array.from(B);
+
+            if (rows * cols >= WASM_MIN_MATMUL_OPS) {
+                if (wasmMatVecMul(this.values, x, C.values, rows, cols)) {
+                    return C;
+                }
             }
-            return Matrix.from(C);
+
+            const A_val = this.values;
+            const C_val = C.values;
+            // Allocated once rather than per row: `neumair_sum` needs the products materialized, and
+            // the previous `row(i).map(…)` built a fresh array on every iteration.
+            const products = new Float64Array(cols);
+            for (let i = 0; i < rows; ++i) {
+                const i_cols = i * cols;
+                for (let j = 0; j < cols; ++j) {
+                    products[j] = A_val[i_cols + j] * x[j];
+                }
+                C_val[i] = neumair_sum(products);
+            }
+            return C;
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
@@ -448,6 +474,12 @@ export class Matrix {
             const B_val = B.values;
             const C_val = C.values;
 
+            if (cols_A * rows_A * cols_B >= WASM_MIN_MATMUL_OPS) {
+                if (wasmTransDot(A_val, cols_A, rows_A, B_val, cols_B, C_val)) {
+                    return C;
+                }
+            }
+
             for (let k = 0; k < cols_A; ++k) {
                 // cols_A is rows_B
                 const k_rows_A = k * rows_A;
@@ -463,15 +495,23 @@ export class Matrix {
             return C;
         } else if (Matrix.isArray(B)) {
             // TODO: create Matrix directly
-            const rows = this._cols;
+            const [rows, cols] = this.shape;
             if (B.length !== rows) {
-                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+                throw new Error(
+                    `A.transDot(B): Aᵀ is a ${cols} ⨯ ${rows}-Matrix and B has ${B.length} entries. Aᵀ's cols and B's length must be equal!`,
+                );
             }
-            const C = new Array(rows);
-            for (let row = 0; row < rows; ++row) {
-                C[row] = neumair_sum(this.col(row).map((e) => e * B[row]));
+            const C = new Matrix(cols, 1, 0);
+            const A_val = this.values;
+            const C_val = C.values;
+            const products = new Float64Array(rows);
+            for (let i = 0; i < cols; ++i) {
+                for (let j = 0; j < rows; ++j) {
+                    products[j] = A_val[j * cols + i] * B[j];
+                }
+                C_val[i] = neumair_sum(products);
             }
-            return Matrix.from(C);
+            return C;
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
@@ -492,27 +532,47 @@ export class Matrix {
                 throw new Error(`A.dot(B): A is a ${this.shape.join(" ⨯ ")}-Matrix, B is a ${[rows_B, cols_B].join(" ⨯ ")}-Matrix:
                 A has ${cols_A} cols and B ${rows_B} rows, which must be equal!`);
             }
-            const C = new Matrix(rows_A, cols_B, (row, col) => {
-                const A_i = this.row(row);
-                const B_i = B.row(col);
-                let sum = 0;
-                for (let i = 0; i < cols_A; ++i) {
-                    sum += A_i[i] * B_i[i];
+
+            const C = new Matrix(rows_A, cols_B, 0);
+            if (rows_A * cols_A * cols_B >= WASM_MIN_MATMUL_OPS) {
+                if (wasmDotTrans(this.values, rows_A, cols_A, B.values, cols_B, C.values)) {
+                    return C;
                 }
-                return sum;
-            });
+            }
+
+            for (let i = 0; i < rows_A; ++i) {
+                const A_i = this.row(i);
+                for (let j = 0; j < cols_B; ++j) {
+                    const B_j = B.row(j);
+                    let sum = 0;
+                    for (let k = 0; k < cols_A; ++k) {
+                        sum += A_i[k] * B_j[k];
+                    }
+                    C.set_entry(i, j, sum);
+                }
+            }
             return C;
         } else if (Matrix.isArray(B)) {
             // TODO: create Matrix directly
-            const rows = this._rows;
-            if (B.length !== rows) {
-                throw new Error(`A.dot(B): A has ${rows} cols and B has ${B.length} rows. Must be equal!`);
+            // `B` is the row vector, so `Bᵀ` is a column and the contract matches `dot`.
+            const [rows, cols] = this.shape;
+            if (B.length !== cols) {
+                throw new Error(
+                    `A.dotTrans(B): A is a ${rows} ⨯ ${cols}-Matrix and Bᵀ has ${B.length} entries. A's cols and Bᵀ's length must be equal!`,
+                );
             }
-            const C = new Array(rows);
-            for (let row = 0; row < rows; ++row) {
-                C[row] = neumair_sum(this.row(row).map((e) => e * B[row]));
+            const C = new Matrix(rows, 1, 0);
+            const A_val = this.values;
+            const C_val = C.values;
+            const products = new Float64Array(cols);
+            for (let i = 0; i < rows; ++i) {
+                const i_cols = i * cols;
+                for (let j = 0; j < cols; ++j) {
+                    products[j] = A_val[i_cols + j] * B[j];
+                }
+                C_val[i] = neumair_sum(products);
             }
-            return Matrix.from(C);
+            return C;
         } else {
             throw new Error(`B must be Matrix or Array`);
         }
@@ -528,17 +588,23 @@ export class Matrix {
         const l = this._data.length;
         const r = B._data.length;
         if (l !== r) throw new Error("Matrix A and B needs to be of the same length!");
-        const C = new Matrix(
-            l,
-            l,
-            /** @type {Accessor} */ (i, j) => {
+
+        const C = new Matrix(l, l);
+        if (l * l >= WASM_MIN_MATMUL_OPS) {
+            if (wasmOuter(this.values, B.values, C.values, l)) {
+                return C;
+            }
+        }
+
+        for (let i = 0; i < l; ++i) {
+            for (let j = 0; j < l; ++j) {
                 if (i <= j) {
-                    return this._data[i] * B._data[j];
+                    C.set_entry(i, j, this._data[i] * B._data[j]);
                 } else {
-                    return this.entry(j, i);
+                    C.set_entry(i, j, C.entry(j, i));
                 }
-            },
-        );
+            }
+        }
 
         return C;
     }
@@ -886,7 +952,6 @@ export class Matrix {
      * @param {[number, number, Accessor]} parameter - Takes an Array in the form [rows, cols, value], where rows and
      *   cols are the number of rows and columns of the matrix, and value is a function which takes two parameters (row
      *   and col) which has to return a value for the colth entry of the rowth row.
-     * @returns {Matrix}
      */
     set shape([rows, cols, value = () => 0]) {
         this._rows = rows;
@@ -1023,7 +1088,7 @@ export class Matrix {
      */
     static solve_CG(A, b, randomizer, tol = 1e-3) {
         if (!randomizer) {
-            randomizer = new Randomizer();
+            randomizer = new Randomizer(1212);
         }
         const rows = A.shape[0];
         const cols = b.shape[1];
@@ -1034,7 +1099,7 @@ export class Matrix {
             let r = b_i.sub(A.dot(x));
             let d = r.clone();
             let iter = 0;
-            const max_iter = rows * 10; // Prevent infinite loops
+            const max_iter = Math.max(rows * 20, 100); // Robust convergence limit
             do {
                 const z = A.dot(d);
                 const alpha = r.transDot(r).entry(0, 0) / d.transDot(z).entry(0, 0);
