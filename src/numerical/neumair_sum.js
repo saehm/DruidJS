@@ -1,6 +1,10 @@
 /**
  * Numerical stable summation with the Neumair summation algorithm.
  *
+ * Deliberately not WASM accelerated: the compensation term makes each step depend on the previous
+ * one, so the kernel cannot vectorise, and `benchmark/wasm_threshold_calibration.js` measures it as
+ * slower than this loop at every input size — the argument copy is pure overhead.
+ *
  * @category Numerical
  * @param {number[] | Float64Array} summands - Array of values to sum up.
  * @returns {number} The sum.
@@ -21,5 +25,8 @@ export function neumair_sum(summands) {
         }
         sum = t;
     }
-    return sum + compensation;
+    // On overflow the compensation is `Infinity - Infinity`, so adding it turns a correct `Infinity`
+    // into `NaN`. There is nothing to compensate once the running sum has left the representable
+    // range, so it is returned as is.
+    return Number.isFinite(sum) ? sum + compensation : sum;
 }
