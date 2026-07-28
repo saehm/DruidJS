@@ -89,16 +89,11 @@ export class TriMap extends DR {
         const nbrs = new Matrix(N, n_extra);
         const knn_distances = new Matrix(N, n_extra);
         for (let i = 0; i < N; ++i) {
-            const results = knn
-                .search(X.row(i), n_extra + 1)
-                .filter((d) => d.distance !== 0)
-                .sort((a, b) => a.distance - b.distance);
-
-            results.forEach((d, j) => {
-                if (j < n_extra) {
-                    nbrs.set_entry(i, j, d.index);
-                    knn_distances.set_entry(i, j, d.distance);
-                }
+            // Excludes `i` itself and comes back closest first. Filtering on a zero distance instead
+            // would also drop genuine duplicates of `i`, which shifts every column that `sig` reads.
+            knn.search_by_index(i, n_extra).forEach((d, j) => {
+                nbrs.set_entry(i, j, d.index);
+                knn_distances.set_entry(i, j, d.distance);
             });
         }
         // scale parameter

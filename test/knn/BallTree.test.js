@@ -54,6 +54,7 @@ describe("BallTree", () => {
         const tree = new BallTree(points, { metric: euclidean });
         const neighbors = tree.search_by_index(0, 2);
         expect(neighbors).toHaveLength(2);
-        expect(neighbors[0].index).toBe(0);
+        // search_by_index excludes the queried element itself.
+        expect(neighbors.map((n) => n.index)).toEqual([1, 2]);
     });
 });

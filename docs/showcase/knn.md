@@ -41,3 +41,18 @@ for (const match of nearestNeighbors) {
   console.log(`Neighbor ID: ${match.index}, Distance: ${match.distance}`);
 }
 ```
+
+## Querying by Index
+
+Every index also answers queries by the position of an already-indexed element. `search_by_index`
+returns the `k` nearest **other** elements — the queried point is never its own neighbor, which is
+what building a neighborhood graph almost always wants:
+
+```javascript
+// The 5 points nearest to element 42, excluding element 42 itself
+const neighbors = nndescent.search_by_index(42, 5);
+```
+
+Note the asymmetry with `search`: an arbitrary query point has no "self" to leave out, so there `k`
+means "k results", while `search_by_index` means "k neighbors". An out-of-range index returns an
+empty list.

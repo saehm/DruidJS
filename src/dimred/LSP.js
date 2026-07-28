@@ -79,9 +79,8 @@ export class LSP extends DR {
         const knn = new KNN(XA, { metric, seed });
         const L = new Matrix(N, N, "I");
         const alpha = -1 / K;
-        XA.forEach((x_i, i) => {
-            for (const { index: j } of knn.search(x_i, K)) {
-                if (i === j) continue;
+        XA.forEach((_x_i, i) => {
+            for (const { index: j } of knn.search_by_index(i, K)) {
                 L.set_entry(i, j, alpha);
             }
         });

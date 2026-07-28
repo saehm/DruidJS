@@ -1,6 +1,6 @@
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
-import { quickselect, Randomizer } from "../util/index.js";
+import { quickselect } from "../util/index.js";
 import { KNN } from "./KNN.js";
 
 /** @import { ParametersNaiveKNN } from "./index.js" */
@@ -45,14 +45,12 @@ export class NaiveKNN extends KNN {
      * Generates a KNN list with given `elements`.
      *
      * @param {T[]} elements - Elements which should be added to the KNN list
-     * @param {ParametersNaiveKNN} parameters
+     * @param {Partial<ParametersNaiveKNN>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      */
     constructor(elements, parameters = {}) {
         const params = Object.assign({ metric: euclidean, seed: 1212 }, parameters);
         super(elements, params);
-        // Seeded pivots for `quickselect`, so a selection among tied distances is reproducible.
-        /** @type {Randomizer} */
-        this._randomizer = new Randomizer(params.seed);
         const elements_any = /** @type {any} */ (this._elements);
         this._N = elements_any instanceof Matrix ? elements_any.shape[0] : this._elements.length;
         this._D =
@@ -82,20 +80,23 @@ export class NaiveKNN extends KNN {
      * @private
      * @param {ArrayLike<number>} distances - Distance from the query to each element, by index.
      * @param {number} k - Number of neighbors to return.
+     * @param {number} [exclude=-1] - Index to leave out, or `-1` to keep every element. Default is `-1`
      * @returns {{ element: T; index: number; distance: number }[]} The `k` nearest, closest first.
      */
-    _k_smallest(distances, k) {
+    _k_smallest(distances, k, exclude = -1) {
         const N = this._N;
-        const size = Math.min(Math.max(Math.floor(k), 0), N);
+        const pool = exclude >= 0 && exclude < N ? N - 1 : N;
+        const size = Math.min(Math.max(Math.floor(k), 0), pool);
         if (size === 0) return [];
 
         /** @type {(a: number, b: number) => number} */
         const compare = (a, b) => distances[a] - distances[b] || a - b;
         /** @type {number[]} */
-        const indices = new Array(N);
-        for (let i = 0; i < N; ++i) indices[i] = i;
-
-        if (size < N) {
+        const indices = new Array(pool);
+        for (let i = 0, at = 0; i < N; ++i) {
+            if (i !== exclude) indices[at++] = i;
+        }
+        if (size < pool) {
             // Leaves the `size` smallest in indices[0..size-1], in no particular order.
             quickselect(indices, this._randomizer, size - 1, compare);
             indices.length = size;
@@ -126,13 +127,18 @@ export class NaiveKNN extends KNN {
     }
 
     /**
+     * Overrides the base `search_by_index`, which reaches the elements through {@link NaiveKNN#search}.
+     * That is not available on a `"precomputed"` index, and it would also throw away the distance
+     * matrix this class already holds. The self-exclusion contract is identical.
+     *
      * @param {number} i - Index of the query element.
      * @param {number} [k=5] - Number of nearest neighbors to return. Default is `5`
-     * @returns {{ element: T; index: number; distance: number }[]} - List consists of the `k` nearest
-     *   neighbors, closest first. `i` itself is included, at distance 0.
+     * @returns {{ element: T; index: number; distance: number }[]} - The `k` nearest *other*
+     *   elements, closest first. Empty when `i` is out of range.
      */
     search_by_index(i, k = 5) {
-        return this._k_smallest(this._distance_matrix().row(i), k);
+        if (i < 0 || i >= this._N) return [];
+        return this._k_smallest(this._distance_matrix().row(i), k, i);
     }
 
     /**

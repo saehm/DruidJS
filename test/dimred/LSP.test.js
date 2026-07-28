@@ -12,6 +12,30 @@ describe("LSP", () => {
         expect(result[0]).toHaveLength(2);
     });
 
+    it("should build a Laplacian whose rows sum to zero", () => {
+        // Each row is 1 on the diagonal plus exactly `neighbors` entries of -1/neighbors. The
+        // neighbor search used to include the point itself and then skip it, which left only
+        // neighbors - 1 entries and a row sum of 1/neighbors.
+        const K = 5;
+        const N = 30;
+        const data = generateTestData(N, 5);
+        const lsp = new LSP(data, { neighbors: K, control_points: 10, d: 2, seed: 42 });
+        lsp.transform();
+        // @ts-ignore - private
+        const A = lsp._A;
+
+        for (let i = 0; i < N; ++i) {
+            let sum = 0;
+            let off_diagonal = 0;
+            for (let j = 0; j < N; ++j) {
+                sum += A.entry(i, j);
+                if (i !== j && A.entry(i, j) !== 0) ++off_diagonal;
+            }
+            expect(off_diagonal, `row ${i}`).toBe(K);
+            expect(sum, `row ${i}`).toBeCloseTo(0, 12);
+        }
+    });
+
     it("should use default parameters if none provided", () => {
         const data = generateTestData(20, 5);
         const lsp = new LSP(data);

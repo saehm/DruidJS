@@ -33,6 +33,10 @@ import { KNN } from "./KNN.js";
  * - `ef_construction`: Controls the quality of the graph during construction (higher = better but slower)
  * - `ef`: Controls the quality of search (higher = better recall but slower)
  *
+ * This is an *approximate* index. Recall above 95% is expected for any `m`; raise `ef` or
+ * `ef_construction` if a dataset needs more. Queries overtake the exact {@link KDTree} at around
+ * 10 000 points, so below a few thousand prefer {@link spatial_tree}, which is exact and quicker.
+ *
  * Based on:
  * - "Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs"
  *   by Malkov & Yashunin (2016)
@@ -63,21 +67,10 @@ export class HNSW extends KNN {
      * Creates a new HNSW index.
      *
      * @param {T[]} points - Initial points to add to the index
-     * @param {ParametersHNSW} [parameters={}] - Configuration parameters
+     * @param {Partial<ParametersHNSW>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      */
-    constructor(
-        points,
-        parameters = {
-            metric: euclidean,
-            heuristic: true,
-            m: 16,
-            ef_construction: 200,
-            m0: null,
-            mL: null,
-            seed: 1212,
-            ef: 50,
-        },
-    ) {
+    constructor(points, parameters = {}) {
         // Handle empty initialization - use dummy element
         const hasElements = points && points.length > 0;
         let firstElement = /** @type {T} */ (hasElements ? points[0] : new Float64Array([0]));
@@ -97,7 +90,24 @@ export class HNSW extends KNN {
             }
         }
 
-        super([firstElement], parameters);
+        // `KNN` keeps the parameter object as handed to it, so defaults are merged here rather
+        // than left to a default argument, which would only apply when `parameters` is omitted
+        // entirely and drop every unspecified default for `new HNSW(points, { m: 8 })`.
+        const merged = Object.assign(
+            {
+                metric: euclidean,
+                heuristic: true,
+                m: 16,
+                ef_construction: 200,
+                m0: null,
+                mL: null,
+                seed: 1212,
+                ef: 50,
+            },
+            parameters,
+        );
+
+        super([firstElement], merged);
 
         // Store reference to elements before clearing
         const elementsToAdd = hasElements ? [...points] : [];
@@ -159,6 +169,12 @@ export class HNSW extends KNN {
 
         /** @type {number[] | null} - Entry point indices for search */
         this._ep = null;
+
+        /** @private @type {number} */
+        this._search_id = 1;
+
+        /** @private @type {Uint32Array} */
+        this._visited_stamps = new Uint32Array(1024);
 
         // Add initial points
         if (elementsToAdd && elementsToAdd.length > 0) {
@@ -230,125 +246,85 @@ export class HNSW extends KNN {
             let ep_indices = this._ep ? [...this._ep] : null;
             const L = this._L;
 
-            if (L >= 0) {
-                // Search from top layer down to min(L, l) + 1
-                // These are the layers where element will NOT be inserted
-                for (let l_c = L; l_c > l; --l_c) {
-                    const search_result = this._search_layer(element, ep_indices, 1, l_c);
-                    if (search_result.length > 0) {
-                        ep_indices = [search_result[0].index];
-                    }
+            // Phase 1: greedy descent through the layers the element does not join, narrowing the
+            // entry point one layer at a time.
+            for (let l_c = L; l_c > l; --l_c) {
+                const search_result = this._search_layer(element, ep_indices, 1, l_c);
+                if (search_result.length > 0) {
+                    ep_indices = [search_result[0].index];
+                }
+            }
+
+            // Phase 2: join every layer from min(L, l) down to 0.
+            for (let l_c = Math.min(L, l); l_c >= 0; --l_c) {
+                const layer = graph.get(l_c);
+                if (!layer) continue;
+
+                layer.point_indices.push(global_index);
+                if (!layer.edges.has(global_index)) {
+                    layer.edges.set(global_index, []);
                 }
 
-                // Insert element into layers l down to 0
-                for (let l_c = Math.min(L, l); l_c >= 0; --l_c) {
-                    const layer = graph.get(l_c);
-                    if (!layer) continue;
+                // Candidates are always members of this layer. Deliberately no fallback to a scan
+                // over the whole dataset: that would link the element to points not on this layer.
+                const W = this._search_layer(element, ep_indices, ef_construction, l_c).filter(
+                    (c) => c.index !== global_index,
+                );
+                if (W.length === 0) continue;
 
-                    layer.point_indices.push(global_index);
+                // The element gets `m` links of its own on every layer, layer 0 included. `m0` is
+                // not a second budget for it, but the cap enforced once reverse links accumulate.
+                const neighbor_indices = this._select(element, W, m, l_c);
+                layer.edges.set(global_index, neighbor_indices.slice());
 
-                    // Search for ef_construction nearest neighbors
-                    let W = this._search_layer(element, ep_indices, ef_construction, l_c);
+                const max_conn = l_c === 0 ? m0 : m;
+                for (const neighbor_idx of neighbor_indices) {
+                    if (neighbor_idx === global_index) continue;
 
-                    // If graph search returns no results (e.g., graph is empty or disconnected),
-                    // fall back to linear search over all existing elements
-                    if (W.length === 0 && elements.length > 1) {
-                        const fallbackCandidates = [];
-                        for (let i = 0; i < elements.length - 1; i++) {
-                            const elem = elements[i];
-                            if (elem && elem.length === element.length) {
-                                fallbackCandidates.push({
-                                    element: elem,
-                                    index: i,
-                                    distance: this._metric(element, elem),
-                                });
-                            }
-                        }
-                        fallbackCandidates.sort((a, b) => a.distance - b.distance);
-                        W = fallbackCandidates.slice(0, ef_construction);
-                        // Update ep_indices for next layer based on fallback results
-                        if (l_c === Math.min(L, l)) {
-                            ep_indices = W.map((c) => c.index);
-                        }
+                    // Add the reverse connection from neighbor to element.
+                    let neighbor_edges = layer.edges.get(neighbor_idx);
+                    if (!neighbor_edges) {
+                        neighbor_edges = [];
+                        layer.edges.set(neighbor_idx, neighbor_edges);
+                    }
+                    if (!neighbor_edges.includes(global_index)) {
+                        neighbor_edges.push(global_index);
                     }
 
-                    // Select neighbors using heuristic or simple approach (respect heuristic setting on all layers)
-                    const neighbor_indices = this._select(element, W, l_c === 0 ? m0 : m, l_c);
-
-                    // Add bidirectional connections
-                    for (const neighbor_idx of neighbor_indices) {
-                        if (neighbor_idx === global_index) continue;
-
-                        // Add connection from element to neighbor
-                        if (!layer.edges.has(global_index)) {
-                            layer.edges.set(global_index, []);
-                        }
-                        layer.edges.get(global_index)?.push(neighbor_idx);
-
-                        // Add connection from neighbor to element
-                        if (!layer.edges.has(neighbor_idx)) {
-                            layer.edges.set(neighbor_idx, []);
-                        }
-                        const neighbor_edge_list = layer.edges.get(neighbor_idx);
-                        if (neighbor_edge_list && !neighbor_edge_list.includes(global_index)) {
-                            neighbor_edge_list.push(global_index);
-                        }
-
-                        // Prune connections if too many
-                        const max_conn = l_c === 0 ? m0 : m;
-                        const neighbor_edges = layer.edges.get(neighbor_idx);
-                        if (neighbor_edges && neighbor_edges.length > max_conn) {
-                            const neighbor_element = elements[neighbor_idx];
-                            // Filter out self-connections before pruning
-                            const valid_neighbor_edges = neighbor_edges.filter((idx) => idx !== neighbor_idx);
-                            const neighbor_candidates = valid_neighbor_edges.map((idx) => ({
+                    // Prune with the same selector used to build the graph; plain nearest-M would
+                    // drop the long-range links that keep the layer navigable.
+                    if (neighbor_edges.length > max_conn) {
+                        const neighbor_element = elements[neighbor_idx];
+                        const neighbor_candidates = neighbor_edges
+                            .filter((idx) => idx !== neighbor_idx)
+                            .map((idx) => ({
                                 element: elements[idx],
                                 index: idx,
                                 distance: this._metric(neighbor_element, elements[idx]),
                             }));
-                            const pruned =
-                                l_c === 0
-                                    ? this._select_simple(neighbor_element, neighbor_candidates, max_conn)
-                                    : this._select(neighbor_element, neighbor_candidates, max_conn, l_c);
-                            layer.edges.set(neighbor_idx, pruned);
-                        }
-                    }
-
-                    // Use closest neighbor as entry point for next layer (following HNSW paper)
-                    if (W.length > 0) {
-                        ep_indices = [W[0].index];
+                        layer.edges.set(
+                            neighbor_idx,
+                            this._select(neighbor_element, neighbor_candidates, max_conn, l_c),
+                        );
                     }
                 }
+
+                // Descend from the closest neighbor actually linked on this layer.
+                ep_indices = [neighbor_indices.length > 0 ? neighbor_indices[0] : W[0].index];
             }
 
-            // If element's level is higher than current max, create new layers
+            // Layers above the previous maximum: the element is their only member and becomes the
+            // new entry point. Also covers the first insertion, where `L` is -1.
             if (l > L) {
                 for (let i = L + 1; i <= l; ++i) {
                     graph.set(i, {
                         l_c: i,
                         point_indices: [global_index],
-                        edges: new Map(),
+                        edges: new Map([[global_index, []]]),
                     });
                 }
-                // Element becomes the new entry point
                 this._ep = [global_index];
                 this._L = l;
-            }
-
-            // Special case: if this is the first element (L was -1),
-            // we need to ensure layer 0 has proper structure for future insertions
-            if (L === -1) {
-                if (!graph.has(0)) {
-                    graph.set(0, {
-                        l_c: 0,
-                        point_indices: [global_index],
-                        edges: new Map(),
-                    });
-                }
-                const layer0 = graph.get(0);
-                if (layer0 && !layer0.edges.has(global_index)) {
-                    layer0.edges.set(global_index, []);
-                }
             }
         }
 
@@ -367,75 +343,84 @@ export class HNSW extends KNN {
      * @param {Candidate<T>[]} candidates - Candidate elements with distances
      * @param {number} M - Maximum number of neighbors to return
      * @param {number} l_c - Layer number
-     * @param {boolean} [extend_candidates=true] - Whether to extend candidates with their neighbors
-     * @param {boolean} [keep_pruned_connections=true] - Whether to add pruned connections back if needed
-     * @returns {number[]} Selected neighbor indices
+     * @param {boolean} [extend_candidates=false] - Whether to extend candidates with their neighbors
+     * @param {boolean} [keep_pruned_connections=false] - Whether to add pruned connections back if needed
+     * @returns {number[]} Selected neighbor indices, nearest first
      */
-    _select_heuristic(q, candidates, M, l_c, extend_candidates = true, keep_pruned_connections = true) {
-        if (l_c > this._L) {
-            return candidates.map((c) => c.index);
-        }
-
+    _select_heuristic(q, candidates, M, l_c, extend_candidates = false, keep_pruned_connections = false) {
         const metric = this._metric;
-        const layer = this._graph.get(l_c);
         const elements = this._elements;
 
-        // Extend candidate set with neighbors of candidates
-        const W_set = new Set(candidates.map((c) => c.index));
+        const dist_map = new Map();
+        const pool = [];
+        for (let i = 0; i < candidates.length; ++i) {
+            const c = candidates[i];
+            if (dist_map.has(c.index)) continue;
+            dist_map.set(c.index, c.distance);
+            pool.push(c.index);
+        }
+
         if (extend_candidates) {
-            for (const c of candidates) {
-                const edges = layer?.edges.get(c.index);
-                if (edges) {
-                    for (const neighbor_idx of edges) {
-                        W_set.add(neighbor_idx);
+            const layer = this._graph.get(l_c);
+            if (layer) {
+                for (let i = 0; i < candidates.length; ++i) {
+                    const edges = layer.edges.get(candidates[i].index) ?? [];
+                    for (let j = 0; j < edges.length; ++j) {
+                        const idx = edges[j];
+                        if (dist_map.has(idx)) continue;
+                        const elem = elements[idx];
+                        if (!elem || elem.length !== q.length) continue;
+                        dist_map.set(idx, metric(elem, q));
+                        pool.push(idx);
                     }
                 }
             }
         }
 
-        // Create extended candidates with distances
-        const W = [...W_set]
-            .map((idx) => ({
-                element: elements[idx],
-                index: idx,
-                distance: metric(elements[idx], q),
-            }))
-            .sort((a, b) => a.distance - b.distance);
+        pool.sort((a, b) => dist_map.get(a) - dist_map.get(b));
 
+        // Nothing to choose between: keep everything rather than thinning an already small
+        // neighborhood.
+        if (pool.length < M) return pool;
+
+        /** @type {number[]} */
         const R = [];
-        const W_discarded = [];
+        /** @type {number[]} */
+        const discarded = [];
 
-        // Select neighbors: prefer points closer to query than to already selected points
-        for (const e of W) {
+        // Keep `e` only if the query is closer to it than any already-selected neighbor is. This
+        // spreads links across directions rather than letting them collapse onto the nearest
+        // cluster, which is what makes the layer navigable and not merely a k-nearest-neighbor graph.
+        for (let i = 0; i < pool.length; ++i) {
             if (R.length >= M) break;
+            const idx = pool[i];
+            const dist_to_q = dist_map.get(idx);
+            const e = elements[idx];
 
             let should_add = true;
-
-            // Check if e is closer to query than to any already selected point
-            for (const r of R) {
-                const dist_er = metric(e.element, r.element);
-                if (dist_er < e.distance) {
+            for (let j = 0; j < R.length; ++j) {
+                if (metric(e, elements[R[j]]) < dist_to_q) {
                     should_add = false;
                     break;
                 }
             }
 
             if (should_add) {
-                R.push(e);
+                R.push(idx);
             } else {
-                W_discarded.push(e);
+                discarded.push(idx);
             }
         }
 
-        // Add discarded connections if we need more
-        if (keep_pruned_connections && R.length < M) {
-            for (const e of W_discarded) {
-                if (R.length >= M) break;
-                R.push(e);
+        // Off by default: refilling to `M` with the nearest rejected candidates undoes the spread
+        // above and turns the result back into plain nearest-M.
+        if (keep_pruned_connections) {
+            for (let i = 0; i < discarded.length && R.length < M; ++i) {
+                R.push(discarded[i]);
             }
         }
 
-        return R.map((c) => c.index);
+        return R;
     }
 
     /**
@@ -478,80 +463,74 @@ export class HNSW extends KNN {
         const layer = this._graph.get(l_c);
         const elements = this._elements;
 
-        if (!layer || layer.edges.size === 0 || !ep_indices || ep_indices.length === 0) {
+        // A layer whose members carry no edges yet is not a failure: the entry points are still the
+        // best answer it can give.
+        if (!layer || !ep_indices || ep_indices.length === 0) {
             return [];
         }
 
-        // Filter out invalid indices
-        const valid_ep_indices = ep_indices.filter((idx) => elements[idx] !== undefined);
-        if (valid_ep_indices.length === 0) {
+        const numElements = elements.length;
+        if (this._visited_stamps.length < numElements) {
+            const nextCap = Math.max(numElements * 2, 1024);
+            const old = this._visited_stamps;
+            this._visited_stamps = new Uint32Array(nextCap);
+            this._visited_stamps.set(old);
+        }
+
+        const search_id = ++this._search_id;
+        const stamps = this._visited_stamps;
+
+        const init_candidates = [];
+        for (let i = 0; i < ep_indices.length; ++i) {
+            const idx = ep_indices[i];
+            const elem = elements[idx];
+            if (elem !== undefined) {
+                stamps[idx] = search_id;
+                init_candidates.push({
+                    element: elem,
+                    index: idx,
+                    distance: metric(elem, q),
+                });
+            }
+        }
+
+        if (init_candidates.length === 0) {
             return [];
         }
 
-        // Visited set to avoid cycles
-        const visited = new Set(valid_ep_indices);
+        const C = new Heap(init_candidates, (item) => item.distance, "min");
+        const W = new Heap(init_candidates, (item) => item.distance, "max");
 
-        // Candidate set (min-heap): closest unvisited candidates to expand
-        const C = new Heap(
-            valid_ep_indices.map((idx) => ({
-                element: elements[idx],
-                index: idx,
-                distance: metric(elements[idx], q),
-            })),
-            (item) => item.distance,
-            "min",
-        );
-
-        // Result set (max-heap): ef closest found neighbors
-        const W = new Heap(
-            valid_ep_indices.map((idx) => ({
-                element: elements[idx],
-                index: idx,
-                distance: metric(elements[idx], q),
-            })),
-            (item) => item.distance,
-            "max",
-        );
-
-        // Algorithm 2 stops when the distance from query to the next candidate is greater
-        // than the distance to the furthest element in the result set W.
         while (!C.empty) {
             const c = C.pop();
             if (!c) break;
             const furthest_dist = W.first?.value ?? Infinity;
 
-            // Stop if current candidate is farther than furthest result
             if (c.value > furthest_dist) {
                 break;
             }
 
-            const edges = layer.edges.get(c.element.index);
-            if (!edges) continue;
+            const edges = layer.edges.get(c.element.index) ?? [];
 
-            for (const neighbor_idx of edges) {
-                if (!visited.has(neighbor_idx)) {
+            for (let i = 0; i < edges.length; ++i) {
+                const neighbor_idx = edges[i];
+                if (stamps[neighbor_idx] !== search_id) {
+                    stamps[neighbor_idx] = search_id;
                     const neighbor_element = elements[neighbor_idx];
-                    // Skip invalid elements or elements with different dimensions
                     if (!neighbor_element || neighbor_element.length !== q.length) continue;
-
-                    // Skip self-connections
                     if (neighbor_idx === c.element.index) continue;
 
-                    visited.add(neighbor_idx);
                     const dist_e = metric(neighbor_element, q);
-
                     const current_furthest = W.first?.value ?? Infinity;
+
                     if (dist_e < current_furthest || W.length < ef) {
-                        C.push({
+                        const candidateNode = {
                             element: neighbor_element,
                             index: neighbor_idx,
                             distance: dist_e,
-                        });
-                        W.push({
-                            element: neighbor_element,
-                            index: neighbor_idx,
-                            distance: dist_e,
-                        });
+                        };
+                        C.push(candidateNode);
+                        W.push(candidateNode);
 
                         if (W.length > ef) {
                             W.pop();
@@ -561,7 +540,6 @@ export class HNSW extends KNN {
             }
         }
 
-        // Return sorted results for consistent entry point selection
         return W.data().sort((a, b) => a.distance - b.distance);
     }
 
@@ -719,22 +697,5 @@ export class HNSW extends KNN {
      */
     get_element(index) {
         return this._elements[index];
-    }
-
-    /**
-     * Search for nearest neighbors using an element index as the query.
-     *
-     * @param {number} i - Index of the query element
-     * @param {number} [K=5] - Number of nearest neighbors to return
-     * @returns {Candidate<T>[]} K nearest neighbors
-     */
-    search_by_index(i, K = 5) {
-        const elements = this._elements;
-        if (i < 0 || i >= elements.length) return [];
-
-        const element = elements[i];
-        if (!element) return [];
-
-        return this.search(element, K);
     }
 }

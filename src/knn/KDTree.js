@@ -1,5 +1,6 @@
 import { Heap } from "../datastructure/index.js";
 import { euclidean } from "../metrics/index.js";
+import { quickselectByAxis } from "../util/index.js";
 import { KNN } from "./KNN.js";
 
 /** @import { Metric } from "../metrics/index.js" */
@@ -38,10 +39,11 @@ export class KDTree extends KNN {
      * Generates a KD-Tree with given `elements`.
      *
      * @param {T[]} elements - Elements which should be added to the KD-Tree
-     * @param {ParametersKDTree} [parameters={metric: euclidean}] Default is `{metric: euclidean}`
+     * @param {Partial<ParametersKDTree>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      */
-    constructor(elements, parameters = { metric: euclidean, seed: 1212 }) {
-        super(elements, Object.assign({ seed: 1212 }, parameters));
+    constructor(elements, parameters = {}) {
+        super(elements, Object.assign({ metric: euclidean, seed: 1212 }, parameters));
         /**
          * @private
          * @type {KDTreeNode<T> | KDTreeLeaf<T> | null}
@@ -75,9 +77,9 @@ export class KDTree extends KNN {
         const k = elements[0].element.length;
         const axis = depth % k;
 
-        // Sort by the splitting axis and find median
-        elements.sort((a, b) => a.element[axis] - b.element[axis]);
+        // In-place QuickSelect partition around median index O(N)
         const medianIndex = Math.floor(elements.length / 2);
+        quickselectByAxis(elements, this._randomizer, medianIndex, axis);
         const medianPoint = elements[medianIndex];
 
         // Recursively build left and right subtrees
@@ -88,14 +90,6 @@ export class KDTree extends KNN {
         const right = this._construct(rightElements, depth + 1);
 
         return new KDTreeNode(medianPoint, axis, left, right);
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} k
-     */
-    search_by_index(i, k = 5) {
-        return this.search(this._elements[i], k);
     }
 
     /**

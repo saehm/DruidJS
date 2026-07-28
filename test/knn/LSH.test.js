@@ -44,7 +44,8 @@ describe("LSH", () => {
         const lsh = new LSH(points, { metric: euclidean });
         const neighbors = lsh.search_by_index(0, 2);
         expect(neighbors).toHaveLength(2);
-        expect(neighbors[0].index).toBe(0);
+        // search_by_index excludes the queried element itself.
+        expect(neighbors.map((n) => n.index)).toEqual([1, 2]);
     });
 
     it("should fallback to linear search when candidates are insufficient", () => {

@@ -87,11 +87,8 @@ export class ISOMAP extends DR {
             seed: /** @type {number} */ (this.parameter("seed")),
         });
         for (let i = 0; i < rows; ++i) {
-            // BallTree search returns elements including the queried point itself (at distance 0).
-            // Request neighbors + 1 and slice off the first one (which should be the query point).
-            const neighborsList = tree.search_by_index(i, neighbors + 1);
             kNearestNeighbors.push(
-                neighborsList.slice(1).map((n) => ({
+                tree.search_by_index(i, neighbors).map((n) => ({
                     index: n.index,
                     distance: n.distance,
                 })),

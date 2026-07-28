@@ -57,7 +57,8 @@ describe("NNDescent", () => {
         const nnd = new NNDescent(points, { samples: 2, seed: 42 });
         const neighbors1 = nnd.search_by_index(0, 2);
         expect(neighbors1).toHaveLength(2);
-        expect(neighbors1[0].index).toBe(0);
+        // search_by_index excludes the queried element itself.
+        expect(neighbors1.map((n) => n.index)).toEqual([1, 2]);
     });
 
     it("should handle invalid search_by_index indices", () => {

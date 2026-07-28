@@ -84,17 +84,24 @@ describe("NaiveKNN", () => {
     it("should return the k nearest in ascending order, matching a brute force scan", () => {
         const data = generateTestData(60, 3);
         const knn = new NaiveKNN(data, { metric: euclidean, seed: 42 });
-        const expected = data
+        const ranked = data
             .map((p, index) => ({ index, distance: euclidean(data[7], p) }))
-            .sort((a, b) => a.distance - b.distance || a.index - b.index)
-            .slice(0, 9);
+            .sort((a, b) => a.distance - b.distance || a.index - b.index);
 
-        for (const result of [knn.search(data[7], 9), knn.search_by_index(7, 9)]) {
-            expect(result.map((r) => r.index)).toEqual(expected.map((r) => r.index));
-            result.forEach((r, i) => {
-                expect(r.distance).toBeCloseTo(expected[i].distance, 12);
-            });
-        }
+        // `search` has no notion of self: an exact match is a legitimate result.
+        const bySearch = knn.search(data[7], 9);
+        expect(bySearch.map((r) => r.index)).toEqual(ranked.slice(0, 9).map((r) => r.index));
+        bySearch.forEach((r, i) => {
+            expect(r.distance).toBeCloseTo(ranked[i].distance, 12);
+        });
+
+        // `search_by_index` drops element 7 itself and fills the gap with the next nearest.
+        const expectedByIndex = ranked.filter((r) => r.index !== 7).slice(0, 9);
+        const byIndex = knn.search_by_index(7, 9);
+        expect(byIndex.map((r) => r.index)).toEqual(expectedByIndex.map((r) => r.index));
+        byIndex.forEach((r, i) => {
+            expect(r.distance).toBeCloseTo(expectedByIndex[i].distance, 12);
+        });
     });
 
     it("should clamp k to the number of elements", () => {

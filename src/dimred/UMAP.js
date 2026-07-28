@@ -144,24 +144,19 @@ export class UMAP extends DR {
         const MIN_K_DIST_SCALE = 1e-3;
         const n_iter = 64;
         const local_connectivity = /** @type {number} */ (this._parameters.local_connectivity);
-        const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const target = Math.log2(k);
         const rhos = [];
         const sigmas = [];
         const X = this.X;
         const N = X.shape[0];
-        //const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
 
         /** @type {{ element: Float64Array; index: number; distance: number }[][]} */
         const distances = [];
-        if (metric === "precomputed" || knn instanceof NaiveKNN) {
-            for (let i = 0; i < N; ++i) {
-                distances.push(knn.search_by_index(i, k).reverse());
-            }
-        } else {
-            for (const x_i of X) {
-                distances.push(knn.search(x_i, k).reverse());
-            }
+        // `search_by_index` excludes the point itself, so it is put back at the front to keep the
+        // `k` entries this expects.
+        for (let i = 0; i < N; ++i) {
+            const x_i = /** @type {Float64Array} */ (X.row(i));
+            distances.push([{ element: x_i, index: i, distance: 0 }, ...knn.search_by_index(i, k - 1)].reverse());
         }
 
         const index = Math.floor(local_connectivity);

@@ -47,27 +47,26 @@ export class Annoy extends KNN {
      * Creates a new Annoy-style index with random projection trees.
      *
      * @param {T[]} elements - Elements to index
-     * @param {ParametersAnnoy} [parameters={}] - Configuration parameters
+     * @param {Partial<ParametersAnnoy>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      */
-    constructor(
-        elements,
-        parameters = {
-            metric: euclidean,
-            numTrees: 10,
-            maxPointsPerLeaf: 10,
-            seed: 1212,
-        },
-    ) {
+    constructor(elements, parameters = {}) {
         // Handle empty initialization - use dummy element
         const hasElements = elements && elements.length > 0;
         const firstElement = /** @type {T} */ (hasElements ? elements[0] : new Float64Array([0]));
 
-        super([firstElement], parameters);
+        // `KNN` keeps the parameter object as handed to it, so defaults are merged here rather
+        // than left to a default argument, which would only apply when `parameters` is omitted
+        // entirely and drop every unspecified default for `new Annoy(elements, { numTrees: 20 })`.
+        super(
+            [firstElement],
+            Object.assign({ metric: euclidean, numTrees: 10, maxPointsPerLeaf: 10, seed: 1212 }, parameters),
+        );
 
-        this._metric = this._parameters.metric ?? euclidean;
-        this._numTrees = this._parameters.numTrees ?? 10;
-        this._maxPointsPerLeaf = this._parameters.maxPointsPerLeaf ?? 10;
-        this._seed = this._parameters.seed ?? 1212;
+        this._metric = this._parameters.metric;
+        this._numTrees = this._parameters.numTrees;
+        this._maxPointsPerLeaf = this._parameters.maxPointsPerLeaf;
+        this._seed = this._parameters.seed;
         this._randomizer = new Randomizer(this._seed);
 
         /**
@@ -388,16 +387,6 @@ export class Annoy extends KNN {
                 pq.push({ node: fartherSide, dist: Math.abs(dist) });
             }
         }
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        if (i < 0 || i >= this._elements.length) return [];
-        return this.search(this._elements[i], k);
     }
 
     /**

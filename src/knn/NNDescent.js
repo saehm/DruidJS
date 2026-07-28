@@ -49,14 +49,17 @@ export class NNDescent extends KNN {
 
     /**
      * @param {T[]} elements - Called V in paper.
-     * @param {Partial<ParametersNNDescent>} parameters
+     * @param {Partial<ParametersNNDescent>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      * @see {@link http://www.cs.princeton.edu/cass/papers/www11.pdf}
      */
     constructor(elements, parameters = {}) {
         super(
             elements,
+            // The neighborhood size is called `samples`; the default was previously keyed as `K`,
+            // which nothing reads, so constructing without one left it `undefined`.
             /** @type {ParametersNNDescent} */ (
-                Object.assign({ metric: euclidean, K: 10, rho: 1, delta: 1e-3, seed: 1212 }, parameters)
+                Object.assign({ metric: euclidean, samples: 10, rho: 1, delta: 1e-3, seed: 1212 }, parameters)
             ),
         );
         this._N = elements.length;
@@ -93,6 +96,28 @@ export class NNDescent extends KNN {
             const randomizer = this._randomizer;
             return randomizer.choice(A, sample_size);
         }
+    }
+
+    /**
+     * Offers each of `u1`, `u2` to the other's neighborhood, under the distance between them.
+     *
+     * The distance has to be computed here. A neighbor object carries the distance to the point
+     * whose list it came from, which says nothing about how far apart `u1` and `u2` are; reusing it
+     * meant no new distance was ever evaluated and the heaps were ordered by unrelated values.
+     *
+     * @private
+     * @param {KNNHeap<T>[]} B
+     * @param {NNDescentNeighbor<T>} u1
+     * @param {NNDescentNeighbor<T>} u2
+     * @returns {number} How many neighborhoods changed.
+     */
+    _join(B, u1, u2) {
+        if (u1.index === u2.index) return 0;
+        const distance = this._parameters.metric(u1.value, u2.value);
+        return (
+            this._update(B[u1.index], { index: u2.index, value: u2.value, distance, flag: true }) +
+            this._update(B[u2.index], { index: u1.index, value: u1.value, distance, flag: true })
+        );
     }
 
     /**
@@ -159,16 +184,15 @@ export class NNDescent extends KNN {
         /** @type {KNNHeap<T>[]} */
         const B = [];
         this._B = B;
+        // Hoisted: rebuilding this per point allocated N arrays of N objects.
+        const indexed = elements.map((el, idx) => ({ el, idx }));
         for (let i = 0; i < N; i++) {
             const e = elements[i];
-            const sample = randomizer
-                .choice(
-                    elements.map((el, idx) => ({ el, idx })),
-                    K,
-                )
-                .map((d) => {
-                    return { index: d.idx, distance: metric(d.el, e), value: d.el };
-                });
+            // `flag: true` marks the entry as new. Without it nothing is ever eligible for the
+            // local join below, so the graph stays at its random initialization.
+            const sample = randomizer.choice(indexed, K).map((d) => {
+                return { index: d.idx, distance: metric(d.el, e), value: d.el, flag: true };
+            });
             const Bi = new KNNHeap(sample, (d) => d.distance, "max");
             B.push(Bi);
         }
@@ -206,20 +230,12 @@ export class NNDescent extends KNN {
                 const n2 = old_i.length;
                 for (let j = 0; j < n1; j++) {
                     const u1 = new_i[j];
-                    const Bu1 = B[u1.index];
-                    for (let k = 0; k < n1; k++) {
-                        const u2 = new_i[k];
-                        if (u1.index === u2.index) continue;
-                        const Bu2 = B[u2.index];
-                        c += this._update(Bu2, u1);
-                        c += this._update(Bu1, u2);
+                    // new x new is unordered, so start at j + 1 rather than joining each pair twice
+                    for (let k = j + 1; k < n1; k++) {
+                        c += this._join(B, u1, new_i[k]);
                     }
                     for (let k = 0; k < n2; k++) {
-                        const u2 = old_i[k];
-                        if (u1.index === u2.index) continue;
-                        const Bu2 = B[u2.index];
-                        c += this._update(Bu2, u1);
-                        c += this._update(Bu1, u2);
+                        c += this._join(B, u1, old_i[k]);
                     }
                 }
             }
@@ -248,7 +264,7 @@ export class NNDescent extends KNN {
 
         // Randomly pick initial candidates
         const randomizer = this._randomizer;
-        for (let i = 0; i < Math.min(N, Math.max(k * 10, 50)); i++) {
+        for (let i = 0; i < Math.min(N, Math.max(k, 10)); i++) {
             let rnd;
             do {
                 rnd = randomizer.random_int % N;
@@ -269,10 +285,14 @@ export class NNDescent extends KNN {
         while (searching) {
             pool.sort((a, b) => a.dist - b.dist);
             // keep the top subset for exploration
-            pool = pool.slice(0, Math.max(k * 5, 50));
+            pool = pool.slice(0, Math.max(k * 2, 32));
 
             searching = false;
-            for (let i = 0; i < pool.length; i++) {
+            // Bounded by the pool as it stands now: expansion appends to `pool`, and re-reading
+            // `pool.length` here would walk those additions in the same pass, so the cap above
+            // never applied and the walk degenerated into a scan of the whole graph.
+            const frontier = pool.length;
+            for (let i = 0; i < frontier; i++) {
                 const candidate = pool[i];
                 if (candidate.evaluated) continue;
 
@@ -315,22 +335,6 @@ export class NNDescent extends KNN {
             });
         }
         return result;
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} [k=5] Default is `5`
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        // Use regular search with the element at index i
-        const elements = this._elements;
-        if (i < 0 || i >= elements.length) return [];
-
-        const element = elements[i];
-        if (!element) return [];
-
-        return this.search(element, k);
     }
 }
 

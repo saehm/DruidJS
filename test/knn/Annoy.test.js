@@ -54,7 +54,8 @@ describe("Annoy", () => {
         const annoy = new Annoy(points, { metric: euclidean });
         const neighbors = annoy.search_by_index(0, 2);
         expect(neighbors).toHaveLength(2);
-        expect(neighbors[0].index).toBe(0);
+        // search_by_index excludes the queried element itself.
+        expect(neighbors.map((n) => n.index)).toEqual([1, 2]);
     });
 
     it("should provide search_index alias", () => {
@@ -63,8 +64,7 @@ describe("Annoy", () => {
             [1, 1],
         ];
         const annoy = new Annoy(points, { seed: 42 });
-        const neighbors = annoy.search_index(0, 2);
-        expect(neighbors).toHaveLength(2);
+        expect(annoy.search_index(0, 2)).toEqual(annoy.search_by_index(0, 2));
     });
 
     it("should have correct num_trees and num_nodes", () => {

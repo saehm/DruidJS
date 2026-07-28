@@ -10,13 +10,13 @@ import { KNN } from "./KNN.js";
  * Locality Sensitive Hashing (LSH) for approximate nearest neighbor search.
  *
  * LSH uses hash functions that map similar items to the same buckets with high probability.
- * This implementation uses Random Projection hashing (SimHash-style) which works well for
- * cosine similarity and Euclidean distance.
+ * This implementation uses the p-stable scheme of Datar et al. for Euclidean distance: each hash
+ * projects onto a Gaussian random vector and quantizes the result into buckets of width w.
  *
  * Key concepts:
  * - Multiple hash tables increase recall probability
- * - Each hash function projects data onto random hyperplanes
- * - Points on the same side of hyperplanes are hashed together
+ * - Each hash function projects data onto a random Gaussian direction
+ * - Points landing in the same quantization bucket are hashed together
  * - Combines results from all tables for better accuracy
  *
  * Best suited for:
@@ -36,27 +36,29 @@ export class LSH extends KNN {
      * Creates a new LSH index.
      *
      * @param {T[]} elements - Elements to index
-     * @param {ParametersLSH} [parameters={}] - Configuration parameters
+     * @param {Partial<ParametersLSH>} [parameters={}] - Anything left out falls back to the
+     *   documented default.
      */
-    constructor(
-        elements,
-        parameters = {
-            metric: euclidean,
-            numHashTables: 10,
-            numHashFunctions: 10,
-            seed: 1212,
-        },
-    ) {
+    constructor(elements, parameters = {}) {
         // Handle empty initialization - use dummy element
         const hasElements = elements && elements.length > 0;
         const firstElement = /** @type {T} */ (hasElements ? elements[0] : new Float64Array([0]));
 
-        super([firstElement], parameters);
+        // `KNN` keeps the parameter object as handed to it, so defaults are merged here rather
+        // than left to a default argument, which would only apply when `parameters` is omitted
+        // entirely and drop every unspecified default for `new LSH(elements, { seed: 5 })`.
+        super(
+            [firstElement],
+            Object.assign(
+                { metric: euclidean, numHashTables: 10, numHashFunctions: 10, bucketWidth: null, seed: 1212 },
+                parameters,
+            ),
+        );
 
-        this._metric = this._parameters.metric ?? euclidean;
-        this._numHashTables = this._parameters.numHashTables ?? 10;
-        this._numHashFunctions = this._parameters.numHashFunctions ?? 10;
-        this._seed = this._parameters.seed ?? 1212;
+        this._metric = this._parameters.metric;
+        this._numHashTables = this._parameters.numHashTables;
+        this._numHashFunctions = this._parameters.numHashFunctions;
+        this._seed = this._parameters.seed;
         this._randomizer = new Randomizer(this._seed);
 
         // Hash tables: array of Maps where key is hash bucket, value is array of element indices
@@ -74,6 +76,10 @@ export class LSH extends KNN {
         // Store dimensionality for later
         /** @type {number} */
         this._dim = firstElement.length;
+
+        // Bucket width w, estimated from the data when not supplied
+        /** @type {number} */
+        this._bucketWidth = this._parameters.bucketWidth ?? this._estimateBucketWidth(hasElements ? elements : []);
 
         // Initialize hash functions
         this._initializeHashFunctions();
@@ -95,37 +101,62 @@ export class LSH extends KNN {
     }
 
     /**
+     * Estimates a bucket width from the spread of the data.
+     *
+     * Projected gaps are distributed as `N(0, ||u - v||^2)`, so w must sit near the scale of
+     * nearby-point distances: much larger and everything collides, much smaller and nothing does.
+     *
+     * @private
+     * @param {T[]} elements
+     * @returns {number} Bucket width, always positive.
+     */
+    _estimateBucketWidth(elements) {
+        const n = elements.length;
+        if (n < 2) return 1;
+
+        const neighbor_rank = Math.min(10, n - 1);
+        const step = Math.max(1, Math.floor(n / Math.min(n, 32)));
+
+        const scales = [];
+        for (let i = 0; i < n; i += step) {
+            const distances = new Array(n);
+            for (let j = 0; j < n; ++j) distances[j] = this._metric(elements[i], elements[j]);
+            distances.sort((a, b) => a - b);
+            scales.push(distances[neighbor_rank]);
+        }
+
+        scales.sort((a, b) => a - b);
+        const scale = scales[scales.length >> 1];
+        // Several times the near-neighbor distance: `numHashFunctions` hashes are ANDed per table,
+        // so the per-hash collision probability is raised to that power and has to stay high.
+        return scale > 0 ? 4 * scale : 1;
+    }
+
+    /**
      * Initialize random projection vectors for all hash tables.
      * @private
      */
     _initializeHashFunctions() {
-        const dim = this._elements[0]?.length ?? 0;
+        // From `_dim`, not `_elements`: the constructor clears `_elements` before re-initializing
+        const dim = this._dim;
 
         for (let t = 0; t < this._numHashTables; t++) {
             const tableProjections = [];
             const tableOffsets = [];
 
             for (let h = 0; h < this._numHashFunctions; h++) {
-                // Generate random projection vector (normalized)
+                // Raw N(0, 1); normalizing to unit length would break p-stability
                 const projection = new Float64Array(dim);
-                let norm = 0;
                 for (let i = 0; i < dim; i++) {
                     // Box-Muller transform for normal distribution
                     const u1 = this._randomizer.random;
                     const u2 = this._randomizer.random;
-                    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                    projection[i] = z;
-                    norm += z * z;
-                }
-                // Normalize
-                norm = Math.sqrt(norm);
-                for (let i = 0; i < dim; i++) {
-                    projection[i] /= norm;
+                    projection[i] = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
                 }
 
                 tableProjections.push(projection);
-                // Random offset for quantization buckets
-                tableOffsets.push(this._randomizer.random);
+                // Offset b, drawn uniformly from [0, w) as the scheme requires.
+                tableOffsets.push(this._randomizer.random * this._bucketWidth);
             }
 
             this._projections.push(tableProjections);
@@ -153,9 +184,8 @@ export class LSH extends KNN {
             for (let j = 0; j < element.length; j++) {
                 dot += element[j] * proj[j];
             }
-            // Quantize with offset
-            const bucket = Math.floor(dot + offsets[i]);
-            bits.push(bucket);
+            // Quantize into buckets of width w
+            bits.push(Math.floor((dot + offsets[i]) / this._bucketWidth));
         }
 
         return bits.join(",");
@@ -278,15 +308,5 @@ export class LSH extends KNN {
         }
 
         return result.reverse();
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        if (i < 0 || i >= this._elements.length) return [];
-        return this.search(this._elements[i], k);
     }
 }
