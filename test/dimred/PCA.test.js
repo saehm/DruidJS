@@ -77,6 +77,48 @@ describe("PCA", () => {
         expect(V1).toBe(V2);
     });
 
+    it("should keep the cache across a transform", () => {
+        const data = generateTestData();
+        const pca = new PCA(data, { d: 2, seed: 42 });
+        const V1 = pca.principal_components();
+        pca.transform();
+        expect(pca.principal_components()).toBe(V1);
+    });
+
+    it("should drop the cached components when d changes", () => {
+        const data = generateTestData();
+        const pca = new PCA(data, { d: 3, seed: 42 });
+        expect(pca.principal_components().shape[1]).toBe(3);
+        expect(/** @type {number[][]} */ (pca.transform())[0]).toHaveLength(3);
+
+        // Without invalidation the components computed for d=3 are returned again and the
+        // projection silently keeps the old dimensionality.
+        pca.parameter("d", 2);
+        expect(pca.principal_components().shape[1]).toBe(2);
+        expect(/** @type {number[][]} */ (pca.transform())[0]).toHaveLength(2);
+    });
+
+    it("should recompute the projection when d changes", () => {
+        const data = generateTestData();
+        const changed = new PCA(data, { d: 3, seed: 42 });
+        changed.transform();
+        changed.parameter("d", 2);
+        const recomputed = /** @type {number[][]} */ (changed.transform());
+
+        const direct = /** @type {number[][]} */ (new PCA(data, { d: 2, seed: 42 }).transform());
+
+        // Compared up to sign, and only to ~1e-5: an eigenvector's orientation is arbitrary, and
+        // the two instances reach `simultaneous_poweriteration` with their randomizer at different
+        // states — so the axes can come back mirrored, and the iteration stops at its convergence
+        // tolerance rather than at the exact eigenvector. The coordinates are what must agree.
+        expect(recomputed).toHaveLength(direct.length);
+        for (let i = 0; i < direct.length; ++i) {
+            for (let j = 0; j < 2; ++j) {
+                expect(Math.abs(recomputed[i][j])).toBeCloseTo(Math.abs(direct[i][j]), 4);
+            }
+        }
+    });
+
     it("should work with static principal_components", () => {
         const data = generateTestData();
         const V = PCA.principal_components(data, { d: 2 });

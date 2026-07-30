@@ -78,7 +78,10 @@ export class PCA extends DR {
      * @returns {Matrix}
      */
     principal_components() {
-        if (this.V) {
+        // The cache is only valid for the parameters it was computed from. `parameter()` clears
+        // `_is_initialized` on every set, so gating on it here is what makes `pca.parameter("d", 2)`
+        // after a `transform()` recompute instead of handing back the components for the old `d`.
+        if (this.V && this._is_initialized) {
             return this.V;
         }
         const d = /** @type {number} */ (this.parameter("d"));
@@ -88,6 +91,8 @@ export class PCA extends DR {
         const C = X_cent.transDot(X_cent);
         const { eigenvectors: V } = simultaneous_poweriteration(C, d, eig_args);
         this.V = Matrix.from(V).transpose();
+        // Marks the cache valid for the current parameters, so repeated calls still hit it.
+        this.check_init();
         return this.V;
     }
 
