@@ -197,6 +197,12 @@ export class MeanShift extends Clustering {
 
             let max_shift = 0;
             const kernel = this._kernel_weight.bind(this);
+            // The sweep is synchronous: every point shifts from the positions held at the start of
+            // the iteration. `Matrix.row` hands out a live subarray, so accumulating into `points`
+            // would let point `i` see the already-shifted `0..i-1` and make the result depend on
+            // the order the rows happen to be in — and diverge from `meanshift_step_range_f64`,
+            // which reads all of its neighbours from the untouched input buffer.
+            const next_points = new Float64Array(N * D);
             for (let i = 0; i < N; ++i) {
                 const row_i = points.row(i);
                 let sum_weights = 0;
@@ -213,6 +219,7 @@ export class MeanShift extends Clustering {
                 if (sum_weights === 0) {
                     const shift_norm = Math.sqrt(weighted_sum.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
+                    next_points.set(row_i, i * D);
                 } else {
                     const shift = new Float64Array(D);
                     for (let d = 0; d < D; ++d) {
@@ -221,10 +228,11 @@ export class MeanShift extends Clustering {
                     const shift_norm = Math.sqrt(shift.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
                     for (let d = 0; d < D; ++d) {
-                        row_i[d] += shift[d];
+                        next_points[i * D + d] = row_i[d] + shift[d];
                     }
                 }
             }
+            points.values.set(next_points);
             if (max_shift < tolerance) {
                 break;
             }

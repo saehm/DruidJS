@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { KMeans } from "../../src/clustering/KMeans.js";
+import { MeanShift } from "../../src/clustering/MeanShift.js";
+import { ISOMAP } from "../../src/dimred/ISOMAP.js";
 import { SAMMON } from "../../src/dimred/SAMMON.js";
 import { SMACOF } from "../../src/dimred/SMACOF.js";
 import { SQDMDS } from "../../src/dimred/SQDMDS.js";
@@ -277,4 +279,49 @@ describe.runIf(isWasmAvailable())("WASM and JS fallback agree", () => {
             expect_close(wasm, js, name);
         });
     }
+
+    it("ISOMAP agrees on both paths", () => {
+        // The JS side is a heap Dijkstra rather than a scalar mirror of the kernel, so this is a
+        // stronger claim than the element-wise cases above: two different shortest-path
+        // implementations have to produce the same geodesics.
+        const X = random_data(40, 5);
+        const { wasm, js } = both_paths(() => new ISOMAP(X, { d: 2, neighbors: 8, seed: 42 }).transform());
+        expect_close(wasm, js, "ISOMAP");
+    });
+
+    it("ISOMAP declines the worker pool below the parallel threshold", () => {
+        // `_dijkstra_parallel` is the pool entry point; under `WASM_MIN_PARALLEL_ROWS` it must bow
+        // out so the single-threaded kernel handles the run.
+        const isomap = new ISOMAP(random_data(20, 4), { d: 2, neighbors: 5, seed: 42 });
+        const rows = 20;
+        const out = new Float64Array(rows * rows);
+        expect(isomap._dijkstra_parallel(new Int32Array(rows * 5), new Float64Array(rows * 5), out, rows, 5)).toBe(
+            false,
+        );
+    });
+
+    for (const kernel of ["gaussian", "flat"]) {
+        it(`MeanShift agrees on both paths — ${kernel} kernel`, () => {
+            const X = random_data(40, 4);
+            const { wasm, js } = both_paths(() =>
+                new MeanShift(X, { bandwidth: 0.4, kernel, max_iter: 5, seed: 42 }).get_cluster_list(),
+            );
+            expect(wasm).toEqual(js);
+        });
+    }
+
+    it("MeanShift declines the worker pool below the parallel threshold", () => {
+        const ms = new MeanShift(random_data(20, 4), { bandwidth: 0.4, max_iter: 3, seed: 42 });
+        expect(ms._mean_shift_parallel(20, 4, true)).toBe(null);
+    });
+
+    it("MeanShift takes the metric-agnostic path for a non-euclidean metric", () => {
+        // Every kernel here is euclidean-only, so a custom metric has to bypass WASM entirely and
+        // still cluster — the branch that decides this is never taken by the default parameters.
+        const X = random_data(40, 4);
+        const { wasm, js } = both_paths(() =>
+            new MeanShift(X, { bandwidth: 1.5, metric: manhattan, max_iter: 5, seed: 42 }).get_cluster_list(),
+        );
+        expect(wasm).toEqual(js);
+    });
 });
