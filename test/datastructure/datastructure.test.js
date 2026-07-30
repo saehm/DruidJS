@@ -57,13 +57,16 @@ describe("Heap", () => {
 
         it("should accept a custom comparator function", () => {
             // Ordering by distance from 4, which neither "min" nor "max" expresses.
+            // Distances are 1, 2, 4, 5 — deliberately all distinct. Ties have no defined
+            // order here and break differently across engines, so a fixture containing one
+            // would assert something that is not a property of the heap.
             const heap = new Heap(
-                [0, 3, 5, 9],
+                [0, 3, 6, 9],
                 (x) => Math.abs(x - 4),
                 (a, b) => a < b,
             );
             expect(heap.first.element).toBe(3);
-            expect(heap.toArray()).toEqual([3, 5, 0, 9]);
+            expect(heap.toArray()).toEqual([3, 6, 0, 9]);
         });
     });
 
