@@ -81,20 +81,28 @@ export class LSH extends KNN {
         /** @type {number} */
         this._bucketWidth = this._parameters.bucketWidth ?? this._estimateBucketWidth(hasElements ? elements : []);
 
-        // Initialize hash functions
-        this._initializeHashFunctions();
+        /**
+         * Whether the projection geometry still has to be derived from real data.
+         *
+         * Both things the hash depends on — `_dim` and the bucket width — come from the elements,
+         * and an index built empty has none yet. Building hash functions against the placeholder
+         * would fix `_dim` at 1 and the width at the `n < 2` fallback, giving one-element projection
+         * vectors; `_computeHash` then walks `element.length` components against them, reads past
+         * the end, and every real point added later hashes to `"NaN,NaN,…"`. That lands the whole
+         * dataset in a single bucket per table and turns every query into a full scan — right
+         * answers, no index. So the hash functions wait for `add` to supply real data.
+         *
+         * @private
+         * @type {boolean}
+         */
+        this._awaiting_data = !hasElements;
 
-        // Reset elements if we were initialized with dummy
-        if (!hasElements) {
-            /** @type {T[]} */
-            this._elements = [];
-        } else {
-            // Clear and re-add elements properly
-            /** @type {T[]} */
-            this._elements = [];
-            this._hashTables = [];
-            this._projections = [];
-            this._offsets = [];
+        // The element `super` was given is a placeholder when the index was built empty, and is
+        // re-added below when it was not. Either way it must not survive into the index.
+        /** @type {T[]} */
+        this._elements = [];
+
+        if (hasElements) {
             this._initializeHashFunctions();
             this.add(elements);
         }
@@ -197,6 +205,21 @@ export class LSH extends KNN {
      * @returns {this}
      */
     add(elements) {
+        // First real data an empty-constructed index has seen: derive the projection geometry from
+        // it now. The draw sequence matches direct construction — one throwaway round in the
+        // constructor, then the round that counts — so both routes build the same index.
+        if (this._awaiting_data && elements.length > 0) {
+            this._dim = elements[0].length;
+            if (this._parameters.bucketWidth == null) {
+                this._bucketWidth = this._estimateBucketWidth(elements);
+            }
+            this._hashTables = [];
+            this._projections = [];
+            this._offsets = [];
+            this._initializeHashFunctions();
+            this._awaiting_data = false;
+        }
+
         // Extend elements array
         const startIndex = this._elements.length;
         this._elements = this._elements.concat(elements);

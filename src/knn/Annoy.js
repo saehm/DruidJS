@@ -51,7 +51,10 @@ export class Annoy extends KNN {
      *   documented default.
      */
     constructor(elements, parameters = {}) {
-        // Handle empty initialization - use dummy element
+        // `KNN` rejects an empty element list, so an index built empty and filled later via
+        // `add()` hands it a dummy element to get past that check. The dummy must not survive
+        // into `this._elements` — it would sit at index 0, shift every real element's index by
+        // one, and be returned by `search` as a phantom point at the origin.
         const hasElements = elements && elements.length > 0;
         const firstElement = /** @type {T} */ (hasElements ? elements[0] : new Float64Array([0]));
 
@@ -62,6 +65,11 @@ export class Annoy extends KNN {
             [firstElement],
             Object.assign({ metric: euclidean, numTrees: 10, maxPointsPerLeaf: 10, seed: 1212 }, parameters),
         );
+
+        // Drop the element `super` was given, dummy or real: `add` below is what populates the
+        // index, and it appends.
+        /** @type {T[]} */
+        this._elements = [];
 
         this._metric = this._parameters.metric;
         this._numTrees = this._parameters.numTrees;
@@ -75,12 +83,7 @@ export class Annoy extends KNN {
          */
         this._trees = [];
 
-        // Build trees
         if (hasElements) {
-            // Reset elements and rebuild properly
-            /** @type {T[]} */
-            this._elements = [];
-            this._trees = [];
             this.add(elements);
         }
     }

@@ -90,4 +90,64 @@ describe("Annoy", () => {
         const results = annoy.search([0.5, 0.5], 10);
         expect(results.length).toBeLessThanOrEqual(5);
     });
+
+    describe("built empty and filled with add()", () => {
+        const points = mistle.IRIS.values;
+
+        it("should report indices into the added elements, not shifted by the dummy", () => {
+            const annoy = new Annoy([], { metric: euclidean, seed: 42 });
+            annoy.add(points);
+
+            // The empty constructor needs an element to get past KNN's non-empty check. If that
+            // placeholder survives into `_elements` it sits at index 0 and shifts everything.
+            const neighbors = annoy.search(points[7], 5);
+            expect(neighbors[0].index).toBe(7);
+            expect(neighbors[0].distance).toBe(0);
+            for (const { index, element } of neighbors) {
+                expect(Array.from(element)).toEqual(Array.from(points[index]));
+            }
+        });
+
+        it("should match an index constructed with the same points directly", () => {
+            const direct = new Annoy(points, { metric: euclidean, seed: 42 });
+            const incremental = new Annoy([], { metric: euclidean, seed: 42 });
+            incremental.add(points);
+
+            expect(incremental.search(points[3], 5).map((n) => n.index)).toEqual(
+                direct.search(points[3], 5).map((n) => n.index),
+            );
+        });
+
+        it("should not admit a phantom point at the origin", () => {
+            const far = [
+                [100, 100],
+                [101, 101],
+                [102, 102],
+            ];
+            const annoy = new Annoy([], { metric: euclidean, seed: 42 });
+            annoy.add(far);
+
+            // A dummy `new Float64Array([0])` left in place would be the nearest thing to [0, 0].
+            const neighbors = annoy.search([0, 0], 3);
+            expect(neighbors).toHaveLength(3);
+            for (const { element } of neighbors) {
+                expect(Array.from(element)).not.toEqual([0]);
+            }
+        });
+
+        it("should keep indices contiguous across several add() calls", () => {
+            const annoy = new Annoy([], { metric: euclidean, seed: 42 });
+            annoy.add(points.slice(0, 40));
+            annoy.add(points.slice(40));
+
+            const neighbors = annoy.search(points[95], 3);
+            expect(neighbors[0].index).toBe(95);
+            expect(neighbors[0].distance).toBe(0);
+        });
+
+        it("should search an index that was never filled", () => {
+            const annoy = new Annoy([], { metric: euclidean, seed: 42 });
+            expect(annoy.search([0, 0], 3)).toEqual([]);
+        });
+    });
 });
