@@ -203,10 +203,10 @@ function initWasm() {
                     // The location is worth decoding: a bare `assert` passes a null message, so
                     // "~lib/rt/tlsf.ts" is the only thing distinguishing heap corruption caused by
                     // a bad buffer size from an ordinary kernel bug.
+                    // Read the location out of the still-live memory before retiring the instance.
                     const where = read_wasm_string(_file) ?? "kernel";
                     const reason = read_wasm_string(msg);
-                    wasmAborted = true;
-                    wasmInstance = null;
+                    retire_instance();
                     console.error(
                         `DruidJS: WASM aborted in ${where} at ${line}:${column}${reason ? `: ${reason}` : ""}, falling back to JS.`,
                     );
@@ -297,6 +297,28 @@ function free_all(exports, ptrs) {
 const sessions = new Map();
 
 /**
+ * Retires the current instance after a trap and drops everything that references it.
+ *
+ * The abort handler calls this the moment a kernel traps; it is also the state a test needs to
+ * reach without corrupting the heap, so it is exported (privately) rather than inlined.
+ *
+ * Clearing `sessions` is the part that is easy to forget and expensive to omit. Every session entry
+ * holds `inst`, so leaving them in the Map would pin the dead instance's whole linear memory — tens
+ * to hundreds of MB after a large run — for the life of the process: once `wasmAborted` is set,
+ * `initWasm` returns null and no later kernel call ever reaches `get_session`/`release_sessions` to
+ * clear them. The pointers are deliberately not freed — the heap they came from dies with the
+ * instance.
+ *
+ * @private
+ * @returns {void}
+ */
+function retire_instance() {
+    wasmAborted = true;
+    wasmInstance = null;
+    sessions.clear();
+}
+
+/**
  * Returns the session for `key`, allocating it if the shape changed or nothing is cached yet.
  *
  * The session is tied to the instance it was allocated from. A kernel trap retires the instance, so
@@ -372,26 +394,26 @@ function copy_once(exports, s, name, source) {
 }
 
 /**
- * Releases the buffers the iterative kernels hold between calls.
+ * Releases the named sessions, if they are still held.
  *
- * The t-SNE session keeps three N ⨯ N buffers alive so they are not reallocated and recopied every
- * iteration, which at N = 2000 is around 96 MB retained after a run finishes. Nothing needs to call
- * this — the next run at a different size replaces them — but a caller that is done projecting and
- * wants the memory back can.
+ * The optimisers call this from a `finally` when a run ends, which is what keeps the retained
+ * buffers — around 96 MB for t-SNE at N = 2000 — from outliving the projection that needed them.
+ * Freeing a session is never a correctness matter: the next call simply reallocates.
  *
+ * @private
+ * @param {string[]} keys
  * @returns {void}
- * @example
- * import { release_wasm_buffers } from "@saehrimnir/druidjs";
- * release_wasm_buffers();
  */
-function release_wasm_buffers() {
+function release_sessions(keys) {
     const inst = /** @type {any} */ (wasmInstance);
-    for (const held of sessions.values()) {
+    for (const key of keys) {
+        const held = sessions.get(key);
+        if (!held) continue;
         if (inst && held.inst === inst) {
             for (const name of Object.keys(held.ptrs)) inst.exports.free(held.ptrs[name]);
         }
+        sessions.delete(key);
     }
-    sessions.clear();
 }
 
 /**
@@ -5665,6 +5687,12 @@ class MeanShift extends Clustering {
 
             let max_shift = 0;
             const kernel = this._kernel_weight.bind(this);
+            // The sweep is synchronous: every point shifts from the positions held at the start of
+            // the iteration. `Matrix.row` hands out a live subarray, so accumulating into `points`
+            // would let point `i` see the already-shifted `0..i-1` and make the result depend on
+            // the order the rows happen to be in — and diverge from `meanshift_step_range_f64`,
+            // which reads all of its neighbours from the untouched input buffer.
+            const next_points = new Float64Array(N * D);
             for (let i = 0; i < N; ++i) {
                 const row_i = points.row(i);
                 let sum_weights = 0;
@@ -5681,6 +5709,7 @@ class MeanShift extends Clustering {
                 if (sum_weights === 0) {
                     const shift_norm = Math.sqrt(weighted_sum.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
+                    next_points.set(row_i, i * D);
                 } else {
                     const shift = new Float64Array(D);
                     for (let d = 0; d < D; ++d) {
@@ -5689,10 +5718,11 @@ class MeanShift extends Clustering {
                     const shift_norm = Math.sqrt(shift.reduce((acc, v) => acc + v * v, 0));
                     max_shift = Math.max(max_shift, shift_norm);
                     for (let d = 0; d < D; ++d) {
-                        row_i[d] += shift[d];
+                        next_points[i * D + d] = row_i[d] + shift[d];
                     }
                 }
             }
+            points.values.set(next_points);
             if (max_shift < tolerance) {
                 break;
             }
@@ -6614,6 +6644,72 @@ class DR {
     static async transform_async(X, parameters, ...args) {
         return DR.transform(X, parameters, ...args);
     }
+
+    /**
+     * WASM buffer sessions this method keeps alive between iterations, released when a run ends.
+     *
+     * Empty for methods with no accelerated iteration step, which is most of them. The accelerated
+     * optimisers override it — see {@link TSNE}.
+     *
+     * @protected
+     * @returns {string[]}
+     */
+    get _wasm_session_keys() {
+        return [];
+    }
+
+    /**
+     * Releases the WASM buffers this run is holding.
+     *
+     * Called from a `finally` around every iteration loop, so the memory does not outlive the
+     * projection. Freeing early is never a correctness problem — the next call reallocates — so
+     * this is safe to call at any point, including when WASM never ran.
+     *
+     * @protected
+     * @returns {void}
+     */
+    _release_wasm() {
+        const keys = this._wasm_session_keys;
+        if (keys.length > 0) release_sessions(keys);
+    }
+
+    /**
+     * Hands back the WASM buffers this instance is holding.
+     *
+     * Only needed after driving `generator()` by hand and stopping early — a plain `transform()`,
+     * or a `for…of` over `generator()` (including one you `break`), already releases when it ends.
+     * It frees only this method's buffers, never another running instance's, and the next run simply
+     * reallocates, so it is safe to call at any time, more than once, and while other instances are
+     * mid-run.
+     *
+     * @returns {this}
+     * @example
+     * const tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next();
+     * tsne.release(); // stop early and give the buffers back
+     */
+    release() {
+        this._release_wasm();
+        return this;
+    }
+
+    /**
+     * Alias of {@link release} for the `using` declaration, so a hand-driven run frees its buffers
+     * when the block exits. Note that {@link transform} and a completed or `break`-ed `generator()`
+     * already release on their own — this only matters for a generator abandoned part way.
+     *
+     * ```js
+     * using tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next(); // buffers released when the enclosing block exits
+     * ```
+     *
+     * @returns {void}
+     */
+    [Symbol.dispose]() {
+        this.release();
+    }
 }
 
 /** @import { InputType } from "../index.js" */
@@ -6808,13 +6904,32 @@ class KNN {
     }
 
     /**
-     * @abstract
-     * @param {number} i
-     * @param {number} k
-     * @returns {{ element: T; index: number; distance: number }[]}
+     * Searches the `k` nearest neighbors of the element stored at index `i`.
+     *
+     * The queried element is never part of the result. It is trivially its own closest neighbor at
+     * distance 0, which is never what a caller asking "what is this point near?" wants, so every
+     * caller used to strip it back out — each in its own, subtly different way. Note the asymmetry
+     * with {@link KNN#search}: an arbitrary query point has no "self" to exclude, so there `k` means
+     * "k results", while here it means "k neighbors".
+     *
+     * The self match is removed **by index** — not by position, and not by looking for a zero
+     * distance. Position is wrong because an approximate index may order ties differently or miss
+     * the element altogether (one extra candidate is requested to cover that), and a zero distance
+     * is wrong because genuine duplicate points share it and must survive.
+     *
+     * @param {number} i - Index of the query element.
+     * @param {number} [k=5] - Number of neighbors to return. Default is `5`
+     * @returns {{ element: T; index: number; distance: number }[]} The `k` nearest *other* elements,
+     *   closest first. Empty when `i` is out of range.
      */
-    search_by_index(i, k) {
-        throw new Error("The function search_by_index must be implemented!");
+    search_by_index(i, k = 5) {
+        const elements = this._elements;
+        if (i < 0 || i >= elements.length) return [];
+        const element = elements[i];
+        if (!element) return [];
+        return this.search(element, k + 1)
+            .filter((neighbor) => neighbor.index !== i)
+            .slice(0, k);
     }
 }
 
@@ -6866,7 +6981,10 @@ class Annoy extends KNN {
      *   documented default.
      */
     constructor(elements, parameters = {}) {
-        // Handle empty initialization - use dummy element
+        // `KNN` rejects an empty element list, so an index built empty and filled later via
+        // `add()` hands it a dummy element to get past that check. The dummy must not survive
+        // into `this._elements` — it would sit at index 0, shift every real element's index by
+        // one, and be returned by `search` as a phantom point at the origin.
         const hasElements = elements && elements.length > 0;
         const firstElement = /** @type {T} */ (hasElements ? elements[0] : new Float64Array([0]));
 
@@ -6877,6 +6995,11 @@ class Annoy extends KNN {
             [firstElement],
             Object.assign({ metric: euclidean, numTrees: 10, maxPointsPerLeaf: 10, seed: 1212 }, parameters),
         );
+
+        // Drop the element `super` was given, dummy or real: `add` below is what populates the
+        // index, and it appends.
+        /** @type {T[]} */
+        this._elements = [];
 
         this._metric = this._parameters.metric;
         this._numTrees = this._parameters.numTrees;
@@ -6890,12 +7013,7 @@ class Annoy extends KNN {
          */
         this._trees = [];
 
-        // Build trees
         if (hasElements) {
-            // Reset elements and rebuild properly
-            /** @type {T[]} */
-            this._elements = [];
-            this._trees = [];
             this.add(elements);
         }
     }
@@ -7205,16 +7323,6 @@ class Annoy extends KNN {
     }
 
     /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        if (i < 0 || i >= this._elements.length) return [];
-        return this.search(this._elements[i], k);
-    }
-
-    /**
      * Alias for search_by_index for backward compatibility.
      *
      * @param {number} i - Index of the query element
@@ -7347,14 +7455,6 @@ class BallTree extends KNN {
             c = spread[i] > spread[c] ? i : c;
         }
         return c;
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} k
-     */
-    search_by_index(i, k = 5) {
-        return this.search(this._elements[i], k);
     }
 
     /**
@@ -8165,23 +8265,6 @@ class HNSW extends KNN {
     get_element(index) {
         return this._elements[index];
     }
-
-    /**
-     * Search for nearest neighbors using an element index as the query.
-     *
-     * @param {number} i - Index of the query element
-     * @param {number} [K=5] - Number of nearest neighbors to return
-     * @returns {Candidate<T>[]} K nearest neighbors
-     */
-    search_by_index(i, K = 5) {
-        const elements = this._elements;
-        if (i < 0 || i >= elements.length) return [];
-
-        const element = elements[i];
-        if (!element) return [];
-
-        return this.search(element, K);
-    }
 }
 
 /** @import { Metric } from "../metrics/index.js" */
@@ -8271,14 +8354,6 @@ class KDTree extends KNN {
         const right = this._construct(rightElements, depth + 1);
 
         return new KDTreeNode(medianPoint, axis, left, right);
-    }
-
-    /**
-     * @param {number} i
-     * @param {number} k
-     */
-    search_by_index(i, k = 5) {
-        return this.search(this._elements[i], k);
     }
 
     /**
@@ -8473,20 +8548,28 @@ class LSH extends KNN {
         /** @type {number} */
         this._bucketWidth = this._parameters.bucketWidth ?? this._estimateBucketWidth(hasElements ? elements : []);
 
-        // Initialize hash functions
-        this._initializeHashFunctions();
+        /**
+         * Whether the projection geometry still has to be derived from real data.
+         *
+         * Both things the hash depends on — `_dim` and the bucket width — come from the elements,
+         * and an index built empty has none yet. Building hash functions against the placeholder
+         * would fix `_dim` at 1 and the width at the `n < 2` fallback, giving one-element projection
+         * vectors; `_computeHash` then walks `element.length` components against them, reads past
+         * the end, and every real point added later hashes to `"NaN,NaN,…"`. That lands the whole
+         * dataset in a single bucket per table and turns every query into a full scan — right
+         * answers, no index. So the hash functions wait for `add` to supply real data.
+         *
+         * @private
+         * @type {boolean}
+         */
+        this._awaiting_data = !hasElements;
 
-        // Reset elements if we were initialized with dummy
-        if (!hasElements) {
-            /** @type {T[]} */
-            this._elements = [];
-        } else {
-            // Clear and re-add elements properly
-            /** @type {T[]} */
-            this._elements = [];
-            this._hashTables = [];
-            this._projections = [];
-            this._offsets = [];
+        // The element `super` was given is a placeholder when the index was built empty, and is
+        // re-added below when it was not. Either way it must not survive into the index.
+        /** @type {T[]} */
+        this._elements = [];
+
+        if (hasElements) {
             this._initializeHashFunctions();
             this.add(elements);
         }
@@ -8589,6 +8672,21 @@ class LSH extends KNN {
      * @returns {this}
      */
     add(elements) {
+        // First real data an empty-constructed index has seen: derive the projection geometry from
+        // it now. The draw sequence matches direct construction — one throwaway round in the
+        // constructor, then the round that counts — so both routes build the same index.
+        if (this._awaiting_data && elements.length > 0) {
+            this._dim = elements[0].length;
+            if (this._parameters.bucketWidth == null) {
+                this._bucketWidth = this._estimateBucketWidth(elements);
+            }
+            this._hashTables = [];
+            this._projections = [];
+            this._offsets = [];
+            this._initializeHashFunctions();
+            this._awaiting_data = false;
+        }
+
         // Extend elements array
         const startIndex = this._elements.length;
         this._elements = this._elements.concat(elements);
@@ -8701,26 +8799,25 @@ class LSH extends KNN {
 
         return result.reverse();
     }
-
-    /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        if (i < 0 || i >= this._elements.length) return [];
-        return this.search(this._elements[i], k);
-    }
 }
 
 /** @import { ParametersNaiveKNN } from "./index.js" */
+/** @import { Metric } from "../metrics/index.js" */
 
 /**
- * Naive KNN implementation using a distance matrix.
+ * Naive KNN implementation performing an exhaustive scan.
  *
- * This implementation pre-computes the entire distance matrix and performs
- * an exhaustive search. Best suited for small datasets or when a distance
- * matrix is already available.
+ * Every query measures the distance to all `N` elements and then selects the `k` smallest with
+ * {@link quickselect}, which is O(N) on average — cheaper than sorting all `N` and far cheaper than
+ * the N heaps of N entries this class used to build up front.
+ *
+ * The N x N distance matrix is only materialized when it actually pays off: a `"precomputed"` index
+ * is handed one directly, and {@link NaiveKNN#search_by_index} builds one lazily on first use so
+ * that building a whole kNN graph costs a single pass over the pairs instead of one per query.
+ * Callers that only ever use {@link NaiveKNN#search} never allocate it.
+ *
+ * Best suited for small datasets, or when a distance matrix is already available. For larger `N`
+ * prefer an approximate index such as {@link HNSW}, {@link Annoy}, or {@link NNDescent}.
  *
  * @template {number[] | Float64Array} T
  * @category KNN
@@ -8728,6 +8825,20 @@ class LSH extends KNN {
  * @extends KNN<T, ParametersNaiveKNN>
  */
 class NaiveKNN extends KNN {
+    /**
+     * Number of indexed elements.
+     *
+     * @type {number}
+     */
+    _N;
+    /**
+     * Pairwise distances. Supplied by the caller when `metric` is `"precomputed"`, built on demand
+     * by {@link NaiveKNN#search_by_index} otherwise, and `null` until then.
+     *
+     * @type {Matrix | null}
+     */
+    _D;
+
     /**
      * Generates a KNN list with given `elements`.
      *
@@ -8738,67 +8849,94 @@ class NaiveKNN extends KNN {
     constructor(elements, parameters = {}) {
         const params = Object.assign({ metric: euclidean, seed: 1212 }, parameters);
         super(elements, params);
-        const N =
-            this._elements instanceof Matrix ? /** @type {any} */ (this._elements).shape[0] : this._elements.length;
-        if (this._parameters.metric === "precomputed") {
-            this._D = Matrix.from(/** @type {number[][] | Float64Array[]} */ (/** @type {any} */ (this._elements)));
-        } else {
-            this._D = distance_matrix(
-                /** @type {number[][] | Float64Array[]} */ (this._elements),
-                this._parameters.metric,
-            );
-        }
-
-        /** @type {Heap<{ value: number; index: number }>[]} */
-        this.KNN = [];
-        for (let row = 0; row < N; ++row) {
-            const distances = this._D.row(row);
-            /** @type {Heap<{ value: number; index: number }>} */
-            const H = new Heap(null, (d) => d.value, "min");
-            for (let j = 0; j < N; ++j) {
-                H.push({
-                    value: distances[j],
-                    index: j,
-                });
-            }
-            this.KNN.push(H);
-        }
+        const elements_any = /** @type {any} */ (this._elements);
+        this._N = elements_any instanceof Matrix ? elements_any.shape[0] : this._elements.length;
+        this._D =
+            this._parameters.metric === "precomputed"
+                ? Matrix.from(/** @type {number[][] | Float64Array[]} */ (elements_any))
+                : null;
     }
 
     /**
+     * Reads the element stored at `i`, which may live in a `Matrix` or a plain array.
+     *
+     * @private
      * @param {number} i
-     * @param {number} k
+     * @returns {T}
+     */
+    _element_at(i) {
+        const elements = /** @type {any} */ (this._elements);
+        return /** @type {T} */ (elements instanceof Matrix ? elements.row(i) : elements[i]);
+    }
+
+    /**
+     * Selects the `k` elements closest to a query from its distances to every element.
+     *
+     * QuickSelect partitions in O(N) average time, after which only the `k` selected entries are
+     * sorted. Ties break on the element index so the result never depends on the pivots drawn.
+     *
+     * @private
+     * @param {ArrayLike<number>} distances - Distance from the query to each element, by index.
+     * @param {number} k - Number of neighbors to return.
+     * @param {number} [exclude=-1] - Index to leave out, or `-1` to keep every element. Default is `-1`
+     * @returns {{ element: T; index: number; distance: number }[]} The `k` nearest, closest first.
+     */
+    _k_smallest(distances, k, exclude = -1) {
+        const N = this._N;
+        const pool = exclude >= 0 && exclude < N ? N - 1 : N;
+        const size = Math.min(Math.max(Math.floor(k), 0), pool);
+        if (size === 0) return [];
+
+        /** @type {(a: number, b: number) => number} */
+        const compare = (a, b) => distances[a] - distances[b] || a - b;
+        /** @type {number[]} */
+        const indices = new Array(pool);
+        for (let i = 0, at = 0; i < N; ++i) {
+            if (i !== exclude) indices[at++] = i;
+        }
+        if (size < pool) {
+            // Leaves the `size` smallest in indices[0..size-1], in no particular order.
+            quickselect(indices, this._randomizer, size - 1, compare);
+            indices.length = size;
+        }
+        indices.sort(compare);
+
+        return indices.map((index) => ({
+            element: this._element_at(index),
+            index,
+            distance: distances[index],
+        }));
+    }
+
+    /**
+     * Returns the pairwise distance matrix, computing it once on first use.
+     *
+     * @private
+     * @returns {Matrix}
+     */
+    _distance_matrix() {
+        if (this._D === null) {
+            this._D = distance_matrix(
+                /** @type {number[][] | Float64Array[]} */ (/** @type {any} */ (this._elements)),
+                /** @type {Metric} */ (this._parameters.metric),
+            );
+        }
+        return this._D;
+    }
+
+    /**
+     * Overrides {@link KNN#search_by_index}, which reaches the elements through {@link NaiveKNN#search}.
+     * That is not available on a `"precomputed"` index, and it would also throw away the distance
+     * matrix this class already holds. The self-exclusion contract is identical.
+     *
+     * @param {number} i - Index of the query element.
+     * @param {number} [k=5] - Number of nearest neighbors to return. Default is `5`
+     * @returns {{ element: T; index: number; distance: number }[]} - The `k` nearest *other*
+     *   elements, closest first. Empty when `i` is out of range.
      */
     search_by_index(i, k = 5) {
-        if (this._parameters.metric === "precomputed") {
-            const H = this.KNN[i];
-            /** @type {{ element: T; index: number; distance: number }[]} */
-            const result = [];
-            const data = H.toArray(); // Get array representation
-            const temp_heap = new Heap(data, (d) => d.value, "min");
-            const N =
-                this._elements instanceof Matrix ? /** @type {any} */ (this._elements).shape[0] : this._elements.length;
-            for (let j = 0; j < Math.min(k, N); ++j) {
-                const node = temp_heap.pop();
-                if (!node) break;
-                result.push({
-                    element: /** @type {T} */ (
-                        this._elements instanceof Matrix
-                            ? /** @type {any} */ (this._elements).row(node.element.index)
-                            : this._elements[node.element.index]
-                    ),
-                    index: /** @type {number} */ (node.element.index),
-                    distance: /** @type {number} */ (node.value),
-                });
-            }
-            return result;
-        }
-        return this.search(
-            /** @type {T} */ (
-                this._elements instanceof Matrix ? /** @type {any} */ (this._elements).row(i) : this._elements[i]
-            ),
-            k,
-        );
+        if (i < 0 || i >= this._N) return [];
+        return this._k_smallest(this._distance_matrix().row(i), k, i);
     }
 
     /**
@@ -8810,27 +8948,13 @@ class NaiveKNN extends KNN {
         if (this._parameters.metric === "precomputed") {
             throw new Error("Search by query element is only possible when not using a precomputed distance matrix!");
         }
-        /** @type {import("../metrics/index.js").Metric} */
-        const metric = /** @type {any} */ (this._parameters.metric);
-
-        const isMatrix = this._elements instanceof Matrix;
-        const elementsAny = /** @type {any} */ (this._elements);
-        const N = isMatrix ? elementsAny.shape[0] : this._elements.length;
-
-        // Compute distances from query to ALL points
-        const distances = [];
-        for (let i = 0; i < N; i++) {
-            const element = /** @type {T} */ (isMatrix ? elementsAny.row(i) : this._elements[i]);
-            distances.push({
-                element: element,
-                index: i,
-                distance: metric(t, element),
-            });
+        const metric = /** @type {Metric} */ (this._parameters.metric);
+        const N = this._N;
+        const distances = new Float64Array(N);
+        for (let i = 0; i < N; ++i) {
+            distances[i] = metric(t, this._element_at(i));
         }
-
-        // Sort by distance and return k nearest
-        distances.sort((a, b) => a.distance - b.distance);
-        return distances.slice(0, k);
+        return this._k_smallest(distances, k);
     }
 }
 
@@ -9167,22 +9291,6 @@ class NNDescent extends KNN {
         }
         return result;
     }
-
-    /**
-     * @param {number} i
-     * @param {number} [k=5] Default is `5`
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i, k = 5) {
-        // Use regular search with the element at index i
-        const elements = this._elements;
-        if (i < 0 || i >= elements.length) return [];
-
-        const element = elements[i];
-        if (!element) return [];
-
-        return this.search(element, k);
-    }
 }
 
 /**
@@ -9392,6 +9500,11 @@ function wasmSmacofStep(Z_val, TargetD_val, ZNew_val, n, d) {
  * @see {@link MDS} for the classical approach.
  */
 class SMACOF extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["smacof"];
+    }
+
     /**
      * SMACOF for MDS.
      *
@@ -9436,67 +9549,71 @@ class SMACOF extends DR {
             return this.projection;
         }
 
-        for (let iter = 0; iter < iterations; ++iter) {
-            const Z_new = new Matrix(rows, d);
-            let current_stress = null;
+        try {
+            for (let iter = 0; iter < iterations; ++iter) {
+                const Z_new = new Matrix(rows, d);
+                let current_stress = null;
 
-            if (rows >= WASM_MIN_ROWS) {
-                current_stress = wasmSmacofStep(Z.values, target_distances.values, Z_new.values, rows, d);
-            }
+                if (rows >= WASM_MIN_ROWS) {
+                    current_stress = wasmSmacofStep(Z.values, target_distances.values, Z_new.values, rows, d);
+                }
 
-            if (current_stress === null) {
-                const B = new Matrix(rows, rows, 0);
+                if (current_stress === null) {
+                    const B = new Matrix(rows, rows, 0);
 
-                for (let i = 0; i < rows; ++i) {
-                    let bii = 0;
-                    const z_i = Z.row(i);
-                    for (let j = 0; j < rows; ++j) {
-                        if (i === j) continue;
-                        const z_j = Z.row(j);
-                        const dist_Z = euclidean(z_i, z_j);
-                        const dist_target = target_distances.entry(i, j);
+                    for (let i = 0; i < rows; ++i) {
+                        let bii = 0;
+                        const z_i = Z.row(i);
+                        for (let j = 0; j < rows; ++j) {
+                            if (i === j) continue;
+                            const z_j = Z.row(j);
+                            const dist_Z = euclidean(z_i, z_j);
+                            const dist_target = target_distances.entry(i, j);
 
-                        let bij = 0;
-                        if (dist_Z > 1e-12) {
-                            bij = -dist_target / dist_Z;
+                            let bij = 0;
+                            if (dist_Z > 1e-12) {
+                                bij = -dist_target / dist_Z;
+                            }
+                            B.set_entry(i, j, bij);
+                            bii -= bij;
                         }
-                        B.set_entry(i, j, bij);
-                        bii -= bij;
+                        B.set_entry(i, i, bii);
                     }
-                    B.set_entry(i, i, bii);
+
+                    // Z_new = 1/N * B(Z) * Z
+                    const Z_new_js = B.dot(Z)._apply(rows, (val, n) => val / n);
+                    Z_new.values.set(Z_new_js.values);
+
+                    // Calculate stress
+                    let stress_num = 0;
+                    let stress_den = 0;
+                    for (let i = 0; i < rows; ++i) {
+                        const z_i = Z_new.row(i);
+                        for (let j = i + 1; j < rows; ++j) {
+                            const z_j = Z_new.row(j);
+                            const dist_Y = euclidean(z_i, z_j);
+                            const diff = target_distances.entry(i, j) - dist_Y;
+                            stress_num += diff * diff;
+                            stress_den += target_distances.entry(i, j) ** 2;
+                        }
+                    }
+                    current_stress = Math.sqrt(stress_num / Math.max(stress_den, 1e-12));
                 }
 
-                // Z_new = 1/N * B(Z) * Z
-                const Z_new_js = B.dot(Z)._apply(rows, (val, n) => val / n);
-                Z_new.values.set(Z_new_js.values);
+                this.Y = Z_new;
+                Z = Z_new;
 
-                // Calculate stress
-                let stress_num = 0;
-                let stress_den = 0;
-                for (let i = 0; i < rows; ++i) {
-                    const z_i = Z_new.row(i);
-                    for (let j = i + 1; j < rows; ++j) {
-                        const z_j = Z_new.row(j);
-                        const dist_Y = euclidean(z_i, z_j);
-                        const diff = target_distances.entry(i, j) - dist_Y;
-                        stress_num += diff * diff;
-                        stress_den += target_distances.entry(i, j) ** 2;
-                    }
+                yield this.projection;
+
+                if (Math.abs(prev_stress - current_stress) < epsilon) {
+                    break;
                 }
-                current_stress = Math.sqrt(stress_num / Math.max(stress_den, 1e-12));
+                prev_stress = current_stress;
             }
-
-            this.Y = Z_new;
-            Z = Z_new;
-
-            yield this.projection;
-
-            if (Math.abs(prev_stress - current_stress) < epsilon) {
-                break;
-            }
-            prev_stress = current_stress;
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -9657,11 +9774,8 @@ class ISOMAP extends DR {
             seed: /** @type {number} */ (this.parameter("seed")),
         });
         for (let i = 0; i < rows; ++i) {
-            // BallTree search returns elements including the queried point itself (at distance 0).
-            // Request neighbors + 1 and slice off the first one (which should be the query point).
-            const neighborsList = tree.search_by_index(i, neighbors + 1);
             kNearestNeighbors.push(
-                neighborsList.slice(1).map((n) => ({
+                tree.search_by_index(i, neighbors).map((n) => ({
                     index: n.index,
                     distance: n.distance,
                 })),
@@ -9968,6 +10082,7 @@ class LDA extends DR {
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLLE} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 
 /**
@@ -9999,6 +10114,7 @@ class LLE extends DR {
                 d: 2,
                 metric: euclidean,
                 seed: 1212,
+                knn: null,
                 eig_args: {},
             },
             parameters,
@@ -10036,13 +10152,26 @@ class LLE extends DR {
         const d = /** @type {number} */ (this.parameter("d"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
-        const nN = k_nearest_neighbors(X, neighbors, metric);
+        const knn =
+            /** @type {KNN<number[] | Float64Array, any> | null} */ (this.parameter("knn")) ??
+            spatial_tree(X.to2dArray(), { metric, seed: /** @type {number} */ (this.parameter("seed")) });
+        const nN = [];
+        for (let row = 0; row < rows; ++row) {
+            const found = knn.search_by_index(row, neighbors);
+            if (found.length < neighbors) {
+                throw new Error(
+                    `The KNN index returned only ${found.length} of the ${neighbors} requested neighbors for element ${row}. ` +
+                        `Lower "neighbors", or use an index that recalls more candidates.`,
+                );
+            }
+            nN.push(found);
+        }
         const O = new Matrix(neighbors, 1, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
-            const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
+            const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].index, j) - X.entry(row, j));
             const C = Z.dotTrans(Z);
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag()) / 1000;
@@ -10054,7 +10183,7 @@ class LLE extends DR {
             let w = Matrix.solve_CG(C, O, this._randomizer);
             w = w.divide(w.sum());
             for (let j = 0; j < neighbors; ++j) {
-                W.set_entry(row, nN_row[j].j, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].index, w.entry(j, 0));
             }
         }
         // comp embedding
@@ -10318,9 +10447,8 @@ class LSP extends DR {
         const knn = spatial_tree(XA, { metric, seed });
         const L = new Matrix(N, N, "I");
         const alpha = -1 / K;
-        XA.forEach((x_i, i) => {
-            for (const { index: j } of knn.search(x_i, K)) {
-                if (i === j) continue;
+        XA.forEach((_x_i, i) => {
+            for (const { index: j } of knn.search_by_index(i, K)) {
                 L.set_entry(i, j, alpha);
             }
         });
@@ -10389,6 +10517,7 @@ class LSP extends DR {
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLTSA} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 
 /**
@@ -10419,6 +10548,7 @@ class LTSA extends DR {
                 d: 2,
                 metric: euclidean,
                 seed: 1212,
+                knn: null,
                 eig_args: {},
             },
             parameters,
@@ -10462,14 +10592,27 @@ class LTSA extends DR {
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
         // 1.1 determine k nearest neighbors
-        const nN = k_nearest_neighbors(X, neighbors, metric);
+        const knn =
+            /** @type {KNN<number[] | Float64Array, any> | null} */ (this.parameter("knn")) ??
+            spatial_tree(X.to2dArray(), { metric, seed: /** @type {number} */ (this.parameter("seed")) });
+        const nN = [];
+        for (let row = 0; row < rows; ++row) {
+            const found = knn.search_by_index(row, neighbors);
+            if (found.length < neighbors) {
+                throw new Error(
+                    `The KNN index returned only ${found.length} of the ${neighbors} requested neighbors for element ${row}. ` +
+                        `Lower "neighbors", or use an index that recalls more candidates.`,
+                );
+            }
+            nN.push(found);
+        }
         // center matrix
         const O = new Matrix(D, D, "center");
         const B = new Matrix(rows, rows, 0);
 
         for (let row = 0; row < rows; ++row) {
             // 1.2 compute the d largest eigenvectors of the correlation matrix
-            const I_i = [row, ...nN[row].map((n) => n.j)];
+            const I_i = [row, ...nN[row].map((n) => n.index)];
             let X_i = Matrix.from(I_i.map((n) => X.row(n)));
             // center X_i
             X_i = X_i.dot(O);
@@ -10606,7 +10749,10 @@ class PCA extends DR {
      * @returns {Matrix}
      */
     principal_components() {
-        if (this.V) {
+        // The cache is only valid for the parameters it was computed from. `parameter()` clears
+        // `_is_initialized` on every set, so gating on it here is what makes `pca.parameter("d", 2)`
+        // after a `transform()` recompute instead of handing back the components for the old `d`.
+        if (this.V && this._is_initialized) {
             return this.V;
         }
         const d = /** @type {number} */ (this.parameter("d"));
@@ -10616,6 +10762,8 @@ class PCA extends DR {
         const C = X_cent.transDot(X_cent);
         const { eigenvectors: V } = simultaneous_poweriteration(C, d, eig_args);
         this.V = Matrix.from(V).transpose();
+        // Marks the cache valid for the current parameters, so repeated calls still hit it.
+        this.check_init();
         return this.V;
     }
 
@@ -10729,6 +10877,11 @@ function wasmSammonStep(Y_val, D_val, n, dim, magic) {
  * @category Dimensionality Reduction
  */
 class SAMMON extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["sammon"];
+    }
+
     /** @type {Matrix | undefined} */
     distance_matrix;
 
@@ -10790,10 +10943,14 @@ class SAMMON extends DR {
     transform(max_iter = 200) {
         this.check_init();
         if (!this.distance_matrix) this.init(this.distance_matrix);
-        for (let j = 0; j < max_iter; ++j) {
-            this._step();
+        try {
+            for (let j = 0; j < max_iter; ++j) {
+                this._step();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -10807,12 +10964,16 @@ class SAMMON extends DR {
         this.check_init();
         if (!this.distance_matrix) this.init(this.distance_matrix);
 
-        for (let j = 0; j < max_iter; ++j) {
-            this._step();
-            yield this.projection;
-        }
+        try {
+            for (let j = 0; j < max_iter; ++j) {
+                this._step();
+                yield this.projection;
+            }
 
-        return this.projection;
+            return this.projection;
+        } finally {
+            this._release_wasm();
+        }
     }
 
     _step() {
@@ -11029,6 +11190,11 @@ function wasmSqdmdsNestrovStep(Y_val, M_val, Grads_val, n, d, lr) {
  * @category Dimensionality Reduction
  */
 class SQDMDS extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["sqdmds_fill_grads", "sqdmds_nestrov"];
+    }
+
     /**
      * SQuadMDS: a lean Stochastic Quartet MDS improving global structure preservation in neighbor embedding like t-SNE
      * and UMAP.
@@ -11108,10 +11274,14 @@ class SQDMDS extends DR {
         this.check_init();
         const decay_start = /** @type {number} */ (this.parameter("decay_start"));
         this._decay_start = Math.round(decay_start * iterations);
-        for (let i = 0; i < iterations; ++i) {
-            this._step(i, iterations);
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this._step(i, iterations);
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -11124,12 +11294,16 @@ class SQDMDS extends DR {
         this.check_init();
         const decay_start = /** @type {number} */ (this.parameter("decay_start"));
         this._decay_start = Math.round(decay_start * iterations);
-        for (let i = 0; i < iterations; ++i) {
-            this._step(i, iterations);
-            yield this.projection;
-        }
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this._step(i, iterations);
+                yield this.projection;
+            }
 
-        return this.projection;
+            return this.projection;
+        } finally {
+            this._release_wasm();
+        }
     }
 
     /**
@@ -11924,9 +12098,14 @@ class TopoMap extends DR {
 /**
  * Computes TriMap triplet gradients in WASM SIMD.
  *
+ * Buffers persist across calls, so the triplet list and their weights are copied in only once per
+ * run. They are the largest operands here — there are far more triplets than points — and `init()`
+ * builds both once, so the caller must pass the same arrays every iteration; see {@link copy_once}.
+ * `Y` and `grad` are rebuilt by the caller each iteration and are copied as before.
+ *
  * @param {Float64Array} Y_val
- * @param {Int32Array} triplets_val
- * @param {Float64Array} weights_val
+ * @param {Int32Array} triplets_val - Constant for the run; copied on first use only.
+ * @param {Float64Array} weights_val - Constant for the run; copied on first use only.
  * @param {Float64Array} grad_val
  * @param {number} n
  * @param {number} dim
@@ -11940,29 +12119,27 @@ function wasmTriMapGrad(Y_val, triplets_val, weights_val, grad_val, n, dim, n_in
 
     /** @type {any} */
     const exports = inst.exports;
-    const memory = exports.memory;
 
     const num_triplets = triplets_val.length / 3;
 
-    /** @type {number[]} */
-    const ptrs = [];
-    try {
-        const ptrY = alloc(exports, ptrs, Y_val.byteLength);
-        const ptrT = alloc(exports, ptrs, triplets_val.byteLength);
-        const ptrW = alloc(exports, ptrs, weights_val.byteLength);
-        const ptrG = alloc(exports, ptrs, grad_val.byteLength);
+    const s = get_session(inst, exports, "trimap_grad", {
+        Y: Y_val.byteLength,
+        triplets: triplets_val.byteLength,
+        weights: weights_val.byteLength,
+        grad: grad_val.byteLength,
+    });
+    const { Y, triplets, weights, grad } = s.ptrs;
 
-        new Float64Array(memory.buffer, ptrY, Y_val.length).set(Y_val);
-        new Int32Array(memory.buffer, ptrT, triplets_val.length).set(triplets_val);
-        new Float64Array(memory.buffer, ptrW, weights_val.length).set(weights_val);
+    copy_once(exports, s, "triplets", triplets_val);
+    copy_once(exports, s, "weights", weights_val);
 
-        const loss = exports.trimap_grad_f64(ptrY, ptrT, ptrW, ptrG, n, dim, num_triplets, n_inliers, n_outliers);
+    const memory = exports.memory;
+    new Float64Array(memory.buffer, Y, Y_val.length).set(Y_val);
 
-        grad_val.set(new Float64Array(memory.buffer, ptrG, grad_val.length));
-        return loss;
-    } finally {
-        free_all(exports, ptrs);
-    }
+    const loss = exports.trimap_grad_f64(Y, triplets, weights, grad, n, dim, num_triplets, n_inliers, n_outliers);
+
+    grad_val.set(new Float64Array(memory.buffer, grad, grad_val.length));
+    return loss;
 }
 
 /**
@@ -11984,30 +12161,29 @@ function wasmTriMapUpdate(Y_val, grad_val, vel_val, gain_val, n, dim, gamma, lr)
 
     /** @type {any} */
     const exports = inst.exports;
+
+    // All four operands are per-iteration state and all are N ⨯ dim, so nothing can be skipped here;
+    // the session only saves the allocate/free pair on each buffer.
+    const s = get_session(inst, exports, "trimap_update", {
+        Y: Y_val.byteLength,
+        grad: grad_val.byteLength,
+        vel: vel_val.byteLength,
+        gain: gain_val.byteLength,
+    });
+    const { Y, grad, vel, gain } = s.ptrs;
+
     const memory = exports.memory;
+    new Float64Array(memory.buffer, Y, Y_val.length).set(Y_val);
+    new Float64Array(memory.buffer, grad, grad_val.length).set(grad_val);
+    new Float64Array(memory.buffer, vel, vel_val.length).set(vel_val);
+    new Float64Array(memory.buffer, gain, gain_val.length).set(gain_val);
 
-    /** @type {number[]} */
-    const ptrs = [];
-    try {
-        const ptrY = alloc(exports, ptrs, Y_val.byteLength);
-        const ptrG = alloc(exports, ptrs, grad_val.byteLength);
-        const ptrV = alloc(exports, ptrs, vel_val.byteLength);
-        const ptrGain = alloc(exports, ptrs, gain_val.byteLength);
+    exports.trimap_update_f64(Y, grad, vel, gain, n, dim, gamma, lr);
 
-        new Float64Array(memory.buffer, ptrY, Y_val.length).set(Y_val);
-        new Float64Array(memory.buffer, ptrG, grad_val.length).set(grad_val);
-        new Float64Array(memory.buffer, ptrV, vel_val.length).set(vel_val);
-        new Float64Array(memory.buffer, ptrGain, gain_val.length).set(gain_val);
-
-        exports.trimap_update_f64(ptrY, ptrG, ptrV, ptrGain, n, dim, gamma, lr);
-
-        Y_val.set(new Float64Array(memory.buffer, ptrY, Y_val.length));
-        vel_val.set(new Float64Array(memory.buffer, ptrV, vel_val.length));
-        gain_val.set(new Float64Array(memory.buffer, ptrGain, gain_val.length));
-        return true;
-    } finally {
-        free_all(exports, ptrs);
-    }
+    Y_val.set(new Float64Array(memory.buffer, Y, Y_val.length));
+    vel_val.set(new Float64Array(memory.buffer, vel, vel_val.length));
+    gain_val.set(new Float64Array(memory.buffer, gain, gain_val.length));
+    return true;
 }
 
 /** @import {InputType} from "../index.js" */
@@ -12028,6 +12204,11 @@ function wasmTriMapUpdate(Y_val, grad_val, vel_val, gain_val, n, dim, gamma, lr)
  * @category Dimensionality Reduction
  */
 class TriMap extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["trimap_grad", "trimap_update"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersTriMap>} [parameters] - Object containing parameterization of the DR method.
@@ -12099,16 +12280,11 @@ class TriMap extends DR {
         const nbrs = new Matrix(N, n_extra);
         const knn_distances = new Matrix(N, n_extra);
         for (let i = 0; i < N; ++i) {
-            const results = knn
-                .search(X.row(i), n_extra + 1)
-                .filter((d) => d.distance !== 0)
-                .sort((a, b) => a.distance - b.distance);
-
-            results.forEach((d, j) => {
-                if (j < n_extra) {
-                    nbrs.set_entry(i, j, d.index);
-                    knn_distances.set_entry(i, j, d.distance);
-                }
+            // Excludes `i` itself and comes back closest first. Filtering on a zero distance instead
+            // would also drop genuine duplicates of `i`, which shifts every column that `sig` reads.
+            knn.search_by_index(i, n_extra).forEach((d, j) => {
+                nbrs.set_entry(i, j, d.index);
+                knn_distances.set_entry(i, j, d.distance);
             });
         }
         // scale parameter
@@ -12383,10 +12559,14 @@ class TriMap extends DR {
      */
     transform(max_iteration = 800) {
         this.check_init();
-        for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter);
+        try {
+            for (let iter = 0; iter < max_iteration; ++iter) {
+                this._next(iter);
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -12395,11 +12575,15 @@ class TriMap extends DR {
      */
     *generator(max_iteration = 800) {
         this.check_init();
-        for (let iter = 0; iter < max_iteration; ++iter) {
-            this._next(iter);
-            yield this.projection;
+        try {
+            for (let iter = 0; iter < max_iteration; ++iter) {
+                this._next(iter);
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -12595,6 +12779,11 @@ function wasmTsneStep(Y_val, P_val, ystep_val, gains_val, n, dim, pmul, epsilon,
  * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 class TSNE extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["tsne"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersTSNE>} [parameters] - Object containing parameterization of the DR method.
@@ -12705,10 +12894,14 @@ class TSNE extends DR {
      */
     transform(iterations = 500) {
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -12717,11 +12910,17 @@ class TSNE extends DR {
      */
     *generator(iterations = 500) {
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-            yield this.projection;
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            // Runs on completion and on early `return()` — which `for…of` issues when the consumer
+            // breaks. A consumer abandoning manual `next()` calls keeps the buffers, as before.
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -13049,6 +13248,11 @@ function wasmUmapOptimizeEpoch(
  * // [[x1, y1], [x2, y2], [x3, y3]]
  */
 class UMAP extends DR {
+    /** @protected */
+    get _wasm_session_keys() {
+        return ["umap_epoch", "umap_neg"];
+    }
+
     /**
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersUMAP>} [parameters] - Object containing parameterization of the DR method.
@@ -13154,25 +13358,37 @@ class UMAP extends DR {
         const MIN_K_DIST_SCALE = 1e-3;
         const n_iter = 64;
         const local_connectivity = /** @type {number} */ (this._parameters.local_connectivity);
-        const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const target = Math.log2(k);
         const rhos = [];
         const sigmas = [];
         const X = this.X;
         const N = X.shape[0];
-        //const distances = [...X].map(x_i => knn.search(x_i, k).raw_data().reverse());
 
         /** @type {{ element: Float64Array; index: number; distance: number }[][]} */
         const distances = [];
-        if (metric === "precomputed" || knn instanceof NaiveKNN) {
-            for (let i = 0; i < N; ++i) {
-                distances.push(knn.search_by_index(i, k).reverse());
-            }
-        } else {
-            for (const x_i of X) {
-                distances.push(knn.search(x_i, k).reverse());
+        // Every index returns its results closest first, which is the order the code below relies
+        // on: `rho` reads the nearest non-zero distance off the front, and the degenerate branch
+        // reads the farthest off the back.
+        //
+        // `search_by_index` excludes the point itself, but UMAP's fuzzy set is defined over `k`
+        // entries *starting* at the point, so it is put back at the front — the `psum` loop below
+        // skips index 0, and `rho` needs the self entry filtered out by distance anyway.
+        for (let i = 0; i < N; ++i) {
+            const x_i = /** @type {Float64Array} */ (X.row(i));
+            distances.push([{ element: x_i, index: i, distance: 0 }, ...knn.search_by_index(i, k - 1)]);
+        }
+
+        // The grand mean of the whole kNN distance matrix, used by the degenerate `rho === 0`
+        // branch below. Computed once: it does not depend on `i`.
+        let total_distance = 0;
+        let total_count = 0;
+        for (const row of distances) {
+            for (const d of row) {
+                total_distance += d.distance;
+                ++total_count;
             }
         }
+        const mean_distances = total_count > 0 ? total_distance / total_count : 0;
 
         const index = Math.floor(local_connectivity);
         const interpolation = local_connectivity - index;
@@ -13199,20 +13415,27 @@ class UMAP extends DR {
             }
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
-                for (let j = 0; j < k; ++j) {
+                // Starts at 1: the element itself sits at index 0 and is not part of the fuzzy set
+                // whose cardinality is being solved for.
+                for (let j = 1; j < search_result.length; ++j) {
                     const d = search_result[j].distance - rho;
                     psum += d > 0 ? Math.exp(-(d / mid)) : 1;
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
                     break;
                 }
+                // The bracket must be narrowed before the new midpoint is taken from it. Assigning
+                // both at once computed the midpoint from the *old* bound, which sent `mid` to
+                // Infinity the first time the search stepped down from `hi = Infinity`.
                 if (psum > target) {
-                    [hi, mid] = [mid, (lo + hi) / 2];
+                    hi = mid;
+                    mid = (lo + hi) / 2;
                 } else {
+                    lo = mid;
                     if (hi === Infinity) {
-                        [lo, mid] = [mid, mid * 2];
+                        mid *= 2;
                     } else {
-                        [lo, mid] = [mid, (lo + hi) / 2];
+                        mid = (lo + hi) / 2;
                     }
                 }
             }
@@ -13223,14 +13446,8 @@ class UMAP extends DR {
                 if (mid < MIN_K_DIST_SCALE * mean_ithd) {
                     mid = MIN_K_DIST_SCALE * mean_ithd;
                 }
-            } else {
-                const mean_d = distances.reduce(
-                    (acc, res) => acc + res.reduce((a, b) => a + b.distance, 0) / res.length,
-                    0,
-                );
-                if (mid < MIN_K_DIST_SCALE * mean_d) {
-                    mid = MIN_K_DIST_SCALE * mean_d;
-                }
+            } else if (mid < MIN_K_DIST_SCALE * mean_distances) {
+                mid = MIN_K_DIST_SCALE * mean_distances;
             }
             rhos[i] = rho;
             sigmas[i] = mid;
@@ -13367,10 +13584,14 @@ class UMAP extends DR {
             this.init();
         }
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -13383,11 +13604,15 @@ class UMAP extends DR {
             this.init();
         }
         this.check_init();
-        for (let i = 0; i < iterations; ++i) {
-            this.next();
-            yield this.projection;
+        try {
+            for (let i = 0; i < iterations; ++i) {
+                this.next();
+                yield this.projection;
+            }
+            return this.projection;
+        } finally {
+            this._release_wasm();
         }
-        return this.projection;
     }
 
     /**
@@ -13669,7 +13894,6 @@ exports.qr = qr;
 exports.qr_householder = qr_householder;
 exports.quickselect = quickselect;
 exports.quickselectByAxis = quickselectByAxis;
-exports.release_wasm_buffers = release_wasm_buffers;
 exports.setWasmEnabled = setWasmEnabled;
 exports.simultaneous_poweriteration = simultaneous_poweriteration;
 exports.sokal_michener = sokal_michener;

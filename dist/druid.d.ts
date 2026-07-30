@@ -1924,6 +1924,58 @@ declare class DR<T extends InputType, Para extends {
      * @returns {Promise<T>} The dimensionality reduced dataset.
      */
     transform_async(...args: unknown[]): Promise<T>;
+    /**
+     * WASM buffer sessions this method keeps alive between iterations, released when a run ends.
+     *
+     * Empty for methods with no accelerated iteration step, which is most of them. The accelerated
+     * optimisers override it — see {@link TSNE}.
+     *
+     * @protected
+     * @returns {string[]}
+     */
+    protected get _wasm_session_keys(): string[];
+    /**
+     * Releases the WASM buffers this run is holding.
+     *
+     * Called from a `finally` around every iteration loop, so the memory does not outlive the
+     * projection. Freeing early is never a correctness problem — the next call reallocates — so
+     * this is safe to call at any point, including when WASM never ran.
+     *
+     * @protected
+     * @returns {void}
+     */
+    protected _release_wasm(): void;
+    /**
+     * Hands back the WASM buffers this instance is holding.
+     *
+     * Only needed after driving `generator()` by hand and stopping early — a plain `transform()`,
+     * or a `for…of` over `generator()` (including one you `break`), already releases when it ends.
+     * It frees only this method's buffers, never another running instance's, and the next run simply
+     * reallocates, so it is safe to call at any time, more than once, and while other instances are
+     * mid-run.
+     *
+     * @returns {this}
+     * @example
+     * const tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next();
+     * tsne.release(); // stop early and give the buffers back
+     */
+    release(): this;
+    /**
+     * Alias of {@link release} for the `using` declaration, so a hand-driven run frees its buffers
+     * when the block exits. Note that {@link transform} and a completed or `break`-ed `generator()`
+     * already release on their own — this only matters for a generator abandoned part way.
+     *
+     * ```js
+     * using tsne = new TSNE(X, { d: 2 });
+     * const steps = tsne.generator(500);
+     * steps.next(); // buffers released when the enclosing block exits
+     * ```
+     *
+     * @returns {void}
+     */
+    [Symbol.dispose](): void;
 }
 
 /** @import { InputType } from "../index.js" */
@@ -2132,6 +2184,7 @@ declare class LDA<T extends InputType> extends DR<T, ParametersLDA> {
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLLE} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 /**
  * Locally Linear Embedding (LLE)
@@ -2250,6 +2303,7 @@ declare class LSP<T extends InputType> extends DR<T, ParametersLSP> {
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLTSA} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 /**
  * Local Tangent Space Alignment (LTSA)
@@ -2928,12 +2982,25 @@ declare class KNN<T extends number[] | Float64Array, Para extends Object> {
         distance: number;
     }[];
     /**
-     * @abstract
-     * @param {number} i
-     * @param {number} k
-     * @returns {{ element: T; index: number; distance: number }[]}
+     * Searches the `k` nearest neighbors of the element stored at index `i`.
+     *
+     * The queried element is never part of the result. It is trivially its own closest neighbor at
+     * distance 0, which is never what a caller asking "what is this point near?" wants, so every
+     * caller used to strip it back out — each in its own, subtly different way. Note the asymmetry
+     * with {@link KNN#search}: an arbitrary query point has no "self" to exclude, so there `k` means
+     * "k results", while here it means "k neighbors".
+     *
+     * The self match is removed **by index** — not by position, and not by looking for a zero
+     * distance. Position is wrong because an approximate index may order ties differently or miss
+     * the element altogether (one extra candidate is requested to cover that), and a zero distance
+     * is wrong because genuine duplicate points share it and must survive.
+     *
+     * @param {number} i - Index of the query element.
+     * @param {number} [k=5] - Number of neighbors to return. Default is `5`
+     * @returns {{ element: T; index: number; distance: number }[]} The `k` nearest *other* elements,
+     *   closest first. Empty when `i` is out of range.
      */
-    search_by_index(i: number, k: number): {
+    search_by_index(i: number, k?: number): {
         element: T;
         index: number;
         distance: number;
@@ -3552,6 +3619,13 @@ type ParametersLLE = {
      */
     seed?: number | undefined;
     /**
+     * - Index used to find the
+     * neighbors. If `null`, a KDTree or BallTree is built, depending on the metric. Pass an
+     * approximate index such as `HNSW`, `Annoy`, or `NNDescent` to avoid the exact O(N^2) search on
+     * large datasets. Default is `null`
+     */
+    knn?: KNN<number[] | Float64Array<ArrayBufferLike>, any> | null | undefined;
+    /**
      * - Parameters for the eigendecomposition algorithm.
      */
     eig_args?: Partial<EigenArgs> | undefined;
@@ -3573,6 +3647,13 @@ type ParametersLTSA = {
      * - the seed for the random number generator.
      */
     seed?: number | undefined;
+    /**
+     * - Index used to find the
+     * neighbors. If `null`, a KDTree or BallTree is built, depending on the metric. Pass an
+     * approximate index such as `HNSW`, `Annoy`, or `NNDescent` to avoid the exact O(N^2) search on
+     * large datasets. Default is `null`
+     */
+    knn?: KNN<number[] | Float64Array<ArrayBufferLike>, any> | null | undefined;
     /**
      * - Parameters for the eigendecomposition algorithm.
      */
@@ -3909,16 +3990,6 @@ declare class Annoy<T extends number[] | Float64Array> extends KNN<T, Parameters
      */
     private _searchTreePriority;
     /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i: number, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
-    /**
      * Alias for search_by_index for backward compatibility.
      *
      * @param {number} i - Index of the query element
@@ -3993,15 +4064,6 @@ declare class BallTree<T extends number[] | Float64Array> extends KNN<T, Paramet
      * @returns {number}
      */
     private _greatest_spread;
-    /**
-     * @param {number} i
-     * @param {number} k
-     */
-    search_by_index(i: number, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
     /**
      * @param {T} t - Query element.
      * @param {number} [k=5] - Number of nearest neighbors to return. Default is `5`
@@ -4222,29 +4284,7 @@ declare class HNSW<T extends number[] | Float64Array> extends KNN<T, ParametersH
      * @returns {T} The element at the given index
      */
     get_element(index: number): T;
-    /**
-     * Search for nearest neighbors using an element index as the query.
-     *
-     * @param {number} i - Index of the query element
-     * @param {number} [K=5] - Number of nearest neighbors to return
-     * @returns {Candidate<T>[]} K nearest neighbors
-     */
-    search_by_index(i: number, K?: number): Candidate<T>[];
 }
-type Candidate<T extends number[] | Float64Array> = {
-    /**
-     * - The actual data point
-     */
-    element: T;
-    /**
-     * - Global index in the dataset
-     */
-    index: number;
-    /**
-     * - Distance from query
-     */
-    distance: number;
-};
 
 /** @import { Metric } from "../metrics/index.js" */
 /** @import { ParametersKDTree } from "./index.js" */
@@ -4298,15 +4338,6 @@ declare class KDTree<T extends number[] | Float64Array> extends KNN<T, Parameter
      * @returns {KDTreeNode<T> | KDTreeLeaf<T> | null} Root of KD-Tree.
      */
     private _construct;
-    /**
-     * @param {number} i
-     * @param {number} k
-     */
-    search_by_index(i: number, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
     /**
      * @param {T} t - Query element.
      * @param {number} [k=5] - Number of nearest neighbors to return. Default is `5`
@@ -4378,6 +4409,21 @@ declare class LSH<T extends number[] | Float64Array> extends KNN<T, ParametersLS
     /** @type {number} */
     _bucketWidth: number;
     /**
+     * Whether the projection geometry still has to be derived from real data.
+     *
+     * Both things the hash depends on — `_dim` and the bucket width — come from the elements,
+     * and an index built empty has none yet. Building hash functions against the placeholder
+     * would fix `_dim` at 1 and the width at the `n < 2` fallback, giving one-element projection
+     * vectors; `_computeHash` then walks `element.length` components against them, reads past
+     * the end, and every real point added later hashes to `"NaN,NaN,…"`. That lands the whole
+     * dataset in a single bucket per table and turns every query into a full scan — right
+     * answers, no index. So the hash functions wait for `add` to supply real data.
+     *
+     * @private
+     * @type {boolean}
+     */
+    private _awaiting_data;
+    /**
      * Estimates a bucket width from the spread of the data.
      *
      * Projected gaps are distributed as `N(0, ||u - v||^2)`, so w must sit near the scale of
@@ -4418,25 +4464,24 @@ declare class LSH<T extends number[] | Float64Array> extends KNN<T, ParametersLS
         index: number;
         distance: number;
     }[];
-    /**
-     * @param {number} i
-     * @param {number} [k=5]
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i: number, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
 }
 
 /** @import { ParametersNaiveKNN } from "./index.js" */
+/** @import { Metric } from "../metrics/index.js" */
 /**
- * Naive KNN implementation using a distance matrix.
+ * Naive KNN implementation performing an exhaustive scan.
  *
- * This implementation pre-computes the entire distance matrix and performs
- * an exhaustive search. Best suited for small datasets or when a distance
- * matrix is already available.
+ * Every query measures the distance to all `N` elements and then selects the `k` smallest with
+ * {@link quickselect}, which is O(N) on average — cheaper than sorting all `N` and far cheaper than
+ * the N heaps of N entries this class used to build up front.
+ *
+ * The N x N distance matrix is only materialized when it actually pays off: a `"precomputed"` index
+ * is handed one directly, and {@link NaiveKNN#search_by_index} builds one lazily on first use so
+ * that building a whole kNN graph costs a single pass over the pairs instead of one per query.
+ * Callers that only ever use {@link NaiveKNN#search} never allocate it.
+ *
+ * Best suited for small datasets, or when a distance matrix is already available. For larger `N`
+ * prefer an approximate index such as {@link HNSW}, {@link Annoy}, or {@link NNDescent}.
  *
  * @template {number[] | Float64Array} T
  * @category KNN
@@ -4452,21 +4497,47 @@ declare class NaiveKNN<T extends number[] | Float64Array> extends KNN<T, Paramet
      *   documented default.
      */
     constructor(elements: T[], parameters?: Partial<ParametersNaiveKNN>);
-    _D: Matrix;
-    /** @type {Heap<{ value: number; index: number }>[]} */
-    KNN: Heap<{
-        value: number;
-        index: number;
-    }>[];
     /**
-     * @param {number} i
-     * @param {number} k
+     * Number of indexed elements.
+     *
+     * @type {number}
      */
-    search_by_index(i: number, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
+    _N: number;
+    /**
+     * Pairwise distances. Supplied by the caller when `metric` is `"precomputed"`, built on demand
+     * by {@link NaiveKNN#search_by_index} otherwise, and `null` until then.
+     *
+     * @type {Matrix | null}
+     */
+    _D: Matrix | null;
+    /**
+     * Reads the element stored at `i`, which may live in a `Matrix` or a plain array.
+     *
+     * @private
+     * @param {number} i
+     * @returns {T}
+     */
+    private _element_at;
+    /**
+     * Selects the `k` elements closest to a query from its distances to every element.
+     *
+     * QuickSelect partitions in O(N) average time, after which only the `k` selected entries are
+     * sorted. Ties break on the element index so the result never depends on the pivots drawn.
+     *
+     * @private
+     * @param {ArrayLike<number>} distances - Distance from the query to each element, by index.
+     * @param {number} k - Number of neighbors to return.
+     * @param {number} [exclude=-1] - Index to leave out, or `-1` to keep every element. Default is `-1`
+     * @returns {{ element: T; index: number; distance: number }[]} The `k` nearest, closest first.
+     */
+    private _k_smallest;
+    /**
+     * Returns the pairwise distance matrix, computing it once on first use.
+     *
+     * @private
+     * @returns {Matrix}
+     */
+    private _distance_matrix;
     /**
      * @param {T} t - Query element.
      * @param {number} [k=5] - Number of nearest neighbors to return. Default is `5`
@@ -4581,16 +4652,6 @@ declare class NNDescent<T extends number[] | Float64Array> extends KNN<T, Parame
      * @returns {{ element: T, index: number; distance: number }[]}
      */
     search(x: T, k?: number): {
-        element: T;
-        index: number;
-        distance: number;
-    }[];
-    /**
-     * @param {number} i
-     * @param {number} [k=5] Default is `5`
-     * @returns {{ element: T; index: number; distance: number }[]}
-     */
-    search_by_index(i: number, k?: number): {
         element: T;
         index: number;
         distance: number;
@@ -4810,20 +4871,6 @@ declare function isWasmAvailable(): boolean;
  * @returns {boolean}
  */
 declare function isWasmThreadsSupported(): boolean;
-/**
- * Releases the buffers the iterative kernels hold between calls.
- *
- * The t-SNE session keeps three N ⨯ N buffers alive so they are not reallocated and recopied every
- * iteration, which at N = 2000 is around 96 MB retained after a run finishes. Nothing needs to call
- * this — the next run at a different size replaces them — but a caller that is done projecting and
- * wants the memory back can.
- *
- * @returns {void}
- * @example
- * import { release_wasm_buffers } from "@saehrimnir/druidjs";
- * release_wasm_buffers();
- */
-declare function release_wasm_buffers(): void;
 
 /**
  * Whether row-range kernels can be split across workers in this environment.
@@ -4844,6 +4891,6 @@ declare function terminate_pool(): void;
 type InputType = Matrix | Float64Array[] | number[][];
 declare const version: string;
 
-export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, MDS, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, Randomizer, SAMMON, SMACOF, SQDMDS, TSNE, TopoMap, TriMap, UMAP, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, release_wasm_buffers, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
+export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, MDS, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, Randomizer, SAMMON, SMACOF, SQDMDS, TSNE, TopoMap, TriMap, UMAP, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
 export type { Comparator, EigenArgs, InputType, Metric, ParametersAnnoy, ParametersBallTree, ParametersCURE, ParametersFASTMAP, ParametersHNSW, ParametersHierarchicalClustering, ParametersISOMAP, ParametersKDTree, ParametersKMeans, ParametersKMedoids, ParametersLDA, ParametersLLE, ParametersLSH, ParametersLSP, ParametersLTSA, ParametersMDS, ParametersMeanShift, ParametersNNDescent, ParametersNaiveKNN, ParametersOptics, ParametersPCA, ParametersSAMMON, ParametersSMACOF, ParametersSQDMDS, ParametersTSNE, ParametersTopoMap, ParametersTriMap, ParametersUMAP, ParametersXMeans, QRDecomposition };
 //# sourceMappingURL=druid.d.ts.map
