@@ -68,10 +68,17 @@ export function wasmSqdmdsFillGrads(
 /**
  * Range-based SQDMDS quartet gradient calculation for multi-threaded worker execution.
  *
+ * Unlike the other range kernels, a quartet range does not map to a slice of the output: each
+ * quartet scatters gradient into the four arbitrary rows it names, so two ranges generally touch
+ * overlapping rows. They therefore cannot share one output buffer the way `wasmMatMulRange` and
+ * friends do. `grads_val` instead receives the *whole* gradient produced by quartets
+ * `[start_q, end_q)` alone, and a caller splitting the quartets across workers sums the partials
+ * elementwise — which is exact, since the gradient is a sum over quartets to begin with.
+ *
  * @param {Float64Array} Y_val
  * @param {Float64Array} X_val
  * @param {Uint32Array} quartets_val
- * @param {Float64Array} grads_val
+ * @param {Float64Array} grads_val - Receives the partial gradient over `[start_q, end_q)`.
  * @param {number} n
  * @param {number} d_ld
  * @param {number} d_hd
@@ -114,6 +121,12 @@ export function wasmSqdmdsFillGradsRange(
         new Float64Array(memory.buffer, ptrY, Y_val.length).set(Y_val);
         new Float64Array(memory.buffer, ptrX, X_val.length).set(X_val);
         new Int32Array(memory.buffer, ptrQ, quartets_val.length).set(quartets_val);
+        // `sqdmds_fill_grads_range_f64` accumulates into `ptrG` without zeroing it first — that is
+        // deliberate, so several ranges can build one gradient — which makes zeroing the caller's
+        // job. `sqdmds_fill_grads_f64` does it inside WASM before delegating here; on this path the
+        // wrapper is the caller and owns it. `allocate` is `heap.alloc`, which hands back recycled
+        // blocks as-is, so without this the partial carries whatever the last allocation left.
+        new Float64Array(memory.buffer, ptrG, grads_val.length).fill(0);
 
         exports.sqdmds_fill_grads_range_f64(
             ptrY,
