@@ -42,6 +42,34 @@ describe("Matrix Utilities", () => {
             const result = linspace(0, 10, 5);
             expect(result).toEqual([0, 2.5, 5, 7.5, 10]);
         });
+
+        test("defaults to one value per integer step when count is omitted", () => {
+            expect(linspace(1, 5)).toEqual([1, 2, 3, 4, 5]);
+            expect(linspace(0, 3)).toEqual([0, 1, 2, 3]);
+        });
+
+        test("treats an explicit null count the same as omitting it", () => {
+            expect(linspace(1, 4, null)).toEqual(linspace(1, 4));
+        });
+
+        test("returns a single point when asked for one", () => {
+            expect(linspace(2, 10, 1)).toEqual([2]);
+        });
+
+        test("returns empty when asked for none", () => {
+            expect(linspace(0, 10, 0)).toEqual([]);
+        });
+
+        test("hits both endpoints exactly", () => {
+            const result = linspace(-1, 1, 9);
+            expect(result[0]).toBe(-1);
+            expect(result.at(-1)).toBe(1);
+            expect(result).toHaveLength(9);
+        });
+
+        test("counts down when end is before start", () => {
+            expect(linspace(5, 1, 5)).toEqual([5, 4, 3, 2, 1]);
+        });
     });
 
     describe("norm", () => {

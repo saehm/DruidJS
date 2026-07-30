@@ -254,4 +254,131 @@ describe("HNSW", () => {
         const neighbors = hnsw.search([0, 0], 2);
         expect(neighbors).toHaveLength(2);
     });
+
+    describe("parameter validation", () => {
+        const points = [
+            [0, 0],
+            [1, 1],
+        ];
+
+        // Each of these guards a graph-shape parameter that would otherwise fail deep inside
+        // construction, or silently build a degenerate index.
+        for (const name of ["m", "ef_construction", "ef", "m0"]) {
+            it(`should reject a non-positive ${name}`, () => {
+                expect(() => new HNSW(points, { [name]: 0, seed: 42 })).toThrow(
+                    `HNSW: parameter '${name}' must be a positive integer`,
+                );
+                expect(() => new HNSW(points, { [name]: -1, seed: 42 })).toThrow(
+                    `HNSW: parameter '${name}' must be a positive integer`,
+                );
+            });
+
+            it(`should reject a fractional ${name}`, () => {
+                expect(() => new HNSW(points, { [name]: 2.5, seed: 42 })).toThrow(
+                    `HNSW: parameter '${name}' must be a positive integer`,
+                );
+            });
+        }
+
+        it("should raise m to the minimum of 2", () => {
+            // `m: 1` is a legal integer but cannot produce a navigable graph, so it is clamped.
+            const hnsw = new HNSW(points, { m: 1, seed: 42 });
+            expect(hnsw._m).toBe(2);
+        });
+
+        it("should default m0 to twice m", () => {
+            expect(new HNSW(points, { m: 8, seed: 42 })._m0).toBe(16);
+        });
+    });
+
+    describe("malformed input", () => {
+        it("should drop points whose dimensions do not match the first", () => {
+            const hnsw = new HNSW(
+                [
+                    [0, 0],
+                    [1, 1, 1],
+                    [2, 2],
+                ],
+                { seed: 42 },
+            );
+            expect(hnsw.size).toBe(2);
+            for (let i = 0; i < hnsw.size; ++i) expect(hnsw.get_element(i)).toHaveLength(2);
+        });
+
+        it("should skip mismatched elements handed to add", () => {
+            const hnsw = new HNSW([], { seed: 42 });
+            hnsw.add([
+                [0, 0],
+                [1, 1],
+            ]);
+            hnsw.add([[9, 9, 9]]);
+            expect(hnsw.size).toBe(2);
+        });
+
+        it("should skip null and non-array elements handed to add", () => {
+            const hnsw = new HNSW([], { seed: 42 });
+            hnsw.add([
+                [0, 0],
+                [1, 1],
+            ]);
+            hnsw.add(/** @type {any} */ ([null, undefined, "nope", 7]));
+            expect(hnsw.size).toBe(2);
+        });
+
+        it("should return itself and change nothing when add gets no elements", () => {
+            const hnsw = new HNSW(
+                [
+                    [0, 0],
+                    [1, 1],
+                ],
+                { seed: 42 },
+            );
+            expect(hnsw.add([])).toBe(hnsw);
+            expect(hnsw.add(/** @type {any} */ (null))).toBe(hnsw);
+            expect(hnsw.size).toBe(2);
+        });
+
+        it("should accept Float64Array rows", () => {
+            const hnsw = new HNSW([], { seed: 42 });
+            hnsw.add([Float64Array.from([0, 0]), Float64Array.from([5, 5])]);
+            expect(hnsw.size).toBe(2);
+            expect(hnsw.search(Float64Array.from([0, 0]), 1)[0].index).toBe(0);
+        });
+    });
+
+    describe("search edge cases", () => {
+        const points = [
+            [0, 0],
+            [1, 1],
+            [2, 2],
+        ];
+
+        it("should return nothing from an empty index", () => {
+            expect(new HNSW([], { seed: 42 }).search([0, 0], 3)).toEqual([]);
+        });
+
+        it("should cap results at the number of elements held", () => {
+            const hnsw = new HNSW(points, { seed: 42 });
+            expect(hnsw.search([0, 0], 100)).toHaveLength(3);
+        });
+
+        it("should return nothing for an out-of-range index", () => {
+            const hnsw = new HNSW(points, { seed: 42 });
+            expect(hnsw.search_by_index(-1)).toEqual([]);
+            expect(hnsw.search_by_index(99)).toEqual([]);
+        });
+
+        it("should honour an ef override in search_iter", () => {
+            const hnsw = new HNSW(points, { seed: 42 });
+            expect([...hnsw.search_iter([0, 0], 2, 10)]).toHaveLength(2);
+        });
+
+        it("should build with the simple neighbour selector", () => {
+            // `heuristic: false` swaps `_select_heuristic` for `_select_simple`, a whole
+            // construction path the default never touches.
+            const hnsw = new HNSW(mistle.IRIS.values, { heuristic: false, seed: 42 });
+            expect(hnsw.size).toBe(mistle.IRIS.values.length);
+            expect(hnsw.search(mistle.IRIS.values[0], 1)[0].index).toBe(0);
+        });
+    });
 });
