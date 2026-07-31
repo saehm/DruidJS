@@ -18,6 +18,7 @@ export { TSNE } from "./TSNE.js";
 export { UMAP } from "./UMAP.js";
 
 /** @import { Metric } from "../metrics/index.js" */
+/** @import { KNN } from "../knn/KNN.js" */
 /** @import { EigenArgs } from "../linear_algebra/index.js" */
 /** @import { ChooseDR } from "./SAMMON.js"; */
 
@@ -61,6 +62,10 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [d=2] - the dimensionality of the projection.
  * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
  * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {KNN<number[] | Float64Array, any> | null} [knn=null] - Index used to find the
+ *   neighbors. If `null`, a KDTree or BallTree is built, depending on the metric. Pass an
+ *   approximate index such as `HNSW`, `Annoy`, or `NNDescent` to avoid the exact O(N^2) search on
+ *   large datasets. Default is `null`
  * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
  */
 
@@ -70,6 +75,10 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [d=2] - the dimensionality of the projection.
  * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
  * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {KNN<number[] | Float64Array, any> | null} [knn=null] - Index used to find the
+ *   neighbors. If `null`, a KDTree or BallTree is built, depending on the metric. Pass an
+ *   approximate index such as `HNSW`, `Annoy`, or `NNDescent` to avoid the exact O(N^2) search on
+ *   large datasets. Default is `null`
  * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
  */
 

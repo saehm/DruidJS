@@ -40,3 +40,18 @@ const ltsa = new druid.LTSA(data);
 // 2. Compute the projection
 const projection = ltsa.transform();
 ```
+
+## Larger Datasets
+
+LTSA collects a local neighborhood around every point before aligning their tangent spaces. By
+default it uses an exact index — a [KD-Tree](/api/classes/KDTree) or
+[BallTree](/api/classes/BallTree), whichever suits the metric — which costs O(N²) on large inputs.
+Pass any KNN index as `knn` to swap that out for an approximate one:
+
+```javascript
+const knn = new druid.HNSW(data, { metric: druid.euclidean, ef: 100 });
+const ltsa = new druid.LTSA(data, { neighbors: 10, knn });
+```
+
+[HNSW](/api/classes/HNSW), [Annoy](/api/classes/Annoy) and [NNDescent](/api/classes/NNDescent) all
+work here.

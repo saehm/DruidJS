@@ -1,11 +1,13 @@
+import { spatial_tree } from "../knn/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
-import { k_nearest_neighbors, Matrix } from "../matrix/index.js";
+import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { neumair_sum } from "../numerical/index.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLLE} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 
 /**
@@ -37,6 +39,7 @@ export class LLE extends DR {
                 d: 2,
                 metric: euclidean,
                 seed: 1212,
+                knn: null,
                 eig_args: {},
             },
             parameters,
@@ -74,13 +77,26 @@ export class LLE extends DR {
         const d = /** @type {number} */ (this.parameter("d"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
-        const nN = k_nearest_neighbors(X, neighbors, metric);
+        const knn =
+            /** @type {KNN<number[] | Float64Array, any> | null} */ (this.parameter("knn")) ??
+            spatial_tree(X.to2dArray(), { metric, seed: /** @type {number} */ (this.parameter("seed")) });
+        const nN = [];
+        for (let row = 0; row < rows; ++row) {
+            const found = knn.search_by_index(row, neighbors);
+            if (found.length < neighbors) {
+                throw new Error(
+                    `The KNN index returned only ${found.length} of the ${neighbors} requested neighbors for element ${row}. ` +
+                        `Lower "neighbors", or use an index that recalls more candidates.`,
+                );
+            }
+            nN.push(found);
+        }
         const O = new Matrix(neighbors, 1, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
-            const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].j, j) - X.entry(row, j));
+            const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].index, j) - X.entry(row, j));
             const C = Z.dotTrans(Z);
             if (neighbors > cols) {
                 const C_trace = neumair_sum(C.diag()) / 1000;
@@ -92,7 +108,7 @@ export class LLE extends DR {
             let w = Matrix.solve_CG(C, O, this._randomizer);
             w = w.divide(w.sum());
             for (let j = 0; j < neighbors; ++j) {
-                W.set_entry(row, nN_row[j].j, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].index, w.entry(j, 0));
             }
         }
         // comp embedding

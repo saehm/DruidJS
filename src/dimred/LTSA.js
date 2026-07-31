@@ -1,10 +1,12 @@
+import { spatial_tree } from "../knn/index.js";
 import { simultaneous_poweriteration } from "../linear_algebra/index.js";
-import { k_nearest_neighbors, Matrix } from "../matrix/index.js";
+import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
 /** @import {ParametersLTSA} from "./index.js" */
+/** @import {KNN} from "../knn/KNN.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 
 /**
@@ -35,6 +37,7 @@ export class LTSA extends DR {
                 d: 2,
                 metric: euclidean,
                 seed: 1212,
+                knn: null,
                 eig_args: {},
             },
             parameters,
@@ -78,14 +81,27 @@ export class LTSA extends DR {
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
         // 1.1 determine k nearest neighbors
-        const nN = k_nearest_neighbors(X, neighbors, metric);
+        const knn =
+            /** @type {KNN<number[] | Float64Array, any> | null} */ (this.parameter("knn")) ??
+            spatial_tree(X.to2dArray(), { metric, seed: /** @type {number} */ (this.parameter("seed")) });
+        const nN = [];
+        for (let row = 0; row < rows; ++row) {
+            const found = knn.search_by_index(row, neighbors);
+            if (found.length < neighbors) {
+                throw new Error(
+                    `The KNN index returned only ${found.length} of the ${neighbors} requested neighbors for element ${row}. ` +
+                        `Lower "neighbors", or use an index that recalls more candidates.`,
+                );
+            }
+            nN.push(found);
+        }
         // center matrix
         const O = new Matrix(D, D, "center");
         const B = new Matrix(rows, rows, 0);
 
         for (let row = 0; row < rows; ++row) {
             // 1.2 compute the d largest eigenvectors of the correlation matrix
-            const I_i = [row, ...nN[row].map((n) => n.j)];
+            const I_i = [row, ...nN[row].map((n) => n.index)];
             let X_i = Matrix.from(I_i.map((n) => X.row(n)));
             // center X_i
             X_i = X_i.dot(O);
