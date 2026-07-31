@@ -135,12 +135,13 @@ export { UMAP } from "./UMAP.js";
 
 /**
  * @typedef {Object} ParametersTriMap
- * @property {number} [weight_adj=500] - scaling factor.
- * @property {number} [n_inliers=5] - number of inliers.
- * @property {number} [n_outliers=5] - number of outliers.
- * @property {number} [n_random=5] - number of random points.
+ * @property {number} [weight_temp=0.5] - Temperature of the tempered log applied to the triplet
+ *   weights. `1` recovers the ordinary logarithm; lower values compress large weights harder.
+ * @property {number} [n_inliers=12] - number of inliers.
+ * @property {number} [n_outliers=4] - number of outliers.
+ * @property {number} [n_random=3] - number of random points.
  * @property {number} [d=2] - the dimensionality of the projection.
- * @property {number} [tol=1e-8]
+ * @property {number} [lr=0.1] - learning rate of the delta-bar-delta optimizer.
  * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
  * @property {number} [seed=1212] - the seed for the random number generator.
  */

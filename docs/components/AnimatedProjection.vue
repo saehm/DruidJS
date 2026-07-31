@@ -23,7 +23,7 @@ const maxIterations = ref(200);
 const methodParams = ref({
   TSNE: { perplexity: 30 },
   UMAP: { n_neighbors: 15, min_dist: 0.1 },
-  TriMap: { n_inliers: 10, n_outliers: 5, n_random: 5 },
+  TriMap: { n_inliers: 12, n_outliers: 4, n_random: 3 },
   SAMMON: { magic: 0.1 },
   SMACOF: {},
   SQDMDS: {},

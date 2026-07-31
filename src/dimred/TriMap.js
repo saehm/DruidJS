@@ -11,6 +11,32 @@ import { wasmTriMapGrad, wasmTriMapUpdate } from "./TriMap.wasm.js";
 /** @import {KNN} from "../knn/KNN.js" */
 
 /**
+ * The embedding starts as a heavily shrunk PCA projection. Every squared distance in the loss is
+ * offset by 1, so an unscaled projection would swamp that term and flatten the gradients.
+ */
+const INIT_PCA_SCALE = 0.01;
+/** Random triplets carry a tenth of the weight of the neighbour-derived ones. */
+const RAND_WEIGHT_SCALE = 0.1;
+/** Neighbours ranked beyond `n_inliers` that are still considered when sampling. */
+const NUM_EXTRA_KNN = 50;
+/** Iteration after which the momentum switches from `INIT_MOMENTUM` to `FINAL_MOMENTUM`. */
+const SWITCH_ITER_MOMENTUM = 250;
+const INIT_MOMENTUM = 0.5;
+const FINAL_MOMENTUM = 0.8;
+
+/**
+ * Tempered logarithm with temperature `t`, which degrades to `Math.log` as `t` approaches 1.
+ *
+ * @param {number} x
+ * @param {number} t - Temperature.
+ * @returns {number}
+ */
+function tempered_log(x, t) {
+    if (Math.abs(t - 1) < 1e-5) return Math.log(x);
+    return (1 / (1 - t)) * (x ** (1 - t) - 1);
+}
+
+/**
  * TriMap
  *
  * A dimensionality reduction technique that preserves both local and global
@@ -38,13 +64,13 @@ export class TriMap extends DR {
         super(
             X,
             {
-                weight_adj: 500,
-                n_inliers: 10,
-                n_outliers: 5,
-                n_random: 5,
+                weight_temp: 0.5,
+                n_inliers: 12,
+                n_outliers: 4,
+                n_random: 3,
                 d: 2,
                 metric: euclidean,
-                tol: 1e-8,
+                lr: 0.1,
                 seed: 1212,
             },
             parameters,
@@ -65,7 +91,7 @@ export class TriMap extends DR {
         this.n_inliers = /** @type {number} */ (this._parameters.n_inliers);
         this.n_outliers = /** @type {number} */ (this._parameters.n_outliers);
         this.n_random = /** @type {number} */ (this._parameters.n_random);
-        this.Y = pca ?? PCA.transform(X, { d, seed });
+        this.Y = pca ?? /** @type {Matrix} */ (PCA.transform(X, { d, seed })).mult(INIT_PCA_SCALE);
         this.knn = knn ?? spatial_tree(X.to2dArray(), { metric, seed });
         const { triplets, weights } = this._generate_triplets(this.n_inliers, this.n_outliers, this.n_random);
         this.triplets = triplets;
@@ -74,7 +100,7 @@ export class TriMap extends DR {
         // They never change after init, so convert once instead of on every gradient step.
         /** @type {Int32Array} */
         this._triplets_int32 = Int32Array.from(triplets.values);
-        this.lr = (1000 * N) / triplets.shape[0];
+        this.lr = /** @type {number} */ (this.parameter("lr"));
         this.C = Infinity;
         this.vel = new Matrix(N, d, 0);
         this.gain = new Matrix(N, d, 1);
@@ -90,12 +116,12 @@ export class TriMap extends DR {
      */
     _generate_triplets(n_inliers, n_outliers, n_random) {
         const metric = /** @type {Metric} */ (this._parameters.metric);
-        const weight_adj = /** @type {number} */ (this._parameters.weight_adj);
+        const weight_temp = /** @type {number} */ (this._parameters.weight_temp);
         const X = this.X;
         const N = X.shape[0];
         const knn = this.knn;
         if (!knn) throw new Error("Call init() first!");
-        const n_extra = Math.min(n_inliers + 20, N);
+        const n_extra = Math.min(n_inliers + NUM_EXTRA_KNN, N);
         const nbrs = new Matrix(N, n_extra);
         const knn_distances = new Matrix(N, n_extra);
         for (let i = 0; i < N; ++i) {
@@ -106,11 +132,13 @@ export class TriMap extends DR {
                 knn_distances.set_entry(i, j, d.distance);
             });
         }
-        // scale parameter
+        // Scale parameter: the mean distance to the 3rd, 4th and 5th nearest neighbour. The
+        // reference reads columns 3..5 of a row that begins with the point itself at distance 0;
+        // these rows exclude it, so the same three neighbours sit one column earlier.
         const sig = new Float64Array(N);
         for (let i = 0; i < N; ++i) {
             sig[i] = Math.max(
-                (knn_distances.entry(i, 3) + knn_distances.entry(i, 4) + knn_distances.entry(i, 5)) / 3,
+                (knn_distances.entry(i, 2) + knn_distances.entry(i, 3) + knn_distances.entry(i, 4)) / 3,
                 1e-10,
             );
         }
@@ -130,25 +158,19 @@ export class TriMap extends DR {
         if (n_random > 0) {
             const { random_triplets, random_weights } = this._sample_random_triplets(X, n_random, sig);
             triplets = triplets.concat(random_triplets, "vertical");
-            weights = Float64Array.from([...weights, ...random_weights]);
+            weights = Float64Array.from([...weights, ...random_weights.map((w) => RAND_WEIGHT_SCALE * w)]);
         }
         n_triplets = triplets.shape[0];
-        let max_weight = -Infinity;
+
+        // Weights are log-ratios, so they are shifted to be non-negative rather than divided by
+        // their maximum, and then compressed with a tempered log.
+        let min_weight = Infinity;
         for (let i = 0; i < n_triplets; ++i) {
-            if (Number.isNaN(weights[i])) {
-                weights[i] = 0;
-            }
-            if (max_weight < weights[i]) max_weight = weights[i];
-        }
-        let max_weight_2 = -Infinity;
-        for (let i = 0; i < n_triplets; ++i) {
-            weights[i] /= max_weight;
-            weights[i] += 0.0001;
-            weights[i] = Math.log(1 + weight_adj * weights[i]);
-            if (max_weight_2 < weights[i]) max_weight_2 = weights[i];
+            if (Number.isNaN(weights[i])) weights[i] = 0;
+            if (weights[i] < min_weight) min_weight = weights[i];
         }
         for (let i = 0; i < n_triplets; ++i) {
-            weights[i] /= max_weight_2;
+            weights[i] = tempered_log(1 + (weights[i] - min_weight), weight_temp);
         }
         return {
             triplets: triplets,
@@ -157,18 +179,22 @@ export class TriMap extends DR {
     }
 
     /**
-     * Calculates the similarity matrix P
+     * Calculates the log-similarity matrix P.
+     *
+     * Kept in log space: exponentiating here underflows to zero for anything but the closest
+     * neighbours, and every consumer either compares entries or takes their difference, both of
+     * which are order-preserving under the logarithm.
      *
      * @private
      * @param {Matrix} knn_distances - Matrix of pairwise knn distances
      * @param {Float64Array} sig - Scaling factor for the distances
      * @param {Matrix} nbrs - Nearest neighbors
-     * @returns {Matrix} Pairwise similarity matrix
+     * @returns {Matrix} Pairwise log-similarity matrix
      */
     _find_p(knn_distances, sig, nbrs) {
         const [N, n_neighbors] = knn_distances.shape;
         return new Matrix(N, n_neighbors, (i, j) => {
-            return Math.exp(-(knn_distances.entry(i, j) ** 2 / sig[i] / sig[nbrs.entry(i, j)]));
+            return -(knn_distances.entry(i, j) ** 2) / (sig[i] * sig[nbrs.entry(i, j)]);
         });
     }
 
@@ -188,7 +214,9 @@ export class TriMap extends DR {
         for (let i = 0; i < N; ++i) {
             const sort_indices = this.__argsort(P.row(i));
             for (let j = 0; j < n_inliers; ++j) {
-                const sim = nbrs.entry(i, sort_indices[sort_indices[j] === i ? j + 1 : j]);
+                // `sort_indices` holds column offsets into `nbrs`, which already excludes `i`, so
+                // the j-th most similar neighbour is taken directly.
+                const sim = nbrs.entry(i, sort_indices[j]);
                 const rejects = [i, ...Array.from(sort_indices.slice(0, j + 2)).map((idx) => nbrs.entry(i, idx))];
                 const samples = this._rejection_sample(n_outliers, N, rejects);
                 for (let k = 0; k < samples.length; ++k) {
@@ -248,9 +276,9 @@ export class TriMap extends DR {
             const i = triplets.entry(t, 0);
             const sim = nbrs.row(i).indexOf(triplets.entry(t, 1));
             const p_sim = P.entry(i, sim);
-            let p_out = Math.exp(-(outlier_distances[t] ** 2 / (sig[i] * sig[triplets.entry(t, 2)])));
-            if (p_out < 1e-20) p_out = 1e-20;
-            weights[t] = p_sim / p_out;
+            const p_out = -(outlier_distances[t] ** 2) / (sig[i] * sig[triplets.entry(t, 2)]);
+            // Both are log-similarities, so their ratio is the difference.
+            weights[t] = p_sim - p_out;
         }
         return weights;
     }
@@ -274,11 +302,11 @@ export class TriMap extends DR {
             const indices = Array.from({ length: N }, (_, idx) => idx).filter((idx) => idx !== i);
             for (let j = 0; j < n_random; ++j) {
                 let [sim, out] = randomizer.choice(indices, 2);
-                let p_sim = Math.exp(-(metric(X.row(i), X.row(sim)) ** 2 / (sig[i] * sig[sim])));
-                if (p_sim < 1e-20) p_sim = 1e-20;
-                let p_out = Math.exp(-(metric(X.row(i), X.row(out)) ** 2 / (sig[i] * sig[out])));
-                if (p_out < 1e-20) p_out = 1e-20;
+                let p_sim = -(metric(X.row(i), X.row(sim)) ** 2) / (sig[i] * sig[sim]);
+                let p_out = -(metric(X.row(i), X.row(out)) ** 2) / (sig[i] * sig[out]);
 
+                // The nearer of the pair has to play the inlier; comparing the logs orders them
+                // the same way comparing the similarities would.
                 if (p_sim < p_out) {
                     [sim, out] = [out, sim];
                     [p_sim, p_out] = [p_out, p_sim];
@@ -287,7 +315,7 @@ export class TriMap extends DR {
                 random_triplets.set_entry(index, 0, i);
                 random_triplets.set_entry(index, 1, sim);
                 random_triplets.set_entry(index, 2, out);
-                random_weights[index] = 0.1 * (p_sim / p_out);
+                random_weights[index] = p_sim - p_out;
             }
         }
         return {
@@ -376,7 +404,7 @@ export class TriMap extends DR {
      * @param {number} max_iteration
      * @returns {T}
      */
-    transform(max_iteration = 800) {
+    transform(max_iteration = 400) {
         this.check_init();
         try {
             for (let iter = 0; iter < max_iteration; ++iter) {
@@ -392,7 +420,7 @@ export class TriMap extends DR {
      * @param {number} max_iteration
      * @returns {Generator<T, T, void>}
      */
-    *generator(max_iteration = 800) {
+    *generator(max_iteration = 400) {
         this.check_init();
         try {
             for (let iter = 0; iter < max_iteration; ++iter) {
@@ -412,16 +440,17 @@ export class TriMap extends DR {
      * @param {number} iter
      */
     _next(iter) {
-        const gamma = iter > 250 ? 0.5 : 0.3;
-        const old_C = this.C;
+        const gamma = iter > SWITCH_ITER_MOMENTUM ? FINAL_MOMENTUM : INIT_MOMENTUM;
         const vel = this.vel;
-        if (!vel || old_C === undefined || this.lr === undefined) throw new Error("Call init() first!");
+        const triplets = this.triplets;
+        if (!vel || !triplets || this.lr === undefined) throw new Error("Call init() first!");
         const Y = this.Y.add(vel.mult(gamma));
         const { grad, loss } = this._grad(Y);
-        this.C = loss;
+        // Reported per triplet, so the value does not scale with the triplet count.
+        this.C = loss / triplets.shape[0];
         this.Y = this._update_embedding(Y, iter, grad);
-        const tol = /** @type {number} */ (this.parameter("tol"));
-        this.lr *= old_C > loss + tol ? 1.01 : 0.9;
+        // The delta-bar-delta optimizer adapts a per-coordinate gain, so the global learning rate
+        // is left alone; only the plain gradient-descent variants anneal it.
         return this.Y;
     }
 
@@ -435,7 +464,7 @@ export class TriMap extends DR {
      */
     _update_embedding(Y, iter, grad) {
         const [N, dim] = Y.shape;
-        const gamma = iter > 250 ? 0.8 : 0.5; // moment parameter
+        const gamma = iter > SWITCH_ITER_MOMENTUM ? FINAL_MOMENTUM : INIT_MOMENTUM;
         const gain = this.gain;
         const vel = this.vel;
         const lr = this.lr;
