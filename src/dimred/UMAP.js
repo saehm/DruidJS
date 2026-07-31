@@ -164,12 +164,29 @@ export class UMAP extends DR {
 
         /** @type {{ element: Float64Array; index: number; distance: number }[][]} */
         const distances = [];
-        // `search_by_index` excludes the point itself, so it is put back at the front to keep the
-        // `k` entries this expects.
+        // Every index returns its results closest first, which is the order the code below relies
+        // on: `rho` reads the nearest non-zero distance off the front, and the degenerate branch
+        // reads the farthest off the back.
+        //
+        // `search_by_index` excludes the point itself, but UMAP's fuzzy set is defined over `k`
+        // entries *starting* at the point, so it is put back at the front — the `psum` loop below
+        // skips index 0, and `rho` needs the self entry filtered out by distance anyway.
         for (let i = 0; i < N; ++i) {
             const x_i = /** @type {Float64Array} */ (X.row(i));
-            distances.push([{ element: x_i, index: i, distance: 0 }, ...knn.search_by_index(i, k - 1)].reverse());
+            distances.push([{ element: x_i, index: i, distance: 0 }, ...knn.search_by_index(i, k - 1)]);
         }
+
+        // The grand mean of the whole kNN distance matrix, used by the degenerate `rho === 0`
+        // branch below. Computed once: it does not depend on `i`.
+        let total_distance = 0;
+        let total_count = 0;
+        for (const row of distances) {
+            for (const d of row) {
+                total_distance += d.distance;
+                ++total_count;
+            }
+        }
+        const mean_distances = total_count > 0 ? total_distance / total_count : 0;
 
         const index = Math.floor(local_connectivity);
         const interpolation = local_connectivity - index;
@@ -196,20 +213,27 @@ export class UMAP extends DR {
             }
             for (let x = 0; x < n_iter; ++x) {
                 let psum = 0;
-                for (let j = 0; j < k; ++j) {
+                // Starts at 1: the element itself sits at index 0 and is not part of the fuzzy set
+                // whose cardinality is being solved for.
+                for (let j = 1; j < search_result.length; ++j) {
                     const d = search_result[j].distance - rho;
                     psum += d > 0 ? Math.exp(-(d / mid)) : 1;
                 }
                 if (Math.abs(psum - target) < SMOOTH_K_TOLERANCE) {
                     break;
                 }
+                // The bracket must be narrowed before the new midpoint is taken from it. Assigning
+                // both at once computed the midpoint from the *old* bound, which sent `mid` to
+                // Infinity the first time the search stepped down from `hi = Infinity`.
                 if (psum > target) {
-                    [hi, mid] = [mid, (lo + hi) / 2];
+                    hi = mid;
+                    mid = (lo + hi) / 2;
                 } else {
+                    lo = mid;
                     if (hi === Infinity) {
-                        [lo, mid] = [mid, mid * 2];
+                        mid *= 2;
                     } else {
-                        [lo, mid] = [mid, (lo + hi) / 2];
+                        mid = (lo + hi) / 2;
                     }
                 }
             }
@@ -220,14 +244,8 @@ export class UMAP extends DR {
                 if (mid < MIN_K_DIST_SCALE * mean_ithd) {
                     mid = MIN_K_DIST_SCALE * mean_ithd;
                 }
-            } else {
-                const mean_d = distances.reduce(
-                    (acc, res) => acc + res.reduce((a, b) => a + b.distance, 0) / res.length,
-                    0,
-                );
-                if (mid < MIN_K_DIST_SCALE * mean_d) {
-                    mid = MIN_K_DIST_SCALE * mean_d;
-                }
+            } else if (mid < MIN_K_DIST_SCALE * mean_distances) {
+                mid = MIN_K_DIST_SCALE * mean_distances;
             }
             rhos[i] = rho;
             sigmas[i] = mid;

@@ -1,7 +1,53 @@
 import { describe, expect, it } from "vitest";
 import { UMAP } from "../../src/dimred/index.js";
+import { spatial_tree } from "../../src/knn/index.js";
+import { euclidean } from "../../src/metrics/index.js";
 import { generateTestData } from "../utils/data-generators.js";
 import { expectValidValues } from "../utils/helpers.js";
+
+describe("UMAP._smooth_knn_dist", () => {
+    // Values cross-checked against umap-learn 0.5.12's smooth_knn_dist on the same input.
+    const data = generateTestData(60, 3);
+    const k = 10;
+    const tree = spatial_tree(data, { metric: euclidean, seed: 1212 });
+    const umap = new UMAP(data, { n_neighbors: k, local_connectivity: 1, d: 2, seed: 1212 });
+    // @ts-ignore - private
+    const { sigmas, rhos } = umap._smooth_knn_dist(tree, k);
+
+    // The row UMAP works on: the point itself at distance 0, then its k-1 nearest neighbors.
+    const rowOf = (i) => [0, ...tree.search_by_index(i, k - 1).map((n) => n.distance)];
+
+    it("should set rho to the distance to the nearest neighbor", () => {
+        for (let i = 0; i < data.length; ++i) {
+            const nearest = rowOf(i).filter((d) => d > 0);
+            expect(rhos[i]).toBeCloseTo(Math.min(...nearest), 10);
+        }
+    });
+
+    it("should converge sigma rather than clamping to the MIN_K_DIST_SCALE floor", () => {
+        // The binary search used to never converge, leaving every sigma pinned at 1e-3 * mean_d.
+        for (let i = 0; i < data.length; ++i) {
+            const row = rowOf(i);
+            const floor = 1e-3 * (row.reduce((a, b) => a + b, 0) / row.length);
+            expect(sigmas[i]).toBeGreaterThan(floor * 10);
+            expect(Number.isFinite(sigmas[i])).toBe(true);
+        }
+    });
+
+    it("should solve sum_j exp(-(d_j - rho)/sigma) = log2(k) over the neighbors", () => {
+        const target = Math.log2(k);
+        for (let i = 0; i < data.length; ++i) {
+            const row = rowOf(i);
+            let psum = 0;
+            // Starts at 1: the self entry is not part of the fuzzy set.
+            for (let j = 1; j < row.length; ++j) {
+                const d = row[j] - rhos[i];
+                psum += d > 0 ? Math.exp(-(d / sigmas[i])) : 1;
+            }
+            expect(psum).toBeCloseTo(target, 4);
+        }
+    });
+});
 
 describe("UMAP", () => {
     it("should reduce dimensionality to d=2 by default", { timeout: 30000 }, () => {
