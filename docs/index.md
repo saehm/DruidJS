@@ -20,7 +20,7 @@ hero:
 features:
   - title: Dimensionality Reduction
     icon: 📐
-    details: 14 Dimensionality Reduction methods, 1 API
+    details: 17 Dimensionality Reduction methods, 1 API
   - title: k-Nearest Neighbors
     icon: 👥
     details: 7 k-Nearest Neighbors methods, 1 API
@@ -31,4 +31,3 @@ features:
     icon: 🔢
     details: Many matrix operations and linear algebra methods
 ---
-

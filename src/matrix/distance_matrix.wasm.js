@@ -46,6 +46,51 @@ export function wasmDistanceMatrix(X_val, n, d, D_val) {
 }
 
 /**
+ * Exact k-nearest neighbors for rows `[start_row, end_row)` using WASM SIMD.
+ *
+ * Selection happens inside the kernel, so the copy back is `k` entries per row rather than `n`, and
+ * the caller can block the search without ever materializing an n ⨯ n distance matrix.
+ *
+ * @param {Float64Array} X_val - Row-major `n` ⨯ `d` input.
+ * @param {number} n
+ * @param {number} d
+ * @param {number} k - Neighbors per row, excluding the row itself.
+ * @param {Float64Array} out_val - `n` ⨯ `2k`: `k` ascending distances then their `k` indices.
+ *   Rows outside the range are left untouched.
+ * @param {number} start_row
+ * @param {number} end_row
+ * @returns {boolean} False if WASM is unavailable and the caller must fall back to JS.
+ */
+export function wasmKnnBlock(X_val, n, d, k, out_val, start_row, end_row) {
+    const inst = initWasm();
+    if (!inst) return false;
+
+    /** @type {any} */
+    const exports = inst.exports;
+    const memory = exports.memory;
+
+    /** @type {number[]} */
+    const ptrs = [];
+    try {
+        const ptrX = alloc(exports, ptrs, X_val.byteLength);
+        const ptrOut = alloc(exports, ptrs, out_val.byteLength);
+
+        new Float64Array(memory.buffer, ptrX, X_val.length).set(X_val);
+
+        exports.euclidean_knn_block_f64(ptrX, ptrOut, n, d, k, start_row, end_row);
+
+        // Slice only, so concurrent workers sharing `out_val` do not clobber each other's rows.
+        const row_len = 2 * k;
+        const offset = start_row * row_len;
+        const count = (end_row - start_row) * row_len;
+        out_val.set(new Float64Array(memory.buffer, ptrOut + offset * 8, count), offset);
+        return true;
+    } finally {
+        free_all(exports, ptrs);
+    }
+}
+
+/**
  * Range-based Pairwise Euclidean Distance Matrix for worker thread execution.
  *
  * @param {Float64Array} X_val

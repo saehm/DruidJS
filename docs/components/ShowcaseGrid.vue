@@ -11,7 +11,9 @@ const methods = [
   { name: "t-SNE", class: "TSNE", iterations: 1000 },
   { name: "UMAP", class: "UMAP", iterations: 350 },
   { name: "PaCMAP", class: "PaCMAP" },
-  { name: "LocalMAP", class: "LocalMAP" },
+  // IRIS embeds into a span of ~40, where the default low_dist_thres of 10 repels cluster-mates
+  // and breaks the clusters up. See docs/dimred/localmap.md, "Choosing low_dist_thres".
+  { name: "LocalMAP", class: "LocalMAP", params: { low_dist_thres: 25 } },
   { name: "TriMap", class: "TriMap", iterations: 1000 },
   { name: "ISOMAP", class: "ISOMAP" },
   { name: "TopoMap", class: "TopoMap" },
@@ -34,7 +36,7 @@ onMounted(async () => {
 
   methods.forEach(async (method) => {
     try {
-      const params = {};
+      const params = { ...method.params };
       if (method.needsLabels) {
         params.labels = [...labels.value]; // Unwrap proxy to ensure serializability
       }

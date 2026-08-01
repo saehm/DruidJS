@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { wasmMeanShiftStep, wasmMeanShiftStepRange } from "../../src/clustering/MeanShift.wasm.js";
 import { wasmDijkstraAPSP, wasmDijkstraAPSPRange } from "../../src/dimred/ISOMAP.wasm.js";
 import { wasmSqdmdsFillGrads, wasmSqdmdsFillGradsRange } from "../../src/dimred/SQDMDS.wasm.js";
-import { wasmDistanceMatrix, wasmDistanceMatrixRange } from "../../src/matrix/distance_matrix.wasm.js";
+import { wasmDistanceMatrix, wasmDistanceMatrixRange, wasmKnnBlock } from "../../src/matrix/distance_matrix.wasm.js";
 import { wasmMatMul, wasmMatMulRange } from "../../src/matrix/Matrix.wasm.js";
 import { Randomizer } from "../../src/util/randomizer.js";
 import { isWasmAvailable } from "../../src/wasm/index.js";
@@ -118,6 +118,77 @@ describe.skipIf(!isWasmAvailable())("range kernels", () => {
                 const expected = i >= start && i < end ? full.subarray(i * n, (i + 1) * n) : null;
                 for (let j = 0; j < n; ++j) {
                     expect(out[i * n + j], `row ${i} col ${j}`).toBe(expected ? expected[j] : SENTINEL);
+                }
+            }
+        });
+    });
+
+    describe("wasmKnnBlock", () => {
+        const n = 14;
+        const d = 4;
+        const k = 5;
+        const row_len = 2 * k;
+        const X = random_flat(n, d, 3);
+
+        const full = new Float64Array(n * row_len);
+        wasmKnnBlock(X, n, d, k, full, 0, n);
+
+        it("should reproduce the whole result from disjoint row ranges", () => {
+            const split = new Float64Array(n * row_len).fill(SENTINEL);
+            for (const [start, end] of ranges(n)) {
+                expect(wasmKnnBlock(X, n, d, k, split, start, end)).toBe(true);
+            }
+            expect(Array.from(split)).toEqual(Array.from(full));
+        });
+
+        it("should leave rows outside its range untouched", () => {
+            const out = new Float64Array(n * row_len).fill(SENTINEL);
+            const start = 5;
+            const end = 9;
+            wasmKnnBlock(X, n, d, k, out, start, end);
+
+            for (let i = 0; i < n; ++i) {
+                for (let c = 0; c < row_len; ++c) {
+                    const at = i * row_len + c;
+                    const expected = i >= start && i < end ? full[at] : SENTINEL;
+                    expect(out[at], `row ${i} slot ${c}`).toBe(expected);
+                }
+            }
+        });
+
+        it("should return the exact k nearest, ascending, excluding the row itself", () => {
+            // Selection happens inside the kernel, so this is the only place it is checked against
+            // a full sort of every distance.
+            const D = new Float64Array(n * n);
+            wasmDistanceMatrix(X, n, d, D);
+
+            for (let i = 0; i < n; ++i) {
+                const exact = [];
+                for (let j = 0; j < n; ++j) if (j !== i) exact.push([D[i * n + j], j]);
+                exact.sort((a, b) => a[0] - b[0]);
+
+                for (let c = 0; c < k; ++c) {
+                    const got_dist = full[i * row_len + c];
+                    const got_idx = full[i * row_len + k + c];
+                    expect(got_idx, `row ${i} slot ${c}`).not.toBe(i);
+                    expect(got_dist, `row ${i} slot ${c}`).toBeCloseTo(exact[c][0], 12);
+                    // Ties may order differently, so verify the index really is at that distance.
+                    expect(D[i * n + got_idx]).toBeCloseTo(exact[c][0], 12);
+                    if (c > 0) expect(got_dist).toBeGreaterThanOrEqual(full[i * row_len + c - 1]);
+                }
+            }
+        });
+
+        it("should pad with -1 when fewer than k other points exist", () => {
+            const small_n = 4;
+            const big_k = 6;
+            const Xs = random_flat(small_n, d, 9);
+            const out = new Float64Array(small_n * 2 * big_k);
+            wasmKnnBlock(Xs, small_n, d, big_k, out, 0, small_n);
+
+            for (let i = 0; i < small_n; ++i) {
+                for (let c = small_n - 1; c < big_k; ++c) {
+                    expect(out[i * 2 * big_k + big_k + c], `row ${i} slot ${c}`).toBe(-1);
                 }
             }
         });

@@ -23,11 +23,31 @@ const maxIterations = ref(200);
 const methodParams = ref({
   TSNE: { perplexity: 30 },
   UMAP: { n_neighbors: 15, min_dist: 0.1 },
+  PaCMAP: { n_neighbors: 10, MN_ratio: 0.5, FP_ratio: 2.0 },
+  // low_dist_thres is an absolute embedding distance, and 10 -- the library default, tuned for
+  // large datasets -- is too small for these, where it repels cluster-mates and breaks the
+  // clusters apart. See docs/dimred/localmap.md, "Choosing low_dist_thres".
+  LocalMAP: { n_neighbors: 10, MN_ratio: 0.5, FP_ratio: 2.0, low_dist_thres: 25 },
   TriMap: { n_inliers: 12, n_outliers: 4, n_random: 3 },
   SAMMON: { magic: 0.1 },
   SMACOF: {},
   SQDMDS: {},
 });
+
+/** Methods whose weight schedule is driven by `num_iters` rather than the iteration count. */
+const phasedMethods = ["PaCMAP", "LocalMAP"];
+
+/**
+ * PaCMAP splits its run into three phases and reads the boundaries from `num_iters`, not from how
+ * many steps the caller asks for. Left at the default [100, 100, 250] the slider would only ever
+ * animate the first two phases, so the phases are rescaled to it in the reference 100:100:250
+ * ratio and the whole schedule stays visible at any length.
+ */
+const scaledPhases = (total) => {
+  const p1 = Math.max(1, Math.round((total * 100) / 450));
+  const p2 = Math.max(1, Math.round((total * 100) / 450));
+  return [p1, p2, Math.max(1, total - p1 - p2)];
+};
 
 let currentStream = null;
 
@@ -43,6 +63,9 @@ const startOptimization = async () => {
   try {
     const rawData = JSON.parse(JSON.stringify(applyZScore(data)));
     const rawParams = JSON.parse(JSON.stringify(methodParams.value[selectedMethod.value] || {}));
+    if (phasedMethods.includes(selectedMethod.value)) {
+      rawParams.num_iters = scaledPhases(maxIterations.value);
+    }
     await runStreamInWorker(
       "AnimatedDR",
       selectedMethod.value,
@@ -115,6 +138,8 @@ onUnmounted(() => {
           >
             <option value="TSNE">t-SNE</option>
             <option value="UMAP">UMAP</option>
+            <option value="PaCMAP">PaCMAP</option>
+            <option value="LocalMAP">LocalMAP</option>
             <option value="TriMap">TriMap</option>
             <option value="SAMMON">Sammon</option>
             <option value="SMACOF">SMACOF</option>
@@ -182,6 +207,72 @@ onUnmounted(() => {
               :disabled="isRunning"
             />
           </div>
+        </div>
+
+        <div
+          v-if="selectedMethod === 'PaCMAP' || selectedMethod === 'LocalMAP'"
+          class="param-group animate-fade"
+        >
+          <div class="control-item slider-item">
+            <label
+              >Neighbors:
+              <span class="val">{{ methodParams[selectedMethod].n_neighbors }}</span></label
+            >
+            <input
+              type="range"
+              v-model.number="methodParams[selectedMethod].n_neighbors"
+              min="2"
+              max="50"
+              step="1"
+              :disabled="isRunning"
+            />
+          </div>
+          <div class="control-item slider-item">
+            <label
+              >MN Ratio:
+              <span class="val">{{ methodParams[selectedMethod].MN_ratio.toFixed(2) }}</span></label
+            >
+            <input
+              type="range"
+              v-model.number="methodParams[selectedMethod].MN_ratio"
+              min="0.1"
+              max="2"
+              step="0.1"
+              :disabled="isRunning"
+            />
+          </div>
+          <div class="control-item slider-item">
+            <label
+              >FP Ratio:
+              <span class="val">{{ methodParams[selectedMethod].FP_ratio.toFixed(1) }}</span></label
+            >
+            <input
+              type="range"
+              v-model.number="methodParams[selectedMethod].FP_ratio"
+              min="0.5"
+              max="5"
+              step="0.5"
+              :disabled="isRunning"
+            />
+          </div>
+          <div v-if="selectedMethod === 'LocalMAP'" class="control-item slider-item">
+            <label
+              >Low Dist Threshold:
+              <span class="val">{{ methodParams.LocalMAP.low_dist_thres }}</span></label
+            >
+            <input
+              type="range"
+              v-model.number="methodParams.LocalMAP.low_dist_thres"
+              min="1"
+              max="60"
+              step="1"
+              :disabled="isRunning"
+            />
+          </div>
+          <p class="param-note">
+            Phases scale to the iteration count: NN pairs attract, mid-near pairs pull the global
+            layout together early, then fade out for local refinement.
+          </p>
         </div>
 
         <div v-if="selectedMethod === 'TriMap'" class="param-group animate-fade">
@@ -395,6 +486,13 @@ onUnmounted(() => {
 
 .animate-fade {
   animation: fadeIn 0.3s ease-out;
+}
+
+.param-note {
+  margin: 0;
+  font-size: 0.78em;
+  line-height: 1.5;
+  color: var(--vp-c-text-3);
 }
 
 @keyframes fadeIn {

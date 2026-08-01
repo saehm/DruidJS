@@ -7,9 +7,11 @@ export { PaCMAP } from "./PaCMAP.js";
 export { ISOMAP } from "./ISOMAP.js";
 export { LDA } from "./LDA.js";
 export { LLE } from "./LLE.js";
+export { LocalMAP } from "./LocalMAP.js";
 export { LSP } from "./LSP.js";
 export { LTSA } from "./LTSA.js";
 export { MDS } from "./MDS.js";
+export { PaCMAP } from "./PaCMAP.js";
 export { PCA } from "./PCA.js";
 export { SAMMON } from "./SAMMON.js";
 export { SMACOF } from "./SMACOF.js";
@@ -145,6 +147,42 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [d=2] - the dimensionality of the projection.
  * @property {number} [lr=0.1] - learning rate of the delta-bar-delta optimizer.
  * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {number} [seed=1212] - the seed for the random number generator.
+ */
+
+/**
+ * @typedef {Object} ParametersPaCMAP
+ * @property {number} [n_neighbors=10] - Number of nearest neighbors forming the attractive pairs.
+ * @property {number} [MN_ratio=0.5] - Mid-near pairs per point, as a fraction of `n_neighbors`.
+ * @property {number} [FP_ratio=2.0] - Further pairs per point, as a multiple of `n_neighbors`.
+ * @property {number} [d=2] - the dimensionality of the projection.
+ * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {number} [lr=1.0] - learning rate of the Adam optimizer.
+ * @property {number[]} [num_iters=[100,100,250]] - Iterations in each of the three phases.
+ * @property {KNN<number[] | Float64Array, any> | null} [knn=null] - Index used to find the
+ *   neighbors. If `null`, an exact blocked search runs instead, which is faster than a tree at the
+ *   `n_neighbors + 50` candidates the density rescaling needs. Pass an approximate index such as
+ *   `HNSW`, `Annoy`, or `NNDescent` to avoid the O(N^2) search on large datasets. Default is `null`
+ * @property {boolean} [apply_pca=true] - Reduce inputs wider than 100 dimensions to 100 via PCA
+ *   before the search and the initialization.
+ * @property {number} [seed=1212] - the seed for the random number generator.
+ */
+
+/**
+ * @typedef {Object} ParametersLocalMAP
+ * @property {number} [n_neighbors=10] - Number of nearest neighbors forming the attractive pairs.
+ * @property {number} [MN_ratio=0.5] - Mid-near pairs per point, as a fraction of `n_neighbors`.
+ * @property {number} [FP_ratio=2.0] - Further pairs per point, as a multiple of `n_neighbors`.
+ * @property {number} [d=2] - the dimensionality of the projection.
+ * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {number} [lr=1.0] - learning rate of the Adam optimizer.
+ * @property {number[]} [num_iters=[100,100,250]] - Iterations in each of the three phases.
+ * @property {number} [low_dist_thres=10] - Embedding distance below which a point may be redrawn as
+ *   a further pair in phase 3. Also sets the local attraction scale, `low_dist_thres / 2`.
+ * @property {KNN<number[] | Float64Array, any> | null} [knn=null] - Index used to find the
+ *   neighbors. If `null`, an exact blocked search runs instead. Default is `null`
+ * @property {boolean} [apply_pca=true] - Reduce inputs wider than 100 dimensions to 100 via PCA
+ *   before the search and the initialization.
  * @property {number} [seed=1212] - the seed for the random number generator.
  */
 
