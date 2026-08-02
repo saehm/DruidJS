@@ -53,7 +53,9 @@ export class DisjointSet {
             if (disjoint_set.parent !== x) {
                 disjoint_set.children.add(x);
                 const new_parent = this.find(disjoint_set.parent);
-                if (!new_parent) throw new Error("should not happen!");
+                // `== null` rather than a falsy test: elements may legitimately be `0`, which every
+                // index-keyed caller starts at.
+                if (new_parent == null) throw new Error("should not happen!");
                 disjoint_set.parent = new_parent;
                 return disjoint_set.parent;
             } else {
@@ -73,7 +75,8 @@ export class DisjointSet {
         let node_x = this.find(x);
         let node_y = this.find(y);
 
-        if (!node_x || !node_y) throw new Error("x or y not found!");
+        // `== null` rather than a falsy test: `0` is a valid element, see `find`.
+        if (node_x == null || node_y == null) throw new Error("x or y not found!");
 
         let disjoint_set_x = this._list.get(node_x);
         let disjoint_set_y = this._list.get(node_y);

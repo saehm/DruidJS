@@ -123,6 +123,17 @@ describe("DisjointSet", () => {
         expect(ds.find(1)).not.toBe(ds.find(3));
     });
 
+    it("should treat 0 as a valid element", () => {
+        // Regression: `find` returns null when an element is absent, but the guards tested it for
+        // falsiness — so element 0 read as "not found" and `union` threw. Every test above starts at
+        // 1, which is why it survived; any index-keyed caller starts at 0.
+        const ds = new DisjointSet([0, 1, 2]);
+        expect(ds.find(0)).toBe(0);
+        expect(() => ds.union(0, 1)).not.toThrow();
+        expect(ds.find(0)).toBe(ds.find(1));
+        expect(ds.find(0)).not.toBe(ds.find(2));
+    });
+
     it("should merge multiple sets", () => {
         const ds = new DisjointSet([1, 2, 3, 4]);
         ds.union(1, 2);
