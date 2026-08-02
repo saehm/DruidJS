@@ -11,25 +11,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
-      - run: npm ci
-      - run: npm test
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm exec playwright install --with-deps
+      - run: pnpm test
 
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
+          node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: "@saehrimnir"
-      - run: npm ci
-      - run: npm publish
+      - run: pnpm install
+      - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
@@ -37,13 +41,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
+          node-version: 22
           registry-url: https://npm.pkg.github.com/
           scope: "@saehm"
-      - run: npm ci
-      - run: npm publish
+      - run: pnpm install
+      - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
