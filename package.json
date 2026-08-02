@@ -1,6 +1,9 @@
 {
     "name": "@saehrimnir/druidjs",
     "version": "0.9.0",
+    "publishConfig": {
+        "access": "public"
+    },
     "description": "A JavaScript Library for Dimensionality Reduction.",
     "keywords": [
         "dimensionality reduction",
