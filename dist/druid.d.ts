@@ -210,6 +210,34 @@ declare function max(values: Iterable<number | null>): number;
 declare function min(values: Iterable<number | null>): number;
 
 /**
+ * @typedef {[number, number, number]} WeightedEdge An edge `[u, v, weight]` between the vertices with
+ *   index `u` and `v`.
+ */
+/**
+ * Computes a minimum spanning tree of a weighted graph with Kruskal's algorithm.
+ *
+ * The graph is given as an edge list over vertices `0 … N-1`, so a caller holding a sparse structure
+ * (a k-nearest-neighbor graph, say) never has to materialize the `N ⨯ N` matrix. Edges are treated as
+ * undirected; passing both `[u, v, w]` and `[v, u, w]` is harmless, the second one is skipped as a
+ * cycle.
+ *
+ * If the graph is disconnected the result is a minimum spanning *forest* — one tree per connected
+ * component, and fewer than `N - 1` edges. Callers that need a connected result must guarantee a
+ * connected input.
+ *
+ * @param {WeightedEdge[]} edges - The edges of the graph. Not mutated.
+ * @param {number} N - The number of vertices. Vertex indices must be in `[0, N)`.
+ * @returns {WeightedEdge[]} The edges of the minimum spanning tree, ascending by weight.
+ * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
+ */
+declare function minimum_spanning_tree(edges: WeightedEdge[], N: number): WeightedEdge[];
+/**
+ * An edge `[u, v, weight]` between the vertices with
+ *   index `u` and `v`.
+ */
+type WeightedEdge = [number, number, number];
+
+/**
  * Seeded pseudo-random number generator.
  *
  * Implements **sfc32** (Small Fast Counting, Doty-Humphrey), a 128-bit-state counter-based
@@ -943,7 +971,7 @@ declare class CURE extends Clustering<ParametersCURE> {
  * Hierarchical Clustering
  *
  * A bottom-up approach (agglomerative) to clustering that builds a tree of clusters (dendrogram).
- * Supports different linkage criteria: single, complete, and average.
+ * Supports different linkage criteria: single, complete, average, and ward.
  *
  * @class
  * @extends Clustering<ParametersHierarchicalClustering>
@@ -1477,7 +1505,11 @@ declare class XMeans extends Clustering<ParametersXMeans> {
 }
 
 type ParametersHierarchicalClustering = {
-    linkage: "single" | "complete" | "average";
+    linkage: "single" | "complete" | "average" | "ward";
+    /**
+     * - `"ward"` assumes these are Euclidean distances; its
+     * minimum-variance criterion is only meaningful in that geometry.
+     */
     metric: Metric | "precomputed";
 };
 type ParametersKMeans = {
@@ -2114,6 +2146,212 @@ declare class ISOMAP<T extends InputType> extends DR<T, ParametersISOMAP> {
 }
 
 /** @import {InputType} from "../index.js" */
+/** @import {ParametersStressMDS, WeightSpec} from "./index.js" */
+/** @import {EigenArgs} from "../linear_algebra/index.js" */
+/** @typedef {"MDS" | "PCA" | "random"} AvailableInit */
+/** Raw stress: every pair counts equally. Recovers the objective {@link SMACOF} minimises. */
+declare const WEIGHTS_UNIFORM: 0;
+/** Sammon stress. Recovers the objective {@link SAMMON} minimises, up to a constant factor. */
+declare const WEIGHTS_SAMMON: -1;
+/** Elastic scaling, also known as the Kamada-Kawai energy. See {@link KKMDS}. */
+declare const WEIGHTS_ELASTIC: -2;
+/**
+ * Weighted metric MDS (stress majorization family)
+ *
+ * Minimises `σ(Y) = Σ_{i<j} w_ij ⋅ (‖y_i - y_j‖ - d_ij)²` for a weighting you choose. An exponent
+ * `q` gives `w_ij = d_ij^q`, recovering the classical family: `0` is raw stress ({@link SMACOF}'s
+ * objective), `-1` Sammon stress ({@link SAMMON}'s), `-2` elastic scaling ({@link KKMDS}). A matrix
+ * or a function works too, where a zero weight drops the pair from the objective — the usual way to
+ * express missing dissimilarities.
+ *
+ * It does not replace {@link SMACOF} or {@link SAMMON}: those minimise the same objectives with
+ * their own historical algorithms and reach different local minima.
+ *
+ * Optimised by Jacobi-preconditioned gradient descent with a backtracking line search, warm-started
+ * from classical MDS. O(N²·d) per iteration.
+ *
+ * @class
+ * @template {InputType} T
+ * @extends DR<T, ParametersStressMDS>
+ * @category Dimensionality Reduction
+ * @see {@link KKMDS} for the `weights: -2` preset.
+ * @example
+ * // Sammon stress, converged further than SAMMON's own optimizer takes it
+ * const Y = new StressMDS(X, { weights: -1 }).transform();
+ * @example
+ * // Ignore pairs whose dissimilarity was never measured
+ * const W = new Matrix(N, N, (i, j) => (observed(i, j) ? 1 : 0));
+ * const Y = new StressMDS(D, { metric: "precomputed", weights: W }).transform();
+ */
+declare class StressMDS<T extends InputType> extends DR<T, ParametersStressMDS> {
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersStressMDS>} [parameters]
+     * @returns {T}
+     */
+    static transform<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersStressMDS>): T_1;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersStressMDS>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static generator<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersStressMDS>): Generator<T_1, T_1, void>;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersStressMDS>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static transform_async<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersStressMDS>): Promise<T_1>;
+    /**
+     * Weighted metric MDS.
+     *
+     * @param {T} X - The high-dimensional data, or a precomputed distance matrix.
+     * @param {Partial<ParametersStressMDS>} [parameters] - Object containing parameterization of the DR method.
+     */
+    constructor(X: T, parameters?: Partial<ParametersStressMDS>);
+    /**
+     * The target distances. Named apart from the base class's `_D`, which is the *input*
+     * dimensionality of `X`, not a matrix.
+     *
+     * @type {Matrix | undefined}
+     */
+    _target_distances: Matrix | undefined;
+    /** @type {Matrix | undefined} */
+    _weights: Matrix | undefined;
+    /** @type {number} */
+    _energy: number;
+    /**
+     * The weighted stress `σ(Y)` of the current embedding.
+     *
+     * @returns {number}
+     */
+    get energy(): number;
+    /**
+     * The weight matrix actually in use, whatever form `weights` was given in.
+     *
+     * @returns {Matrix}
+     */
+    get weights(): Matrix;
+    /**
+     * Materialises `weights` into an N ⨯ N matrix.
+     *
+     * Non-positive and non-finite weights are normalised to exactly 0, which is the kernel's "skip
+     * this pair" signal. That is what makes a zero distance harmless under a negative exponent: `0^-2`
+     * is `Infinity`, and coincident rows are ordinary in real data, so the pair is dropped rather
+     * than given infinite stiffness.
+     *
+     * @private
+     * @param {Matrix} D
+     * @returns {Matrix}
+     */
+    private _build_weights;
+    /**
+     * Classical MDS on the target distances, scaled by the square roots of the eigenvalues.
+     *
+     * The scaling matters: the descent starts from here, and an unscaled eigenvector basis would put
+     * the configuration at a completely different magnitude from `d_ij`, so the first steps would be
+     * spent on scale rather than structure.
+     *
+     * @private
+     * @param {Matrix} D
+     * @param {number} d
+     * @returns {Matrix}
+     */
+    private _classical_mds;
+    /** Computes the target distances, the weights, and the starting configuration. */
+    init(): this;
+    /**
+     * @private
+     * @param {Matrix} Y
+     * @param {Matrix} D
+     * @param {Matrix} W
+     * @returns {number}
+     */
+    private _compute_energy;
+    /**
+     * One preconditioned gradient step with a backtracking line search, in JS.
+     *
+     * Mirrors `stress_mds_step_f64` in `StressMDS.as.ts` loop for loop, so the two paths agree to
+     * floating point tolerance. See that file for why the gradient is divided by the weighted degree.
+     *
+     * @private
+     * @param {Matrix} Y - Updated in place on an accepted step.
+     * @param {Matrix} D
+     * @param {Matrix} W
+     * @param {Float64Array} G - Gradient scratch, `N * d`.
+     * @param {number} step
+     * @param {number} energy_current
+     * @returns {{ energy: number; step: number; accepted: boolean }}
+     */
+    private _step_js;
+    /**
+     * Computes the projection.
+     *
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    generator(): Generator<T, T, void>;
+    /**
+     * Computes the projection.
+     *
+     * @returns {T}
+     */
+    transform(): T;
+}
+
+/** @import {InputType} from "../index.js" */
+/** @import {ParametersKKMDS} from "./index.js" */
+/**
+ * Kamada-Kawai Multidimensional Scaling (KKMDS)
+ *
+ * {@link StressMDS} fixed at `weights: -2`, weighting each pair by `1 / d_ij²`. That is the
+ * Kamada-Kawai energy from graph drawing, known in the MDS literature as *elastic scaling*.
+ *
+ * Its classic use is laying out a graph from its shortest-path distances — pass those as a
+ * `"precomputed"` matrix, as {@link MINFOTree} does.
+ *
+ * @class
+ * @template {InputType} T
+ * @extends StressMDS<T>
+ * @category Dimensionality Reduction
+ * @see {@link https://doi.org/10.1016/0020-0190(89)90102-6}
+ * @see {@link StressMDS} for other weightings.
+ */
+declare class KKMDS<T extends InputType> extends StressMDS<T> {
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersKKMDS>} [parameters]
+     * @returns {T}
+     */
+    static transform<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersKKMDS>): T_1;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersKKMDS>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static generator<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersKKMDS>): Generator<T_1, T_1, void>;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersKKMDS>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static transform_async<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersKKMDS>): Promise<T_1>;
+    /**
+     * Kamada-Kawai weighted MDS.
+     *
+     * @param {T} X - The high-dimensional data, or a precomputed distance matrix.
+     * @param {Partial<ParametersKKMDS>} [parameters] - Object containing parameterization of the DR
+     *   method. `weights` is not among them; it is fixed at `-2`.
+     */
+    constructor(X: T, parameters?: Partial<ParametersKKMDS>);
+}
+
+/** @import {InputType} from "../index.js" */
 /** @import {ParametersLDA} from "./index.js" */
 /** @import {EigenArgs} from "../linear_algebra/index.js" */
 /**
@@ -2241,6 +2479,330 @@ declare class LLE<T extends InputType> extends DR<T, ParametersLLE> {
      * @returns {T}
      */
     transform(): T;
+}
+
+/**
+ * Pairwise Controlled Manifold Approximation Projection (PaCMAP)
+ *
+ * A dimensionality reduction technique that uses three types of point pairs — nearest neighbor
+ * (NN), mid-near (MN), and further (FP) pairs — with a dynamic three-phase weight schedule and
+ * Adam optimization to preserve both local and global structure. Neighbours are scaled by a local
+ * density estimate before selection, which is what separates the NN set from a plain KNN graph.
+ *
+ * @class
+ * @template {InputType} T
+ * @template {ParametersPaCMAP} [P=ParametersPaCMAP] - Widened by {@link LocalMAP}, which adds a parameter.
+ * @extends DR<T, P>
+ * @category Dimensionality Reduction
+ * @see {@link https://arxiv.org/abs/2012.04456|PaCMAP Paper}
+ * @see {@link https://github.com/YingfanWang/PaCMAP|PaCMAP GitHub}
+ * @see {@link UMAP} for a related graph-based technique
+ * @see {@link LocalMAP} for the local-refinement variant
+ *
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ *
+ * const X = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]];
+ * const pacmap = new druid.PaCMAP(X, {
+ *     n_neighbors: 10,
+ *     MN_ratio: 0.5,
+ *     FP_ratio: 2.0,
+ *     seed: 42
+ * });
+ *
+ * const Y = pacmap.transform(); // 450 iterations (default)
+ * // [[x1, y1], [x2, y2], [x3, y3]]
+ */
+declare class PaCMAP<T extends InputType, P extends ParametersPaCMAP = ParametersPaCMAP> extends DR<T, P> {
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersPaCMAP>} [parameters]
+     * @returns {T}
+     */
+    static transform<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersPaCMAP>): T_1;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersPaCMAP>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static generator<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersPaCMAP>): Generator<T_1, T_1, void>;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersPaCMAP>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static transform_async<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersPaCMAP>): Promise<T_1>;
+    /**
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<P>} [parameters] - Object containing parameterization of the DR method.
+     */
+    constructor(X: T, parameters?: Partial<P>);
+    _iter: number;
+    /**
+     * Finds the `n_candidates` nearest neighbors of every point.
+     *
+     * The reference over-fetches 50 beyond `n_neighbors` so that the density rescaling in
+     * {@link _scaled_neighbors} has something to re-rank, which makes this the most expensive part
+     * of a run — asking an approximate index for 60 neighbors instead of 10 costs it far more than
+     * the extra 50 suggests. The default path is therefore an exact blocked search whose selection
+     * happens inside the WASM kernel; it beats a tree at these widths and matches the exact search
+     * the reference performs. A `knn` index is used instead when one is supplied.
+     *
+     * @protected
+     * @param {Matrix} X - The matrix to search, already reduced if PCA was applied.
+     * @param {number} n_candidates
+     * @returns {{ dist: Float64Array; idx: Int32Array }} Row-major `N` ⨯ `n_candidates`, ascending.
+     */
+    protected _find_candidates(X: Matrix, n_candidates: number): {
+        dist: Float64Array;
+        idx: Int32Array;
+    };
+    /**
+     * Exact neighbour search in JS, for a non-euclidean metric or when WASM is unavailable.
+     *
+     * @protected
+     * @param {Matrix} X
+     * @param {number} n_candidates
+     * @returns {{ dist: Float64Array; idx: Int32Array }}
+     */
+    protected _find_candidates_js(X: Matrix, n_candidates: number): {
+        dist: Float64Array;
+        idx: Int32Array;
+    };
+    /**
+     * Selects the NN pairs by rescaled distance.
+     *
+     * Each candidate distance is divided by the local scale of both endpoints — the mean distance
+     * to their 4th to 6th neighbors — before the top `n_neighbors` are taken. Without this the NN
+     * set is an ordinary KNN graph and dense regions dominate the attractive term.
+     *
+     * @protected
+     * @param {{ dist: Float64Array; idx: Int32Array }} candidates
+     * @param {number} n_candidates
+     * @param {number} n_neighbors
+     * @returns {Int32Array} Flat `[i, j, ...]` pairs.
+     */
+    protected _scaled_neighbors(candidates: {
+        dist: Float64Array;
+        idx: Int32Array;
+    }, n_candidates: number, n_neighbors: number): Int32Array;
+    /**
+     * Draws `n_samples` distinct indices, excluding `self` and everything in `reject`.
+     *
+     * @protected
+     * @param {number} n_samples
+     * @param {number} self
+     * @param {Int32Array | number[]} reject
+     * @param {Int32Array} out - Receives the sample; must hold `n_samples`.
+     * @returns {number} How many were drawn, short of `n_samples` only if the pool is exhausted.
+     */
+    protected _sample_excluding(n_samples: number, self: number, reject: Int32Array | number[], out: Int32Array): number;
+    /**
+     * Samples mid-near pairs: for each point, six random draws from the whole dataset, of which the
+     * second closest is kept. Sampling globally rather than from the neighbour list is what makes
+     * these pairs "mid-near" and is the mechanism behind PaCMAP's global structure in phase 1.
+     *
+     * @protected
+     * @param {Matrix} X
+     * @param {number} n_MN
+     * @returns {Int32Array} Flat `[i, j, ...]` pairs.
+     */
+    protected _sample_mn_pairs(X: Matrix, n_MN: number): Int32Array;
+    /**
+     * Samples further pairs: random points that are not among `i`'s neighbors.
+     *
+     * @protected
+     * @param {Int32Array} nn_pairs
+     * @param {number} n_neighbors
+     * @param {number} n_FP
+     * @returns {Int32Array} Flat `[i, j, ...]` pairs.
+     */
+    protected _sample_fp_pairs(nn_pairs: Int32Array, n_neighbors: number, n_FP: number): Int32Array;
+    /**
+     * Accumulates the gradient of one pair type into `grad_flat`.
+     *
+     * All three losses share the form `w * f(d_ij)` with `d_ij = 1 + ||y_i - y_j||²`, so one loop
+     * covers them: the attractive pairs use `d_ij / (a + d_ij)` and the repulsive ones
+     * `1 / (1 + d_ij)`, which is the same denominator with `a = 1` and the sign flipped.
+     *
+     * `Y` is indexed flat rather than through `Matrix.row`, which would allocate a subarray per
+     * endpoint — two per pair, tens of millions per run, and by far the dominant cost of a step.
+     *
+     * @protected
+     * @param {Float64Array} grad_flat - Flat N ⨯ d gradient accumulator, modified in place.
+     * @param {Int32Array} pairs - Flat `[i, j, ...]` pair array.
+     * @param {number} w - Weight for this pair type.
+     * @param {number} a - Denominator constant: 10 for NN, 10000 for MN, 1 for FP.
+     * @param {boolean} repulsive
+     */
+    protected _accumulate_gradients(grad_flat: Float64Array, pairs: Int32Array, w: number, a: number, repulsive: boolean): void;
+    /**
+     * Returns the weight schedule for the current iteration.
+     *
+     * @protected
+     * @param {number} iter - Current iteration (0-indexed)
+     * @returns {{ w_nn: number; w_mn: number; w_fp: number }}
+     */
+    protected _get_weights(iter: number): {
+        w_nn: number;
+        w_mn: number;
+        w_fp: number;
+    };
+    /**
+     * Applies Adam optimizer update to Y using accumulated gradients.
+     *
+     * @protected
+     * @param {Float64Array} grad_flat - Flat N ⨯ d gradient
+     */
+    protected _adam_update(grad_flat: Float64Array): void;
+    _adam_t: any;
+    /**
+     * Initializes PaCMAP: preprocessing, PCA embedding, NN, MN and FP pairs, and Adam state.
+     *
+     * @returns {this}
+     */
+    init(): this;
+    _X_knn: Matrix | undefined;
+    _nn_pairs: Int32Array<ArrayBufferLike> | undefined;
+    _mn_pairs: Int32Array<ArrayBufferLike> | undefined;
+    _fp_pairs: Int32Array<ArrayBufferLike> | undefined;
+    _adam_m: Float64Array<ArrayBuffer> | undefined;
+    _adam_v: Float64Array<ArrayBuffer> | undefined;
+    _grad: Float64Array<ArrayBuffer> | undefined;
+    /**
+     * Accumulates the nearest-neighbor gradient for the current step.
+     *
+     * Split out from {@link next} because it is the only part of a step {@link LocalMAP} changes,
+     * and only in phase 3. Everything else — the mid-near and further terms, the Adam update, the
+     * iteration bookkeeping — is shared.
+     *
+     * @protected
+     * @param {Float64Array} grad_flat - Flat N ⨯ d gradient accumulator, modified in place.
+     * @param {number} w_nn
+     */
+    protected _accumulate_nn_gradients(grad_flat: Float64Array, w_nn: number): void;
+    /**
+     * Hook run after the embedding has been updated, with the iteration that just finished.
+     *
+     * Nothing to do here; {@link LocalMAP} redraws its further pairs from it.
+     *
+     * @protected
+     * @param {number} iter - The 0-indexed iteration that just completed.
+     */
+    protected _after_step(iter: number): void;
+    /**
+     * Performs one optimization step.
+     *
+     * @returns {Matrix}
+     */
+    next(): Matrix;
+    /**
+     * @param {number} [iterations] - Total number of iterations. Defaults to sum of `num_iters`.
+     * @returns {T}
+     */
+    transform(iterations?: number): T;
+    /**
+     * @param {number} [iterations] - Total number of iterations. Defaults to sum of `num_iters`.
+     * @returns {Generator<T, T, void>}
+     */
+    generator(iterations?: number): Generator<T, T, void>;
+}
+
+/** @import {InputType} from "../index.js" */
+/** @import {Matrix} from "../matrix/index.js" */
+/** @import {ParametersLocalMAP} from "./index.js" */
+/**
+ * LocalMAP
+ *
+ * A variant of {@link PaCMAP} that sharpens local cluster separation in phase 3. Attraction on the
+ * nearest-neighbor pairs is scaled by `low_dist_thres / (2 * sqrt(d_ij))`, which strengthens it for
+ * pairs already close in the embedding and weakens it for far ones, and the further pairs are
+ * periodically redrawn from points that are *near* in the current embedding rather than staying the
+ * random set chosen at initialization.
+ *
+ * @class
+ * @template {InputType} T
+ * @extends PaCMAP<T, ParametersLocalMAP>
+ * @category Dimensionality Reduction
+ * @see {@link https://arxiv.org/abs/2012.04456|PaCMAP Paper}
+ * @see {@link PaCMAP} for the base algorithm
+ *
+ * @example
+ * import * as druid from "@saehrimnir/druidjs";
+ *
+ * const X = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]];
+ * const localmap = new druid.LocalMAP(X, {
+ *     n_neighbors: 10,
+ *     low_dist_thres: 10,
+ *     seed: 42
+ * });
+ *
+ * const Y = localmap.transform(); // 450 iterations (default)
+ * // [[x1, y1], [x2, y2], [x3, y3]]
+ */
+declare class LocalMAP<T extends InputType> extends PaCMAP<T, ParametersLocalMAP> {
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLocalMAP>} [parameters]
+     * @returns {T}
+     */
+    static transform<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersLocalMAP>): T_1;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLocalMAP>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static generator<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersLocalMAP>): Generator<T_1, T_1, void>;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersLocalMAP>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static transform_async<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersLocalMAP>): Promise<T_1>;
+    /**
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersLocalMAP>} [parameters] - Object containing parameterization of the DR method.
+     */
+    constructor(X: T, parameters?: Partial<ParametersLocalMAP>);
+    /**
+     * The first iteration of phase 3, past which LocalMAP diverges from PaCMAP.
+     *
+     * The reference tests `itr > phase_1 + phase_2`, so the first phase 3 step still runs plain
+     * PaCMAP; this is that boundary, and "after" means strictly greater.
+     *
+     * @private
+     * @returns {number}
+     */
+    private get _phase3_start();
+    /**
+     * Accumulates NN gradients with LocalMAP's local scaling, `nn_scale / sqrt(d_ij)`.
+     *
+     * @protected
+     * @param {Float64Array} grad_flat - Flat N ⨯ d gradient accumulator, modified in place.
+     * @param {Int32Array} pairs - Flat `[i, j, ...]` pair array.
+     * @param {number} w_nn - NN weight.
+     * @param {number} nn_scale - `low_dist_thres / 2`.
+     */
+    protected _accumulate_gradients_local_nn(grad_flat: Float64Array, pairs: Int32Array, w_nn: number, nn_scale: number): void;
+    /**
+     * Redraws the further pairs from points within `low_dist_thres` of `i` in the embedding.
+     *
+     * A point that is far in the input but has drifted close in the embedding is exactly what the
+     * repulsive term needs to push apart, so sampling from the current layout rather than the
+     * original random set is what sharpens the cluster boundaries. Candidates that are already
+     * neighbors are rejected, and a row that finds nothing within the threshold keeps its old
+     * partner.
+     *
+     * @protected
+     * @param {number} low_dist_thres
+     */
+    protected _resample_local_fp_pairs(low_dist_thres: number): void;
 }
 
 /** @import {InputType} from "../index.js" */
@@ -2421,6 +2983,231 @@ declare class MDS<T extends InputType> extends DR<T, ParametersMDS> {
     _d_X: Matrix | undefined;
     /** @returns {number} - The stress of the projection. */
     stress(): number;
+}
+
+/**
+ * Minimum Information Trees (MINFO Trees)
+ *
+ * A visualization method for clustered high-dimensional data. It reads the cluster labels on a
+ * k-nearest-neighbor graph as a q-state Potts model, weights the edges by an information-geometric
+ * curvature derived from it, and keeps the minimum spanning tree of that weighted graph.
+ *
+ * {@link projection} returns 2D coordinates like any other method here, but the tree is the actual
+ * output — read {@link edges} to draw it.
+ *
+ * @class
+ * @template {InputType} T
+ * @extends DR<T, ParametersMINFOTree>
+ * @category Dimensionality Reduction
+ * @see {@link https://doi.org/10.1109/ACCESS.2025.3602730}
+ * @see {@link TopoMap} for another spanning-tree-based projection.
+ */
+declare class MINFOTree<T extends InputType> extends DR<T, ParametersMINFOTree> {
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMINFOTree>} [parameters]
+     * @returns {T}
+     */
+    static transform<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersMINFOTree>): T_1;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMINFOTree>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static generator<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersMINFOTree>): Generator<T_1, T_1, void>;
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMINFOTree>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static transform_async<T_1 extends InputType>(X: T_1, parameters?: Partial<ParametersMINFOTree>): Promise<T_1>;
+    /**
+     * Minimum Information Trees.
+     *
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersMINFOTree>} [parameters] - Object containing parameterization of the DR method.
+     * @see {@link https://doi.org/10.1109/ACCESS.2025.3602730}
+     */
+    constructor(X: T, parameters?: Partial<ParametersMINFOTree>);
+    /**
+     * The edges of the Minimum Information Tree, as `[u, v, weight]` over row indices of `X`,
+     * ascending by weight. This is the method's real output — {@link projection} is one drawing of
+     * it.
+     *
+     * @returns {WeightedEdge[]}
+     */
+    get edges(): WeightedEdge[];
+    /**
+     * The cluster label per point, whether supplied or computed in step 1.
+     *
+     * @returns {Int32Array} Labels, remapped to `0 … q-1`.
+     */
+    get labels(): Int32Array;
+    /**
+     * The information curvature `S_i` per point, normalised as the edge weighting uses it.
+     *
+     * @returns {Float64Array}
+     */
+    get curvature(): Float64Array;
+    /**
+     * The maximum pseudo-likelihood estimate of the Potts inverse temperature.
+     *
+     * @returns {number}
+     */
+    get beta(): number;
+    /**
+     * Resolves the labels field: either the caller's, or the outcome of clustering `X`.
+     *
+     * Labels are remapped to a dense `0 … q-1` so they can index the Potts state vectors directly.
+     *
+     * @private
+     * @returns {Int32Array}
+     */
+    private _make_labels;
+    _q: number | undefined;
+    /**
+     * Finds the distance threshold that cuts a dendrogram into exactly `k` clusters.
+     *
+     * {@link HierarchicalClustering.get_cluster_list} cuts at a height, not at a cluster count, so
+     * the height has to be recovered: breaking the `k - 1` tallest merges leaves `k` components, and
+     * any threshold between the `k`-th and `(k-1)`-th tallest does that. The midpoint is used so
+     * ties on either side cannot land the cut on the wrong number.
+     *
+     * Only `2 … N-1` is reachable this way. A dendrogram has `N-1` merges, and the traversal emits a
+     * cluster per subtree it stops at, never a bare leaf — so there is no height that separates all
+     * `N` points. Asking for more is rejected rather than approximated: cutting below every merge
+     * silently yields *one* cluster, the opposite of what was asked for.
+     *
+     * @private
+     * @param {HierarchicalClustering} hc
+     * @param {number} k - At least 2; {@link _make_labels} rejects anything smaller before this runs.
+     * @returns {number}
+     */
+    private _dendrogram_cut;
+    /**
+     * Builds the symmetric k-nearest-neighbor graph, connected.
+     *
+     * The Potts model is defined over a neighborhood system and the layout needs finite pairwise
+     * distances, so a k-NNG that falls into several components would break both. When that happens
+     * the components are stitched together with the shortest edge between each pair, which is what
+     * the author's reference implementation achieves by unioning in a spanning tree of the complete
+     * graph.
+     *
+     * @private
+     * @returns {number[][]} Adjacency list.
+     */
+    private _make_knn_graph;
+    /**
+     * Adds the fewest edges needed to make `adjacency` connected, preferring short ones.
+     *
+     * @private
+     * @param {Set<number>[]} adjacency - Mutated in place.
+     */
+    private _connect_components;
+    /**
+     * Counts, for every vertex, how many of its neighbors carry each of the `q` labels.
+     *
+     * `U[i * q + l]` is `U_i(l)` in the paper.
+     *
+     * @private
+     * @param {number[][]} adjacency
+     * @returns {Float64Array}
+     */
+    private _neighbor_counts;
+    /**
+     * Gibbs weights `w_i(l) = exp(β ⋅ U_i(l))`, shifted to avoid overflow.
+     *
+     * Every quantity built from `w` here is a ratio of equally-weighted sums, so scaling the whole
+     * vector by `exp(-β ⋅ max_l U_i(l))` leaves φ and ψ untouched while keeping `exp` in range even
+     * for a large β on a dense neighborhood.
+     *
+     * @private
+     * @param {Float64Array} U
+     * @param {number} offset - Start of vertex `i`'s counts in `U`.
+     * @param {number} q
+     * @param {number} beta
+     * @param {Float64Array} out - Length `q` scratch buffer.
+     */
+    private _gibbs_weights;
+    /**
+     * Maximum pseudo-likelihood estimate of the inverse temperature β.
+     *
+     * Solves the pseudo-likelihood equation (3), which sets the observed energy equal to the
+     * expected energy:
+     *
+     * ```
+     * f(β) = Σ_i U_i(x_i) - Σ_i E_β[U_i] = 0
+     * ```
+     *
+     * `f` is the negative of a sum of variances, hence non-increasing, so plain bisection is enough
+     * and needs no derivatives — the same role Brent's method plays in the paper, without the extra
+     * machinery. `f(0) <= 0` means the labels agree with their neighborhoods no better than chance,
+     * which leaves β = 0 as the estimate.
+     *
+     * @private
+     * @param {Float64Array} U
+     * @returns {number}
+     */
+    private _estimate_beta;
+    /**
+     * Information curvature `S_i = -ψ_i / φ_i` at every vertex, normalised to `(0, 1]`.
+     *
+     * The paper states φ (17) and ψ (23) as Kronecker products over `q ⨯ q` matrices, but both
+     * collapse: since summing every entry of `a ⊗ aᵀ` is just `(Σa)²`, the double sums reduce to
+     *
+     * ```
+     * φ_i = (Σ_l v_l w_l / Σ_l w_l)²                                  — squared observed/expected energy gap
+     * ψ_i = [(Σ_l U_l² w_l)(Σ_l w_l) - (Σ_l U_l w_l)²] / (Σ_l w_l)²   — the variance of U under w
+     * ```
+     *
+     * which is O(q) per vertex instead of O(q²), and allocates nothing.
+     *
+     * `epsilon` floors the denominator, following the author's reference implementation. It is load
+     * bearing: both φ and ψ vanish for an interior point as β grows, and by β ≈ 8 ψ has underflowed
+     * to exactly 0, so `S` is pinned at the top of the range rather than the bottom. That inverts the
+     * interior/boundary reading in §VI-C for anything above β ≈ 2, which well-separated clusters
+     * comfortably exceed. The formulas are implemented as published in either regime; see
+     * `docs/dimred/minfotree.md` for the measurements.
+     *
+     * @private
+     * @param {Float64Array} U
+     * @param {number} beta
+     * @returns {Float64Array}
+     */
+    private _information_curvature;
+    /**
+     * All-pairs shortest paths over the Minimum Information Tree.
+     *
+     * A tree has exactly one path between any two vertices, so a depth-first walk from each source
+     * settles every distance in O(N) — no priority queue and no relaxation, unlike the Dijkstra
+     * {@link ISOMAP} needs on its general k-NNG.
+     *
+     * @private
+     * @param {WeightedEdge[]} edges
+     * @returns {Matrix}
+     */
+    private _tree_distances;
+    /** Runs steps 1-5: labels, k-NNG, β, curvature, information graph and its spanning tree. */
+    init(): this;
+    _labels: Int32Array<ArrayBufferLike> | undefined;
+    _beta: number | undefined;
+    _curvature: Float64Array<ArrayBufferLike> | undefined;
+    _edges: WeightedEdge[] | undefined;
+    /**
+     * Computes the projection.
+     *
+     * @returns {T}
+     */
+    transform(): T;
+    /**
+     * Computes the projection.
+     *
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    generator(): Generator<T, T, void>;
 }
 
 /** @import {InputType} from "../index.js" */
@@ -2859,10 +3646,9 @@ declare class TopoMap<T extends InputType> extends DR<T, ParametersTopoMap> {
      * @see {@link https://en.wikipedia.org/wiki/Kruskal%27s_algorithm}
      */
     private _make_minimum_spanning_tree;
-    _disjoint_set: DisjointSet<Float64Array<ArrayBufferLike>> | undefined;
     /** Initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree. */
     init(): this;
-    _Emst: number[][] | undefined;
+    _Emst: WeightedEdge[] | undefined;
     /**
      * Returns true if Point C is left of line AB.
      *
@@ -2987,7 +3773,7 @@ declare class KNN<T extends number[] | Float64Array, Para extends Object> {
      * The queried element is never part of the result. It is trivially its own closest neighbor at
      * distance 0, which is never what a caller asking "what is this point near?" wants, so every
      * caller used to strip it back out — each in its own, subtly different way. Note the asymmetry
-     * with {@link KNN#search}: an arbitrary query point has no "self" to exclude, so there `k` means
+     * with `search`: an arbitrary query point has no "self" to exclude, so there `k` means
      * "k results", while here it means "k neighbors".
      *
      * The self match is removed **by index** — not by position, and not by looking for a zero
@@ -3007,10 +3793,6 @@ declare class KNN<T extends number[] | Float64Array, Para extends Object> {
     }[];
 }
 
-/** @import {InputType} from "../index.js" */
-/** @import {Metric} from "../metrics/index.js" */
-/** @import {ParametersTriMap} from "./index.js" */
-/** @import {KNN} from "../knn/KNN.js" */
 /**
  * TriMap
  *
@@ -3081,13 +3863,17 @@ declare class TriMap<T extends InputType> extends DR<T, ParametersTriMap> {
         weights: Float64Array<ArrayBuffer>;
     };
     /**
-     * Calculates the similarity matrix P
+     * Calculates the log-similarity matrix P.
+     *
+     * Kept in log space: exponentiating here underflows to zero for anything but the closest
+     * neighbours, and every consumer either compares entries or takes their difference, both of
+     * which are order-preserving under the logarithm.
      *
      * @private
      * @param {Matrix} knn_distances - Matrix of pairwise knn distances
      * @param {Float64Array} sig - Scaling factor for the distances
      * @param {Matrix} nbrs - Nearest neighbors
-     * @returns {Matrix} Pairwise similarity matrix
+     * @returns {Matrix} Pairwise log-similarity matrix
      */
     private _find_p;
     /**
@@ -3583,6 +4369,65 @@ type ParametersISOMAP = {
      */
     eig_args?: Partial<EigenArgs> | undefined;
 };
+/**
+ * How to weight each pair in the {@link StressMDS} objective.
+ *
+ * A number is an exponent `q`, giving `w_ij = d_ij^q` — `0` for raw stress, `-1` for Sammon stress,
+ * `-2` for elastic scaling / Kamada-Kawai. A matrix supplies the weights directly. A function is
+ * called per pair with the target distance and the two indices.
+ *
+ * A weight of zero, or any non-finite value, drops that pair from the objective — which is how
+ * missing or untrusted dissimilarities are expressed.
+ */
+type WeightSpec = number | Matrix | number[][] | ((d_ij: number, i: number, j: number) => number);
+type ParametersStressMDS = {
+    /**
+     * - the dimensionality of the projection.
+     */
+    d?: number | undefined;
+    /**
+     * - the metric which defines the distance
+     * between two points. Pass graph shortest-path distances as `"precomputed"` for a graph layout.
+     */
+    metric?: Metric | "precomputed" | undefined;
+    /**
+     * - Pair weighting, see {@link WeightSpec}.
+     */
+    weights?: WeightSpec | undefined;
+    /**
+     * - maximum number of gradient steps.
+     */
+    iterations?: number | undefined;
+    /**
+     * - stop once the relative stress improvement falls below this.
+     */
+    epsilon?: number | undefined;
+    /**
+     * - initial step size. Dimensionless: the gradient is
+     * preconditioned by the weighted degree, so this needs no rescaling for the data or the weighting.
+     * Adapted by the line search, so it only sets where the search starts.
+     */
+    learning_rate?: number | undefined;
+    /**
+     * - starting configuration. `"MDS"` runs
+     * classical MDS on the same distances, which is what keeps the non-convex descent out of the poor
+     * local minima this objective is known for. `"PCA"` needs the original data, not a precomputed
+     * matrix.
+     */
+    init_DR?: "MDS" | "PCA" | "random" | undefined;
+    /**
+     * - the seed for the random number generator.
+     */
+    seed?: number | undefined;
+    /**
+     * - Parameters for the eigendecomposition algorithm.
+     */
+    eig_args?: Partial<EigenArgs> | undefined;
+};
+/**
+ * {@link ParametersStressMDS} without `weights`, which {@link KKMDS} fixes at `-2`.
+ */
+type ParametersKKMDS = Omit<ParametersStressMDS, "weights">;
 type ParametersLDA = {
     /**
      * - The labels / classes for each data point.
@@ -3668,6 +4513,68 @@ type ParametersMDS = {
      * - the metric which defines the distance between two points.
      */
     metric?: Metric | "precomputed" | undefined;
+    /**
+     * - the seed for the random number generator.
+     */
+    seed?: number | undefined;
+    /**
+     * - Parameters for the eigendecomposition algorithm.
+     */
+    eig_args?: Partial<EigenArgs> | undefined;
+};
+type ParametersMINFOTree = {
+    /**
+     * - Neighbors in the k-NN graph. Defaults to `round(ln N)`, as in the paper.
+     */
+    k?: number | undefined;
+    /**
+     * - the dimensionality of the projection.
+     */
+    d?: number | undefined;
+    /**
+     * - the metric which defines the distance between two points.
+     */
+    metric?: Metric | undefined;
+    /**
+     * - Number of clusters to partition `X` into for the labels field.
+     * Required unless `labels` is given — the tree inherits whatever the clustering gets wrong, so
+     * there is no safe default. With the default hierarchical clustering the usable range is
+     * `2 … N-1`, the number of merges a dendrogram cut can separate; `"kmeans"` has no such limit.
+     */
+    clusters?: number | undefined;
+    /**
+     * - How to obtain the labels when
+     * `labels` is not given. `"hierarchical"` uses Ward linkage, matching the paper's experiments.
+     */
+    clustering?: "hierarchical" | "kmeans" | undefined;
+    /**
+     * - Precomputed labels, one per
+     * row of `X`. Bypasses the clustering step. Values may be of any type; they are remapped to
+     * `0 … q-1`.
+     */
+    labels?: any[] | Int32Array<ArrayBufferLike> | Float64Array<ArrayBufferLike> | null | undefined;
+    /**
+     * - Shrinkage applied to intra-cluster edge weights. Defaults to the
+     * golden ratio conjugate `(√5-1)/2 ≈ 0.618`, which the paper picks for interpretability rather
+     * than by tuning.
+     */
+    alpha?: number | undefined;
+    /**
+     * - Floor on the curvature denominator, `S = -ψ / (φ + epsilon)`,
+     * needed because φ and ψ both vanish for interior points as β grows. Default matches the author's
+     * reference implementation. See `MINFOTree._information_curvature` on how the interior/boundary
+     * curvature ordering depends on β.
+     */
+    epsilon?: number | undefined;
+    /**
+     * - How to lay the tree out. `"MDS"`
+     * stops after the classical-MDS warm start, which is far cheaper and often enough.
+     */
+    layout?: "MDS" | "kamada_kawai" | undefined;
+    /**
+     * - Maximum Kamada-Kawai gradient steps.
+     */
+    iterations?: number | undefined;
     /**
      * - the seed for the random number generator.
      */
@@ -3768,9 +4675,10 @@ type ParametersTopoMap = {
 };
 type ParametersTriMap = {
     /**
-     * - scaling factor.
+     * - Temperature of the tempered log applied to the triplet
+     * weights. `1` recovers the ordinary logarithm; lower values compress large weights harder.
      */
-    weight_adj?: number | undefined;
+    weight_temp?: number | undefined;
     /**
      * - number of inliers.
      */
@@ -3787,11 +4695,109 @@ type ParametersTriMap = {
      * - the dimensionality of the projection.
      */
     d?: number | undefined;
-    tol?: number | undefined;
+    /**
+     * - learning rate of the delta-bar-delta optimizer.
+     */
+    lr?: number | undefined;
     /**
      * - the metric which defines the distance between two points.
      */
     metric?: Metric | undefined;
+    /**
+     * - the seed for the random number generator.
+     */
+    seed?: number | undefined;
+};
+type ParametersPaCMAP = {
+    /**
+     * - Number of nearest neighbors forming the attractive pairs.
+     */
+    n_neighbors?: number | undefined;
+    /**
+     * - Mid-near pairs per point, as a fraction of `n_neighbors`.
+     */
+    MN_ratio?: number | undefined;
+    /**
+     * - Further pairs per point, as a multiple of `n_neighbors`.
+     */
+    FP_ratio?: number | undefined;
+    /**
+     * - the dimensionality of the projection.
+     */
+    d?: number | undefined;
+    /**
+     * - the metric which defines the distance between two points.
+     */
+    metric?: Metric | undefined;
+    /**
+     * - learning rate of the Adam optimizer.
+     */
+    lr?: number | undefined;
+    /**
+     * - Iterations in each of the three phases.
+     */
+    num_iters?: number[] | undefined;
+    /**
+     * - Index used to find the
+     * neighbors. If `null`, an exact blocked search runs instead, which is faster than a tree at the
+     * `n_neighbors + 50` candidates the density rescaling needs. Pass an approximate index such as
+     * `HNSW`, `Annoy`, or `NNDescent` to avoid the O(N^2) search on large datasets. Default is `null`
+     */
+    knn?: KNN<number[] | Float64Array<ArrayBufferLike>, any> | null | undefined;
+    /**
+     * - Reduce inputs wider than 100 dimensions to 100 via PCA
+     * before the search and the initialization.
+     */
+    apply_pca?: boolean | undefined;
+    /**
+     * - the seed for the random number generator.
+     */
+    seed?: number | undefined;
+};
+type ParametersLocalMAP = {
+    /**
+     * - Number of nearest neighbors forming the attractive pairs.
+     */
+    n_neighbors?: number | undefined;
+    /**
+     * - Mid-near pairs per point, as a fraction of `n_neighbors`.
+     */
+    MN_ratio?: number | undefined;
+    /**
+     * - Further pairs per point, as a multiple of `n_neighbors`.
+     */
+    FP_ratio?: number | undefined;
+    /**
+     * - the dimensionality of the projection.
+     */
+    d?: number | undefined;
+    /**
+     * - the metric which defines the distance between two points.
+     */
+    metric?: Metric | undefined;
+    /**
+     * - learning rate of the Adam optimizer.
+     */
+    lr?: number | undefined;
+    /**
+     * - Iterations in each of the three phases.
+     */
+    num_iters?: number[] | undefined;
+    /**
+     * - Embedding distance below which a point may be redrawn as
+     * a further pair in phase 3. Also sets the local attraction scale, `low_dist_thres / 2`.
+     */
+    low_dist_thres?: number | undefined;
+    /**
+     * - Index used to find the
+     * neighbors. If `null`, an exact blocked search runs instead. Default is `null`
+     */
+    knn?: KNN<number[] | Float64Array<ArrayBufferLike>, any> | null | undefined;
+    /**
+     * - Reduce inputs wider than 100 dimensions to 100 via PCA
+     * before the search and the initialization.
+     */
+    apply_pca?: boolean | undefined;
     /**
      * - the seed for the random number generator.
      */
@@ -4818,8 +5824,9 @@ declare function kahan_sum(summands: number[] | Float64Array): number;
  * Numerical stable summation with the Neumair summation algorithm.
  *
  * Deliberately not WASM accelerated: the compensation term makes each step depend on the previous
- * one, so the kernel cannot vectorise, and `benchmark/wasm_threshold_calibration.js` measures it as
- * slower than this loop at every input size — the argument copy is pure overhead.
+ * one, so the kernel cannot vectorise, and it measured slower than this loop at every input size —
+ * the argument copy is pure overhead. A `neumair_sum_f64` kernel existed on that basis alone, never
+ * called by anything; it and its benchmark row were removed once the measurement had been made.
  *
  * @category Numerical
  * @param {number[] | Float64Array} summands - Array of values to sum up.
@@ -4891,6 +5898,6 @@ declare function terminate_pool(): void;
 type InputType = Matrix | Float64Array[] | number[][];
 declare const version: string;
 
-export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, MDS, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, Randomizer, SAMMON, SMACOF, SQDMDS, TSNE, TopoMap, TriMap, UMAP, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
-export type { Comparator, EigenArgs, InputType, Metric, ParametersAnnoy, ParametersBallTree, ParametersCURE, ParametersFASTMAP, ParametersHNSW, ParametersHierarchicalClustering, ParametersISOMAP, ParametersKDTree, ParametersKMeans, ParametersKMedoids, ParametersLDA, ParametersLLE, ParametersLSH, ParametersLSP, ParametersLTSA, ParametersMDS, ParametersMeanShift, ParametersNNDescent, ParametersNaiveKNN, ParametersOptics, ParametersPCA, ParametersSAMMON, ParametersSMACOF, ParametersSQDMDS, ParametersTSNE, ParametersTopoMap, ParametersTriMap, ParametersUMAP, ParametersXMeans, QRDecomposition };
+export { Annoy, BallTree, CURE, DisjointSet, FASTMAP, HNSW, Heap, HierarchicalClustering, ISOMAP, KDTree, KKMDS, KMeans, KMedoids, LDA, LLE, LSH, LSP, LTSA, LocalMAP, MDS, MINFOTree, Matrix, MeanShift, NNDescent, NaiveKNN, OPTICS, PCA, PaCMAP, Randomizer, SAMMON, SMACOF, SQDMDS, StressMDS, TSNE, TopoMap, TriMap, UMAP, WEIGHTS_ELASTIC, WEIGHTS_SAMMON, WEIGHTS_UNIFORM, XMeans, bray_curtis, canberra, chebyshev, cosine, distance_matrix, euclidean, euclidean_squared, goodman_kruskal, hamming, haversine, inner_product, isWasmAvailable, isWasmThreadsSupported, jaccard, k_nearest_neighbors, kahan_sum, linspace, manhattan, max, min, minimum_spanning_tree, neumair_sum, norm, normalize, parallel_available, powell, qr, qr_householder, quickselect, quickselectByAxis, setWasmEnabled, simultaneous_poweriteration, sokal_michener, spatial_tree, terminate_pool, version, wasserstein, yule };
+export type { Comparator, EigenArgs, InputType, Metric, ParametersAnnoy, ParametersBallTree, ParametersCURE, ParametersFASTMAP, ParametersHNSW, ParametersHierarchicalClustering, ParametersISOMAP, ParametersKDTree, ParametersKKMDS, ParametersKMeans, ParametersKMedoids, ParametersLDA, ParametersLLE, ParametersLSH, ParametersLSP, ParametersLTSA, ParametersLocalMAP, ParametersMDS, ParametersMINFOTree, ParametersMeanShift, ParametersNNDescent, ParametersNaiveKNN, ParametersOptics, ParametersPCA, ParametersPaCMAP, ParametersSAMMON, ParametersSMACOF, ParametersSQDMDS, ParametersStressMDS, ParametersTSNE, ParametersTopoMap, ParametersTriMap, ParametersUMAP, ParametersXMeans, QRDecomposition, WeightSpec };
 //# sourceMappingURL=druid.d.ts.map
