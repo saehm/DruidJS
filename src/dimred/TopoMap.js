@@ -1,6 +1,7 @@
 import { DisjointSet } from "../datastructure/index.js";
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { minimum_spanning_tree } from "../util/index.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
@@ -41,11 +42,6 @@ export class TopoMap extends DR {
      */
     _make_minimum_spanning_tree(metric = euclidean) {
         const N = this._N;
-        const X = [...this.X];
-
-        this._disjoint_set = new DisjointSet(X);
-        const disjoint_set = this._disjoint_set;
-        const F = [];
         // Local to the spanning tree construction: the N ⨯ N distances are only needed to weight the
         // edges below, so they are not kept alive on the instance after `transform` returns.
         const D =
@@ -53,25 +49,15 @@ export class TopoMap extends DR {
                 ? Matrix.from(this.X)
                 : distance_matrix(this.X, /** @type {Metric} */ (metric));
 
-        let E = [];
+        /** @type {[number, number, number][]} */
+        const E = [];
         for (let i = 0; i < N; ++i) {
             for (let j = i + 1; j < N; ++j) {
                 E.push([i, j, D.entry(i, j)]);
             }
         }
-        E = E.sort((a, b) => a[2] - b[2]);
 
-        for (const [u, v, w] of E) {
-            const set_u = disjoint_set.find(X[u]);
-            const set_v = disjoint_set.find(X[v]);
-            if (!set_u || !set_v) throw new Error("Should not happen!");
-            if (set_u !== set_v) {
-                F.push([u, v, w]);
-                disjoint_set.union(set_u, set_v);
-            }
-        }
-
-        return F.sort((a, b) => a[2] - b[2]);
+        return minimum_spanning_tree(E, N);
     }
 
     /** Initializes TopoMap. Sets all projcted points to zero, and computes a minimum spanning tree. */
