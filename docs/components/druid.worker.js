@@ -35,6 +35,22 @@ self.onmessage = async (e) => {
         }
         self.postMessage({ id, success: true, done: true });
       }
+    } else if (task === "Tree") {
+      // MINFOTree's projection is only one drawing of its real output. The tree, the labels field
+      // and the per-point curvature all have to come back too, or the showcase has nothing to draw.
+      const dr = new Algorithm(data, params);
+      const projection = dr.transform();
+      self.postMessage({
+        id,
+        result: {
+          projection,
+          edges: dr.edges,
+          labels: Array.from(dr.labels),
+          curvature: Array.from(dr.curvature),
+          beta: dr.beta,
+        },
+        success: true,
+      });
     } else if (task === "Clustering") {
       // KMeans specifically takes { K: k }
       const clusteringParams =

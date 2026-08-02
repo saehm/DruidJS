@@ -280,6 +280,7 @@ onMounted(() => {
               <option value="single">Single Link</option>
               <option value="average">Average Link</option>
               <option value="complete">Complete Link</option>
+              <option value="ward">Ward</option>
             </select>
           </div>
           <div class="control-item slider-item" style="margin-top: 10px">
@@ -293,7 +294,7 @@ onMounted(() => {
               type="range"
               v-model.number="methodParams.HierarchicalClustering.cut_value"
               min="0.1"
-              max="30"
+              max="40"
               step="0.1"
               @change="runPipeline"
               :disabled="isLoading"

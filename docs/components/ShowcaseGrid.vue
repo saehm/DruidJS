@@ -21,6 +21,11 @@ const methods = [
   { name: "LLE", class: "LLE" },
   { name: "FastMap", class: "FASTMAP" },
   { name: "SMACOF", class: "SMACOF", iterations: 300 },
+  { name: "StressMDS", class: "StressMDS", params: { weights: -1 } },
+  { name: "KKMDS", class: "KKMDS" },
+  // MINFOTree's real output is its tree, drawn in the "Reading the Tree" showcase; this panel shows
+  // only the layout, so it sits alongside the others fairly.
+  { name: "MINFO Tree", class: "MINFOTree", params: { clusters: 3 } },
   { name: "LDA", class: "LDA", needsLabels: true },
   { name: "LSP", class: "LSP" },
   { name: "LTSA", class: "LTSA" },

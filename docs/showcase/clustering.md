@@ -10,6 +10,8 @@ import ClusteringPipeline from '../components/ClusteringPipeline.vue'
 
 A frequent task in data science is identifying clusters in high-dimensional space and then visualizing the learned structural manifolds. This showcase allows you to run multiple clustering algorithms—such as [**K-Means**](/api/classes/KMeans), [**OPTICS**](/api/classes/OPTICS), [**CURE**](/api/classes/CURE), and [**Hierarchical Clustering**](/api/classes/HierarchicalClustering)—on various datasets. It computes the assignments intrinsically and then uses [**UMAP**](/api/classes/UMAP) for the 2D visual projection.
 
+[**Hierarchical Clustering**](/api/classes/HierarchicalClustering) offers four linkage criteria. **Ward** minimizes within-cluster variance and tends to produce compact, similarly-sized groups, which suits the roughly spherical structure of Iris or Wine; **single** link chains along density and handles elongated shapes; **complete** and **average** sit between them. Ward's merge heights run on a larger scale than the others, so the tree cut needs a correspondingly larger value — around 10 for three clusters on Iris.
+
 <ClusteringPipeline />
 
 ## How-to (Code)
@@ -24,8 +26,9 @@ const data = [
 ];
 
 // 1. Run a clustering algorithm (e.g., Hierarchical Clustering)
-const hc = new druid.HierarchicalClustering(data, { linkage: "complete" });
-const clusters = hc.get_cluster_list(5.0); // Cut the dendrogram tree at distance 5.0
+// linkage: "single" | "average" | "complete" | "ward"
+const hc = new druid.HierarchicalClustering(data, { linkage: "ward" });
+const clusters = hc.get_cluster_list(10.0); // Cut the dendrogram tree at distance 10.0
 
 // Or use OPTICS
 // const optics = new druid.OPTICS(data, { epsilon: 1.0, min_points: 4 });

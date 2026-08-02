@@ -27,6 +27,7 @@ export default defineConfig({
                 items: [
                     { text: "Projections", link: "/showcase/projections" },
                     { text: "Clustering", link: "/showcase/clustering" },
+                    { text: "Cluster Diagnostics", link: "/showcase/diagnostics" },
                     { text: "Optimization", link: "/showcase/optimization" },
                     { text: "Metrics", link: "/showcase/metrics" },
                     { text: "Topology", link: "/showcase/topology" },
@@ -53,6 +54,10 @@ export default defineConfig({
                         link: "/dimred/isomap",
                     },
                     {
+                        text: "KKMDS",
+                        link: "/dimred/kkmds",
+                    },
+                    {
                         text: "LDA",
                         link: "/dimred/lda",
                     },
@@ -73,6 +78,10 @@ export default defineConfig({
                         link: "/dimred/mds",
                     },
                     {
+                        text: "MINFO Tree",
+                        link: "/dimred/minfotree",
+                    },
+                    {
                         text: "Sammon",
                         link: "/dimred/sammon",
                     },
@@ -83,6 +92,10 @@ export default defineConfig({
                     {
                         text: "SQDMDS",
                         link: "/dimred/sqdmds",
+                    },
+                    {
+                        text: "StressMDS",
+                        link: "/dimred/stressmds",
                     },
                     {
                         text: "t-SNE",

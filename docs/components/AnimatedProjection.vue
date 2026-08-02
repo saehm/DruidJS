@@ -31,11 +31,18 @@ const methodParams = ref({
   TriMap: { n_inliers: 12, n_outliers: 4, n_random: 3 },
   SAMMON: { magic: 0.1 },
   SMACOF: {},
+  StressMDS: { weights: -2 },
   SQDMDS: {},
 });
 
 /** Methods whose weight schedule is driven by `num_iters` rather than the iteration count. */
 const phasedMethods = ["PaCMAP", "LocalMAP"];
+
+/**
+ * Methods whose `generator()` takes no argument and reads its budget from the `iterations`
+ * parameter instead, so the slider has to be passed through rather than handed to the generator.
+ */
+const iterationParamMethods = ["SMACOF", "StressMDS"];
 
 /**
  * PaCMAP splits its run into three phases and reads the boundaries from `num_iters`, not from how
@@ -53,6 +60,15 @@ let currentStream = null;
 
 const labels = computed(() => mistle[selectedDataset.value].labels);
 
+/** Names the three exponents that coincide with a method the library already ships. */
+const weightHint = computed(() => {
+  const q = methodParams.value.StressMDS.weights;
+  if (q === 0) return "raw stress, as SMACOF";
+  if (q === -1) return "Sammon stress";
+  if (q === -2) return "elastic / Kamada-Kawai";
+  return "";
+});
+
 const startOptimization = async () => {
   if (isRunning.value) return;
 
@@ -65,6 +81,9 @@ const startOptimization = async () => {
     const rawParams = JSON.parse(JSON.stringify(methodParams.value[selectedMethod.value] || {}));
     if (phasedMethods.includes(selectedMethod.value)) {
       rawParams.num_iters = scaledPhases(maxIterations.value);
+    }
+    if (iterationParamMethods.includes(selectedMethod.value)) {
+      rawParams.iterations = maxIterations.value;
     }
     await runStreamInWorker(
       "AnimatedDR",
@@ -143,6 +162,7 @@ onUnmounted(() => {
             <option value="TriMap">TriMap</option>
             <option value="SAMMON">Sammon</option>
             <option value="SMACOF">SMACOF</option>
+            <option value="StressMDS">StressMDS</option>
             <option value="SQDMDS">SQDMDS</option>
           </select>
         </div>
@@ -333,6 +353,24 @@ onUnmounted(() => {
             />
           </div>
         </div>
+
+        <div v-if="selectedMethod === 'StressMDS'" class="param-group animate-fade">
+          <div class="control-item slider-item">
+            <label
+              >Weight Exponent:
+              <span class="val">{{ methodParams.StressMDS.weights.toFixed(1) }}</span>
+              <span class="hint-inline">{{ weightHint }}</span></label
+            >
+            <input
+              type="range"
+              v-model.number="methodParams.StressMDS.weights"
+              min="-3"
+              max="0"
+              step="0.5"
+              :disabled="isRunning"
+            />
+          </div>
+        </div>
       </div>
 
       <div class="action-footer">
@@ -444,6 +482,13 @@ onUnmounted(() => {
   color: var(--vp-c-brand);
   font-family: var(--vp-font-family-mono);
   font-weight: bold;
+}
+
+.control-item label .hint-inline {
+  color: var(--vp-c-text-3);
+  font-weight: 400;
+  font-size: 0.9em;
+  margin-left: 6px;
 }
 
 .modern-select {
