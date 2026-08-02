@@ -12,6 +12,7 @@ export { LocalMAP } from "./LocalMAP.js";
 export { LSP } from "./LSP.js";
 export { LTSA } from "./LTSA.js";
 export { MDS } from "./MDS.js";
+export { MINFOTree } from "./MINFOTree.js";
 export { PaCMAP } from "./PaCMAP.js";
 export { PCA } from "./PCA.js";
 export { SAMMON } from "./SAMMON.js";
@@ -131,6 +132,34 @@ export { UMAP } from "./UMAP.js";
  * @typedef {Object} ParametersMDS
  * @property {number} [d=2] - the dimensionality of the projection.
  * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
+ */
+
+/**
+ * @typedef {Object} ParametersMINFOTree
+ * @property {number} [k] - Neighbors in the k-NN graph. Defaults to `round(ln N)`, as in the paper.
+ * @property {number} [d=2] - the dimensionality of the projection.
+ * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {number} [clusters] - Number of clusters to partition `X` into for the labels field.
+ *   Required unless `labels` is given — the tree inherits whatever the clustering gets wrong, so
+ *   there is no safe default. With the default hierarchical clustering the usable range is
+ *   `2 … N-1`, the number of merges a dendrogram cut can separate; `"kmeans"` has no such limit.
+ * @property {"hierarchical" | "kmeans"} [clustering="hierarchical"] - How to obtain the labels when
+ *   `labels` is not given. `"hierarchical"` uses Ward linkage, matching the paper's experiments.
+ * @property {any[] | Float64Array | Int32Array | null} [labels=null] - Precomputed labels, one per
+ *   row of `X`. Bypasses the clustering step. Values may be of any type; they are remapped to
+ *   `0 … q-1`.
+ * @property {number} [alpha] - Shrinkage applied to intra-cluster edge weights. Defaults to the
+ *   golden ratio conjugate `(√5-1)/2 ≈ 0.618`, which the paper picks for interpretability rather
+ *   than by tuning.
+ * @property {number} [epsilon=1e-3] - Floor on the curvature denominator, `S = -ψ / (φ + epsilon)`,
+ *   needed because φ and ψ both vanish for interior points as β grows. Default matches the author's
+ *   reference implementation. See `MINFOTree._information_curvature` on how the interior/boundary
+ *   curvature ordering depends on β.
+ * @property {"kamada_kawai" | "MDS"} [layout="kamada_kawai"] - How to lay the tree out. `"MDS"`
+ *   stops after the classical-MDS warm start, which is far cheaper and often enough.
+ * @property {number} [iterations=300] - Maximum Kamada-Kawai gradient steps.
  * @property {number} [seed=1212] - the seed for the random number generator.
  * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
  */
