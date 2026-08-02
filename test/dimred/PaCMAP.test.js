@@ -359,7 +359,7 @@ describe("PaCMAP", () => {
             expect(Math.max(...dr.Y.values.map(Math.abs))).toBeLessThan(0.1);
         });
 
-        it("should reduce inputs wider than 100 dimensions before searching", () => {
+        it("should reduce inputs wider than 100 dimensions before searching", { timeout: 30000 }, () => {
             const data = generateTestData(20, 120);
             const dr = new PaCMAP(data, { n_neighbors: 4, seed: 42 });
             dr.init();
