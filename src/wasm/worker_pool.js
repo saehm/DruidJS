@@ -8,6 +8,21 @@ import { WASM_BASE64 } from "./wasm_bytes.js";
  * gate behind COOP/COEP headers. {@link parallel_available} reports false there and every caller
  * falls back to its single-threaded path.
  *
+ * Two things about the protocol decide whether splitting a kernel is worth it, and both have caught
+ * out attempts to add callers:
+ *
+ * 1. **Every input is copied into every worker**, so a kernel whose inputs are large relative to its
+ *    arithmetic loses outright. Parallel `(n x n) * (n x 2)` measures ~0.1x for this reason.
+ * 2. **Each worker allocates the whole output**, not just its rows, and the caller then copies the
+ *    shared buffer into its own. A kernel with an `n * n` output pays that twice over -- the
+ *    parallel distance matrix came out slower than the triangular kernel at every size tried, and
+ *    was removed.
+ *
+ * So the kernels that pay are the ones with small inputs and outputs relative to their work, run
+ * repeatedly enough to amortise the ~50ms start-up: `meanshift_step_range_f64` and
+ * `dijkstra_apsp_range_f64` are the two that qualify today. Fixing either point above -- sharing one
+ * input mapping, or having workers own only their rows -- would widen that set considerably.
+ *
  * @module wasm/worker_pool
  */
 

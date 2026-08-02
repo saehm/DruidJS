@@ -19,6 +19,20 @@ export function matmul_f64(
 /**
  * Range-based Parallel Matrix Multiplication Kernel.
  * Allows worker threads to compute matrix rows [start_row, end_row) in parallel.
+ *
+ * This is the body of {@link matmul_f64}, which calls it over all rows -- it is not dead code -- but
+ * nothing splits it across the worker pool, and the measurements say not to without changing the
+ * pool first. Square by square it is worth having: end to end on 8 workers, 1.2x at n=512, 2.4x at
+ * n=800, 4.3x at n=1000, and 3.2x to 4.3x once the pool is warm.
+ *
+ * The shapes this library actually multiplies are the other kind. `SMACOF` and the power iteration
+ * do (n x n) * (n x 2), and there parallel measures 0.08x to 0.11x -- an order of magnitude slower.
+ * `run_row_range` copies every input into every worker, so an n x n left operand is copied once per
+ * worker to produce an n x 2 result, and the copying dwarfs the arithmetic. Note that an operation
+ * count cannot separate the two cases: (4000 x 4000) * (4000 x 2) is 32M multiply-accumulates and
+ * loses badly, while (256 x 256) * (256 x 256) is 16M and wins. The guard would have to be work per
+ * byte copied, and the honest fix is for workers to share one input mapping rather than each taking
+ * a private copy.
  */
 export function matmul_range_f64(
     a_ptr: usize,

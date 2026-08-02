@@ -2,8 +2,9 @@
  * Numerical stable summation with the Neumair summation algorithm.
  *
  * Deliberately not WASM accelerated: the compensation term makes each step depend on the previous
- * one, so the kernel cannot vectorise, and `benchmark/wasm_threshold_calibration.js` measures it as
- * slower than this loop at every input size — the argument copy is pure overhead.
+ * one, so the kernel cannot vectorise, and it measured slower than this loop at every input size —
+ * the argument copy is pure overhead. A `neumair_sum_f64` kernel existed on that basis alone, never
+ * called by anything; it and its benchmark row were removed once the measurement had been made.
  *
  * @category Numerical
  * @param {number[] | Float64Array} summands - Array of values to sum up.

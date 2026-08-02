@@ -18,7 +18,6 @@ export * from "../metrics/manhattan.as";
 export * from "../metrics/chebyshev.as";
 export * from "../metrics/canberra.as";
 export * from "../metrics/bray_curtis.as";
-export * from "../numerical/neumair_sum.as";
 export * from "../dimred/SMACOF.as";
 export * from "../dimred/StressMDS.as";
 export * from "../dimred/SQDMDS.as";

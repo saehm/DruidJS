@@ -6,7 +6,6 @@ import { BallTree } from "../src/knn/BallTree.js";
 import { euclidean } from "../src/metrics/euclidean.js";
 import { wasmDijkstraAPSP, wasmDijkstraAPSPRange } from "../src/dimred/ISOMAP.wasm.js";
 import { wasmMatMul, wasmMatMulRange } from "../src/matrix/Matrix.wasm.js";
-import { wasmDistanceMatrix, wasmDistanceMatrixRange } from "../src/matrix/distance_matrix.wasm.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -15,9 +14,6 @@ if (!isMainThread) {
     if (task === "dijkstra") {
         const { flatN, flatD, outD, n, k, startSrc, endSrc } = data;
         wasmDijkstraAPSPRange(flatN, flatD, outD, n, k, startSrc, endSrc);
-    } else if (task === "distance_matrix") {
-        const { X_val, n, d, outD, startRow, endRow } = data;
-        wasmDistanceMatrixRange(X_val, n, d, outD, startRow, endRow);
     } else if (task === "matmul") {
         const { A_val, rows_A, cols_A, B_val, cols_B, outC, startRow, endRow } = data;
         wasmMatMulRange(A_val, rows_A, cols_A, B_val, cols_B, outC, startRow, endRow);
@@ -28,55 +24,6 @@ if (!isMainThread) {
     console.log("DruidJS Parallel WASM Multi-Threading Benchmark");
     console.log(`Available CPU Threads: ${availableParallelism()}`);
     console.log("==========================================\n");
-
-    async function benchmarkParallelDistanceMatrix(n, d, numThreads = 4) {
-        const X = new Matrix(n, d, () => Math.random());
-        const D_single = new Matrix(n, n);
-
-        const startSingle = performance.now();
-        wasmDistanceMatrix(X.values, n, d, D_single.values);
-        const timeSingle = performance.now() - startSingle;
-
-        const sharedBuffer = new SharedArrayBuffer(n * n * 8);
-        const outDShared = new Float64Array(sharedBuffer);
-
-        const chunkSize = Math.ceil(n / numThreads);
-        const workers = [];
-        const startParallel = performance.now();
-
-        for (let t = 0; t < numThreads; ++t) {
-            const startRow = t * chunkSize;
-            const endRow = Math.min((t + 1) * chunkSize, n);
-            if (startRow >= n) break;
-
-            const worker = new Worker(__filename, {
-                workerData: {
-                    task: "distance_matrix",
-                    data: {
-                        X_val: X.values,
-                        n,
-                        d,
-                        outD: outDShared,
-                        startRow,
-                        endRow,
-                    },
-                },
-            });
-            workers.push(
-                new Promise((resolve) => {
-                    worker.on("message", resolve);
-                })
-            );
-        }
-
-        await Promise.all(workers);
-        const timeParallel = performance.now() - startParallel;
-
-        console.log(`Pairwise Distance Matrix (${n} points, ${d} dims):`);
-        console.log(`  Single-Threaded WASM SIMD: ${timeSingle.toFixed(2)} ms`);
-        console.log(`  Multi-Threaded WASM (${numThreads} Workers): ${timeParallel.toFixed(2)} ms`);
-        console.log(`  Parallel Speedup:           ${(timeSingle / timeParallel).toFixed(2)}x over Single-Thread WASM\n`);
-    }
 
     async function benchmarkParallelMatMul(size, numThreads = 4) {
         const A = new Matrix(size, size, () => Math.random());
@@ -209,10 +156,6 @@ if (!isMainThread) {
     }
 
     async function main() {
-        console.log("--- Pairwise Distance Matrix Parallel Benchmarks ---");
-        await benchmarkParallelDistanceMatrix(2000, 50, 4);
-        await benchmarkParallelDistanceMatrix(2000, 50, 8);
-
         console.log("--- Matrix Multiplication Parallel Benchmarks ---");
         await benchmarkParallelMatMul(1000, 4);
         await benchmarkParallelMatMul(1000, 8);

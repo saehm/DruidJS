@@ -2,19 +2,18 @@ import { describe, expect, it } from "vitest";
 import { wasmMeanShiftStep, wasmMeanShiftStepRange } from "../../src/clustering/MeanShift.wasm.js";
 import { wasmDijkstraAPSP, wasmDijkstraAPSPRange } from "../../src/dimred/ISOMAP.wasm.js";
 import { wasmSqdmdsFillGrads, wasmSqdmdsFillGradsRange } from "../../src/dimred/SQDMDS.wasm.js";
-import { wasmDistanceMatrix, wasmDistanceMatrixRange, wasmKnnBlock } from "../../src/matrix/distance_matrix.wasm.js";
+import { wasmDistanceMatrix, wasmKnnBlock } from "../../src/matrix/distance_matrix.wasm.js";
 import { wasmMatMul, wasmMatMulRange } from "../../src/matrix/Matrix.wasm.js";
 import { Randomizer } from "../../src/util/randomizer.js";
 import { isWasmAvailable } from "../../src/wasm/index.js";
 
 /**
  * The `*Range` kernels are the halves the worker pool calls: each worker runs one row range against
- * a shared output buffer. Nothing else in the suite reaches them — the pool only starts above
- * `WASM_MIN_PARALLEL_ROWS`, so the single-threaded tests always take the whole-matrix path — which
- * leaves the row-offset arithmetic in every wrapper unexercised.
+ * a shared output buffer. Of the five, only `meanshift` and `dijkstra` are run in parallel by
+ * anything today, so for the rest this file is the only thing exercising the row-offset arithmetic.
  *
  * Two properties are asserted for the kernels whose ranges partition the output rows — `matmul`,
- * `distance_matrix`, `meanshift` and `dijkstra`:
+ * `knn_block`, `meanshift` and `dijkstra`:
  *
  * 1. **Partition equivalence.** Splitting the rows into disjoint ranges and running each produces
  *    exactly what one whole-range call produces. An off-by-one in a range bound shows up here.
@@ -87,37 +86,6 @@ describe.skipIf(!isWasmAvailable())("range kernels", () => {
                     const at = i * cols_B + j;
                     const expected = i >= start && i < end ? full[at] : SENTINEL;
                     expect(out[at], `row ${i} col ${j}`).toBe(expected);
-                }
-            }
-        });
-    });
-
-    describe("wasmDistanceMatrixRange", () => {
-        const n = 14;
-        const d = 4;
-        const X = random_flat(n, d, 3);
-
-        const full = new Float64Array(n * n);
-        wasmDistanceMatrix(X, n, d, full);
-
-        it("should reproduce the whole distance matrix from disjoint row ranges", () => {
-            const split = new Float64Array(n * n).fill(SENTINEL);
-            for (const [start, end] of ranges(n)) {
-                expect(wasmDistanceMatrixRange(X, n, d, split, start, end)).toBe(true);
-            }
-            expect(Array.from(split)).toEqual(Array.from(full));
-        });
-
-        it("should leave rows outside its range untouched", () => {
-            const out = new Float64Array(n * n).fill(SENTINEL);
-            const start = 5;
-            const end = 9;
-            wasmDistanceMatrixRange(X, n, d, out, start, end);
-
-            for (let i = 0; i < n; ++i) {
-                const expected = i >= start && i < end ? full.subarray(i * n, (i + 1) * n) : null;
-                for (let j = 0; j < n; ++j) {
-                    expect(out[i * n + j], `row ${i} col ${j}`).toBe(expected ? expected[j] : SENTINEL);
                 }
             }
         });

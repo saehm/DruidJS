@@ -138,29 +138,3 @@ export function euclidean_knn_block_f64(
         }
     }
 }
-
-/**
- * Multi-threaded Range-based Pairwise Euclidean Distance Matrix Kernel.
- * Allows worker threads to compute distance matrix rows [start_row, end_row) in parallel.
- */
-export function euclidean_distance_matrix_range_f64(
-    x_ptr: usize,
-    out_ptr: usize,
-    n: i32,
-    d: i32,
-    start_row: i32,
-    end_row: i32
-): void {
-    for (let i = start_row; i < end_row; ++i) {
-        const row_i = x_ptr + ((i * d) << 3);
-        const i_n = i * n;
-
-        store<f64>(out_ptr + ((i_n + i) << 3), 0.0);
-
-        for (let j = 0; j < n; ++j) {
-            if (i == j) continue;
-            const dist = Math.sqrt(sqdist_simd_f64(row_i, x_ptr + ((j * d) << 3), d));
-            store<f64>(out_ptr + ((i_n + j) << 3), dist);
-        }
-    }
-}

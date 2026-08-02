@@ -24,7 +24,6 @@ import { cosine } from "../../src/metrics/cosine.js";
 import { manhattan } from "../../src/metrics/manhattan.js";
 import { wasmManhattanDistance } from "../../src/metrics/manhattan.wasm.js";
 import { neumair_sum } from "../../src/numerical/neumair_sum.js";
-import { wasmNeumaierSum } from "../../src/numerical/neumair_sum.wasm.js";
 import { isWasmAvailable } from "../../src/wasm/index.js";
 
 describe("WASM Acceleration Kernels", () => {
@@ -103,7 +102,7 @@ describe("WASM Acceleration Kernels", () => {
         expect(resOuter.shape).toEqual([20, 20]);
     });
 
-    it("should compute vector norm, normalize, inner product, and Neumaier sum via WASM SIMD", () => {
+    it("should compute vector norm, normalize, inner product via WASM SIMD", () => {
         const v = new Float64Array(40).fill(2);
         const nVal = norm(v);
         expect(nVal).toBeCloseTo(Math.sqrt(40 * 4), 8);
@@ -117,45 +116,6 @@ describe("WASM Acceleration Kernels", () => {
 
         const nSum = neumair_sum(v);
         expect(nSum).toBeCloseTo(80, 8);
-    });
-
-    describe("wasmNeumaierSum", () => {
-        // `neumair_sum` deliberately never dispatches to this kernel — the compensation term is a
-        // serial dependency, so the calibration benchmark measures the kernel as slower than the JS
-        // loop at every size. That leaves the wrapper reachable only from here, and completely
-        // unexercised otherwise, so the kernel is checked against the implementation it mirrors.
-        it("should agree with the JS implementation on a plain sum", () => {
-            const v = new Float64Array(40).fill(2);
-            const wasm = wasmNeumaierSum(v);
-            if (wasm === null) return; // WASM unavailable on this runner
-            expect(wasm).toBeCloseTo(neumair_sum(v), 8);
-            expect(wasm).toBeCloseTo(80, 8);
-        });
-
-        it("should agree with the JS implementation on mixed magnitudes", () => {
-            // The case Neumaier summation exists for: a large running sum swamping small addends.
-            const v = Float64Array.from([1e16, 1, -1e16, 1, 1, 1]);
-            const wasm = wasmNeumaierSum(v);
-            if (wasm === null) return;
-            expect(wasm).toBeCloseTo(neumair_sum(v), 8);
-        });
-
-        it("should agree across a range of lengths, including non-SIMD-aligned ones", () => {
-            for (const len of [0, 1, 2, 3, 7, 8, 9, 15, 16, 17, 33, 128, 1000]) {
-                const v = Float64Array.from({ length: len }, (_, i) => Math.sin(i) * (i + 1));
-                const wasm = wasmNeumaierSum(v);
-                if (wasm === null) return;
-                const scale = Math.max(1, Math.abs(neumair_sum(v)));
-                expect(Math.abs(wasm - neumair_sum(v)), `length ${len}`).toBeLessThan(1e-9 * scale);
-            }
-        });
-
-        it("should accept a plain number array", () => {
-            const v = [1.5, 2.5, 3.5];
-            const wasm = wasmNeumaierSum(v);
-            if (wasm === null) return;
-            expect(wasm).toBeCloseTo(7.5, 8);
-        });
     });
 
     it("should compute Manhattan, Chebyshev, Canberra, and Bray-Curtis SIMD metrics correctly", () => {

@@ -15,7 +15,6 @@ import { wasmMatMul } from "../src/matrix/Matrix.wasm.js";
 import { wasmDistanceMatrix } from "../src/matrix/distance_matrix.wasm.js";
 import { wasmCosineDistance } from "../src/metrics/cosine.wasm.js";
 import { wasmManhattanDistance } from "../src/metrics/manhattan.wasm.js";
-import { wasmNeumaierSum } from "../src/numerical/neumair_sum.wasm.js";
 import { isWasmAvailable } from "../src/wasm/index.js";
 
 if (!isWasmAvailable()) {
@@ -104,26 +103,6 @@ table(
         };
     },
 );
-
-table("Compensated summation — kept in JS, see neumair_sum", "length", [128, 512, 4096, 16384], (n) => {
-    const v = random_vector(n);
-    return {
-        reps: 5000,
-        js: () => {
-            let sum = 0;
-            let compensation = 0;
-            for (let i = 0; i < n; ++i) {
-                const summand = v[i];
-                const t = sum + summand;
-                if (Math.abs(sum) >= Math.abs(summand)) compensation += sum - t + summand;
-                else compensation += summand - t + sum;
-                sum = t;
-            }
-            return sum + compensation;
-        },
-        wasm: () => wasmNeumaierSum(v),
-    };
-});
 
 table("Matrix product — WASM_MIN_MATMUL_OPS (ops = n³)", "n", [4, 6, 8, 12, 16, 32], (n) => {
     const A = random_vector(n * n);

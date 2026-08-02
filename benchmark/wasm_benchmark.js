@@ -12,7 +12,6 @@ import { wasmNorm } from "../src/matrix/norm.wasm.js";
 import { wasmNormalize } from "../src/matrix/normalize.wasm.js";
 import { wasmBrayCurtisDistance } from "../src/metrics/bray_curtis.wasm.js";
 import { wasmCanberraDistance } from "../src/metrics/canberra.wasm.js";
-import { wasmNeumaierSum } from "../src/numerical/neumair_sum.wasm.js";
 
 console.log("==========================================");
 console.log("DruidJS WASM SIMD Acceleration Benchmark");
@@ -133,34 +132,6 @@ function benchmarkVectorNorm(len, iters = 100000) {
     console.log(`  Speedup:   ${(timeJS / timeWASM).toFixed(2)}x\n`);
 }
 
-function benchmarkNeumaierSum(len, iters = 50000) {
-    const v = new Float64Array(len).fill(1.0000001);
-
-    const startJS = performance.now();
-    for (let i = 0; i < iters; ++i) {
-        let sum = 0, c = 0;
-        for (let k = 0; k < len; ++k) {
-            const val = v[k];
-            const t = sum + val;
-            if (Math.abs(sum) >= Math.abs(val)) c += (sum - t) + val;
-            else c += (val - t) + sum;
-            sum = t;
-        }
-    }
-    const timeJS = performance.now() - startJS;
-
-    const startWASM = performance.now();
-    for (let i = 0; i < iters; ++i) {
-        wasmNeumaierSum(v);
-    }
-    const timeWASM = performance.now() - startWASM;
-
-    console.log(`Neumaier Sum (${len} elements, ${iters} calls):`);
-    console.log(`  JS Time:   ${timeJS.toFixed(2)} ms`);
-    console.log(`  WASM Time: ${timeWASM.toFixed(2)} ms`);
-    console.log(`  Speedup:   ${(timeJS / timeWASM).toFixed(2)}x\n`);
-}
-
 console.log("--- Matrix Multiplication Benchmarks ---");
 benchmarkMatMul(100);
 benchmarkMatMul(300);
@@ -172,4 +143,3 @@ benchmarkDistanceMatrix(1000, 50);
 console.log("--- Vector Operations & Metrics Benchmarks ---");
 benchmarkInnerProduct(128, 100000);
 benchmarkVectorNorm(128, 100000);
-benchmarkNeumaierSum(128, 50000);
