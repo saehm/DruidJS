@@ -1,5 +1,7 @@
 // src/dimred/TSNE.as.ts
 
+import { adapt_gain, sqdist_f64, zero_f64 } from "../wasm/shared.as";
+
 /**
  * t-SNE Single Iteration Gradient SIMD Kernel.
  * Computes Qu, Q, gradients, updates gains & ystep, and updates Y positions.
@@ -22,17 +24,12 @@ export function tsne_step_f64(
 
     // 1. Compute unnormalized Qu and qsum
     for (let i = 0; i < n; ++i) {
-        const i_d = i * dim;
+        const row_i = y_ptr + ((i * dim) << 3);
         const i_n = i * n;
         store<f64>(qu_ptr + ((i_n + i) << 3), 0.0);
 
         for (let j = i + 1; j < n; ++j) {
-            const j_d = j * dim;
-            let dsum: f64 = 0.0;
-            for (let d = 0; d < dim; ++d) {
-                const diff = load<f64>(y_ptr + ((i_d + d) << 3)) - load<f64>(y_ptr + ((j_d + d) << 3));
-                dsum += diff * diff;
-            }
+            const dsum = sqdist_f64(row_i, y_ptr + ((j * dim) << 3), dim);
             const qu = 1.0 / (1.0 + dsum);
             store<f64>(qu_ptr + ((i_n + j) << 3), qu);
             store<f64>(qu_ptr + ((j * n + i) << 3), qu);
@@ -53,10 +50,7 @@ export function tsne_step_f64(
     }
 
     // 3. Compute gradients
-    const total_grad = n * dim;
-    for (let i = 0; i < total_grad; ++i) {
-        store<f64>(grad_ptr + (i << 3), 0.0);
-    }
+    zero_f64(grad_ptr, n * dim);
 
     for (let i = 0; i < n; ++i) {
         const i_n = i * n;
@@ -85,15 +79,8 @@ export function tsne_step_f64(
             const idx = (i * dim + d) << 3;
             const gid = load<f64>(grad_ptr + idx);
             const sid = load<f64>(ystep_ptr + idx);
-            const gainid = load<f64>(gains_ptr + idx);
 
-            // Must match `Math.sign(gid) === Math.sign(sid)`: a zero counts as its own sign, so a
-            // zero paired with a non-zero is *not* the same sign. `ystep` starts out all zeros, so
-            // treating them as matching would take the wrong branch on the whole first iteration.
-            const sign_g = gid > 0.0 ? 1 : gid < 0.0 ? -1 : 0;
-            const sign_s = sid > 0.0 ? 1 : sid < 0.0 ? -1 : 0;
-            let newgain = sign_g == sign_s ? gainid * 0.8 : gainid + 0.2;
-            if (newgain < 0.01) newgain = 0.01;
+            const newgain = adapt_gain(load<f64>(gains_ptr + idx), gid, sid);
             store<f64>(gains_ptr + idx, newgain);
 
             const newsid = momval * sid - epsilon * newgain * gid;

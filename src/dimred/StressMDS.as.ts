@@ -1,5 +1,37 @@
 // src/dimred/StressMDS.as.ts
 
+import { sqdist_f64, zero_f64 } from "../wasm/shared.as";
+
+/**
+ * Weighted stress of the configuration at `cfg_ptr`, `sum_{i<j} w_ij (||y_i - y_j|| - d_ij)^2`.
+ *
+ * The line search in {@link stress_mds_step_f64} accepts a trial step by comparing its energy
+ * against the incumbent's, so the two must be measured the same way down to the summation order.
+ * Keeping one definition is what makes that structural rather than a thing to remember.
+ */
+function weighted_energy(
+    cfg_ptr: usize,
+    target_d_ptr: usize,
+    w_ptr: usize,
+    n: i32,
+    dim: i32
+): f64 {
+    let energy: f64 = 0.0;
+    for (let i = 0; i < n; ++i) {
+        const i_dim = i * dim;
+        const i_n = i * n;
+        for (let j = i + 1; j < n; ++j) {
+            const w_ij = load<f64>(w_ptr + ((i_n + j) << 3));
+            if (!(w_ij > 0.0)) continue;
+            const d_ij = load<f64>(target_d_ptr + ((i_n + j) << 3));
+            const dist = Math.sqrt(sqdist_f64(cfg_ptr + (i_dim << 3), cfg_ptr + ((j * dim) << 3), dim));
+            const residual = dist - d_ij;
+            energy += w_ij * residual * residual;
+        }
+    }
+    return energy;
+}
+
 /**
  * One weighted-stress iteration: preconditioned gradient, backtracking line search, and the update.
  *
@@ -33,9 +65,7 @@ export function stress_mds_step_f64(
 ): f64 {
     const total = n * dim;
 
-    for (let i = 0; i < total; ++i) {
-        store<f64>(g_ptr + (i << 3), 0.0);
-    }
+    zero_f64(g_ptr, total);
 
     // Gradient of sum_{i<j} w_ij (||y_i - y_j|| - d_ij)^2, divided per point by its weighted degree
     // sum_j w_ij (Jacobi preconditioning).
@@ -48,6 +78,7 @@ export function stress_mds_step_f64(
     for (let i = 0; i < n; ++i) {
         const i_dim = i * dim;
         const i_n = i * n;
+        const row_i = y_ptr + (i_dim << 3);
         let degree: f64 = 0.0;
         for (let j = 0; j < n; ++j) {
             if (i == j) continue;
@@ -56,19 +87,14 @@ export function stress_mds_step_f64(
             degree += w_ij;
 
             const d_ij = load<f64>(target_d_ptr + ((i_n + j) << 3));
-            const j_dim = j * dim;
-            let sum_sq: f64 = 0.0;
-            for (let k = 0; k < dim; ++k) {
-                const diff = load<f64>(y_ptr + ((i_dim + k) << 3)) - load<f64>(y_ptr + ((j_dim + k) << 3));
-                sum_sq += diff * diff;
-            }
-            const dist = Math.sqrt(sum_sq);
+            const row_j = y_ptr + ((j * dim) << 3);
+            const dist = Math.sqrt(sqdist_f64(row_i, row_j, dim));
             // Coincident embedded points carry no direction; the other pairs separate them next step.
             if (dist < 1e-12) continue;
 
             const coeff = 2.0 * w_ij * (dist - d_ij) / dist;
             for (let k = 0; k < dim; ++k) {
-                const delta = load<f64>(y_ptr + ((i_dim + k) << 3)) - load<f64>(y_ptr + ((j_dim + k) << 3));
+                const delta = load<f64>(row_i + (k << 3)) - load<f64>(row_j + (k << 3));
                 const current = load<f64>(g_ptr + ((i_dim + k) << 3));
                 store<f64>(g_ptr + ((i_dim + k) << 3), current + coeff * delta);
             }
@@ -105,25 +131,7 @@ export function stress_mds_step_f64(
             );
         }
 
-        let energy: f64 = 0.0;
-        for (let i = 0; i < n; ++i) {
-            const i_dim = i * dim;
-            const i_n = i * n;
-            for (let j = i + 1; j < n; ++j) {
-                const w_ij = load<f64>(w_ptr + ((i_n + j) << 3));
-                if (!(w_ij > 0.0)) continue;
-                const d_ij = load<f64>(target_d_ptr + ((i_n + j) << 3));
-                const j_dim = j * dim;
-                let sum_sq: f64 = 0.0;
-                for (let k = 0; k < dim; ++k) {
-                    const diff =
-                        load<f64>(trial_ptr + ((i_dim + k) << 3)) - load<f64>(trial_ptr + ((j_dim + k) << 3));
-                    sum_sq += diff * diff;
-                }
-                const residual = Math.sqrt(sum_sq) - d_ij;
-                energy += w_ij * residual * residual;
-            }
-        }
+        const energy = weighted_energy(trial_ptr, target_d_ptr, w_ptr, n, dim);
 
         if (energy < energy_current) {
             for (let i = 0; i < total; ++i) {
@@ -154,23 +162,5 @@ export function stress_mds_energy_f64(
     n: i32,
     dim: i32
 ): f64 {
-    let energy: f64 = 0.0;
-    for (let i = 0; i < n; ++i) {
-        const i_dim = i * dim;
-        const i_n = i * n;
-        for (let j = i + 1; j < n; ++j) {
-            const w_ij = load<f64>(w_ptr + ((i_n + j) << 3));
-            if (!(w_ij > 0.0)) continue;
-            const d_ij = load<f64>(target_d_ptr + ((i_n + j) << 3));
-            const j_dim = j * dim;
-            let sum_sq: f64 = 0.0;
-            for (let k = 0; k < dim; ++k) {
-                const diff = load<f64>(y_ptr + ((i_dim + k) << 3)) - load<f64>(y_ptr + ((j_dim + k) << 3));
-                sum_sq += diff * diff;
-            }
-            const residual = Math.sqrt(sum_sq) - d_ij;
-            energy += w_ij * residual * residual;
-        }
-    }
-    return energy;
+    return weighted_energy(y_ptr, target_d_ptr, w_ptr, n, dim);
 }

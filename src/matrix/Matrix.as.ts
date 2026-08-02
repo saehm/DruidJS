@@ -1,5 +1,7 @@
 // src/matrix/Matrix.as.ts
 
+import { axpy_simd_f64, dot_simd_f64, zero_f64 } from "../wasm/shared.as";
+
 /**
  * Matrix Multiplication: C (rows_A x cols_B) = A (rows_A x cols_A) * B (cols_A x cols_B)
  */
@@ -28,43 +30,16 @@ export function matmul_range_f64(
     start_row: i32,
     end_row: i32
 ): void {
-    const cols_B_simd = cols_B - 1;
-
     for (let i = start_row; i < end_row; ++i) {
         const i_cols_A = i * cols_A;
-        const i_cols_B = i * cols_B;
+        const out_row = out_ptr + ((i * cols_B) << 3);
 
-        for (let j = 0; j < cols_B; ++j) {
-            store<f64>(out_ptr + ((i_cols_B + j) << 3), 0.0);
-        }
+        zero_f64(out_row, cols_B);
 
         for (let k = 0; k < cols_A; ++k) {
             const aik = load<f64>(a_ptr + ((i_cols_A + k) << 3));
             if (aik == 0.0) continue;
-
-            const k_cols_B = k * cols_B;
-            const aik_v = f64x2.splat(aik);
-
-            let j = 0;
-            for (; j < cols_B_simd; j += 2) {
-                const b_idx = (k_cols_B + j) << 3;
-                const out_idx = (i_cols_B + j) << 3;
-
-                const b_v = v128.load(b_ptr + b_idx);
-                const out_v = v128.load(out_ptr + out_idx);
-
-                const prod = f64x2.mul(aik_v, b_v);
-                const res = f64x2.add(out_v, prod);
-
-                v128.store(out_ptr + out_idx, res);
-            }
-
-            for (; j < cols_B; ++j) {
-                const bkj = load<f64>(b_ptr + ((k_cols_B + j) << 3));
-                const out_offset = (i_cols_B + j) << 3;
-                const prev = load<f64>(out_ptr + out_offset);
-                store<f64>(out_ptr + out_offset, prev + aik * bkj);
-            }
+            axpy_simd_f64(out_row, b_ptr + ((k * cols_B) << 3), aik, cols_B);
         }
     }
 }
@@ -72,6 +47,9 @@ export function matmul_range_f64(
 /**
  * Transposed Matrix Multiplication: C (rows_A x cols_B) = A^T * B
  * A is stored as (cols_A x rows_A) in row-major order.
+ *
+ * The k loop is outermost, so unlike {@link matmul_range_f64} the output cannot be zeroed per row
+ * as it is reached -- every row is touched on every k.
  */
 export function transDot_f64(
     a_ptr: usize,
@@ -81,35 +59,15 @@ export function transDot_f64(
     rows_A: i32,
     cols_B: i32
 ): void {
-    const total_out = rows_A * cols_B;
-    for (let i = 0; i < total_out; ++i) {
-        store<f64>(out_ptr + (i << 3), 0.0);
-    }
+    zero_f64(out_ptr, rows_A * cols_B);
 
     for (let k = 0; k < cols_A; ++k) {
         const k_rows_A = k * rows_A;
-        const k_cols_B = k * cols_B;
+        const b_row = b_ptr + ((k * cols_B) << 3);
         for (let i = 0; i < rows_A; ++i) {
             const aki = load<f64>(a_ptr + ((k_rows_A + i) << 3));
             if (aki == 0.0) continue;
-            const aki_v = f64x2.splat(aki);
-            const cols_B_simd = cols_B - 1;
-
-            let j = 0;
-            for (; j < cols_B_simd; j += 2) {
-                const b_idx = (k_cols_B + j) << 3;
-                const out_idx = (i * cols_B + j) << 3;
-                const b_v = v128.load(b_ptr + b_idx);
-                const out_v = v128.load(out_ptr + out_idx);
-                v128.store(out_ptr + out_idx, f64x2.add(out_v, f64x2.mul(aki_v, b_v)));
-            }
-
-            for (; j < cols_B; ++j) {
-                const bkj = load<f64>(b_ptr + ((k_cols_B + j) << 3));
-                const out_offset = (i * cols_B + j) << 3;
-                const prev = load<f64>(out_ptr + out_offset);
-                store<f64>(out_ptr + out_offset, prev + aki * bkj);
-            }
+            axpy_simd_f64(out_ptr + ((i * cols_B) << 3), b_row, aki, cols_B);
         }
     }
 }
@@ -126,31 +84,11 @@ export function dotTrans_f64(
     cols_A: i32,
     cols_B: i32
 ): void {
-    const cols_A_simd = cols_A - 1;
-
     for (let i = 0; i < rows_A; ++i) {
-        const i_cols_A = i * cols_A;
+        const a_row = a_ptr + ((i * cols_A) << 3);
         const i_cols_B = i * cols_B;
         for (let j = 0; j < cols_B; ++j) {
-            const j_cols_A = j * cols_A;
-            let sum: f64 = 0.0;
-            let k = 0;
-            let sum_v = f64x2.splat(0.0);
-
-            for (; k < cols_A_simd; k += 2) {
-                const a_v = v128.load(a_ptr + ((i_cols_A + k) << 3));
-                const b_v = v128.load(b_ptr + ((j_cols_A + k) << 3));
-                sum_v = f64x2.add(sum_v, f64x2.mul(a_v, b_v));
-            }
-
-            sum += f64x2.extract_lane(sum_v, 0) + f64x2.extract_lane(sum_v, 1);
-
-            for (; k < cols_A; ++k) {
-                const aik = load<f64>(a_ptr + ((i_cols_A + k) << 3));
-                const bjk = load<f64>(b_ptr + ((j_cols_A + k) << 3));
-                sum += aik * bjk;
-            }
-
+            const sum = dot_simd_f64(a_row, b_ptr + ((j * cols_A) << 3), cols_A);
             store<f64>(out_ptr + ((i_cols_B + j) << 3), sum);
         }
     }

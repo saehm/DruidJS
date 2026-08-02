@@ -1,5 +1,7 @@
 // src/dimred/SAMMON.as.ts
 
+import { sqdist_f64 } from "../wasm/shared.as";
+
 /**
  * Sammon Mapping Single Iteration Pseudo-Newton Step SIMD Kernel.
  * Computes 1st (e1) and 2nd (e2) stress derivatives and updates embedding coordinates Y (N x D).
@@ -12,7 +14,6 @@ export function sammon_step_f64(
     dim: i32,
     magic: f64
 ): void {
-    const total = n * dim;
     const inv_n = 1.0 / f64(n);
 
     // Array to store column sums for mean centering
@@ -22,6 +23,7 @@ export function sammon_step_f64(
     for (let i = 0; i < n; ++i) {
         const i_d = i * dim;
         const i_n = i * n;
+        const row_i = y_ptr + (i_d << 3);
 
         // Temporary buffers for e1 and e2
         const e1 = new Array<f64>(dim);
@@ -37,13 +39,9 @@ export function sammon_step_f64(
             if (dX == 0.0) continue;
 
             const j_d = j * dim;
-            let sum_sq: f64 = 0.0;
-            for (let k = 0; k < dim; ++k) {
-                const diff = load<f64>(y_ptr + ((i_d + k) << 3)) - load<f64>(y_ptr + ((j_d + k) << 3));
-                sum_sq += diff * diff;
-            }
+            const row_j = y_ptr + (j_d << 3);
 
-            let dY = Math.sqrt(sum_sq);
+            let dY = Math.sqrt(sqdist_f64(row_i, row_j, dim));
             if (dY < 1e-6) dY = 1e-6;
 
             const dq = dX - dY;
@@ -52,7 +50,7 @@ export function sammon_step_f64(
             const inv_dY = 1.0 / dY;
 
             for (let k = 0; k < dim; ++k) {
-                const delta_k = load<f64>(y_ptr + ((i_d + k) << 3)) - load<f64>(y_ptr + ((j_d + k) << 3));
+                const delta_k = load<f64>(row_i + (k << 3)) - load<f64>(row_j + (k << 3));
                 e1[k] += (delta_k * dq) * inv_dr;
                 const delta_sq = delta_k * delta_k;
                 const term2 = (delta_sq * (1.0 + dq * inv_dY)) * inv_dY;
@@ -63,7 +61,7 @@ export function sammon_step_f64(
         for (let k = 0; k < dim; ++k) {
             const abs_e2 = Math.abs(e2[k]);
             const step = abs_e2 > 0.0 ? (magic * e1[k]) / abs_e2 : 0.0;
-            const y_ik = load<f64>(y_ptr + ((i_d + k) << 3));
+            const y_ik = load<f64>(row_i + (k << 3));
             const val = y_ik + step;
             store<f64>(g_ptr + ((i_d + k) << 3), val);
             sums[k] += val;

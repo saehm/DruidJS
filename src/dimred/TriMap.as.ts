@@ -1,5 +1,7 @@
 // src/dimred/TriMap.as.ts
 
+import { adapt_gain, zero_f64 } from "../wasm/shared.as";
+
 /**
  * TriMap Triplet Gradient Computation WASM SIMD Kernel.
  * Computes gradients and loss for all triplets without heap allocations or GC overhead.
@@ -15,10 +17,7 @@ export function trimap_grad_f64(
     n_inliers: i32,
     n_outliers: i32
 ): f64 {
-    const total_grad = n * dim;
-    for (let i = 0; i < total_grad; ++i) {
-        store<f64>(grad_ptr + (i << 3), 0.0);
-    }
+    zero_f64(grad_ptr, n * dim);
 
     return trimap_grad_range_f64(y_ptr, triplets_ptr, weights_ptr, grad_ptr, n, dim, num_triplets, n_inliers, n_outliers, 0, num_triplets);
 }
@@ -125,24 +124,13 @@ export function trimap_update_f64(
     lr: f64
 ): void {
     const total = n * dim;
-    const min_gain = 0.01;
 
     for (let idx = 0; idx < total; ++idx) {
         const offset = idx << 3;
         const v = load<f64>(vel_ptr + offset);
         const g = load<f64>(grad_ptr + offset);
-        const curr_gain = load<f64>(gain_ptr + offset);
 
-        const v_sign = v > 0.0 ? 1 : (v < 0.0 ? -1 : 0);
-        const g_sign = g > 0.0 ? 1 : (g < 0.0 ? -1 : 0);
-
-        let new_gain: f64 = 0.0;
-        if (v_sign != g_sign) {
-            new_gain = curr_gain + 0.2;
-        } else {
-            const scaled = curr_gain * 0.8;
-            new_gain = scaled > min_gain ? scaled : min_gain;
-        }
+        const new_gain = adapt_gain(load<f64>(gain_ptr + offset), g, v);
         store<f64>(gain_ptr + offset, new_gain);
 
         const new_v = gamma * v - lr * new_gain * g;

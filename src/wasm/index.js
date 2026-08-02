@@ -187,6 +187,74 @@ export function free_all(exports, ptrs) {
 }
 
 /**
+ * Builds the wrapper for a kernel that reduces one vector to a single number.
+ *
+ * The vector metrics and reductions all wrap the same way — copy the operands in, call, free in a
+ * `finally` — and differ only in which kernel they name. Building them from one definition is what
+ * keeps a fix to the allocation discipline from having to be made nine times.
+ *
+ * @private
+ * @param {string} kernel - Name of the exported kernel, which must take `(ptr, len)`.
+ * @returns {(V: Float64Array | number[]) => number | null} The wrapper, returning null when WASM is
+ *   unavailable so the caller falls back to its JS implementation.
+ */
+export function vector_reduction(kernel) {
+    return (V) => {
+        const inst = initWasm();
+        if (!inst) return null;
+
+        /** @type {any} */
+        const exports = inst.exports;
+        const len = V.length;
+
+        /** @type {number[]} */
+        const ptrs = [];
+        try {
+            const ptr = alloc(exports, ptrs, len * 8);
+            new Float64Array(exports.memory.buffer, ptr, len).set(V);
+            return exports[kernel](ptr, len);
+        } finally {
+            free_all(exports, ptrs);
+        }
+    };
+}
+
+/**
+ * Builds the wrapper for a kernel that reduces two vectors to a single number.
+ *
+ * The length is taken from `A`, matching every caller: these are the vector metrics, which are only
+ * ever handed two rows of the same matrix.
+ *
+ * @private
+ * @param {string} kernel - Name of the exported kernel, which must take `(a_ptr, b_ptr, len)`.
+ * @returns {(A: Float64Array | number[], B: Float64Array | number[]) => number | null} The wrapper,
+ *   returning null when WASM is unavailable so the caller falls back to its JS implementation.
+ */
+export function vector_pair_reduction(kernel) {
+    return (A, B) => {
+        const inst = initWasm();
+        if (!inst) return null;
+
+        /** @type {any} */
+        const exports = inst.exports;
+        const memory = exports.memory;
+        const len = A.length;
+
+        /** @type {number[]} */
+        const ptrs = [];
+        try {
+            const ptrA = alloc(exports, ptrs, len * 8);
+            const ptrB = alloc(exports, ptrs, len * 8);
+            new Float64Array(memory.buffer, ptrA, len).set(A);
+            new Float64Array(memory.buffer, ptrB, len).set(B);
+            return exports[kernel](ptrA, ptrB, len);
+        } finally {
+            free_all(exports, ptrs);
+        }
+    };
+}
+
+/**
  * Buffers held across calls to an iterative kernel.
  *
  * The optimisers call their kernel once per iteration with operands that mostly do not change.

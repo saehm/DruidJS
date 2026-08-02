@@ -1,5 +1,7 @@
 // src/dimred/SQDMDS.as.ts
 
+import { sqdist_f64, zero_f64 } from "../wasm/shared.as";
+
 /**
  * Computes quartet gradients and updates gradient buffer in WASM memory without GC object allocations.
  */
@@ -15,10 +17,7 @@ export function sqdmds_fill_grads_f64(
     use_exaggeration: boolean,
     is_precomputed: boolean
 ): void {
-    const total_gd = n * d_ld;
-    for (let i = 0; i < total_gd; ++i) {
-        store<f64>(grads_ptr + (i << 3), 0.0);
-    }
+    zero_f64(grads_ptr, n * d_ld);
     sqdmds_fill_grads_range_f64(y_ptr, x_ptr, quartets_ptr, num_quartets, grads_ptr, n, d_ld, d_hd, use_exaggeration, is_precomputed, 0, num_quartets);
 }
 
@@ -38,13 +37,7 @@ function sqdmds_hd_distance(
         const value = load<f64>(x_ptr + ((a * n + b) << 3));
         return use_exaggeration ? value * value : value;
     }
-    let sum: f64 = 0.0;
-    const a_off = a * d_hd;
-    const b_off = b * d_hd;
-    for (let t = 0; t < d_hd; ++t) {
-        const diff = load<f64>(x_ptr + ((a_off + t) << 3)) - load<f64>(x_ptr + ((b_off + t) << 3));
-        sum += diff * diff;
-    }
+    const sum = sqdist_f64(x_ptr + ((a * d_hd) << 3), x_ptr + ((b * d_hd) << 3), d_hd);
     // Exaggeration squares the metric, so the square root cancels out.
     return use_exaggeration ? sum : Math.sqrt(sum);
 }
@@ -137,34 +130,16 @@ export function sqdmds_fill_grads_range_f64(
         }
 
         // Low-dimensional distances, nudged off zero so the divisions below stay finite.
-        let s_ij: f64 = 0.0;
-        let s_ik: f64 = 0.0;
-        let s_il: f64 = 0.0;
-        let s_jk: f64 = 0.0;
-        let s_jl: f64 = 0.0;
-        let s_kl: f64 = 0.0;
-        const i_off = i * d_ld;
-        const j_off = j * d_ld;
-        const k_off = k * d_ld;
-        const l_off = l * d_ld;
-        for (let t = 0; t < d_ld; ++t) {
-            const yi = load<f64>(y_ptr + ((i_off + t) << 3));
-            const yj = load<f64>(y_ptr + ((j_off + t) << 3));
-            const yk = load<f64>(y_ptr + ((k_off + t) << 3));
-            const yl = load<f64>(y_ptr + ((l_off + t) << 3));
-            s_ij += (yi - yj) * (yi - yj);
-            s_ik += (yi - yk) * (yi - yk);
-            s_il += (yi - yl) * (yi - yl);
-            s_jk += (yj - yk) * (yj - yk);
-            s_jl += (yj - yl) * (yj - yl);
-            s_kl += (yk - yl) * (yk - yl);
-        }
-        const d_ij = Math.sqrt(s_ij) + 1e-12;
-        const d_ik = Math.sqrt(s_ik) + 1e-12;
-        const d_il = Math.sqrt(s_il) + 1e-12;
-        const d_jk = Math.sqrt(s_jk) + 1e-12;
-        const d_jl = Math.sqrt(s_jl) + 1e-12;
-        const d_kl = Math.sqrt(s_kl) + 1e-12;
+        const row_i = y_ptr + ((i * d_ld) << 3);
+        const row_j = y_ptr + ((j * d_ld) << 3);
+        const row_k = y_ptr + ((k * d_ld) << 3);
+        const row_l = y_ptr + ((l * d_ld) << 3);
+        const d_ij = Math.sqrt(sqdist_f64(row_i, row_j, d_ld)) + 1e-12;
+        const d_ik = Math.sqrt(sqdist_f64(row_i, row_k, d_ld)) + 1e-12;
+        const d_il = Math.sqrt(sqdist_f64(row_i, row_l, d_ld)) + 1e-12;
+        const d_jk = Math.sqrt(sqdist_f64(row_j, row_k, d_ld)) + 1e-12;
+        const d_jl = Math.sqrt(sqdist_f64(row_j, row_l, d_ld)) + 1e-12;
+        const d_kl = Math.sqrt(sqdist_f64(row_k, row_l, d_ld)) + 1e-12;
         const sum_ld = d_ij + d_ik + d_il + d_jk + d_jl + d_kl;
 
         // The same gradient for each of the six pairs, with the quartet permuted into place.

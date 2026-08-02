@@ -1,5 +1,30 @@
 // src/dimred/UMAP.as.ts
 
+import { sqdist_f64 } from "../wasm/shared.as";
+
+/** Matches `UMAP._clip`. */
+function clip(x: f64): f64 {
+    if (x > 4.0) return 4.0;
+    if (x < -4.0) return -4.0;
+    return x;
+}
+
+/**
+ * Moves the two rows of a pair apart along their connecting axis, `cur` forwards and `oth` back.
+ *
+ * The attractive and repulsive passes differ only in the sign carried by `grad_coeff`, so both go
+ * through here.
+ */
+function apply_pair_gradient(cur_off: usize, oth_off: usize, grad_coeff: f64, alpha: f64, dim: i32): void {
+    for (let d = 0; d < dim; ++d) {
+        const c_idx = cur_off + (d << 3);
+        const o_idx = oth_off + (d << 3);
+        const grad_d = clip(grad_coeff * (load<f64>(c_idx) - load<f64>(o_idx))) * alpha;
+        store<f64>(c_idx, load<f64>(c_idx) + grad_d);
+        store<f64>(o_idx, load<f64>(o_idx) - grad_d);
+    }
+}
+
 /**
  * UMAP Single Epoch SGD Optimization Kernel.
  *
@@ -45,21 +70,11 @@ export function umap_optimize_epoch_f64(
         const oth_off = embedding_ptr + ((k * dim) << 3);
 
         // --- attractive force ---
-        let dist: f64 = 0.0;
-        for (let d = 0; d < dim; ++d) {
-            const diff = load<f64>(cur_off + (d << 3)) - load<f64>(oth_off + (d << 3));
-            dist += diff * diff;
-        }
+        const dist = sqdist_f64(cur_off, oth_off, dim);
 
         if (dist > 0.0) {
             const grad_coeff = (-2.0 * a * b * Math.pow(dist, b - 1.0)) / (a * Math.pow(dist, b) + 1.0);
-            for (let d = 0; d < dim; ++d) {
-                const c_idx = cur_off + (d << 3);
-                const o_idx = oth_off + (d << 3);
-                const grad_d = clip(grad_coeff * (load<f64>(c_idx) - load<f64>(o_idx))) * alpha;
-                store<f64>(c_idx, load<f64>(c_idx) + grad_d);
-                store<f64>(o_idx, load<f64>(o_idx) - grad_d);
-            }
+            apply_pair_gradient(cur_off, oth_off, grad_coeff, alpha, dim);
         }
 
         const eps = load<f32>(eps_ptr + (i << 2));
@@ -75,32 +90,14 @@ export function umap_optimize_epoch_f64(
             ++cursor;
             const neg_off = embedding_ptr + ((other * dim) << 3);
 
-            let ndist: f64 = 0.0;
-            for (let d = 0; d < dim; ++d) {
-                const diff = load<f64>(cur_off + (d << 3)) - load<f64>(neg_off + (d << 3));
-                ndist += diff * diff;
-            }
+            const ndist = sqdist_f64(cur_off, neg_off, dim);
 
             if (ndist > 0.0) {
                 const grad_coeff = (2.0 * gamma * b) / ((0.01 + ndist) * (a * Math.pow(ndist, b) + 1.0));
-                for (let d = 0; d < dim; ++d) {
-                    const c_idx = cur_off + (d << 3);
-                    const o_idx = neg_off + (d << 3);
-                    const grad_d = clip(grad_coeff * (load<f64>(c_idx) - load<f64>(o_idx))) * alpha;
-                    store<f64>(c_idx, load<f64>(c_idx) + grad_d);
-                    store<f64>(o_idx, load<f64>(o_idx) - grad_d);
-                }
+                apply_pair_gradient(cur_off, neg_off, grad_coeff, alpha, dim);
             }
         }
 
         store<f32>(eonns_ptr + (i << 2), f32(f64(load<f32>(eonns_ptr + (i << 2))) + n_neg_samples * epns));
     }
-}
-
-/** Matches `UMAP._clip`. */
-@inline
-function clip(x: f64): f64 {
-    if (x > 4.0) return 4.0;
-    if (x < -4.0) return -4.0;
-    return x;
 }

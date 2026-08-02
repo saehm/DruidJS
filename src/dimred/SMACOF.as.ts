@@ -1,5 +1,7 @@
 // src/dimred/SMACOF.as.ts
 
+import { sqdist_f64, zero_f64 } from "../wasm/shared.as";
+
 /**
  * Single iteration SMACOF Guttman Transform SIMD kernel.
  * Computes Z_new = (1/N) * B(Z) * Z in-place in WASM memory.
@@ -13,11 +15,7 @@ export function smacof_step_f64(
 ): f64 {
     const inv_n = 1.0 / f64(n);
 
-    // Reset Z_new to 0
-    const total_zd = n * d;
-    for (let i = 0; i < total_zd; ++i) {
-        store<f64>(z_new_ptr + (i << 3), 0.0);
-    }
+    zero_f64(z_new_ptr, n * d);
 
     for (let i = 0; i < n; ++i) {
         const i_d = i * d;
@@ -28,13 +26,7 @@ export function smacof_step_f64(
             if (i == j) continue;
             const j_d = j * d;
 
-            // Compute distance in embedding space dist_Z
-            let sum_sq: f64 = 0.0;
-            for (let k = 0; k < d; ++k) {
-                const diff = load<f64>(z_ptr + ((i_d + k) << 3)) - load<f64>(z_ptr + ((j_d + k) << 3));
-                sum_sq += diff * diff;
-            }
-            const dist_z = Math.sqrt(sum_sq);
+            const dist_z = Math.sqrt(sqdist_f64(z_ptr + (i_d << 3), z_ptr + (j_d << 3), d));
             const dist_target = load<f64>(target_d_ptr + ((i_n + j) << 3));
 
             let bij: f64 = 0.0;
@@ -70,14 +62,9 @@ export function smacof_step_f64(
         const i_d = i * d;
         const i_n = i * n;
         for (let j = i + 1; j < n; ++j) {
-            const j_d = j * d;
-            let sum_sq: f64 = 0.0;
-            for (let k = 0; k < d; ++k) {
-                const diff = load<f64>(z_new_ptr + ((i_d + k) << 3)) - load<f64>(z_new_ptr + ((j_d + k) << 3));
-                sum_sq += diff * diff;
-            }
+            const dist_z = Math.sqrt(sqdist_f64(z_new_ptr + (i_d << 3), z_new_ptr + ((j * d) << 3), d));
             const dist_target = load<f64>(target_d_ptr + ((i_n + j) << 3));
-            const diff_target = dist_target - Math.sqrt(sum_sq);
+            const diff_target = dist_target - dist_z;
             stress_num += diff_target * diff_target;
             stress_den += dist_target * dist_target;
         }

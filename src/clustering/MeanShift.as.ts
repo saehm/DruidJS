@@ -1,5 +1,7 @@
 // src/clustering/MeanShift.as.ts
 
+import { sqdist_simd_f64 } from "../wasm/shared.as";
+
 /**
  * WASM SIMD MeanShift Iteration Step Kernel.
  * Computes Gaussian or Flat kernel density shifts for points [start_i, end_i) in linear WASM memory.
@@ -15,11 +17,11 @@ export function meanshift_step_range_f64(
     end_i: i32
 ): f64 {
     const inv_two_bw_sq = 1.0 / (2.0 * bandwidth * bandwidth);
-    const d_simd = d - 1;
     let max_shift: f64 = 0.0;
 
     for (let i = start_i; i < end_i; ++i) {
         const i_d = i * d;
+        const row_i = points_ptr + (i_d << 3);
         let sum_weights: f64 = 0.0;
 
         // Temporary weighted sum buffer
@@ -28,22 +30,7 @@ export function meanshift_step_range_f64(
 
         for (let j = 0; j < n; ++j) {
             const j_d = j * d;
-            let sum_sq: f64 = 0.0;
-            let k = 0;
-            let sum_v = f64x2.splat(0.0);
-
-            for (; k < d_simd; k += 2) {
-                const pi_v = v128.load(points_ptr + ((i_d + k) << 3));
-                const pj_v = v128.load(points_ptr + ((j_d + k) << 3));
-                const diff = f64x2.sub(pi_v, pj_v);
-                sum_v = f64x2.add(sum_v, f64x2.mul(diff, diff));
-            }
-            sum_sq += f64x2.extract_lane(sum_v, 0) + f64x2.extract_lane(sum_v, 1);
-
-            for (; k < d; ++k) {
-                const diff = load<f64>(points_ptr + ((i_d + k) << 3)) - load<f64>(points_ptr + ((j_d + k) << 3));
-                sum_sq += diff * diff;
-            }
+            const sum_sq = sqdist_simd_f64(row_i, points_ptr + (j_d << 3), d);
 
             const dist = Math.sqrt(sum_sq);
             let weight: f64 = 0.0;
