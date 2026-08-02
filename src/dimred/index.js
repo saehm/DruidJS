@@ -5,6 +5,7 @@ export { FASTMAP } from "./FASTMAP.js";
 export { LocalMAP } from "./LocalMAP.js";
 export { PaCMAP } from "./PaCMAP.js";
 export { ISOMAP } from "./ISOMAP.js";
+export { KKMDS } from "./KKMDS.js";
 export { LDA } from "./LDA.js";
 export { LLE } from "./LLE.js";
 export { LocalMAP } from "./LocalMAP.js";
@@ -16,12 +17,14 @@ export { PCA } from "./PCA.js";
 export { SAMMON } from "./SAMMON.js";
 export { SMACOF } from "./SMACOF.js";
 export { SQDMDS } from "./SQDMDS.js";
+export { StressMDS, WEIGHTS_ELASTIC, WEIGHTS_SAMMON, WEIGHTS_UNIFORM } from "./StressMDS.js";
 export { TopoMap } from "./TopoMap.js";
 export { TriMap } from "./TriMap.js";
 export { TSNE } from "./TSNE.js";
 export { UMAP } from "./UMAP.js";
 
 /** @import { Metric } from "../metrics/index.js" */
+/** @import { Matrix } from "../matrix/index.js" */
 /** @import { KNN } from "../knn/KNN.js" */
 /** @import { EigenArgs } from "../linear_algebra/index.js" */
 /** @import { ChooseDR } from "./SAMMON.js"; */
@@ -50,6 +53,44 @@ export { UMAP } from "./UMAP.js";
  * @property {"MDS" | "SMACOF"} [project="MDS"] - Whether to use classical MDS or SMACOF for the final DR.
  * @property {number} [seed=1212] - the seed for the random number generator.
  * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
+ */
+
+/**
+ * How to weight each pair in the {@link StressMDS} objective.
+ *
+ * A number is an exponent `q`, giving `w_ij = d_ij^q` — `0` for raw stress, `-1` for Sammon stress,
+ * `-2` for elastic scaling / Kamada-Kawai. A matrix supplies the weights directly. A function is
+ * called per pair with the target distance and the two indices.
+ *
+ * A weight of zero, or any non-finite value, drops that pair from the objective — which is how
+ * missing or untrusted dissimilarities are expressed.
+ *
+ * @typedef {number | Matrix | number[][] | ((d_ij: number, i: number, j: number) => number)} WeightSpec
+ */
+
+/**
+ * @typedef {Object} ParametersStressMDS
+ * @property {number} [d=2] - the dimensionality of the projection.
+ * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance
+ *   between two points. Pass graph shortest-path distances as `"precomputed"` for a graph layout.
+ * @property {WeightSpec} [weights=-2] - Pair weighting, see {@link WeightSpec}.
+ * @property {number} [iterations=300] - maximum number of gradient steps.
+ * @property {number} [epsilon=1e-6] - stop once the relative stress improvement falls below this.
+ * @property {number} [learning_rate=0.1] - initial step size. Dimensionless: the gradient is
+ *   preconditioned by the weighted degree, so this needs no rescaling for the data or the weighting.
+ *   Adapted by the line search, so it only sets where the search starts.
+ * @property {"MDS" | "PCA" | "random"} [init_DR="MDS"] - starting configuration. `"MDS"` runs
+ *   classical MDS on the same distances, which is what keeps the non-convex descent out of the poor
+ *   local minima this objective is known for. `"PCA"` needs the original data, not a precomputed
+ *   matrix.
+ * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {Partial<EigenArgs>} [eig_args={}] - Parameters for the eigendecomposition algorithm.
+ */
+
+/**
+ * {@link ParametersStressMDS} without `weights`, which {@link KKMDS} fixes at `-2`.
+ *
+ * @typedef {Omit<ParametersStressMDS, "weights">} ParametersKKMDS
  */
 
 /**

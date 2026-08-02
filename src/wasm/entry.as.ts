@@ -20,6 +20,7 @@ export * from "../metrics/canberra.as";
 export * from "../metrics/bray_curtis.as";
 export * from "../numerical/neumair_sum.as";
 export * from "../dimred/SMACOF.as";
+export * from "../dimred/StressMDS.as";
 export * from "../dimred/SQDMDS.as";
 export * from "../dimred/TriMap.as";
 export * from "../clustering/MeanShift.as";
