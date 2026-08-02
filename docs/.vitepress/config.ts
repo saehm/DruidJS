@@ -100,6 +100,14 @@ export default defineConfig({
                         text: "UMAP",
                         link: "/dimred/umap",
                     },
+                    {
+                        text: "PaCMAP",
+                        link: "/dimred/pacmap",
+                    },
+                    {
+                        text: "LocalMAP",
+                        link: "/dimred/localmap",
+                    },
                 ],
             },
             {
