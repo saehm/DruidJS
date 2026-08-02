@@ -13,8 +13,9 @@ export { XMeans } from "./XMeans.js";
 
 /**
  * @typedef ParametersHierarchicalClustering
- * @property {"single" | "complete" | "average"} linkage
- * @property {Metric | "precomputed"} metric
+ * @property {"single" | "complete" | "average" | "ward"} linkage
+ * @property {Metric | "precomputed"} metric - `"ward"` assumes these are Euclidean distances; its
+ *   minimum-variance criterion is only meaningful in that geometry.
  */
 
 /**

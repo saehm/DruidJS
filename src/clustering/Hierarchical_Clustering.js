@@ -9,7 +9,7 @@ import { Clustering } from "./Clustering.js";
  * Hierarchical Clustering
  *
  * A bottom-up approach (agglomerative) to clustering that builds a tree of clusters (dendrogram).
- * Supports different linkage criteria: single, complete, and average.
+ * Supports different linkage criteria: single, complete, average, and ward.
  *
  * @class
  * @extends Clustering<ParametersHierarchicalClustering>
@@ -118,6 +118,9 @@ export class HierarchicalClustering extends Clustering {
 
             const size1 = c_size[c1];
             const size2 = c_size[c2];
+            // Ward reaches back to the distance between the two clusters being merged, which the
+            // loop below never overwrites — but read it first so the dependency is explicit.
+            const D_c1_c2 = D.entry(c1, c2);
             c_size[c1] += size2;
 
             for (let j = 0; j < N; ++j) {
@@ -135,6 +138,23 @@ export class HierarchicalClustering extends Clustering {
                     case "average":
                         value = (size1 * D_c1_j + size2 * D_c2_j) / (size1 + size2);
                         break;
+                    case "ward": {
+                        // Lance-Williams recurrence for Ward's minimum-variance criterion. It is
+                        // stated over *squared* distances, so square on the way in and take the root
+                        // on the way out to keep `D` in the same units as the other linkages.
+                        const size_j = c_size[j];
+                        const total = size1 + size2 + size_j;
+                        value = Math.sqrt(
+                            Math.max(
+                                0,
+                                ((size1 + size_j) * D_c1_j * D_c1_j +
+                                    (size2 + size_j) * D_c2_j * D_c2_j -
+                                    size_j * D_c1_c2 * D_c1_c2) /
+                                    total,
+                            ),
+                        );
+                        break;
+                    }
                 }
                 D.set_entry(j, c1, value);
                 D.set_entry(c1, j, value);

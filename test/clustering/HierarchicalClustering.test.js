@@ -25,6 +25,79 @@ describe("HierarchicalClustering", () => {
         expect(() => hc.get_clusters(1, "invalid_type")).toThrow("invalid type");
     });
 
+    describe("ward linkage", () => {
+        /** Three well-separated groups of four, so the correct 3-way split is unambiguous. */
+        const blocks = [
+            [0, 0],
+            [0, 1],
+            [1, 0],
+            [1, 1],
+            [20, 0],
+            [20, 1],
+            [21, 0],
+            [21, 1],
+            [0, 20],
+            [0, 21],
+            [1, 20],
+            [1, 21],
+        ];
+
+        /** @param {HierarchicalClustering} hc */
+        const merge_heights = (hc) =>
+            hc.root
+                .descendants()
+                .filter((node) => !node.isLeaf)
+                .map((node) => node.dist);
+
+        it("should recover well-separated groups", () => {
+            const hc = new HierarchicalClustering(blocks, { linkage: "ward", metric: euclidean });
+            const heights = merge_heights(hc).sort((a, b) => a - b);
+            // cut between the 3rd- and 2nd-tallest merge to leave exactly three clusters
+            const cut = (heights[heights.length - 3] + heights[heights.length - 2]) / 2;
+            const list = hc.get_cluster_list(cut);
+
+            expect(new Set(list).size).toBe(3);
+            // members of each block must agree, and differ from the other blocks
+            for (const [a, b, c] of [
+                [0, 1, 4],
+                [4, 5, 8],
+                [8, 9, 0],
+            ]) {
+                expect(list[a]).toBe(list[b]);
+                expect(list[a]).not.toBe(list[c]);
+            }
+        });
+
+        it("should produce monotone merge heights", () => {
+            // Ward is a monotone (non-inverting) linkage. A mis-stated Lance-Williams recurrence
+            // typically shows up as an inversion — a merge cheaper than one of its own children.
+            const hc = new HierarchicalClustering(blocks, { linkage: "ward", metric: euclidean });
+            /** @param {any} node */
+            const check = (node) => {
+                if (node.isLeaf) return;
+                for (const child of [node.left, node.right]) {
+                    if (!child || child.isLeaf) continue;
+                    expect(node.dist).toBeGreaterThanOrEqual(child.dist - 1e-9);
+                    check(child);
+                }
+            };
+            check(hc.root);
+        });
+
+        it("should merge later than complete linkage on the same data", () => {
+            // Ward's criterion grows with cluster size, so its dendrogram spans a wider range of
+            // heights than a distance-based linkage on identical input.
+            const ward = new HierarchicalClustering(blocks, { linkage: "ward", metric: euclidean });
+            const complete = new HierarchicalClustering(blocks, {
+                linkage: "complete",
+                metric: euclidean,
+            });
+            expect(Math.max(...merge_heights(ward))).toBeGreaterThan(
+                Math.max(...merge_heights(complete)),
+            );
+        });
+    });
+
     it("should create hierarchical clusters with single linkage", () => {
         const points = [
             [0, 0],
