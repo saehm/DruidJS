@@ -81,4 +81,19 @@ describe("SAMMON", () => {
         const sammon = new SAMMON(data, { init_DR: "invalid" });
         expect(() => sammon.init()).toThrow();
     });
+
+    // Regression test for #38: `init()` left `_is_initialized` false, so reading `projection`
+    // re-ran `init()` and handed back the initial layout in place of the computed one.
+    it("should mark itself initialized and keep the projection stable", { timeout: 20000 }, () => {
+        const data = generateTestData(12, 4);
+        const sammon = new SAMMON(data, { d: 2, init_DR: "PCA", seed: 42 });
+        expect(sammon._is_initialized).toBe(false);
+
+        const result = sammon.transform(30);
+        expect(sammon._is_initialized).toBe(true);
+
+        // Every read goes through the getter that used to re-initialize.
+        expect(sammon.projection).toEqual(result);
+        expect(sammon.projection).toEqual(result);
+    });
 });
