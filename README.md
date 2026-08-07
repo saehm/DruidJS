@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=saehm&project=DruidJS&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 ## DruidJS — A JavaScript Library for Dimensionality Reduction.
 
 <a href="#"><img src="https://raw.githubusercontent.com/saehm/DruidJS/refs/heads/master/icon.svg" width=80 align="left" hspace="10" vspace="6"></a>
