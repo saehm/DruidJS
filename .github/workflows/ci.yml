@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+# A newer push to the same branch supersedes the run in flight; master is never cancelled so the
+# badge always reflects a completed run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm test:types
+
+      # Node and the three Playwright browsers, as configured in vitest.config.js.
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      # The WASM kernels are built by `pnpm asbuild` as part of this, so a kernel that no longer
+      # compiles fails here rather than at release time.
+      - name: Build
+        run: pnpm build
