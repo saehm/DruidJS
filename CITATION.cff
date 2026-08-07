@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+title: "DruidJS — A JavaScript Library for Dimensionality Reduction"
+abstract: >-
+  A JavaScript library for dimensionality reduction, providing dimensionality
+  reduction methods, nearest-neighbor indices and clustering algorithms behind a
+  single API, with WebAssembly kernels and a JavaScript fallback.
+type: software
+authors:
+  - family-names: Cutura
+    given-names: Rene
+    orcid: "https://orcid.org/0000-0003-0395-2448"
+    website: "http://renecutura.eu"
+  - family-names: Kralj
+    given-names: Christoph
+  - family-names: Sedlmair
+    given-names: Michael
+    orcid: "https://orcid.org/0000-0001-7048-9292"
+repository-code: "https://github.com/saehm/DruidJS"
+url: "https://saehm.github.io/DruidJS/"
+license: LGPL-3.0-or-later
+version: 0.9.0
+date-released: "2026-08-02"
+keywords:
+  - dimensionality-reduction
+  - visualization
+  - clustering
+  - nearest-neighbors
+  - javascript
+preferred-citation:
+  type: conference-paper
+  title: "DRUIDJS — A JavaScript Library for Dimensionality Reduction"
+  authors:
+    - family-names: Cutura
+      given-names: Rene
+      orcid: "https://orcid.org/0000-0003-0395-2448"
+    - family-names: Kralj
+      given-names: Christoph
+    - family-names: Sedlmair
+      given-names: Michael
+      orcid: "https://orcid.org/0000-0001-7048-9292"
+  collection-title: "2020 IEEE Visualization Conference (VIS)"
+  conference:
+    name: "2020 IEEE Visualization Conference (VIS)"
+  publisher:
+    name: IEEE
+  year: 2020
+  start: 111
+  end: 115
+  doi: 10.1109/VIS47514.2020.00029
