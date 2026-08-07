@@ -84,7 +84,7 @@ const index = new druid.HNSW(points, { seed: 1212 });
 index.search(points[0], 10); // the 10 nearest points
 ```
 
-**Clustering** — KMeans, KMedoids, XMeans, OPTICS, CURE, MeanShift, HierarchicalClustering (single, complete, average, centroid, median and Ward linkage)
+**Clustering** — KMeans, KMedoids, XMeans, OPTICS, CURE, MeanShift, HierarchicalClustering (single, complete, average and Ward linkage)
 
 ### Performance
 
