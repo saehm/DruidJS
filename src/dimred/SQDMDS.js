@@ -146,7 +146,10 @@ export class SQDMDS extends DR {
     _step(i, iterations) {
         if (this._LR_init === undefined || this._offset === undefined) throw new Error("Call init() first!");
 
-        const decay_start = /** @type {number} */ (this.parameter("decay_start"));
+        // the step where the decay starts, set by transform() / generator(); the decay_start
+        // parameter itself is the fraction of iterations with distance exaggeration
+        const decay_start =
+            this._decay_start ?? Math.round(/** @type {number} */ (this.parameter("decay_start")) * iterations);
         if (i > decay_start) {
             const decay_cte = /** @type {number} */ (this.parameter("decay_cte"));
             const offset = this._offset;
