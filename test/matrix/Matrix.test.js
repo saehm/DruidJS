@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Matrix } from "../../src/matrix/index.js";
+import { Randomizer } from "../../src/util/index.js";
 
 describe("Matrix", () => {
     describe("Constructor", () => {
@@ -440,9 +441,13 @@ describe("Matrix", () => {
                 [4, 3],
                 [6, 3],
             ]);
-            const { L, U } = Matrix.LU(m);
+            // partial pivoting swaps the rows (|6| > |4|): L U = P A
+            const { L, U, P } = Matrix.LU(m);
+            expect(P).toEqual([1, 0]);
             const LU = L.dot(U);
-            expect(LU.entry(0, 0)).toBeCloseTo(4);
+            expect(LU.entry(0, 0)).toBeCloseTo(6);
+            expect(LU.entry(0, 1)).toBeCloseTo(3);
+            expect(LU.entry(1, 0)).toBeCloseTo(4);
             expect(LU.entry(1, 1)).toBeCloseTo(3);
         });
 
@@ -499,14 +504,6 @@ describe("Matrix", () => {
     });
 
     describe("Static math methods", () => {
-        test("LU throws on 0 diagonal", () => {
-            const m = Matrix.from([
-                [0, 1],
-                [1, 0],
-            ]);
-            expect(() => Matrix.LU(m)).toThrow("L's diagonal not supposed to be 0!");
-        });
-
         test("det 3x3", () => {
             const m = Matrix.from([
                 [1, 2, 3],
@@ -540,6 +537,162 @@ describe("Matrix", () => {
             expect(Matrix.is2dArray([])).toBe(false);
             expect(Matrix.is2dArray([[1, 2], [3]])).toBe(false);
             expect(Matrix.is2dArray([[1, 2], "invalid"])).toBe(false);
+        });
+    });
+});
+
+describe("LU, solve, det and inverse", () => {
+    /**
+     * A random n × m matrix with entries in [-1, 1). Its diagonal is not dominant, so the
+     * factorization has to pivot.
+     *
+     * @param {number} n
+     * @param {number} m
+     * @param {number} seed
+     */
+    const random = (n, m, seed) => {
+        const r = new Randomizer(seed);
+        return new Matrix(n, m, () => r.random * 2 - 1);
+    };
+    /**
+     * Largest absolute entrywise difference.
+     *
+     * @param {Matrix} A
+     * @param {Matrix} B
+     */
+    const max_diff = (A, B) => {
+        expect(A.shape).toEqual(B.shape);
+        let d = 0;
+        for (let i = 0; i < A.values.length; ++i) d = Math.max(d, Math.abs(A.values[i] - B.values[i]));
+        return d;
+    };
+    const sizes = [1, 2, 3, 5, 10, 40];
+
+    describe("LU", () => {
+        test.each(sizes)("reconstructs P A = L U (n = %i)", (n) => {
+            const A = random(n, n, n);
+            const { L, U, P } = Matrix.LU(A);
+            const PA = new Matrix(n, n, (i, j) => A.entry(P[i], j));
+            expect(max_diff(L.dot(U), PA)).toBeLessThan(1e-12);
+            for (let i = 0; i < n; ++i) {
+                for (let j = i + 1; j < n; ++j) {
+                    expect(L.entry(i, j)).toBe(0);
+                    expect(U.entry(j, i)).toBe(0);
+                }
+            }
+        });
+
+        test("pivots on a zero diagonal", () => {
+            const A = Matrix.from([
+                [0, 1],
+                [1, 0],
+            ]);
+            const { L, U, P } = Matrix.LU(A);
+            expect(Array.from(P)).toEqual([1, 0]);
+            expect(max_diff(L.dot(U), new Matrix(2, 2, "identity"))).toBe(0);
+        });
+
+        test("throws for a singular matrix", () => {
+            const A = Matrix.from([
+                [1, 2, 3],
+                [2, 4, 6],
+                [1, 0, 1],
+            ]);
+            expect(() => Matrix.LU(A)).toThrow(/singular/);
+        });
+
+        test("leaves A unchanged", () => {
+            const A = random(6, 6, 3);
+            const copy = A.clone();
+            Matrix.LU(A);
+            expect(max_diff(A, copy)).toBe(0);
+        });
+    });
+
+    describe("solve", () => {
+        test.each(sizes)("solves A x = b for a column b (n = %i)", (n) => {
+            const A = random(n, n, 100 + n);
+            const x_true = random(n, 1, 200 + n);
+            const x = Matrix.solve(A, A.dot(x_true));
+            expect(x.shape).toEqual([n, 1]);
+            expect(max_diff(x, x_true)).toBeLessThan(1e-9);
+        });
+
+        test("solves several right-hand sides at once", () => {
+            const A = random(12, 12, 5);
+            const X_true = random(12, 4, 6);
+            expect(max_diff(Matrix.solve(A, A.dot(X_true)), X_true)).toBeLessThan(1e-9);
+        });
+
+        test("accepts b as a row and returns a row", () => {
+            const A = random(7, 7, 7);
+            const x_true = random(1, 7, 8);
+            const b = A.dot(x_true.T).T;
+            const x = Matrix.solve(A, b);
+            expect(x.shape).toEqual([1, 7]);
+            expect(max_diff(x, x_true)).toBeLessThan(1e-9);
+        });
+
+        test("reuses a precomputed LU decomposition", () => {
+            const A = random(9, 9, 9);
+            const b = random(9, 1, 10);
+            const lu = Matrix.LU(A);
+            expect(max_diff(Matrix.solve(lu, b), Matrix.solve(A, b))).toBe(0);
+        });
+
+        test("is accurate where a tiny pivot would be chosen without pivoting", () => {
+            const A = Matrix.from([
+                [1e-17, 1],
+                [1, 1],
+            ]);
+            // exact solution: x = [1 / (1 - 1e-17), (1 - 2e-17) / (1 - 1e-17)] ≈ [1, 1]
+            const x = Matrix.solve(A, Matrix.from([[1], [2]]));
+            expect(x.entry(0, 0)).toBeCloseTo(1, 12);
+            expect(x.entry(1, 0)).toBeCloseTo(1, 12);
+        });
+
+        test("does not change b", () => {
+            const A = random(5, 5, 11);
+            const b = random(5, 2, 12);
+            const copy = b.clone();
+            Matrix.solve(A, b);
+            expect(max_diff(b, copy)).toBe(0);
+        });
+    });
+
+    describe("det", () => {
+        test.each([4, 6, 10])("is the signed product of the factors' diagonals (n = %i)", (n) => {
+            // A = swap · L0 · U0 with known diagonals: det(A) = -Π diag(L0) · Π diag(U0)
+            const r = new Randomizer(n);
+            const L0 = new Matrix(n, n, (i, j) => (i > j ? r.random - 0.5 : i === j ? 1 + i : 0));
+            const U0 = new Matrix(n, n, (i, j) => (i < j ? r.random - 0.5 : i === j ? (i % 2 ? -1 : 2) : 0));
+            const A = L0.dot(U0);
+            A.swap_rows(0, n - 1);
+            let expected = -1;
+            for (let i = 0; i < n; ++i) expected *= (1 + i) * (i % 2 ? -1 : 2);
+            expect(Matrix.det(A) / expected).toBeCloseTo(1, 10);
+        });
+
+        test("of a permutation matrix is its sign", () => {
+            // the 4-cycle (0 1 2 3) is an odd permutation
+            const A = new Matrix(4, 4, (i, j) => (j === (i + 1) % 4 ? 1 : 0));
+            expect(Matrix.det(A)).toBe(-1);
+        });
+
+        test("is 0 for a singular matrix", () => {
+            const A = Matrix.from([
+                [1, 2, 3, 4],
+                [2, 4, 6, 8],
+                [0, 1, 0, 1],
+                [1, 0, 1, 0],
+            ]);
+            expect(Matrix.det(A)).toBe(0);
+        });
+
+        test("is multiplicative", () => {
+            const A = random(8, 8, 21);
+            const B = random(8, 8, 22);
+            expect(Matrix.det(A.dot(B)) / (Matrix.det(A) * Matrix.det(B))).toBeCloseTo(1, 9);
         });
     });
 });
