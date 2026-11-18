@@ -695,4 +695,34 @@ describe("LU, solve, det and inverse", () => {
             expect(Matrix.det(A.dot(B)) / (Matrix.det(A) * Matrix.det(B))).toBeCloseTo(1, 9);
         });
     });
+
+    describe("inverse", () => {
+        test.each(sizes)("gives A A⁻¹ = A⁻¹ A = I (n = %i)", (n) => {
+            const A = random(n, n, 300 + n);
+            const inv = A.inverse();
+            const I = new Matrix(n, n, "identity");
+            expect(max_diff(A.dot(inv), I)).toBeLessThan(1e-10);
+            expect(max_diff(inv.dot(A), I)).toBeLessThan(1e-10);
+        });
+
+        test("inverts a permutation matrix to its transpose", () => {
+            const A = new Matrix(5, 5, (i, j) => (j === (i + 2) % 5 ? 1 : 0));
+            expect(max_diff(A.inverse(), A.T)).toBe(0);
+        });
+
+        test("throws for a singular matrix", () => {
+            const A = Matrix.from([
+                [1, 2],
+                [2, 4],
+            ]);
+            expect(() => A.inverse()).toThrow("Cannot compute inverse of Matrix, determinant is zero");
+        });
+
+        test("leaves A unchanged", () => {
+            const A = random(6, 6, 31);
+            const copy = A.clone();
+            A.inverse();
+            expect(max_diff(A, copy)).toBe(0);
+        });
+    });
 });

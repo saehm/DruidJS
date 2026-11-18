@@ -313,69 +313,18 @@ export class Matrix {
     }
 
     /**
-     * Returns the inverse of the Matrix.
+     * Returns the inverse of the Matrix, computed from its LU decomposition with partial pivoting.
      *
      * @returns {Matrix}
+     * @throws {Error} If the matrix is singular.
      */
     inverse() {
-        const rows = this._rows;
-        const cols = this._cols;
-        const A = this.clone();
-        const B = new Matrix(rows, cols, "I");
-
-        // foreach column
-        for (let col = 0; col < cols; ++col) {
-            // Search for maximum in this column (pivot)
-            let max_idx = col;
-            let max_val = Math.abs(A.entry(col, col));
-            for (let row = col + 1; row < rows; ++row) {
-                const val = Math.abs(A.entry(row, col));
-                if (max_val < val) {
-                    max_idx = row;
-                    max_val = val;
-                }
-            }
-            if (max_val === 0) {
-                throw new Error("Cannot compute inverse of Matrix, determinant is zero");
-            }
-            // Swap maximum row with current row
-            if (max_idx !== col) {
-                A.swap_rows(col, max_idx);
-                B.swap_rows(col, max_idx);
-            }
-
-            // eliminate non-zero values on the other rows at column c
-            const A_col = A.row(col);
-            const B_col = B.row(col);
-            for (let row = 0; row < rows; ++row) {
-                if (row !== col) {
-                    // eliminate value at column c and row r
-                    const A_row = A.row(row);
-                    const B_row = B.row(row);
-                    if (A_row[col] !== 0) {
-                        const f = A_row[col] / A_col[col];
-                        // sub (f * row c) from row r to eliminate the value at column c
-                        for (let s = col; s < cols; ++s) {
-                            A_row[s] -= f * A_col[s];
-                        }
-                        for (let s = 0; s < cols; ++s) {
-                            B_row[s] -= f * B_col[s];
-                        }
-                    }
-                } else {
-                    // normalize value at Acc to 1 (diagonal):
-                    // divide each value of row r=c by the value at Acc
-                    const f = A_col[col];
-                    for (let s = col; s < cols; ++s) {
-                        A_col[s] /= f;
-                    }
-                    for (let s = 0; s < cols; ++s) {
-                        B_col[s] /= f;
-                    }
-                }
-            }
+        const n = this._rows;
+        const { lu, perm, singular } = lu_factor(this);
+        if (singular) {
+            throw new Error("Cannot compute inverse of Matrix, determinant is zero");
         }
-        return B;
+        return Matrix.solve({ ...lu_unpack(lu, n), P: Array.from(perm) }, new Matrix(n, n, "identity"));
     }
 
     /**
