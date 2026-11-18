@@ -7,7 +7,8 @@ import { generateTestData } from "../utils/data-generators.js";
 import { bestRankCorrelation, expectValidValues } from "../utils/helpers.js";
 
 describe("LTSA", () => {
-    it("should unroll the Swiss roll like scikit-learn", () => {
+    // N = 800 takes about 0.5 s, but up to 20 s under coverage instrumentation on CI
+    it("should unroll the Swiss roll like scikit-learn", { timeout: 60000 }, () => {
         // scikit-learn 1.7.2 scores 1.00 / 1.00 on roll / height here. Before the fix (wrong
         // centering, wrong constant term, largest instead of smallest eigenvectors) DruidJS scored
         // 0.72 / 0.37.

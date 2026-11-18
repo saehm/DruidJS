@@ -7,7 +7,8 @@ import { generateTestData } from "../utils/data-generators.js";
 import { bestRankCorrelation, expectValidValues } from "../utils/helpers.js";
 
 describe("LLE", () => {
-    it("should unroll the Swiss roll like scikit-learn", () => {
+    // N = 800 takes about 0.5 s, but up to 20 s under coverage instrumentation on CI
+    it("should unroll the Swiss roll like scikit-learn", { timeout: 60000 }, () => {
         // scikit-learn 1.7.2 (dense eigensolver) scores 1.00 here. Before the eigensolver fix,
         // DruidJS took the largest eigenvectors of M instead of the smallest and scored 0.02.
         const X = mistle.swissroll({ N: 800, noise: 0.05, seed: 1212 }).values;
