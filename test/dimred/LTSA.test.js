@@ -1,11 +1,23 @@
+import * as mistle from "@saehrimnir/mistle";
 import { describe, expect, it } from "vitest";
 import { LTSA } from "../../src/dimred/index.js";
 import { HNSW, NaiveKNN, spatial_tree } from "../../src/knn/index.js";
 import { euclidean } from "../../src/metrics/index.js";
 import { generateTestData } from "../utils/data-generators.js";
-import { expectValidValues } from "../utils/helpers.js";
+import { bestRankCorrelation, expectValidValues } from "../utils/helpers.js";
 
 describe("LTSA", () => {
+    // N = 800 takes about 0.5 s, but up to 20 s under coverage instrumentation on CI
+    it("should unroll the Swiss roll like scikit-learn", { timeout: 60000 }, () => {
+        // scikit-learn 1.7.2 scores 1.00 / 1.00 on roll / height here. Before the fix (wrong
+        // centering, wrong constant term, largest instead of smallest eigenvectors) DruidJS scored
+        // 0.72 / 0.37.
+        const X = mistle.swissroll({ N: 800, noise: 0.05, seed: 1212 }).values;
+        const Y = new LTSA(X, { d: 2, neighbors: 10 }).transform();
+        expectValidValues(Y, "LTSA");
+        expect(bestRankCorrelation(Y, X.map((_, i) => i))).toBeGreaterThan(0.99);
+        expect(bestRankCorrelation(Y, X.map((row) => row[2]))).toBeGreaterThan(0.99);
+    });
     it("should reduce dimensionality to specified d", () => {
         const data = generateTestData(15, 5);
         const ltsa = new LTSA(data, { neighbors: 4, d: 2, seed: 42 });

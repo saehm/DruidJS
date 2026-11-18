@@ -9,6 +9,11 @@ import { qr as qr_gramschmidt } from "./index.js";
  *
  * "Biggest" means largest in magnitude. The eigenvalues keep their sign.
  *
+ * With `smallest: true`, it computes the `k` smallest eigenpairs of a positive semidefinite `A` instead
+ * (in ascending order), by shift-invert iteration: `A + σI` is factored once, and each step solves
+ * with it rather than multiplying by `A`. The smallest eigenvalues of `A` are then the largest of
+ * `(A + σI)⁻¹` by a wide margin, so a few dozen steps suffice.
+ *
  * @category Linear Algebra
  * @param {Matrix} A - The Matrix
  * @param {number} k - The number of eigenvectors and eigenvalues to compute.
@@ -20,15 +25,28 @@ import { qr as qr_gramschmidt } from "./index.js";
 export function simultaneous_poweriteration(
     A,
     k = 2,
-    { seed = 1212, max_iterations = 100, qr = qr_gramschmidt, tol = 1e-8 } = {},
+    { seed = 1212, max_iterations = 100, qr = qr_gramschmidt, tol = 1e-8, smallest = false } = {},
 ) {
     const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
     if (!(A instanceof Matrix)) A = Matrix.from(A);
     const n = A.shape[0];
+
+    /** @type {(Q: Matrix) => Matrix} */
+    let step = (Q) => A.dot(Q);
+    if (smallest) {
+        // σ well below the wanted eigenvalues (LLE's can be ~1e-9 · trace/n), but large enough
+        // to make the factorization of the singular A safe.
+        let trace = 0;
+        for (let i = 0; i < n; ++i) trace += A.entry(i, i);
+        const sigma = 1e-12 * (trace > 0 ? trace / n : 1);
+        const LU = Matrix.LU(new Matrix(n, n, (i, j) => A.entry(i, j) + (i === j ? sigma : 0)));
+        step = (Q) => Matrix.from(Q.T.to2dArray().map((q) => Matrix.solve(LU, Matrix.from([q])).row(0))).T;
+    }
+
     let { Q } = qr(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
     while (max_iterations--) {
         const oldQ = Q;
-        const Z = A.dot(Q);
+        const Z = step(Q);
         Q = qr(Z).Q;
         if (converged(Q, oldQ, tol)) {
             break;

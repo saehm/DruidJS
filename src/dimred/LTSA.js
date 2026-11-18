@@ -75,7 +75,7 @@ export class LTSA extends DR {
      */
     transform() {
         const X = this.X;
-        const [rows, D] = X.shape;
+        const rows = X.shape[0];
         const neighbors = /** @type {number} */ (this.parameter("neighbors"));
         const d = /** @type {number} */ (this.parameter("d"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
@@ -95,33 +95,33 @@ export class LTSA extends DR {
             }
             nN.push(found);
         }
-        // center matrix
-        const O = new Matrix(D, D, "center");
+        // Alignment matrix B = Σ S_i (I - G_i G_iᵀ) S_iᵀ, where G_i = [1/√(k+1), g_1, ..., g_d] are
+        // the constant vector and the local tangent coordinates of the neighborhood of point i.
         const B = new Matrix(rows, rows, 0);
+        const size = neighbors + 1;
 
         for (let row = 0; row < rows; ++row) {
-            // 1.2 compute the d largest eigenvectors of the correlation matrix
+            // 1.2 local tangent coordinates: the d leading eigenvectors of the Gram matrix of the
+            // neighborhood, centered over its k + 1 points
             const I_i = [row, ...nN[row].map((n) => n.index)];
             let X_i = Matrix.from(I_i.map((n) => X.row(n)));
-            // center X_i
-            X_i = X_i.dot(O);
-            // correlation matrix
+            X_i = X_i.sub(X_i.meanCols());
             const C = X_i.dotTrans(X_i);
             const { eigenvectors: g } = simultaneous_poweriteration(C, d, eig_args);
-            //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
-            // 2. Constructing alignment matrix
-            const W_i = G_i_t.transDot(G_i_t).add(1 / Math.sqrt(neighbors + 1));
-            for (let i = 0; i < neighbors + 1; ++i) {
-                for (let j = 0; j < neighbors + 1; ++j) {
-                    B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
+            // 2. alignment: G_i G_iᵀ = g gᵀ + 1/(k+1) (the constant column's outer product)
+            const W_i = G_i_t.transDot(G_i_t).add(1 / size);
+            for (let i = 0; i < size; ++i) {
+                for (let j = 0; j < size; ++j) {
+                    B.add_entry(I_i[i], I_i[j], (i === j ? 1 : 0) - W_i.entry(i, j));
                 }
             }
         }
 
-        // 3. Aligning global coordinates
-        const { eigenvectors: Y } = simultaneous_poweriteration(B, d + 1, eig_args);
-        this.Y = Matrix.from(Y.slice(1)).transpose();
+        // 3. Aligning global coordinates: the eigenvectors of B with the smallest eigenvalues, after
+        // the constant one (eigenvalue 0)
+        const { eigenvectors: Y } = simultaneous_poweriteration(B, d + 1, { ...eig_args, smallest: true });
+        this.Y = Matrix.from(Y.slice(1, 1 + d)).transpose();
 
         // return embedding
         return this.projection;

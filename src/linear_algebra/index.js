@@ -13,6 +13,8 @@
  * @property {number | Randomizer} [seed=1212] - The seed value or a randomizer used in the algorithm. Default is `1212`
  * @property {QRDecomposition} [qr] - The QR technique to use. Default is `qr_gramschmidt`
  * @property {number} [tol=1e-8] - Tolerated error for stopping criteria. Default is `1e-8`
+ * @property {boolean} [smallest=false] - Compute the smallest eigenpairs of a positive semidefinite matrix
+ *   (by shift-invert iteration) instead of the largest in magnitude. Default is `false`
  */
 
 export { inner_product } from "./inner_product.js";
