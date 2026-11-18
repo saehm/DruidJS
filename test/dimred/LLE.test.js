@@ -1,11 +1,20 @@
+import * as mistle from "@saehrimnir/mistle";
 import { describe, expect, it } from "vitest";
 import { LLE } from "../../src/dimred/index.js";
 import { HNSW, NaiveKNN, spatial_tree } from "../../src/knn/index.js";
 import { euclidean } from "../../src/metrics/index.js";
 import { generateTestData } from "../utils/data-generators.js";
-import { expectValidValues } from "../utils/helpers.js";
+import { bestRankCorrelation, expectValidValues } from "../utils/helpers.js";
 
 describe("LLE", () => {
+    it("should unroll the Swiss roll like scikit-learn", () => {
+        // scikit-learn 1.7.2 (dense eigensolver) scores 1.00 here. Before the eigensolver fix,
+        // DruidJS took the largest eigenvectors of M instead of the smallest and scored 0.02.
+        const X = mistle.swissroll({ N: 800, noise: 0.05, seed: 1212 }).values;
+        const Y = new LLE(X, { d: 2, neighbors: 10 }).transform();
+        expectValidValues(Y, "LLE");
+        expect(bestRankCorrelation(Y, X.map((_, i) => i))).toBeGreaterThan(0.99);
+    });
     it("should reduce dimensionality to specified d", () => {
         const data = generateTestData(15, 4);
         const lle = new LLE(data, { neighbors: 4, d: 2, seed: 42 });

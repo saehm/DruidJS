@@ -91,24 +91,25 @@ export class LLE extends DR {
             }
             nN.push(found);
         }
-        const O = new Matrix(neighbors, 1, 1);
+        const ones = new Matrix(1, neighbors, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
             const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].index, j) - X.entry(row, j));
             const C = Z.dotTrans(Z);
-            if (neighbors > cols) {
-                const C_trace = neumair_sum(C.diag()) / 1000;
-                for (let j = 0; j < neighbors; ++j) {
-                    C.add_entry(j, j, C_trace);
-                }
+            // Regularize always (as scikit-learn does): C is singular when neighbors > cols, and
+            // ill-conditioned when the neighbors are nearly collinear.
+            const C_trace = neumair_sum(C.diag());
+            const reg = C_trace > 0 ? 1e-3 * C_trace : 1e-3;
+            for (let j = 0; j < neighbors; ++j) {
+                C.add_entry(j, j, reg);
             }
-            // reconstruct;
-            let w = Matrix.solve_CG(C, O, this._randomizer);
+            // reconstruction weights: solve C w = 1, then normalize to sum 1
+            let w = Matrix.solve(C, ones);
             w = w.divide(w.sum());
             for (let j = 0; j < neighbors; ++j) {
-                W.set_entry(row, nN_row[j].index, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].index, w.entry(0, j));
             }
         }
         // comp embedding
@@ -116,14 +117,9 @@ export class LLE extends DR {
         const IW = I.sub(W);
         const M = IW.transDot(IW);
 
-        // M is symmetric positive semi-definite. Smallest eigenvalue is 0 (ones vector).
-        // To find smallest eigenvalues of M, we can find largest of (C*I - M)
-        // Upper bound for max eigenvalue: Frobenius norm or sum of absolute values
-        const C = M.mean() * rows * 2; // Safe upper bound for a sparse-ish M in LLE
-        const CI_M = new Matrix(rows, rows, (i, j) => (i === j ? C : 0) - M.entry(i, j));
-
-        const { eigenvectors: V } = simultaneous_poweriteration(CI_M, d + 1, eig_args);
-        // Skip the first eigenvector (the ones vector corresponding to eigenvalue C)
+        // The embedding is spanned by the eigenvectors of M with the smallest eigenvalues. The very
+        // smallest (eigenvalue 0) is the constant vector and is skipped.
+        const { eigenvectors: V } = simultaneous_poweriteration(M, d + 1, { ...eig_args, smallest: true });
         this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 
         // return embedding
