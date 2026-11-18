@@ -53,7 +53,7 @@ export class KMeans extends Clustering {
         this._N = N;
         this._D = D;
 
-        this._K = K > N ? N : K;
+        this._K = Math.min(K, N);
         this._randomizer = new Randomizer(seed);
 
         /** @type {number[]} */
