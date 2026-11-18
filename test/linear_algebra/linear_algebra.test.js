@@ -48,4 +48,15 @@ describe("simultaneous_poweriteration", () => {
         expect(eigenvalues[0]).toBeCloseTo(3, 3);
         expect(eigenvalues[1]).toBeCloseTo(1, 3);
     });
+
+    it("should keep the sign of negative eigenvalues", () => {
+        const A = Matrix.from([
+            [5, 0, 0],
+            [0, -3, 0],
+            [0, 0, 1],
+        ]);
+        const { eigenvalues } = simultaneous_poweriteration(A, 2, { seed: 42 });
+        expect(eigenvalues[0]).toBeCloseTo(5, 6);
+        expect(eigenvalues[1]).toBeCloseTo(-3, 6);
+    });
 });

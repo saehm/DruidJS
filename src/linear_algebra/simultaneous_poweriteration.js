@@ -8,6 +8,8 @@ import { qr as qr_gramschmidt } from "./index.js";
 /**
  * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  *
+ * "Biggest" means largest in magnitude. The eigenvalues keep their sign.
+ *
  * @category Linear Algebra
  * @param {Matrix} A - The Matrix
  * @param {number} k - The number of eigenvectors and eigenvalues to compute.
@@ -24,20 +26,26 @@ export function simultaneous_poweriteration(
     const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
     if (!(A instanceof Matrix)) A = Matrix.from(A);
     const n = A.shape[0];
-    let { Q, R } = qr(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
+    let { Q } = qr(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
     while (max_iterations--) {
         const oldQ = Q;
         const Z = A.dot(Q);
-        const QR = qr(Z);
-        Q = QR.Q;
-        R = QR.R;
+        Q = qr(Z).Q;
         const error = euclidean_squared(Q.values, oldQ.values);
         if (error < tol) {
             break;
         }
     }
 
-    const eigenvalues = R.diag();
+    // Rayleigh quotients qᵀAq. Unlike the diagonal of R, which holds only |λ|, they keep the sign
+    // of negative eigenvalues (e.g. of the double-centered matrix of non-Euclidean distances).
+    const AQ = A.dot(Q);
+    const eigenvalues = new Float64Array(k);
+    for (let j = 0; j < k; ++j) {
+        let lambda = 0;
+        for (let i = 0; i < n; ++i) lambda += Q.entry(i, j) * AQ.entry(i, j);
+        eigenvalues[j] = lambda;
+    }
     const eigenvectors = Q.transpose().to2dArray();
     return { eigenvalues, eigenvectors };
 }
