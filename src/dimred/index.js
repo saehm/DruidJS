@@ -33,14 +33,16 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [neighbors] - number of neighbors to consider.
  * @property {number} [control_points] - number of controlpoints
  * @property {number} [d=2] - the dimensionality of the projection.
- * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix.
  * @property {number} [seed=1212] - the seed for the random number generator.
  */
 
 /**
  * @typedef {Object} ParametersFASTMAP
  * @property {number} [d=2] - The dimensionality of the projection
- * @property {Metric} [metric=euclidean] - The metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - The metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix.
  * @property {number} [seed=1212] - The seed for the random number generator.
  */
 
@@ -187,6 +189,8 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [iterations=300] - maximum number of iterations.
  * @property {number} [epsilon=1e-4] - tolerance for stress difference.
  * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {Matrix | number[][] | Float64Array[] | null} [init_Y=null] - starting configuration
+ *   (N × d). Random and centered when not given.
  */
 
 /**
@@ -224,7 +228,9 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [MN_ratio=0.5] - Mid-near pairs per point, as a fraction of `n_neighbors`.
  * @property {number} [FP_ratio=2.0] - Further pairs per point, as a multiple of `n_neighbors`.
  * @property {number} [d=2] - the dimensionality of the projection.
- * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix. Then the start is classical MDS on
+ *   it instead of PCA, and `apply_pca` has no effect.
  * @property {number} [lr=1.0] - learning rate of the Adam optimizer.
  * @property {number[]} [num_iters=[100,100,250]] - Iterations in each of the three phases.
  * @property {KNN<number[] | Float64Array, any> | null} [knn=null] - Index used to find the
@@ -242,7 +248,9 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [MN_ratio=0.5] - Mid-near pairs per point, as a fraction of `n_neighbors`.
  * @property {number} [FP_ratio=2.0] - Further pairs per point, as a multiple of `n_neighbors`.
  * @property {number} [d=2] - the dimensionality of the projection.
- * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix. Then the start is classical MDS on
+ *   it instead of PCA, and `apply_pca` has no effect.
  * @property {number} [lr=1.0] - learning rate of the Adam optimizer.
  * @property {number[]} [num_iters=[100,100,250]] - Iterations in each of the three phases.
  * @property {number} [low_dist_thres=10] - Embedding distance below which a point may be redrawn as

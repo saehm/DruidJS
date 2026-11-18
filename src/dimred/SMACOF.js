@@ -21,6 +21,12 @@ import { wasmSmacofStep } from "./SMACOF.wasm.js";
  * @see {@link MDS} for the classical approach.
  */
 export class SMACOF extends DR {
+    /**
+     * @private
+     * @type {Matrix | undefined}
+     */
+    _target_distances;
+
     /** @protected */
     get _wasm_session_keys() {
         return ["smacof"];
@@ -33,36 +39,65 @@ export class SMACOF extends DR {
      * @param {Partial<ParametersSMACOF>} [parameters] - Object containing parameterization.
      */
     constructor(X, parameters = {}) {
-        super(X, { d: 2, metric: euclidean, seed: 1212, iterations: 300, epsilon: 1e-4 }, parameters);
+        super(
+            X,
+            { d: 2, metric: euclidean, seed: 1212, iterations: 300, epsilon: 1e-4, init_Y: null },
+            parameters,
+        );
     }
 
     /**
-     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     * Computes the target distances and the starting configuration: `init_Y` if given, otherwise
+     * random and centered. Runs automatically before the first step; {@link SMACOF#generator} and
+     * {@link SMACOF#transform} continue from the current `Y` afterwards.
+     *
+     * @returns {this}
      */
-    *generator() {
-        this.check_init();
-        const X = this.X;
+    init() {
         const rows = this._N;
         const d = /** @type {number} */ (this.parameter("d"));
         const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
-        const iterations = /** @type {number} */ (this.parameter("iterations"));
-        const epsilon = /** @type {number} */ (this.parameter("epsilon"));
+        const init_Y = /** @type {Matrix | number[][] | Float64Array[] | null} */ (this.parameter("init_Y"));
 
-        const target_distances = metric === "precomputed" ? X : distance_matrix(X, metric);
+        this._target_distances = metric === "precomputed" ? Matrix.from(this.X) : distance_matrix(this.X, metric);
 
-        let Z = new Matrix(rows, d, () => (this._randomizer.random - 0.5) * 2);
-
-        // Center Z
-        for (let j = 0; j < d; ++j) {
-            const col = Z.col(j);
-            const mean = col.reduce((a, b) => a + b, 0) / rows;
-            for (let i = 0; i < rows; ++i) {
-                Z.sub_entry(i, j, mean);
+        if (init_Y) {
+            const Y = Matrix.from(init_Y);
+            if (Y.shape[0] !== rows || Y.shape[1] !== d) {
+                throw new Error(`init_Y needs shape ${rows} × ${d}, but has shape ${Y.shape[0]} × ${Y.shape[1]}!`);
             }
+            this.Y = Y.clone();
+        } else {
+            const Z = new Matrix(rows, d, () => (this._randomizer.random - 0.5) * 2);
+            // Center Z
+            for (let j = 0; j < d; ++j) {
+                const col = Z.col(j);
+                const mean = col.reduce((a, b) => a + b, 0) / rows;
+                for (let i = 0; i < rows; ++i) {
+                    Z.sub_entry(i, j, mean);
+                }
+            }
+            this.Y = Z;
         }
+        this._is_initialized = true;
+        return this;
+    }
 
-        this.Y = /** @type {Matrix} */ (Z); // Initial state
+    /**
+     * Runs SMACOF from the current configuration (the start from {@link SMACOF#init} on the first
+     * call), so calling it again continues where the last run stopped.
+     *
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    *generator(iterations = /** @type {number} */ (this.parameter("iterations"))) {
+        this.check_init();
+        const rows = this._N;
+        const d = /** @type {number} */ (this.parameter("d"));
+        const epsilon = /** @type {number} */ (this.parameter("epsilon"));
+        const target_distances = /** @type {Matrix} */ (this._target_distances);
 
+        let Z = this.Y;
         let prev_stress = Infinity;
 
         if (!(iterations > 0)) {
@@ -138,10 +173,11 @@ export class SMACOF extends DR {
     }
 
     /**
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
      * @returns {T}
      */
-    transform() {
-        const gen = this.generator();
+    transform(iterations) {
+        const gen = this.generator(iterations);
         let res = /** @type {T} */ (this.X);
         for (const step of gen) {
             res = step;

@@ -29,7 +29,8 @@ export { XMeans } from "./XMeans.js";
 /** @typedef ParametersKMedoids
  * @property {number} K - Number of clusters
  * @property {number?} max_iter - Maximum number of iterations. Default is 10 * Math.log10(N). Default is `null`
- * @property {Metric} metric - Metric defining the dissimilarity. Default is `euclidean`
+ * @property {Metric | "precomputed"} metric - Metric defining the dissimilarity, or `"precomputed"` when
+ *   the input is an N × N distance matrix. Default is `euclidean`
  * @property {number} seed - Seed value for random number generator. Default is `1212`
  */
 

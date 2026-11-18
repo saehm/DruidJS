@@ -30,7 +30,15 @@ export class KMedoids extends Clustering {
         let K = this._parameters.K;
         const N = this._N;
         this._max_iter = this._parameters.max_iter ?? 10 * Math.log10(N);
-        this._distance_matrix = new Matrix(N, N, "zeros");
+        if (this._parameters.metric === "precomputed") {
+            if (this._matrix.shape[0] !== this._matrix.shape[1]) {
+                throw new Error("If metric is 'precomputed', then matrix has to be square!");
+            }
+            this._distance_matrix = this._matrix.clone();
+        } else {
+            // filled lazily: 0 marks a pair that is not computed yet
+            this._distance_matrix = new Matrix(N, N, "zeros");
+        }
 
         if (K > N) {
             this._parameters.K = K = N;
@@ -240,6 +248,7 @@ export class KMedoids extends Clustering {
         const A = this._A;
         const metric = this._parameters.metric;
         let d_ij = D.entry(i, j);
+        if (metric === "precomputed") return d_ij;
         if (d_ij === 0) {
             d_ij = metric(x_i || A[i], x_j || A[j]);
             D.set_entry(i, j, d_ij);
