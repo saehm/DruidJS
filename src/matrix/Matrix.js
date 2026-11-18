@@ -313,69 +313,18 @@ export class Matrix {
     }
 
     /**
-     * Returns the inverse of the Matrix.
+     * Returns the inverse of the Matrix, computed from its LU decomposition with partial pivoting.
      *
      * @returns {Matrix}
+     * @throws {Error} If the matrix is singular.
      */
     inverse() {
-        const rows = this._rows;
-        const cols = this._cols;
-        const A = this.clone();
-        const B = new Matrix(rows, cols, "I");
-
-        // foreach column
-        for (let col = 0; col < cols; ++col) {
-            // Search for maximum in this column (pivot)
-            let max_idx = col;
-            let max_val = Math.abs(A.entry(col, col));
-            for (let row = col + 1; row < rows; ++row) {
-                const val = Math.abs(A.entry(row, col));
-                if (max_val < val) {
-                    max_idx = row;
-                    max_val = val;
-                }
-            }
-            if (max_val === 0) {
-                throw new Error("Cannot compute inverse of Matrix, determinant is zero");
-            }
-            // Swap maximum row with current row
-            if (max_idx !== col) {
-                A.swap_rows(col, max_idx);
-                B.swap_rows(col, max_idx);
-            }
-
-            // eliminate non-zero values on the other rows at column c
-            const A_col = A.row(col);
-            const B_col = B.row(col);
-            for (let row = 0; row < rows; ++row) {
-                if (row !== col) {
-                    // eliminate value at column c and row r
-                    const A_row = A.row(row);
-                    const B_row = B.row(row);
-                    if (A_row[col] !== 0) {
-                        const f = A_row[col] / A_col[col];
-                        // sub (f * row c) from row r to eliminate the value at column c
-                        for (let s = col; s < cols; ++s) {
-                            A_row[s] -= f * A_col[s];
-                        }
-                        for (let s = 0; s < cols; ++s) {
-                            B_row[s] -= f * B_col[s];
-                        }
-                    }
-                } else {
-                    // normalize value at Acc to 1 (diagonal):
-                    // divide each value of row r=c by the value at Acc
-                    const f = A_col[col];
-                    for (let s = col; s < cols; ++s) {
-                        A_col[s] /= f;
-                    }
-                    for (let s = 0; s < cols; ++s) {
-                        B_col[s] /= f;
-                    }
-                }
-            }
+        const n = this._rows;
+        const { lu, perm, singular } = lu_factor(this);
+        if (singular) {
+            throw new Error("Cannot compute inverse of Matrix, determinant is zero");
         }
-        return B;
+        return Matrix.solve({ ...lu_unpack(lu, n), P: Array.from(perm) }, new Matrix(n, n, "identity"));
     }
 
     /**
@@ -1118,66 +1067,71 @@ export class Matrix {
     /**
      * Solves the equation `Ax = b`. Returns the result `x`.
      *
-     * @param {Matrix | { L: Matrix; U: Matrix }} A - Matrix or LU Decomposition
+     * `b` holds one right-hand side per column (`n × k`, the result is `n × k`), or a single one as a row
+     * (`1 × n`, the result is `1 × n`).
+     *
+     * @param {Matrix | { L: Matrix; U: Matrix; P?: number[] }} A - Matrix or its LU decomposition (as
+     *   returned by {@link Matrix.LU}; without `P`, no row swaps are assumed).
      * @param {Matrix} b - Matrix
      * @returns {Matrix}
      */
     static solve(A, b) {
-        const { L, U } = "L" in A && "U" in A ? A : Matrix.LU(A);
-        const rows = L.shape[0];
-        const x = b.clone();
+        const { L, U, P } = "L" in A && "U" in A ? A : Matrix.LU(A);
+        const n = L.shape[0];
+        const [b_rows, b_cols] = b.shape;
+        const as_row = b_rows === 1 && b_cols === n && n !== 1;
+        if (!as_row && b_rows !== n) {
+            throw new Error(`b needs ${n} rows (or 1 row of ${n} entries), but has shape ${b_rows} × ${b_cols}!`);
+        }
+        const k = as_row ? 1 : b_cols;
+        const l = L.values;
+        const u = U.values;
+        const bv = b.values;
+        const x = new Float64Array(n * k);
+        const y = new Float64Array(n); // one right-hand side at a time, contiguous
 
-        // forward
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < row; ++col) {
-                x.sub_entry(0, row, L.entry(row, col) * x.entry(0, col));
+        for (let c = 0; c < k; ++c) {
+            // P b
+            for (let i = 0; i < n; ++i) {
+                const src = P ? P[i] : i;
+                y[i] = as_row ? bv[src] : bv[src * k + c];
             }
-            x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
+            // forward: L z = P b
+            for (let i = 0; i < n; ++i) {
+                const ri = i * n;
+                let s = y[i];
+                for (let p = 0; p < i; ++p) s -= l[ri + p] * y[p];
+                y[i] = s / l[ri + i];
+            }
+            // backward: U x = z
+            for (let i = n - 1; i >= 0; --i) {
+                const ri = i * n;
+                let s = y[i];
+                for (let p = i + 1; p < n; ++p) s -= u[ri + p] * y[p];
+                y[i] = s / u[ri + i];
+            }
+            for (let i = 0; i < n; ++i) x[i * k + c] = y[i];
         }
 
-        // backward
-        for (let row = rows - 1; row >= 0; --row) {
-            for (let col = rows - 1; col > row; --col) {
-                x.sub_entry(0, row, U.entry(row, col) * x.entry(0, col));
-            }
-            x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));
-        }
-
-        return x;
+        const X = new Matrix(n, k, (i, c) => x[i * k + c]);
+        return as_row ? X.T : X;
     }
 
     /**
-     * `LU` decomposition of the Matrix `A`. Creates two matrices, so that the dot product `LU` equals `A`.
+     * `LU` decomposition of the Matrix `A` with partial pivoting: `P A = L U`, where row `i` of `P A` is
+     * row `P[i]` of `A`, `L` is lower triangular and `U` is upper triangular with a unit diagonal.
      *
-     * @param {Matrix} A
-     * @returns {{ L: Matrix; U: Matrix }} The left triangle matrix `L` and the upper triangle matrix `U`.
+     * @param {Matrix} A - A square matrix.
+     * @returns {{ L: Matrix; U: Matrix; P: number[] }} The lower triangle matrix `L`, the upper triangle
+     *   matrix `U`, and the row permutation `P`.
+     * @throws {Error} If `A` is singular.
      */
     static LU(A) {
-        const rows = A.shape[0];
-        const L = new Matrix(rows, rows, "zeros");
-        const U = new Matrix(rows, rows, "identity");
-
-        for (let j = 0; j < rows; ++j) {
-            for (let i = j; i < rows; ++i) {
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(i, k) * U.entry(k, j);
-                }
-                L.set_entry(i, j, A.entry(i, j) - sum);
-            }
-            for (let i = j; i < rows; ++i) {
-                if (L.entry(j, j) === 0) {
-                    throw new Error("L's diagonal not supposed to be 0!");
-                }
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(j, k) * U.entry(k, i);
-                }
-                U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));
-            }
+        const { lu, perm, singular } = lu_factor(A);
+        if (singular) {
+            throw new Error("LU decomposition: the matrix is singular!");
         }
-
-        return { L, U };
+        return { ...lu_unpack(lu, A.shape[0]), P: Array.from(perm) };
     }
 
     /**
@@ -1205,12 +1159,12 @@ export class Matrix {
             return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
         }
 
-        const { L, U } = Matrix.LU(A);
-        const L_diag = L.diag();
-        const U_diag = U.diag();
-        let det = L_diag[0] * U_diag[0];
-        for (let row = 1; row < rows; ++row) {
-            det *= L_diag[row] * U_diag[row];
+        // det(P A) = det(L) det(U) = Π l_ii, and every row swap flips the sign
+        const { lu, swaps, singular } = lu_factor(A);
+        if (singular) return 0;
+        let det = swaps % 2 ? -1 : 1;
+        for (let i = 0; i < rows; ++i) {
+            det *= lu[i * rows + i];
         }
         return det;
     }
@@ -1267,4 +1221,71 @@ export class Matrix {
         }
         return true;
     }
+}
+
+/**
+ * Crout LU decomposition with partial pivoting of a square matrix, on a copy of its values: afterwards
+ * the lower triangle (with the diagonal) holds `L`, the strict upper triangle holds `U` (whose diagonal
+ * is 1), and `P A = L U` with `(P A)[i] = A[perm[i]]`.
+ *
+ * @private
+ * @param {Matrix} A
+ * @returns {{ lu: Float64Array; perm: Int32Array; swaps: number; singular: boolean }}
+ */
+function lu_factor(A) {
+    const [n, cols] = A.shape;
+    if (n !== cols) {
+        throw new Error(`LU decomposition needs a square matrix, but has shape ${n} × ${cols}!`);
+    }
+    const a = Float64Array.from(A.values);
+    const perm = Int32Array.from({ length: n }, (_, i) => i);
+    let swaps = 0;
+
+    // Right-looking elimination: every step reads and updates whole rows, which keeps the memory
+    // access contiguous. It yields the same factors as Crout's column-by-column formulas.
+    for (let j = 0; j < n; ++j) {
+        // pivot: the row with the largest |a_ij| in column j
+        let p = j;
+        for (let i = j + 1; i < n; ++i) {
+            if (Math.abs(a[i * n + j]) > Math.abs(a[p * n + j])) p = i;
+        }
+        if (a[p * n + j] === 0) return { lu: a, perm, swaps, singular: true };
+        if (p !== j) {
+            for (let c = 0; c < n; ++c) {
+                const t = a[j * n + c];
+                a[j * n + c] = a[p * n + c];
+                a[p * n + c] = t;
+            }
+            const t = perm[j];
+            perm[j] = perm[p];
+            perm[p] = t;
+            ++swaps;
+        }
+        // row j of U (unit diagonal): u_jc = a_jc / l_jj
+        const rj = j * n;
+        const l_jj = a[rj + j];
+        for (let c = j + 1; c < n; ++c) a[rj + c] /= l_jj;
+        // remove row j from the rows below; column j keeps l_ij
+        for (let i = j + 1; i < n; ++i) {
+            const ri = i * n;
+            const l_ij = a[ri + j];
+            if (l_ij === 0) continue;
+            for (let c = j + 1; c < n; ++c) a[ri + c] -= l_ij * a[rj + c];
+        }
+    }
+    return { lu: a, perm, swaps, singular: false };
+}
+
+/**
+ * Splits the combined result of {@link lu_factor} into `L` and `U`.
+ *
+ * @private
+ * @param {Float64Array} lu
+ * @param {number} n
+ * @returns {{ L: Matrix; U: Matrix }}
+ */
+function lu_unpack(lu, n) {
+    const L = new Matrix(n, n, (i, j) => (i >= j ? lu[i * n + j] : 0));
+    const U = new Matrix(n, n, (i, j) => (i < j ? lu[i * n + j] : i === j ? 1 : 0));
+    return { L, U };
 }

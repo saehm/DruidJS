@@ -2,6 +2,7 @@ import { wasmKnnBlock } from "../matrix/distance_matrix.wasm.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
+import { MDS } from "./MDS.js";
 import { PCA } from "./PCA.js";
 
 /** @import {InputType} from "../index.js" */
@@ -119,7 +120,7 @@ export class PaCMAP extends DR {
         }
 
         // The kernel is euclidean-only, so anything else falls back to the JS search below.
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
         if (metric === euclidean) {
             const row_len = 2 * n_candidates;
             const out = new Float64Array(N * row_len);
@@ -152,7 +153,9 @@ export class PaCMAP extends DR {
      */
     _find_candidates_js(X, n_candidates) {
         const N = this._N;
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
+        // with "precomputed", X is the distance matrix itself
+        const pre = metric === "precomputed" ? X.values : null;
         const dist = new Float64Array(N * n_candidates);
         const idx = new Int32Array(N * n_candidates);
         // Bounded max-heap, so the scan stays O(N log k) per row instead of sorting all of N.
@@ -164,7 +167,7 @@ export class PaCMAP extends DR {
             let size = 0;
             for (let j = 0; j < N; ++j) {
                 if (j === i) continue;
-                const v = metric(x_i, X.row(j));
+                const v = pre ? pre[i * N + j] : /** @type {Metric} */ (metric)(x_i, X.row(j));
                 if (size < n_candidates) {
                     hd[size] = v;
                     hi[size] = j;
@@ -313,7 +316,8 @@ export class PaCMAP extends DR {
      */
     _sample_mn_pairs(X, n_MN) {
         const N = this._N;
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
+        const pre = metric === "precomputed" ? X.values : null;
         const pairs = new Int32Array(N * n_MN * 2);
         const picked = new Int32Array(n_MN);
         const sampled = new Int32Array(6);
@@ -327,7 +331,9 @@ export class PaCMAP extends DR {
                 const reject = n_picked > 0 ? picked.subarray(0, n_picked) : EMPTY;
                 const got = this._sample_excluding(6, i, reject, sampled);
                 if (got < 2) continue;
-                for (let c = 0; c < got; ++c) dists[c] = metric(x_i, X.row(sampled[c]));
+                for (let c = 0; c < got; ++c) {
+                    dists[c] = pre ? pre[i * N + sampled[c]] : /** @type {Metric} */ (metric)(x_i, X.row(sampled[c]));
+                }
                 // Second closest of the draw: drop the nearest, take the nearest of the rest.
                 let best = 0;
                 for (let c = 1; c < got; ++c) if (dists[c] < dists[best]) best = c;
@@ -485,7 +491,13 @@ export class PaCMAP extends DR {
         // and 1 are absolute, so an unnormalized input silently changes what "near" means.
         let X_knn;
         let pca_solution = false;
-        if (this._D > 100 && apply_pca) {
+        const precomputed = this.parameter("metric") === "precomputed";
+        if (precomputed) {
+            // The pairs depend only on the order and the ratios of distances, so D is used as given.
+            if (this._D !== N)
+                throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+            X_knn = this.X;
+        } else if (this._D > 100 && apply_pca) {
             X_knn = /** @type {Matrix} */ (PCA.transform(this.X, { d: 100, seed }));
             pca_solution = true;
         } else {
@@ -510,8 +522,17 @@ export class PaCMAP extends DR {
         }
         this._X_knn = X_knn;
 
-        // 2. PCA initialization scaled by 0.01.
-        const init_source = pca_solution ? X_knn : /** @type {Matrix} */ (PCA.transform(X_knn, { d, seed }));
+        // 2. PCA initialization scaled by 0.01. Without coordinates, classical MDS on D (the same as
+        // PCA for Euclidean distances), scaled to a diameter of 1 in place of the unit-range scaling.
+        let init_source;
+        if (precomputed) {
+            let max = 0;
+            for (const v of X_knn.values) if (v > max) max = v;
+            const Y_mds = /** @type {Matrix} */ (new MDS(X_knn, { d, metric: "precomputed", seed }).transform());
+            init_source = Y_mds.mult(max > 0 ? 1 / max : 1);
+        } else {
+            init_source = pca_solution ? X_knn : /** @type {Matrix} */ (PCA.transform(X_knn, { d, seed }));
+        }
         this.Y = new Matrix(N, d, (i, j) => init_source.entry(i, j) * 0.01);
 
         // 3. Pair construction. The 50 extra candidates are what the density rescaling re-ranks.

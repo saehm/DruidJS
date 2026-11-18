@@ -1,5 +1,5 @@
 import { KMedoids } from "../clustering/index.js";
-import { spatial_tree } from "../knn/index.js";
+import { NaiveKNN, spatial_tree } from "../knn/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { DR } from "./DR.js";
@@ -62,7 +62,10 @@ export class LSP extends DR {
         const K = /** @type {number} */ (this.parameter("neighbors"));
         const d = /** @type {number} */ (this.parameter("d"));
         const seed = /** @type {number} */ (this.parameter("seed"));
-        const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
+        const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
+        if (metric === "precomputed" && X.shape[0] !== X.shape[1]) {
+            throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+        }
         DR_parameters = Object.assign({ d, metric, seed }, DR_parameters);
         const nc = /** @type {number} */ (this.parameter("control_points"));
         const control_points = new KMedoids(X, { K: nc, metric }).get_medoids();
@@ -71,11 +74,15 @@ export class LSP extends DR {
             C.set_entry(i, c_i, 1);
         });
 
-        const control_points_matrix = Matrix.from(control_points.map((c_i) => X.row(c_i)));
+        // with "precomputed", the control points' rows and columns of D are their distance matrix
+        const control_points_matrix =
+            metric === "precomputed"
+                ? new Matrix(nc, nc, (i, j) => X.entry(control_points[i], control_points[j]))
+                : Matrix.from(control_points.map((c_i) => X.row(c_i)));
         const Y_C = new DR(control_points_matrix, DR_parameters).transform();
 
         const XA = X.to2dArray();
-        const knn = spatial_tree(XA, { metric, seed });
+        const knn = metric === "precomputed" ? new NaiveKNN(XA, { metric }) : spatial_tree(XA, { metric, seed });
         const L = new Matrix(N, N, "I");
         const alpha = -1 / K;
         XA.forEach((_x_i, i) => {

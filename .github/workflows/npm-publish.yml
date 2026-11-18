@@ -11,9 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
@@ -24,31 +24,39 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
+    # Job-wide: the .npmrc that setup-node writes reads it, also during pnpm install. setup-node v7
+    # no longer sets a placeholder when it is missing.
+    env:
+      NODE_AUTH_TOKEN: ${{secrets.npm_token}}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: "@saehrimnir"
       - run: pnpm install
+      # Publish a fresh Linux build rather than the committed dist/: declaration maps built on
+      # Windows point to broken paths (rollup-plugin-dts bug).
+      - run: pnpm build
       - run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
   publish-gpr:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://npm.pkg.github.com/
           scope: "@saehm"
       - run: pnpm install
+      # Publish a fresh Linux build rather than the committed dist/: declaration maps built on
+      # Windows point to broken paths (rollup-plugin-dts bug).
+      - run: pnpm build
       - run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

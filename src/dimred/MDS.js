@@ -46,32 +46,43 @@ export class MDS extends DR {
     }
 
     /**
-     * Transforms the inputdata `X` to dimensionality `d`.
+     * Transforms the inputdata `X` to dimensionality `d`: `Y = V Λ^½` for the `d` largest
+     * eigenvalues `λ` of the double-centered matrix `B = -½ J D² J`.
+     *
+     * Distances that are not Euclidean give `B` negative eigenvalues; axes with `λ ≤ 0` get no extent.
      *
      * @returns {T}
      */
     transform() {
         const X = this.X;
-        const rows = X.shape[0];
+        const n = X.shape[0];
         const d = /** @type {number} */ (this.parameter("d"));
         const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const A = metric === "precomputed" ? X : distance_matrix(X, metric);
+        this._d_X = A;
 
-        const D_sq = new Matrix(rows, rows, (i, j) => {
-            const val = A.entry(i, j);
-            return val * val;
-        });
-
+        const D_sq = new Matrix(n, n, (i, j) => A.entry(i, j) ** 2);
         const ai_ = D_sq.meanCols();
         const a_j = D_sq.meanRows();
         const a__ = D_sq.mean();
+        const B = new Matrix(n, n, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
 
-        this._d_X = A;
-        const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
+        // Power iteration finds the eigenvalues largest in magnitude, MDS needs the largest by value.
+        // A negative one that turns up is the most negative of all, so shifting B by it makes B + cI
+        // positive semidefinite, and a second run finds the right ones. Euclidean distances never
+        // need it.
+        let { eigenvalues, eigenvectors } = simultaneous_poweriteration(B, d, eig_args);
+        const most_negative = Math.min(...eigenvalues);
+        if (most_negative < 0) {
+            const shift = -most_negative;
+            const B_shifted = new Matrix(n, n, (i, j) => B.entry(i, j) + (i === j ? shift : 0));
+            ({ eigenvalues, eigenvectors } = simultaneous_poweriteration(B_shifted, d, eig_args));
+            eigenvalues = eigenvalues.map((lambda) => lambda - shift);
+        }
 
-        const { eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-        this.Y = Matrix.from(V).transpose();
+        const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
+        this.Y = new Matrix(n, d, (i, k) => eigenvectors[k][i] * scales[k]);
 
         return this.projection;
     }

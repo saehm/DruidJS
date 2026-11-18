@@ -1,4 +1,4 @@
-var version$1 = "0.9.0";
+var version$1 = "0.10.0";
 var pkg = {
 	version: version$1};
 
@@ -2097,6 +2097,13 @@ class Randomizer {
 /**
  * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  *
+ * "Biggest" means largest in magnitude. The eigenvalues keep their sign.
+ *
+ * With `smallest: true`, it computes the `k` smallest eigenpairs of a positive semidefinite `A` instead
+ * (in ascending order), by shift-invert iteration: `A + σI` is factored once, and each step solves
+ * with it rather than multiplying by `A`. The smallest eigenvalues of `A` are then the largest of
+ * `(A + σI)⁻¹` by a wide margin, so a few dozen steps suffice.
+ *
  * @category Linear Algebra
  * @param {Matrix} A - The Matrix
  * @param {number} k - The number of eigenvectors and eigenvalues to compute.
@@ -2108,27 +2115,74 @@ class Randomizer {
 function simultaneous_poweriteration(
     A,
     k = 2,
-    { seed = 1212, max_iterations = 100, qr: qr$1 = qr, tol = 1e-8 } = {},
+    { seed = 1212, max_iterations = 100, qr: qr$1 = qr, tol = 1e-8, smallest = false } = {},
 ) {
     const randomizer = seed instanceof Randomizer ? seed : new Randomizer(seed);
     if (!(A instanceof Matrix)) A = Matrix.from(A);
     const n = A.shape[0];
-    let { Q, R } = qr$1(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
+
+    /** @type {(Q: Matrix) => Matrix} */
+    let step = (Q) => A.dot(Q);
+    if (smallest) {
+        // σ well below the wanted eigenvalues (LLE's can be ~1e-9 · trace/n), but large enough
+        // to make the factorization of the singular A safe.
+        let trace = 0;
+        for (let i = 0; i < n; ++i) trace += A.entry(i, i);
+        const sigma = 1e-12 * (trace > 0 ? trace / n : 1);
+        const LU = Matrix.LU(new Matrix(n, n, (i, j) => A.entry(i, j) + (i === j ? sigma : 0)));
+        step = (Q) => Matrix.solve(LU, Q);
+    }
+
+    let { Q } = qr$1(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
     while (max_iterations--) {
         const oldQ = Q;
-        const Z = A.dot(Q);
-        const QR = qr$1(Z);
-        Q = QR.Q;
-        R = QR.R;
-        const error = euclidean_squared(Q.values, oldQ.values);
-        if (error < tol) {
+        const Z = step(Q);
+        Q = qr$1(Z).Q;
+        if (converged(Q, oldQ, tol)) {
             break;
         }
     }
 
-    const eigenvalues = R.diag();
+    // Rayleigh quotients qᵀAq. Unlike the diagonal of R, which holds only |λ|, they keep the sign
+    // of negative eigenvalues (e.g. of the double-centered matrix of non-Euclidean distances).
+    const AQ = A.dot(Q);
+    const eigenvalues = new Float64Array(k);
+    for (let j = 0; j < k; ++j) {
+        let lambda = 0;
+        for (let i = 0; i < n; ++i) lambda += Q.entry(i, j) * AQ.entry(i, j);
+        eigenvalues[j] = lambda;
+    }
     const eigenvectors = Q.transpose().to2dArray();
     return { eigenvalues, eigenvectors };
+}
+
+/**
+ * Whether the columns of `Q` equal those of `oldQ` up to sign. A column whose eigenvalue is negative
+ * flips its sign in every step, so comparing the columns directly would never report convergence.
+ *
+ * @private
+ * @param {Matrix} Q
+ * @param {Matrix} oldQ
+ * @param {number} tol - Bound on the summed squared differences.
+ * @returns {boolean}
+ */
+function converged(Q, oldQ, tol) {
+    const [n, k] = Q.shape;
+    const q = Q.values;
+    const o = oldQ.values;
+    let error = 0;
+    for (let j = 0; j < k; ++j) {
+        let same = 0;
+        let flipped = 0;
+        for (let i = 0; i < n; ++i) {
+            const a = q[i * k + j];
+            const b = o[i * k + j];
+            same += (a - b) ** 2;
+            flipped += (a + b) ** 2;
+        }
+        error += Math.min(same, flipped);
+    }
+    return error < tol;
 }
 
 /**
@@ -2649,69 +2703,18 @@ class Matrix {
     }
 
     /**
-     * Returns the inverse of the Matrix.
+     * Returns the inverse of the Matrix, computed from its LU decomposition with partial pivoting.
      *
      * @returns {Matrix}
+     * @throws {Error} If the matrix is singular.
      */
     inverse() {
-        const rows = this._rows;
-        const cols = this._cols;
-        const A = this.clone();
-        const B = new Matrix(rows, cols, "I");
-
-        // foreach column
-        for (let col = 0; col < cols; ++col) {
-            // Search for maximum in this column (pivot)
-            let max_idx = col;
-            let max_val = Math.abs(A.entry(col, col));
-            for (let row = col + 1; row < rows; ++row) {
-                const val = Math.abs(A.entry(row, col));
-                if (max_val < val) {
-                    max_idx = row;
-                    max_val = val;
-                }
-            }
-            if (max_val === 0) {
-                throw new Error("Cannot compute inverse of Matrix, determinant is zero");
-            }
-            // Swap maximum row with current row
-            if (max_idx !== col) {
-                A.swap_rows(col, max_idx);
-                B.swap_rows(col, max_idx);
-            }
-
-            // eliminate non-zero values on the other rows at column c
-            const A_col = A.row(col);
-            const B_col = B.row(col);
-            for (let row = 0; row < rows; ++row) {
-                if (row !== col) {
-                    // eliminate value at column c and row r
-                    const A_row = A.row(row);
-                    const B_row = B.row(row);
-                    if (A_row[col] !== 0) {
-                        const f = A_row[col] / A_col[col];
-                        // sub (f * row c) from row r to eliminate the value at column c
-                        for (let s = col; s < cols; ++s) {
-                            A_row[s] -= f * A_col[s];
-                        }
-                        for (let s = 0; s < cols; ++s) {
-                            B_row[s] -= f * B_col[s];
-                        }
-                    }
-                } else {
-                    // normalize value at Acc to 1 (diagonal):
-                    // divide each value of row r=c by the value at Acc
-                    const f = A_col[col];
-                    for (let s = col; s < cols; ++s) {
-                        A_col[s] /= f;
-                    }
-                    for (let s = 0; s < cols; ++s) {
-                        B_col[s] /= f;
-                    }
-                }
-            }
+        const n = this._rows;
+        const { lu, perm, singular } = lu_factor(this);
+        if (singular) {
+            throw new Error("Cannot compute inverse of Matrix, determinant is zero");
         }
-        return B;
+        return Matrix.solve({ ...lu_unpack(lu, n), P: Array.from(perm) }, new Matrix(n, n, "identity"));
     }
 
     /**
@@ -3454,66 +3457,71 @@ class Matrix {
     /**
      * Solves the equation `Ax = b`. Returns the result `x`.
      *
-     * @param {Matrix | { L: Matrix; U: Matrix }} A - Matrix or LU Decomposition
+     * `b` holds one right-hand side per column (`n × k`, the result is `n × k`), or a single one as a row
+     * (`1 × n`, the result is `1 × n`).
+     *
+     * @param {Matrix | { L: Matrix; U: Matrix; P?: number[] }} A - Matrix or its LU decomposition (as
+     *   returned by {@link Matrix.LU}; without `P`, no row swaps are assumed).
      * @param {Matrix} b - Matrix
      * @returns {Matrix}
      */
     static solve(A, b) {
-        const { L, U } = "L" in A && "U" in A ? A : Matrix.LU(A);
-        const rows = L.shape[0];
-        const x = b.clone();
+        const { L, U, P } = "L" in A && "U" in A ? A : Matrix.LU(A);
+        const n = L.shape[0];
+        const [b_rows, b_cols] = b.shape;
+        const as_row = b_rows === 1 && b_cols === n && n !== 1;
+        if (!as_row && b_rows !== n) {
+            throw new Error(`b needs ${n} rows (or 1 row of ${n} entries), but has shape ${b_rows} × ${b_cols}!`);
+        }
+        const k = as_row ? 1 : b_cols;
+        const l = L.values;
+        const u = U.values;
+        const bv = b.values;
+        const x = new Float64Array(n * k);
+        const y = new Float64Array(n); // one right-hand side at a time, contiguous
 
-        // forward
-        for (let row = 0; row < rows; ++row) {
-            for (let col = 0; col < row; ++col) {
-                x.sub_entry(0, row, L.entry(row, col) * x.entry(0, col));
+        for (let c = 0; c < k; ++c) {
+            // P b
+            for (let i = 0; i < n; ++i) {
+                const src = P ? P[i] : i;
+                y[i] = as_row ? bv[src] : bv[src * k + c];
             }
-            x.set_entry(0, row, x.entry(0, row) / L.entry(row, row));
+            // forward: L z = P b
+            for (let i = 0; i < n; ++i) {
+                const ri = i * n;
+                let s = y[i];
+                for (let p = 0; p < i; ++p) s -= l[ri + p] * y[p];
+                y[i] = s / l[ri + i];
+            }
+            // backward: U x = z
+            for (let i = n - 1; i >= 0; --i) {
+                const ri = i * n;
+                let s = y[i];
+                for (let p = i + 1; p < n; ++p) s -= u[ri + p] * y[p];
+                y[i] = s / u[ri + i];
+            }
+            for (let i = 0; i < n; ++i) x[i * k + c] = y[i];
         }
 
-        // backward
-        for (let row = rows - 1; row >= 0; --row) {
-            for (let col = rows - 1; col > row; --col) {
-                x.sub_entry(0, row, U.entry(row, col) * x.entry(0, col));
-            }
-            x.set_entry(0, row, x.entry(0, row) / U.entry(row, row));
-        }
-
-        return x;
+        const X = new Matrix(n, k, (i, c) => x[i * k + c]);
+        return as_row ? X.T : X;
     }
 
     /**
-     * `LU` decomposition of the Matrix `A`. Creates two matrices, so that the dot product `LU` equals `A`.
+     * `LU` decomposition of the Matrix `A` with partial pivoting: `P A = L U`, where row `i` of `P A` is
+     * row `P[i]` of `A`, `L` is lower triangular and `U` is upper triangular with a unit diagonal.
      *
-     * @param {Matrix} A
-     * @returns {{ L: Matrix; U: Matrix }} The left triangle matrix `L` and the upper triangle matrix `U`.
+     * @param {Matrix} A - A square matrix.
+     * @returns {{ L: Matrix; U: Matrix; P: number[] }} The lower triangle matrix `L`, the upper triangle
+     *   matrix `U`, and the row permutation `P`.
+     * @throws {Error} If `A` is singular.
      */
     static LU(A) {
-        const rows = A.shape[0];
-        const L = new Matrix(rows, rows, "zeros");
-        const U = new Matrix(rows, rows, "identity");
-
-        for (let j = 0; j < rows; ++j) {
-            for (let i = j; i < rows; ++i) {
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(i, k) * U.entry(k, j);
-                }
-                L.set_entry(i, j, A.entry(i, j) - sum);
-            }
-            for (let i = j; i < rows; ++i) {
-                if (L.entry(j, j) === 0) {
-                    throw new Error("L's diagonal not supposed to be 0!");
-                }
-                let sum = 0;
-                for (let k = 0; k < j; ++k) {
-                    sum += L.entry(j, k) * U.entry(k, i);
-                }
-                U.set_entry(j, i, (A.entry(j, i) - sum) / L.entry(j, j));
-            }
+        const { lu, perm, singular } = lu_factor(A);
+        if (singular) {
+            throw new Error("LU decomposition: the matrix is singular!");
         }
-
-        return { L, U };
+        return { ...lu_unpack(lu, A.shape[0]), P: Array.from(perm) };
     }
 
     /**
@@ -3541,12 +3549,12 @@ class Matrix {
             return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
         }
 
-        const { L, U } = Matrix.LU(A);
-        const L_diag = L.diag();
-        const U_diag = U.diag();
-        let det = L_diag[0] * U_diag[0];
-        for (let row = 1; row < rows; ++row) {
-            det *= L_diag[row] * U_diag[row];
+        // det(P A) = det(L) det(U) = Π l_ii, and every row swap flips the sign
+        const { lu, swaps, singular } = lu_factor(A);
+        if (singular) return 0;
+        let det = swaps % 2 ? -1 : 1;
+        for (let i = 0; i < rows; ++i) {
+            det *= lu[i * rows + i];
         }
         return det;
     }
@@ -3603,6 +3611,73 @@ class Matrix {
         }
         return true;
     }
+}
+
+/**
+ * Crout LU decomposition with partial pivoting of a square matrix, on a copy of its values: afterwards
+ * the lower triangle (with the diagonal) holds `L`, the strict upper triangle holds `U` (whose diagonal
+ * is 1), and `P A = L U` with `(P A)[i] = A[perm[i]]`.
+ *
+ * @private
+ * @param {Matrix} A
+ * @returns {{ lu: Float64Array; perm: Int32Array; swaps: number; singular: boolean }}
+ */
+function lu_factor(A) {
+    const [n, cols] = A.shape;
+    if (n !== cols) {
+        throw new Error(`LU decomposition needs a square matrix, but has shape ${n} × ${cols}!`);
+    }
+    const a = Float64Array.from(A.values);
+    const perm = Int32Array.from({ length: n }, (_, i) => i);
+    let swaps = 0;
+
+    // Right-looking elimination: every step reads and updates whole rows, which keeps the memory
+    // access contiguous. It yields the same factors as Crout's column-by-column formulas.
+    for (let j = 0; j < n; ++j) {
+        // pivot: the row with the largest |a_ij| in column j
+        let p = j;
+        for (let i = j + 1; i < n; ++i) {
+            if (Math.abs(a[i * n + j]) > Math.abs(a[p * n + j])) p = i;
+        }
+        if (a[p * n + j] === 0) return { lu: a, perm, swaps, singular: true };
+        if (p !== j) {
+            for (let c = 0; c < n; ++c) {
+                const t = a[j * n + c];
+                a[j * n + c] = a[p * n + c];
+                a[p * n + c] = t;
+            }
+            const t = perm[j];
+            perm[j] = perm[p];
+            perm[p] = t;
+            ++swaps;
+        }
+        // row j of U (unit diagonal): u_jc = a_jc / l_jj
+        const rj = j * n;
+        const l_jj = a[rj + j];
+        for (let c = j + 1; c < n; ++c) a[rj + c] /= l_jj;
+        // remove row j from the rows below; column j keeps l_ij
+        for (let i = j + 1; i < n; ++i) {
+            const ri = i * n;
+            const l_ij = a[ri + j];
+            if (l_ij === 0) continue;
+            for (let c = j + 1; c < n; ++c) a[ri + c] -= l_ij * a[rj + c];
+        }
+    }
+    return { lu: a, perm, swaps, singular: false };
+}
+
+/**
+ * Splits the combined result of {@link lu_factor} into `L` and `U`.
+ *
+ * @private
+ * @param {Float64Array} lu
+ * @param {number} n
+ * @returns {{ L: Matrix; U: Matrix }}
+ */
+function lu_unpack(lu, n) {
+    const L = new Matrix(n, n, (i, j) => (i >= j ? lu[i * n + j] : 0));
+    const U = new Matrix(n, n, (i, j) => (i < j ? lu[i * n + j] : i === j ? 1 : 0));
+    return { L, U };
 }
 
 /**
@@ -4515,7 +4590,7 @@ class KMeans extends Clustering {
         this._N = N;
         this._D = D;
 
-        this._K = K > N ? N : K;
+        this._K = Math.min(K, N);
         this._randomizer = new Randomizer(seed);
 
         /** @type {number[]} */
@@ -4827,7 +4902,15 @@ class KMedoids extends Clustering {
         let K = this._parameters.K;
         const N = this._N;
         this._max_iter = this._parameters.max_iter ?? 10 * Math.log10(N);
-        this._distance_matrix = new Matrix(N, N, "zeros");
+        if (this._parameters.metric === "precomputed") {
+            if (this._matrix.shape[0] !== this._matrix.shape[1]) {
+                throw new Error("If metric is 'precomputed', then matrix has to be square!");
+            }
+            this._distance_matrix = this._matrix.clone();
+        } else {
+            // filled lazily: 0 marks a pair that is not computed yet
+            this._distance_matrix = new Matrix(N, N, "zeros");
+        }
 
         if (K > N) {
             this._parameters.K = K = N;
@@ -5037,6 +5120,7 @@ class KMedoids extends Clustering {
         const A = this._A;
         const metric = this._parameters.metric;
         let d_ij = D.entry(i, j);
+        if (metric === "precomputed") return d_ij;
         if (d_ij === 0) {
             d_ij = metric(x_i || A[i], x_j || A[j]);
             D.set_entry(i, j, d_ij);
@@ -6802,10 +6886,13 @@ class FASTMAP extends DR {
         const X = this.X;
         const N = X.shape[0];
         const d = /** @type {number} */ (this._parameters.d);
-        const metric = /** @type {typeof euclidean} */ (this._parameters.metric);
+        const metric = /** @type {typeof euclidean | "precomputed"} */ (this._parameters.metric);
+        if (metric === "precomputed" && X.shape[0] !== X.shape[1]) {
+            throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+        }
         const Y = new Matrix(N, d, 0);
         /** @type {(a: number, b: number) => number} */
-        let dist = (a, b) => metric(X.row(a), X.row(b));
+        let dist = metric === "precomputed" ? (a, b) => X.entry(a, b) : (a, b) => metric(X.row(a), X.row(b));
 
         for (let _col = 0; _col < d; ++_col) {
             const old_dist = dist;
@@ -6822,8 +6909,11 @@ class FASTMAP extends DR {
                 // consider the projections of the objects on a
                 // hyperplane perpendicluar to the line (a, b);
                 // the distance function D'() between two
-                // projections is given by Eq.4
-                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);
+                // projections is given by Eq.4. For Euclidean distances the difference is never negative
+                // (up to rounding). For others it can be: the axes so far already separate a and b by
+                // more than their distance. Clamping treats such a pair as equal on the remaining axes.
+                dist = (a, b) =>
+                    Math.sqrt(Math.max(0, old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2));
             }
         }
         // return embedding.
@@ -9456,6 +9546,151 @@ function wasmDijkstraAPSP(neighbors_val, distances_val, out_d_val, n, k) {
     }
 }
 
+/** @import {InputType} from "../index.js" */
+/** @import {ParametersMDS} from "./index.js" */
+/** @import {EigenArgs} from "../linear_algebra/index.js" */
+
+/**
+ * Classical Multidimensional Scaling (MDS)
+ *
+ * A linear dimensionality reduction technique that seeks to preserve the
+ * pairwise distances between points as much as possible in the lower-dimensional
+ * space.
+ *
+ * @class
+ * @template {InputType} T
+ * @extends DR<T, ParametersMDS>
+ * @category Dimensionality Reduction
+ * @see {@link PCA} for another linear alternative
+ */
+class MDS extends DR {
+    /**
+     * Classical MDS.
+     *
+     * @param {T} X - The high-dimensional data.
+     * @param {Partial<ParametersMDS>} [parameters] - Object containing parameterization of the DR method.
+     */
+    constructor(X, parameters = {}) {
+        super(X, { d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
+        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+        if (!Object.hasOwn(eig_args, "seed")) {
+            eig_args.seed = this._randomizer;
+        }
+    }
+
+    /**
+     * Transforms the inputdata `X` to dimensionality `d`.
+     *
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    *generator() {
+        yield this.transform();
+        return this.projection;
+    }
+
+    /**
+     * Transforms the inputdata `X` to dimensionality `d`: `Y = V Λ^½` for the `d` largest
+     * eigenvalues `λ` of the double-centered matrix `B = -½ J D² J`.
+     *
+     * Distances that are not Euclidean give `B` negative eigenvalues; axes with `λ ≤ 0` get no extent.
+     *
+     * @returns {T}
+     */
+    transform() {
+        const X = this.X;
+        const n = X.shape[0];
+        const d = /** @type {number} */ (this.parameter("d"));
+        const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
+        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+        const A = metric === "precomputed" ? X : distance_matrix(X, metric);
+        this._d_X = A;
+
+        const D_sq = new Matrix(n, n, (i, j) => A.entry(i, j) ** 2);
+        const ai_ = D_sq.meanCols();
+        const a_j = D_sq.meanRows();
+        const a__ = D_sq.mean();
+        const B = new Matrix(n, n, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
+
+        // Power iteration finds the eigenvalues largest in magnitude, MDS needs the largest by value.
+        // A negative one that turns up is the most negative of all, so shifting B by it makes B + cI
+        // positive semidefinite, and a second run finds the right ones. Euclidean distances never
+        // need it.
+        let { eigenvalues, eigenvectors } = simultaneous_poweriteration(B, d, eig_args);
+        const most_negative = Math.min(...eigenvalues);
+        if (most_negative < 0) {
+            const shift = -most_negative;
+            const B_shifted = new Matrix(n, n, (i, j) => B.entry(i, j) + (i === j ? shift : 0));
+            ({ eigenvalues, eigenvectors } = simultaneous_poweriteration(B_shifted, d, eig_args));
+            eigenvalues = eigenvalues.map((lambda) => lambda - shift);
+        }
+
+        const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
+        this.Y = new Matrix(n, d, (i, k) => eigenvectors[k][i] * scales[k]);
+
+        return this.projection;
+    }
+
+    /** @returns {number} - The stress of the projection. */
+    stress() {
+        const N = this.X.shape[0];
+        const Y = this.Y;
+        const d_X = this._d_X;
+        if (!d_X) throw new Error("First transform!");
+
+        const d_Y = new Matrix(N, N, 0);
+        d_Y.shape = [
+            N,
+            N,
+            (i, j) => {
+                return i < j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
+            },
+        ];
+        let top_sum = 0;
+        let bottom_sum = 0;
+        for (let i = 0; i < N; ++i) {
+            for (let j = i + 1; j < N; ++j) {
+                top_sum += (d_X.entry(i, j) - d_Y.entry(i, j)) ** 2;
+                bottom_sum += d_X.entry(i, j) ** 2;
+            }
+        }
+        return Math.sqrt(top_sum / bottom_sum);
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMDS>} [parameters]
+     * @returns {T}
+     */
+    static transform(X, parameters) {
+        const dr = new MDS(X, parameters);
+        return dr.transform();
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMDS>} [parameters]
+     * @returns {Generator<T, T, void>}
+     */
+    static *generator(X, parameters) {
+        const dr = new MDS(X, parameters);
+        yield* dr.generator();
+        return dr.projection;
+    }
+
+    /**
+     * @template {InputType} T
+     * @param {T} X
+     * @param {Partial<ParametersMDS>} [parameters]
+     * @returns {Promise<T>}
+     */
+    static async transform_async(X, parameters) {
+        const dr = new MDS(X, parameters);
+        return dr.transform_async();
+    }
+}
+
 /**
  * WASM wrappers for the `SMACOF` kernels.
  *
@@ -9521,6 +9756,12 @@ function wasmSmacofStep(Z_val, TargetD_val, ZNew_val, n, d) {
  * @see {@link MDS} for the classical approach.
  */
 class SMACOF extends DR {
+    /**
+     * @private
+     * @type {Matrix | undefined}
+     */
+    _target_distances;
+
     /** @protected */
     get _wasm_session_keys() {
         return ["smacof"];
@@ -9533,36 +9774,65 @@ class SMACOF extends DR {
      * @param {Partial<ParametersSMACOF>} [parameters] - Object containing parameterization.
      */
     constructor(X, parameters = {}) {
-        super(X, { d: 2, metric: euclidean, seed: 1212, iterations: 300, epsilon: 1e-4 }, parameters);
+        super(
+            X,
+            { d: 2, metric: euclidean, seed: 1212, iterations: 300, epsilon: 1e-4, init_Y: null },
+            parameters,
+        );
     }
 
     /**
-     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     * Computes the target distances and the starting configuration: `init_Y` if given, otherwise
+     * random and centered. Runs automatically before the first step; {@link SMACOF#generator} and
+     * {@link SMACOF#transform} continue from the current `Y` afterwards.
+     *
+     * @returns {this}
      */
-    *generator() {
-        this.check_init();
-        const X = this.X;
+    init() {
         const rows = this._N;
         const d = /** @type {number} */ (this.parameter("d"));
         const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
-        const iterations = /** @type {number} */ (this.parameter("iterations"));
-        const epsilon = /** @type {number} */ (this.parameter("epsilon"));
+        const init_Y = /** @type {Matrix | number[][] | Float64Array[] | null} */ (this.parameter("init_Y"));
 
-        const target_distances = metric === "precomputed" ? X : distance_matrix(X, metric);
+        this._target_distances = metric === "precomputed" ? Matrix.from(this.X) : distance_matrix(this.X, metric);
 
-        let Z = new Matrix(rows, d, () => (this._randomizer.random - 0.5) * 2);
-
-        // Center Z
-        for (let j = 0; j < d; ++j) {
-            const col = Z.col(j);
-            const mean = col.reduce((a, b) => a + b, 0) / rows;
-            for (let i = 0; i < rows; ++i) {
-                Z.sub_entry(i, j, mean);
+        if (init_Y) {
+            const Y = Matrix.from(init_Y);
+            if (Y.shape[0] !== rows || Y.shape[1] !== d) {
+                throw new Error(`init_Y needs shape ${rows} × ${d}, but has shape ${Y.shape[0]} × ${Y.shape[1]}!`);
             }
+            this.Y = Y.clone();
+        } else {
+            const Z = new Matrix(rows, d, () => (this._randomizer.random - 0.5) * 2);
+            // Center Z
+            for (let j = 0; j < d; ++j) {
+                const col = Z.col(j);
+                const mean = col.reduce((a, b) => a + b, 0) / rows;
+                for (let i = 0; i < rows; ++i) {
+                    Z.sub_entry(i, j, mean);
+                }
+            }
+            this.Y = Z;
         }
+        this._is_initialized = true;
+        return this;
+    }
 
-        this.Y = /** @type {Matrix} */ (Z); // Initial state
+    /**
+     * Runs SMACOF from the current configuration (the start from {@link SMACOF#init} on the first
+     * call), so calling it again continues where the last run stopped.
+     *
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
+     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
+     */
+    *generator(iterations = /** @type {number} */ (this.parameter("iterations"))) {
+        this.check_init();
+        const rows = this._N;
+        const d = /** @type {number} */ (this.parameter("d"));
+        const epsilon = /** @type {number} */ (this.parameter("epsilon"));
+        const target_distances = /** @type {Matrix} */ (this._target_distances);
 
+        let Z = this.Y;
         let prev_stress = Infinity;
 
         if (!(iterations > 0)) {
@@ -9638,10 +9908,11 @@ class SMACOF extends DR {
     }
 
     /**
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
      * @returns {T}
      */
-    transform() {
-        const gen = this.generator();
+    transform(iterations) {
+        const gen = this.generator(iterations);
         let res = /** @type {T} */ (this.X);
         for (const step of gen) {
             res = step;
@@ -9893,21 +10164,12 @@ class ISOMAP extends DR {
             smacof.transform();
             this.Y = smacof.Y;
         } else {
-            // "MDS" (Classical MDS) via Eigendecomposition of double-centered squared distance matrix
-            const D_sq = new Matrix(rows, rows, (i, j) => {
-                let val = G.entry(i, j);
-                if (val === Infinity) val = big_val;
-                return val * val;
+            // "MDS": classical MDS on the geodesic distances
+            const D_geodesic = new Matrix(rows, rows, (i, j) => {
+                const val = G.entry(i, j);
+                return val === Infinity ? big_val : val;
             });
-
-            const ai_ = D_sq.meanCols();
-            const a_j = D_sq.meanRows();
-            const a__ = D_sq.mean();
-            const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-            // compute d eigenvectors
-            const { eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-            this.Y = Matrix.from(V).transpose();
+            this.Y = /** @type {Matrix} */ (new MDS(D_geodesic, { d, metric: "precomputed", eig_args }).transform());
         }
         // return embedding
         return this.projection;
@@ -10330,32 +10592,6 @@ class StressMDS extends DR {
         });
     }
 
-    /**
-     * Classical MDS on the target distances, scaled by the square roots of the eigenvalues.
-     *
-     * The scaling matters: the descent starts from here, and an unscaled eigenvector basis would put
-     * the configuration at a completely different magnitude from `d_ij`, so the first steps would be
-     * spent on scale rather than structure.
-     *
-     * @private
-     * @param {Matrix} D
-     * @param {number} d
-     * @returns {Matrix}
-     */
-    _classical_mds(D, d) {
-        const N = this._N;
-        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
-        const D_sq = new Matrix(N, N, (i, j) => D.entry(i, j) ** 2);
-        const ai_ = D_sq.meanCols();
-        const a_j = D_sq.meanRows();
-        const a__ = D_sq.mean();
-        const B = new Matrix(N, N, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-        const { eigenvalues, eigenvectors } = simultaneous_poweriteration(B, d, eig_args);
-        const scales = Array.from({ length: d }, (_, k) => Math.sqrt(Math.max(eigenvalues[k], 0)));
-        return new Matrix(N, d, (i, k) => eigenvectors[k][i] * scales[k]);
-    }
-
     /** Computes the target distances, the weights, and the starting configuration. */
     init() {
         const d = /** @type {number} */ (this.parameter("d"));
@@ -10384,7 +10620,10 @@ class StressMDS extends DR {
             }
             this.Y = Matrix.from(PCA.transform(this.X, { d, seed: this.parameter("seed") }));
         } else if (init_DR === "MDS") {
-            this.Y = this._classical_mds(D, d);
+            // Scaled classical MDS: starting at the magnitude of d_ij, the first steps go into
+            // structure rather than scale.
+            const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+            this.Y = /** @type {Matrix} */ (new MDS(D, { d, metric: "precomputed", eig_args }).transform());
         } else {
             throw new Error('init_DR needs to be "MDS", "PCA" or "random"!');
         }
@@ -10906,24 +11145,25 @@ class LLE extends DR {
             }
             nN.push(found);
         }
-        const O = new Matrix(neighbors, 1, 1);
+        const ones = new Matrix(1, neighbors, 1);
         const W = new Matrix(rows, rows);
 
         for (let row = 0; row < rows; ++row) {
             const nN_row = nN[row];
             const Z = new Matrix(neighbors, cols, (i, j) => X.entry(nN_row[i].index, j) - X.entry(row, j));
             const C = Z.dotTrans(Z);
-            if (neighbors > cols) {
-                const C_trace = neumair_sum(C.diag()) / 1000;
-                for (let j = 0; j < neighbors; ++j) {
-                    C.add_entry(j, j, C_trace);
-                }
+            // Regularize always (as scikit-learn does): C is singular when neighbors > cols, and
+            // ill-conditioned when the neighbors are nearly collinear.
+            const C_trace = neumair_sum(C.diag());
+            const reg = C_trace > 0 ? 1e-3 * C_trace : 1e-3;
+            for (let j = 0; j < neighbors; ++j) {
+                C.add_entry(j, j, reg);
             }
-            // reconstruct;
-            let w = Matrix.solve_CG(C, O, this._randomizer);
+            // reconstruction weights: solve C w = 1, then normalize to sum 1
+            let w = Matrix.solve(C, ones);
             w = w.divide(w.sum());
             for (let j = 0; j < neighbors; ++j) {
-                W.set_entry(row, nN_row[j].index, w.entry(j, 0));
+                W.set_entry(row, nN_row[j].index, w.entry(0, j));
             }
         }
         // comp embedding
@@ -10931,14 +11171,9 @@ class LLE extends DR {
         const IW = I.sub(W);
         const M = IW.transDot(IW);
 
-        // M is symmetric positive semi-definite. Smallest eigenvalue is 0 (ones vector).
-        // To find smallest eigenvalues of M, we can find largest of (C*I - M)
-        // Upper bound for max eigenvalue: Frobenius norm or sum of absolute values
-        const C = M.mean() * rows * 2; // Safe upper bound for a sparse-ish M in LLE
-        const CI_M = new Matrix(rows, rows, (i, j) => (i === j ? C : 0) - M.entry(i, j));
-
-        const { eigenvectors: V } = simultaneous_poweriteration(CI_M, d + 1, eig_args);
-        // Skip the first eigenvector (the ones vector corresponding to eigenvalue C)
+        // The embedding is spanned by the eigenvectors of M with the smallest eigenvalues. The very
+        // smallest (eigenvalue 0) is the constant vector and is skipped.
+        const { eigenvectors: V } = simultaneous_poweriteration(M, d + 1, { ...eig_args, smallest: true });
         this.Y = Matrix.from(V.slice(1, 1 + d)).T;
 
         // return embedding
@@ -11095,7 +11330,7 @@ class PaCMAP extends DR {
         }
 
         // The kernel is euclidean-only, so anything else falls back to the JS search below.
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
         if (metric === euclidean) {
             const row_len = 2 * n_candidates;
             const out = new Float64Array(N * row_len);
@@ -11128,7 +11363,9 @@ class PaCMAP extends DR {
      */
     _find_candidates_js(X, n_candidates) {
         const N = this._N;
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
+        // with "precomputed", X is the distance matrix itself
+        const pre = metric === "precomputed" ? X.values : null;
         const dist = new Float64Array(N * n_candidates);
         const idx = new Int32Array(N * n_candidates);
         // Bounded max-heap, so the scan stays O(N log k) per row instead of sorting all of N.
@@ -11140,7 +11377,7 @@ class PaCMAP extends DR {
             let size = 0;
             for (let j = 0; j < N; ++j) {
                 if (j === i) continue;
-                const v = metric(x_i, X.row(j));
+                const v = pre ? pre[i * N + j] : /** @type {Metric} */ (metric)(x_i, X.row(j));
                 if (size < n_candidates) {
                     hd[size] = v;
                     hi[size] = j;
@@ -11289,7 +11526,8 @@ class PaCMAP extends DR {
      */
     _sample_mn_pairs(X, n_MN) {
         const N = this._N;
-        const metric = /** @type {Metric} */ (this.parameter("metric"));
+        const metric = /** @type {Metric | "precomputed"} */ (this.parameter("metric"));
+        const pre = metric === "precomputed" ? X.values : null;
         const pairs = new Int32Array(N * n_MN * 2);
         const picked = new Int32Array(n_MN);
         const sampled = new Int32Array(6);
@@ -11303,7 +11541,9 @@ class PaCMAP extends DR {
                 const reject = n_picked > 0 ? picked.subarray(0, n_picked) : EMPTY;
                 const got = this._sample_excluding(6, i, reject, sampled);
                 if (got < 2) continue;
-                for (let c = 0; c < got; ++c) dists[c] = metric(x_i, X.row(sampled[c]));
+                for (let c = 0; c < got; ++c) {
+                    dists[c] = pre ? pre[i * N + sampled[c]] : /** @type {Metric} */ (metric)(x_i, X.row(sampled[c]));
+                }
                 // Second closest of the draw: drop the nearest, take the nearest of the rest.
                 let best = 0;
                 for (let c = 1; c < got; ++c) if (dists[c] < dists[best]) best = c;
@@ -11461,7 +11701,13 @@ class PaCMAP extends DR {
         // and 1 are absolute, so an unnormalized input silently changes what "near" means.
         let X_knn;
         let pca_solution = false;
-        if (this._D > 100 && apply_pca) {
+        const precomputed = this.parameter("metric") === "precomputed";
+        if (precomputed) {
+            // The pairs depend only on the order and the ratios of distances, so D is used as given.
+            if (this._D !== N)
+                throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+            X_knn = this.X;
+        } else if (this._D > 100 && apply_pca) {
             X_knn = /** @type {Matrix} */ (PCA.transform(this.X, { d: 100, seed }));
             pca_solution = true;
         } else {
@@ -11486,8 +11732,17 @@ class PaCMAP extends DR {
         }
         this._X_knn = X_knn;
 
-        // 2. PCA initialization scaled by 0.01.
-        const init_source = pca_solution ? X_knn : /** @type {Matrix} */ (PCA.transform(X_knn, { d, seed }));
+        // 2. PCA initialization scaled by 0.01. Without coordinates, classical MDS on D (the same as
+        // PCA for Euclidean distances), scaled to a diameter of 1 in place of the unit-range scaling.
+        let init_source;
+        if (precomputed) {
+            let max = 0;
+            for (const v of X_knn.values) if (v > max) max = v;
+            const Y_mds = /** @type {Matrix} */ (new MDS(X_knn, { d, metric: "precomputed", seed }).transform());
+            init_source = Y_mds.mult(max > 0 ? 1 / max : 1);
+        } else {
+            init_source = pca_solution ? X_knn : /** @type {Matrix} */ (PCA.transform(X_knn, { d, seed }));
+        }
         this.Y = new Matrix(N, d, (i, j) => init_source.entry(i, j) * 0.01);
 
         // 3. Pair construction. The 50 extra candidates are what the density rescaling re-ranks.
@@ -11853,140 +12108,6 @@ class LocalMAP extends PaCMAP {
 }
 
 /** @import {InputType} from "../index.js" */
-/** @import {ParametersMDS} from "./index.js" */
-/** @import {EigenArgs} from "../linear_algebra/index.js" */
-
-/**
- * Classical Multidimensional Scaling (MDS)
- *
- * A linear dimensionality reduction technique that seeks to preserve the
- * pairwise distances between points as much as possible in the lower-dimensional
- * space.
- *
- * @class
- * @template {InputType} T
- * @extends DR<T, ParametersMDS>
- * @category Dimensionality Reduction
- * @see {@link PCA} for another linear alternative
- */
-class MDS extends DR {
-    /**
-     * Classical MDS.
-     *
-     * @param {T} X - The high-dimensional data.
-     * @param {Partial<ParametersMDS>} [parameters] - Object containing parameterization of the DR method.
-     */
-    constructor(X, parameters = {}) {
-        super(X, { d: 2, metric: euclidean, seed: 1212, eig_args: {} }, parameters);
-        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
-        if (!Object.hasOwn(eig_args, "seed")) {
-            eig_args.seed = this._randomizer;
-        }
-    }
-
-    /**
-     * Transforms the inputdata `X` to dimensionality `d`.
-     *
-     * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
-     */
-    *generator() {
-        yield this.transform();
-        return this.projection;
-    }
-
-    /**
-     * Transforms the inputdata `X` to dimensionality `d`.
-     *
-     * @returns {T}
-     */
-    transform() {
-        const X = this.X;
-        const rows = X.shape[0];
-        const d = /** @type {number} */ (this.parameter("d"));
-        const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
-        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
-        const A = metric === "precomputed" ? X : distance_matrix(X, metric);
-
-        const D_sq = new Matrix(rows, rows, (i, j) => {
-            const val = A.entry(i, j);
-            return val * val;
-        });
-
-        const ai_ = D_sq.meanCols();
-        const a_j = D_sq.meanRows();
-        const a__ = D_sq.mean();
-
-        this._d_X = A;
-        const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-        const { eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-        this.Y = Matrix.from(V).transpose();
-
-        return this.projection;
-    }
-
-    /** @returns {number} - The stress of the projection. */
-    stress() {
-        const N = this.X.shape[0];
-        const Y = this.Y;
-        const d_X = this._d_X;
-        if (!d_X) throw new Error("First transform!");
-
-        const d_Y = new Matrix(N, N, 0);
-        d_Y.shape = [
-            N,
-            N,
-            (i, j) => {
-                return i < j ? euclidean(Y.row(i), Y.row(j)) : d_Y.entry(j, i);
-            },
-        ];
-        let top_sum = 0;
-        let bottom_sum = 0;
-        for (let i = 0; i < N; ++i) {
-            for (let j = i + 1; j < N; ++j) {
-                top_sum += (d_X.entry(i, j) - d_Y.entry(i, j)) ** 2;
-                bottom_sum += d_X.entry(i, j) ** 2;
-            }
-        }
-        return Math.sqrt(top_sum / bottom_sum);
-    }
-
-    /**
-     * @template {InputType} T
-     * @param {T} X
-     * @param {Partial<ParametersMDS>} [parameters]
-     * @returns {T}
-     */
-    static transform(X, parameters) {
-        const dr = new MDS(X, parameters);
-        return dr.transform();
-    }
-
-    /**
-     * @template {InputType} T
-     * @param {T} X
-     * @param {Partial<ParametersMDS>} [parameters]
-     * @returns {Generator<T, T, void>}
-     */
-    static *generator(X, parameters) {
-        const dr = new MDS(X, parameters);
-        yield* dr.generator();
-        return dr.projection;
-    }
-
-    /**
-     * @template {InputType} T
-     * @param {T} X
-     * @param {Partial<ParametersMDS>} [parameters]
-     * @returns {Promise<T>}
-     */
-    static async transform_async(X, parameters) {
-        const dr = new MDS(X, parameters);
-        return dr.transform_async();
-    }
-}
-
-/** @import {InputType} from "../index.js" */
 /** @import {ParametersLSP} from "./index.js" */
 
 /**
@@ -12043,7 +12164,10 @@ class LSP extends DR {
         const K = /** @type {number} */ (this.parameter("neighbors"));
         const d = /** @type {number} */ (this.parameter("d"));
         const seed = /** @type {number} */ (this.parameter("seed"));
-        const metric = /** @type {typeof euclidean} */ (this.parameter("metric"));
+        const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
+        if (metric === "precomputed" && X.shape[0] !== X.shape[1]) {
+            throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+        }
         DR_parameters = Object.assign({ d, metric, seed }, DR_parameters);
         const nc = /** @type {number} */ (this.parameter("control_points"));
         const control_points = new KMedoids(X, { K: nc, metric }).get_medoids();
@@ -12052,11 +12176,15 @@ class LSP extends DR {
             C.set_entry(i, c_i, 1);
         });
 
-        const control_points_matrix = Matrix.from(control_points.map((c_i) => X.row(c_i)));
+        // with "precomputed", the control points' rows and columns of D are their distance matrix
+        const control_points_matrix =
+            metric === "precomputed"
+                ? new Matrix(nc, nc, (i, j) => X.entry(control_points[i], control_points[j]))
+                : Matrix.from(control_points.map((c_i) => X.row(c_i)));
         const Y_C = new DR(control_points_matrix, DR_parameters).transform();
 
         const XA = X.to2dArray();
-        const knn = spatial_tree(XA, { metric, seed });
+        const knn = metric === "precomputed" ? new NaiveKNN(XA, { metric }) : spatial_tree(XA, { metric, seed });
         const L = new Matrix(N, N, "I");
         const alpha = -1 / K;
         XA.forEach((_x_i, i) => {
@@ -12198,7 +12326,7 @@ class LTSA extends DR {
      */
     transform() {
         const X = this.X;
-        const [rows, D] = X.shape;
+        const rows = X.shape[0];
         const neighbors = /** @type {number} */ (this.parameter("neighbors"));
         const d = /** @type {number} */ (this.parameter("d"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
@@ -12218,33 +12346,33 @@ class LTSA extends DR {
             }
             nN.push(found);
         }
-        // center matrix
-        const O = new Matrix(D, D, "center");
+        // Alignment matrix B = Σ S_i (I - G_i G_iᵀ) S_iᵀ, where G_i = [1/√(k+1), g_1, ..., g_d] are
+        // the constant vector and the local tangent coordinates of the neighborhood of point i.
         const B = new Matrix(rows, rows, 0);
+        const size = neighbors + 1;
 
         for (let row = 0; row < rows; ++row) {
-            // 1.2 compute the d largest eigenvectors of the correlation matrix
+            // 1.2 local tangent coordinates: the d leading eigenvectors of the Gram matrix of the
+            // neighborhood, centered over its k + 1 points
             const I_i = [row, ...nN[row].map((n) => n.index)];
             let X_i = Matrix.from(I_i.map((n) => X.row(n)));
-            // center X_i
-            X_i = X_i.dot(O);
-            // correlation matrix
+            X_i = X_i.sub(X_i.meanCols());
             const C = X_i.dotTrans(X_i);
             const { eigenvectors: g } = simultaneous_poweriteration(C, d, eig_args);
-            //g.push(linspace(0, k).map(_ => 1 / Math.sqrt(k + 1)));
             const G_i_t = Matrix.from(g);
-            // 2. Constructing alignment matrix
-            const W_i = G_i_t.transDot(G_i_t).add(1 / Math.sqrt(neighbors + 1));
-            for (let i = 0; i < neighbors + 1; ++i) {
-                for (let j = 0; j < neighbors + 1; ++j) {
-                    B.add_entry(I_i[i], I_i[j], W_i.entry(i, j) - (i === j ? 1 : 0));
+            // 2. alignment: G_i G_iᵀ = g gᵀ + 1/(k+1) (the constant column's outer product)
+            const W_i = G_i_t.transDot(G_i_t).add(1 / size);
+            for (let i = 0; i < size; ++i) {
+                for (let j = 0; j < size; ++j) {
+                    B.add_entry(I_i[i], I_i[j], (i === j ? 1 : 0) - W_i.entry(i, j));
                 }
             }
         }
 
-        // 3. Aligning global coordinates
-        const { eigenvectors: Y } = simultaneous_poweriteration(B, d + 1, eig_args);
-        this.Y = Matrix.from(Y.slice(1)).transpose();
+        // 3. Aligning global coordinates: the eigenvectors of B with the smallest eigenvalues, after
+        // the constant one (eigenvalue 0)
+        const { eigenvectors: Y } = simultaneous_poweriteration(B, d + 1, { ...eig_args, smallest: true });
+        this.Y = Matrix.from(Y.slice(1, 1 + d)).transpose();
 
         // return embedding
         return this.projection;
@@ -12967,7 +13095,7 @@ class SAMMON extends DR {
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersSAMMON<AvailableInit>>} [parameters] - Object containing parameterization of the DR
      *   method.
-     * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
+     * @see {@link https://doi.org/10.1109/T-C.1969.222678|Sammon (1969): A Nonlinear Mapping for Data Structure Analysis. IEEE Transactions on Computers C-18(5)}
      */
     constructor(X, parameters) {
         super(
@@ -13392,7 +13520,10 @@ class SQDMDS extends DR {
     _step(i, iterations) {
         if (this._LR_init === undefined || this._offset === undefined) throw new Error("Call init() first!");
 
-        const decay_start = /** @type {number} */ (this.parameter("decay_start"));
+        // the step where the decay starts, set by transform() / generator(); the decay_start
+        // parameter itself is the fraction of iterations with distance exaggeration
+        const decay_start =
+            this._decay_start ?? Math.round(/** @type {number} */ (this.parameter("decay_start")) * iterations);
         if (i > decay_start) {
             const decay_cte = /** @type {number} */ (this.parameter("decay_cte"));
             const offset = this._offset;
@@ -14901,7 +15032,6 @@ class TSNE extends DR {
         const perplexity = /** @type {number} */ (this.parameter("perplexity"));
         const Htarget = Math.log(perplexity);
         const N = this._N;
-        const D = this._D;
         const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const X = this.X;
         let Delta;
@@ -14921,8 +15051,10 @@ class TSNE extends DR {
 
         const P = new Matrix(N, N, 0);
 
-        this._ystep = new Matrix(N, D, 0);
-        this._gains = new Matrix(N, D, 1);
+        // one entry per output coordinate: N × d, not N × D (the input dimension)
+        const d = /** @type {number} */ (this.parameter("d"));
+        this._ystep = new Matrix(N, d, 0);
+        this._gains = new Matrix(N, d, 1);
 
         // search for fitting sigma
         const tol = 1e-4;
