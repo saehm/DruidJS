@@ -69,7 +69,6 @@ export class TSNE extends DR {
         const perplexity = /** @type {number} */ (this.parameter("perplexity"));
         const Htarget = Math.log(perplexity);
         const N = this._N;
-        const D = this._D;
         const metric = /** @type {Metric | "precomputed"} */ (this._parameters.metric);
         const X = this.X;
         let Delta;
@@ -89,8 +88,10 @@ export class TSNE extends DR {
 
         const P = new Matrix(N, N, 0);
 
-        this._ystep = new Matrix(N, D, 0);
-        this._gains = new Matrix(N, D, 1);
+        // one entry per output coordinate: N × d, not N × D (the input dimension)
+        const d = /** @type {number} */ (this.parameter("d"));
+        this._ystep = new Matrix(N, d, 0);
+        this._gains = new Matrix(N, d, 1);
 
         // search for fitting sigma
         const tol = 1e-4;

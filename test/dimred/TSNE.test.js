@@ -86,4 +86,16 @@ describe("TSNE", () => {
         const result = await TSNE.transform_async(data, { perplexity: 3 });
         expect(result).toHaveLength(10);
     });
+
+    // ystep and gains used to be N × (input dimension). With d larger than that, the JS path read
+    // across rows and the WASM kernel (N ≥ 16) wrote past the end of its buffers.
+    it.each([10, 40])("embeds into more dimensions than the input has (N = %i)", { timeout: 30000 }, (N) => {
+        const data = generateTestData(N, 2);
+        const tsne = new TSNE(data, { d: 3, perplexity: 3, seed: 42 });
+        const result = tsne.transform(50);
+        expect(result).toHaveLength(N);
+        expect(result[0]).toHaveLength(3);
+        expectValidValues(result);
+        expect(tsne._ystep?.shape).toEqual([N, 3]);
+    });
 });
