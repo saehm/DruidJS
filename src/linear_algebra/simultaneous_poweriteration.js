@@ -1,5 +1,4 @@
 import { Matrix } from "../matrix/index.js";
-import { euclidean_squared } from "../metrics/index.js";
 import { Randomizer } from "../util/index.js";
 import { qr as qr_gramschmidt } from "./index.js";
 
@@ -31,8 +30,7 @@ export function simultaneous_poweriteration(
         const oldQ = Q;
         const Z = A.dot(Q);
         Q = qr(Z).Q;
-        const error = euclidean_squared(Q.values, oldQ.values);
-        if (error < tol) {
+        if (converged(Q, oldQ, tol)) {
             break;
         }
     }
@@ -48,4 +46,33 @@ export function simultaneous_poweriteration(
     }
     const eigenvectors = Q.transpose().to2dArray();
     return { eigenvalues, eigenvectors };
+}
+
+/**
+ * Whether the columns of `Q` equal those of `oldQ` up to sign. A column whose eigenvalue is negative
+ * flips its sign in every step, so comparing the columns directly would never report convergence.
+ *
+ * @private
+ * @param {Matrix} Q
+ * @param {Matrix} oldQ
+ * @param {number} tol - Bound on the summed squared differences.
+ * @returns {boolean}
+ */
+function converged(Q, oldQ, tol) {
+    const [n, k] = Q.shape;
+    const q = Q.values;
+    const o = oldQ.values;
+    let error = 0;
+    for (let j = 0; j < k; ++j) {
+        let same = 0;
+        let flipped = 0;
+        for (let i = 0; i < n; ++i) {
+            const a = q[i * k + j];
+            const b = o[i * k + j];
+            same += (a - b) ** 2;
+            flipped += (a + b) ** 2;
+        }
+        error += Math.min(same, flipped);
+    }
+    return error < tol;
 }

@@ -59,4 +59,30 @@ describe("simultaneous_poweriteration", () => {
         expect(eigenvalues[0]).toBeCloseTo(5, 6);
         expect(eigenvalues[1]).toBeCloseTo(-3, 6);
     });
+
+    it("should stop early when an eigenvalue is negative", () => {
+        // The eigenvector of a negative eigenvalue flips its sign in every step; convergence must
+        // still be detected instead of running into max_iterations.
+        /**
+         * @param {number} d
+         * @returns {number}
+         */
+        const steps = (d) => {
+            let calls = 0;
+            /** @type {typeof qr} */
+            const counting_qr = (M) => {
+                ++calls;
+                return qr(M);
+            };
+            const A = Matrix.from([
+                [5, 0, 0],
+                [0, d, 0],
+                [0, 0, 1],
+            ]);
+            simultaneous_poweriteration(A, 2, { seed: 42, qr: counting_qr, max_iterations: 1000 });
+            return calls - 1; // the first call orthogonalizes the random start
+        };
+        expect(steps(-3)).toBeLessThan(100);
+        expect(steps(-3)).toBeLessThan(2 * steps(3));
+    });
 });
