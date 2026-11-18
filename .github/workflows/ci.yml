@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [master, next]
+  # every PR, including ones stacked on another PR's branch
   pull_request:
-    branches: [master, next]
   workflow_dispatch:
 
 # A newer push to the same branch supersedes the run in flight; master is never cancelled so the
