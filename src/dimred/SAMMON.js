@@ -42,7 +42,7 @@ export class SAMMON extends DR {
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersSAMMON<AvailableInit>>} [parameters] - Object containing parameterization of the DR
      *   method.
-     * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
+     * @see {@link https://doi.org/10.1109/T-C.1969.222678|Sammon (1969): A Nonlinear Mapping for Data Structure Analysis. IEEE Transactions on Computers C-18(5)}
      */
     constructor(X, parameters) {
         super(
