@@ -33,6 +33,8 @@ export default [
                 sourcemap: true,
             },
         ],
-        plugins: [dts()],
+        // `sourcemap: true` makes the plugin follow tsc's declaration maps, so Go-to-Definition in
+        // consumers' editors lands in the published `src/*.js` instead of the unpublished `dist/types`.
+        plugins: [dts({ sourcemap: true })],
     },
 ];

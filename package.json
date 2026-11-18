@@ -29,7 +29,8 @@
         "dist/**/*.d.ts",
         "dist/**/*.d.ts.map",
         "dist/**/*.d.cts",
-        "dist/**/*.d.cts.map"
+        "dist/**/*.d.cts.map",
+        "!dist/types/**"
     ],
     "type": "module",
     "main": "./dist/druid.cjs",
