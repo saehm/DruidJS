@@ -91,8 +91,11 @@ export class FASTMAP extends DR {
                 // consider the projections of the objects on a
                 // hyperplane perpendicluar to the line (a, b);
                 // the distance function D'() between two
-                // projections is given by Eq.4
-                dist = (a, b) => Math.sqrt(old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2);
+                // projections is given by Eq.4. For Euclidean distances the difference is never negative
+                // (up to rounding). For others it can be: the axes so far already separate a and b by
+                // more than their distance. Clamping treats such a pair as equal on the remaining axes.
+                dist = (a, b) =>
+                    Math.sqrt(Math.max(0, old_dist(a, b) ** 2 - (Y.entry(a, _col) - Y.entry(b, _col)) ** 2));
             }
         }
         // return embedding.
