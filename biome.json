@@ -1,9 +1,9 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
+            "preset": "recommended",
             "correctness": {
                 "noUnusedImports": "off",
                 "noUnusedFunctionParameters": "off"
@@ -37,12 +37,6 @@
         }
     },
     "files": {
-        "includes": [
-            "*.{mjs|js}",
-            "src/**/*.js",
-            "test/**/*.js",
-            "docs/**/*.{vue|js|ts}",
-            "!src/wasm/wasm_bytes.js"
-        ]
+        "includes": ["*.{mjs|js}", "src/**/*.js", "test/**/*.js", "docs/**/*.{vue|js|ts}", "!src/wasm/wasm_bytes.js"]
     }
 }
