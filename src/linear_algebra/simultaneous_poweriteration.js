@@ -40,7 +40,7 @@ export function simultaneous_poweriteration(
         for (let i = 0; i < n; ++i) trace += A.entry(i, i);
         const sigma = 1e-12 * (trace > 0 ? trace / n : 1);
         const LU = Matrix.LU(new Matrix(n, n, (i, j) => A.entry(i, j) + (i === j ? sigma : 0)));
-        step = (Q) => Matrix.from(Q.T.to2dArray().map((q) => Matrix.solve(LU, Matrix.from([q])).row(0))).T;
+        step = (Q) => Matrix.solve(LU, Q);
     }
 
     let { Q } = qr(new Matrix(n, k, () => (randomizer.random - 0.5) * 2));
