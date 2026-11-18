@@ -1,8 +1,8 @@
-import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
 import { DR } from "./DR.js";
+import { MDS } from "./MDS.js";
 import { PCA } from "./PCA.js";
 import { wasmStressMDSEnergy, wasmStressMDSStep } from "./StressMDS.wasm.js";
 
@@ -156,32 +156,6 @@ export class StressMDS extends DR {
         });
     }
 
-    /**
-     * Classical MDS on the target distances, scaled by the square roots of the eigenvalues.
-     *
-     * The scaling matters: the descent starts from here, and an unscaled eigenvector basis would put
-     * the configuration at a completely different magnitude from `d_ij`, so the first steps would be
-     * spent on scale rather than structure.
-     *
-     * @private
-     * @param {Matrix} D
-     * @param {number} d
-     * @returns {Matrix}
-     */
-    _classical_mds(D, d) {
-        const N = this._N;
-        const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
-        const D_sq = new Matrix(N, N, (i, j) => D.entry(i, j) ** 2);
-        const ai_ = D_sq.meanCols();
-        const a_j = D_sq.meanRows();
-        const a__ = D_sq.mean();
-        const B = new Matrix(N, N, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-        const { eigenvalues, eigenvectors } = simultaneous_poweriteration(B, d, eig_args);
-        const scales = Array.from({ length: d }, (_, k) => Math.sqrt(Math.max(eigenvalues[k], 0)));
-        return new Matrix(N, d, (i, k) => eigenvectors[k][i] * scales[k]);
-    }
-
     /** Computes the target distances, the weights, and the starting configuration. */
     init() {
         const d = /** @type {number} */ (this.parameter("d"));
@@ -210,7 +184,10 @@ export class StressMDS extends DR {
             }
             this.Y = Matrix.from(PCA.transform(this.X, { d, seed: this.parameter("seed") }));
         } else if (init_DR === "MDS") {
-            this.Y = this._classical_mds(D, d);
+            // Scaled classical MDS: starting at the magnitude of d_ij, the first steps go into
+            // structure rather than scale.
+            const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
+            this.Y = /** @type {Matrix} */ (new MDS(D, { d, metric: "precomputed", eig_args }).transform());
         } else {
             throw new Error('init_DR needs to be "MDS", "PCA" or "random"!');
         }

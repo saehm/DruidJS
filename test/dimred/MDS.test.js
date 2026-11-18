@@ -1,10 +1,80 @@
+import * as mistle from "@saehrimnir/mistle";
 import { describe, expect, it } from "vitest";
-import { MDS } from "../../src/dimred/index.js";
+import { MDS, PCA } from "../../src/dimred/index.js";
 import { Matrix } from "../../src/matrix/index.js";
 import { generateTestData } from "../utils/data-generators.js";
 import { expectValidValues } from "../utils/helpers.js";
 
+/**
+ * @param {number[][]} Y
+ * @param {number} k
+ */
+const column = (Y, k) => Y.map((row) => row[k]);
+
+/** @param {number[]} c */
+const std = (c) => {
+    const m = c.reduce((s, x) => s + x, 0) / c.length;
+    return Math.sqrt(c.reduce((s, x) => s + (x - m) ** 2, 0) / c.length);
+};
+
+/**
+ * @param {number[]} a
+ * @param {number[]} b
+ */
+const correlation = (a, b) => {
+    const ma = a.reduce((s, x) => s + x, 0) / a.length;
+    const mb = b.reduce((s, x) => s + x, 0) / b.length;
+    let ab = 0;
+    for (let i = 0; i < a.length; ++i) ab += (a[i] - ma) * (b[i] - mb);
+    return ab / a.length / (std(a) * std(b));
+};
+
 describe("MDS", () => {
+    // Classical MDS on Euclidean distances is PCA up to the sign of each axis. Iris and Wine have
+    // distinct leading eigenvalues, so the axes are unique.
+    it.each([
+        ["Iris", mistle.IRIS.values],
+        ["Wine", mistle.WINE.values],
+    ])("should equal PCA up to sign on %s", (_, X) => {
+        const P = /** @type {number[][]} */ (new PCA(X, { d: 2 }).transform());
+        const M = /** @type {number[][]} */ (new MDS(X, { d: 2 }).transform());
+        for (let k = 0; k < 2; ++k) {
+            expect(Math.abs(correlation(column(M, k), column(P, k)))).toBeCloseTo(1, 6);
+            expect(std(column(M, k)) / std(column(P, k))).toBeCloseTo(1, 6);
+        }
+    });
+
+    describe("with non-Euclidean distances", () => {
+        // d(2, 3) = 3 > d(2, 0) + d(0, 3) = 2, so the double-centered matrix has the eigenvalues
+        // 4.5, 0.5, 0 and -1.5. Each axis has spread sqrt(max(λ, 0) / n) for the largest λ by value,
+        // not by magnitude: -1.5 must not take the place of 0.5.
+        const D = Matrix.from([
+            [0, 1, 1, 1],
+            [1, 0, 1, 1],
+            [1, 1, 0, 3],
+            [1, 1, 3, 0],
+        ]);
+        /** @param {number} d */
+        const extents = (d) => {
+            const Y = /** @type {Matrix} */ (new MDS(D, { d, metric: "precomputed" }).transform());
+            expectValidValues(Y.to2dArray(), "MDS");
+            return Array.from({ length: d }, (_, k) => std(Array.from(Y.col(k))));
+        };
+
+        it("should use the largest positive eigenvalues", () => {
+            const [e0, e1] = extents(2);
+            expect(e0).toBeCloseTo(Math.sqrt(4.5 / 4), 6);
+            expect(e1).toBeCloseTo(Math.sqrt(0.5 / 4), 6);
+        });
+
+        it("should give no extent to axes beyond the positive eigenvalues", () => {
+            const [e0, e1, e2] = extents(3);
+            expect(e0).toBeCloseTo(Math.sqrt(4.5 / 4), 6);
+            expect(e1).toBeCloseTo(Math.sqrt(0.5 / 4), 6);
+            expect(e2).toBeCloseTo(0, 6);
+        });
+    });
+
     it("should reduce dimensionality to specified d", () => {
         const data = generateTestData(15, 4);
         const mds = new MDS(data, { d: 2, seed: 42 });
