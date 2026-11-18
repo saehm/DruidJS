@@ -187,6 +187,8 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [iterations=300] - maximum number of iterations.
  * @property {number} [epsilon=1e-4] - tolerance for stress difference.
  * @property {number} [seed=1212] - the seed for the random number generator.
+ * @property {Matrix | number[][] | Float64Array[] | null} [init_Y=null] - starting configuration
+ *   (N × d). Random and centered when not given.
  */
 
 /**
