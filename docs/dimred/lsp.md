@@ -11,15 +11,15 @@
 
 # LSP
 
-Local Space Preservation (LSP) aims to preserve the local geometry of the data points.
+Least Square Projection (LSP) places a few representative points first and positions all other points relative to their neighbors, keeping local neighborhoods while staying fast on large datasets.
 
 ## How It Works
 
-Local Space Preservation (LSP) focuses on preserving local geometric relationships by treating data points and their neighbors as a local patch, aiming to align these patches in the lower dimension.
+LSP picks control points (by default about √N of them, with k-medoids) and projects only those with classical MDS. Every other point should sit at the mean of its nearest neighbors, and every control point at its MDS position. Together these conditions form a sparse linear system, which LSP solves in the least-squares sense.
 
 ## Why or When to Use
 
-Use LSP when local structure is critical and computing a robust local patch alignment is desired over purely distance-based preserving methods.
+Use LSP when the dataset is too large for a full distance-based method like MDS, but you still want a projection whose overall layout comes from distances and whose local neighborhoods are kept.
 
 ## Example
 

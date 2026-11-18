@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [master, next]
+  # every PR, including ones stacked on another PR's branch
   pull_request:
-    branches: [master, next]
   workflow_dispatch:
 
 # A newer push to the same branch supersedes the run in flight; master is never cancelled so the
@@ -17,13 +17,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
@@ -48,7 +48,7 @@ jobs:
         run: pnpm test:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
