@@ -409,23 +409,32 @@ declare class Matrix {
     /**
      * Solves the equation `Ax = b`. Returns the result `x`.
      *
-     * @param {Matrix | { L: Matrix; U: Matrix }} A - Matrix or LU Decomposition
+     * `b` holds one right-hand side per column (`n × k`, the result is `n × k`), or a single one as a row
+     * (`1 × n`, the result is `1 × n`).
+     *
+     * @param {Matrix | { L: Matrix; U: Matrix; P?: number[] }} A - Matrix or its LU decomposition (as
+     *   returned by {@link Matrix.LU}; without `P`, no row swaps are assumed).
      * @param {Matrix} b - Matrix
      * @returns {Matrix}
      */
     static solve(A: Matrix | {
         L: Matrix;
         U: Matrix;
+        P?: number[];
     }, b: Matrix): Matrix;
     /**
-     * `LU` decomposition of the Matrix `A`. Creates two matrices, so that the dot product `LU` equals `A`.
+     * `LU` decomposition of the Matrix `A` with partial pivoting: `P A = L U`, where row `i` of `P A` is
+     * row `P[i]` of `A`, `L` is lower triangular and `U` is upper triangular with a unit diagonal.
      *
-     * @param {Matrix} A
-     * @returns {{ L: Matrix; U: Matrix }} The left triangle matrix `L` and the upper triangle matrix `U`.
+     * @param {Matrix} A - A square matrix.
+     * @returns {{ L: Matrix; U: Matrix; P: number[] }} The lower triangle matrix `L`, the upper triangle
+     *   matrix `U`, and the row permutation `P`.
+     * @throws {Error} If `A` is singular.
      */
     static LU(A: Matrix): {
         L: Matrix;
         U: Matrix;
+        P: number[];
     };
     /**
      * Computes the determinante of `A`, by using the `LU` decomposition of `A`.
@@ -566,9 +575,10 @@ declare class Matrix {
      */
     get T(): Matrix;
     /**
-     * Returns the inverse of the Matrix.
+     * Returns the inverse of the Matrix, computed from its LU decomposition with partial pivoting.
      *
      * @returns {Matrix}
+     * @throws {Error} If the matrix is singular.
      */
     inverse(): Matrix;
     /**
@@ -1537,9 +1547,10 @@ type ParametersKMedoids = {
      */
     max_iter: number | null;
     /**
-     * - Metric defining the dissimilarity. Default is `euclidean`
+     * - Metric defining the dissimilarity, or `"precomputed"` when
+     * the input is an N × N distance matrix. Default is `euclidean`
      */
-    metric: Metric;
+    metric: Metric | "precomputed";
     /**
      * - Seed value for random number generator. Default is `1212`
      */
@@ -2248,19 +2259,6 @@ declare class StressMDS<T extends InputType> extends DR<T, ParametersStressMDS> 
      * @returns {Matrix}
      */
     private _build_weights;
-    /**
-     * Classical MDS on the target distances, scaled by the square roots of the eigenvalues.
-     *
-     * The scaling matters: the descent starts from here, and an unscaled eigenvector basis would put
-     * the configuration at a completely different magnitude from `d_ij`, so the first steps would be
-     * spent on scale rather than structure.
-     *
-     * @private
-     * @param {Matrix} D
-     * @param {number} d
-     * @returns {Matrix}
-     */
-    private _classical_mds;
     /** Computes the target distances, the weights, and the starting configuration. */
     init(): this;
     /**
@@ -2975,7 +2973,10 @@ declare class MDS<T extends InputType> extends DR<T, ParametersMDS> {
      */
     generator(): Generator<T, T, void>;
     /**
-     * Transforms the inputdata `X` to dimensionality `d`.
+     * Transforms the inputdata `X` to dimensionality `d`: `Y = V Λ^½` for the `d` largest
+     * eigenvalues `λ` of the double-centered matrix `B = -½ J D² J`.
+     *
+     * Distances that are not Euclidean give `B` negative eigenvalues; axes with `λ ≤ 0` get no extent.
      *
      * @returns {T}
      */
@@ -3336,7 +3337,7 @@ declare class SAMMON<T extends InputType> extends DR<T, ParametersSAMMON<Availab
      * @param {T} X - The high-dimensional data.
      * @param {Partial<ParametersSAMMON<AvailableInit>>} [parameters] - Object containing parameterization of the DR
      *   method.
-     * @see {@link https://arxiv.org/pdf/2009.01512.pdf}
+     * @see {@link https://doi.org/10.1109/T-C.1969.222678|Sammon (1969): A Nonlinear Mapping for Data Structure Analysis. IEEE Transactions on Computers C-18(5)}
      */
     constructor(X: T, parameters?: Partial<ParametersSAMMON<AvailableInit>>);
     /** @type {Matrix | undefined} */
@@ -3417,13 +3418,31 @@ declare class SMACOF<T extends InputType> extends DR<T, ParametersSMACOF> {
      */
     constructor(X: T, parameters?: Partial<ParametersSMACOF>);
     /**
+     * @private
+     * @type {Matrix | undefined}
+     */
+    private _target_distances;
+    /**
+     * Computes the target distances and the starting configuration: `init_Y` if given, otherwise
+     * random and centered. Runs automatically before the first step; {@link SMACOF#generator} and
+     * {@link SMACOF#transform} continue from the current `Y` afterwards.
+     *
+     * @returns {this}
+     */
+    init(): this;
+    /**
+     * Runs SMACOF from the current configuration (the start from {@link SMACOF#init} on the first
+     * call), so calling it again continues where the last run stopped.
+     *
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
      * @returns {Generator<T, T, void>} A generator yielding the intermediate steps of the projection.
      */
-    generator(): Generator<T, T, void>;
+    generator(iterations?: number): Generator<T, T, void>;
     /**
+     * @param {number} [iterations] - Maximum number of steps. Defaults to the `iterations` parameter.
      * @returns {T}
      */
-    transform(): T;
+    transform(iterations?: number): T;
 }
 
 /** @import {InputType} from "../index.js" */
@@ -4271,6 +4290,13 @@ declare function qr_householder(A: Matrix): {
 /**
  * Computes the `k` biggest Eigenvectors and Eigenvalues from Matrix `A` with the QR-Algorithm.
  *
+ * "Biggest" means largest in magnitude. The eigenvalues keep their sign.
+ *
+ * With `smallest: true`, it computes the `k` smallest eigenpairs of a positive semidefinite `A` instead
+ * (in ascending order), by shift-invert iteration: `A + σI` is factored once, and each step solves
+ * with it rather than multiplying by `A`. The smallest eigenvalues of `A` are then the largest of
+ * `(A + σI)⁻¹` by a wide margin, so a few dozen steps suffice.
+ *
  * @category Linear Algebra
  * @param {Matrix} A - The Matrix
  * @param {number} k - The number of eigenvectors and eigenvalues to compute.
@@ -4279,7 +4305,7 @@ declare function qr_householder(A: Matrix): {
  * @returns {{ eigenvalues: Float64Array; eigenvectors: Float64Array[] }} The `k` biggest eigenvectors and eigenvalues
  *   of Matrix `A`.
  */
-declare function simultaneous_poweriteration(A: Matrix, k?: number, { seed, max_iterations, qr, tol }?: EigenArgs): {
+declare function simultaneous_poweriteration(A: Matrix, k?: number, { seed, max_iterations, qr, tol, smallest }?: EigenArgs): {
     eigenvalues: Float64Array;
     eigenvectors: Float64Array[];
 };
@@ -4305,6 +4331,11 @@ type EigenArgs = {
      * - Tolerated error for stopping criteria. Default is `1e-8`
      */
     tol?: number | undefined;
+    /**
+     * - Compute the smallest eigenpairs of a positive semidefinite matrix
+     * (by shift-invert iteration) instead of the largest in magnitude. Default is `false`
+     */
+    smallest?: boolean | undefined;
 };
 
 type ParametersLSP = {
@@ -4321,9 +4352,10 @@ type ParametersLSP = {
      */
     d?: number | undefined;
     /**
-     * - the metric which defines the distance between two points.
+     * - the metric which defines the distance between two
+     * points, or `"precomputed"` when `X` is an N × N distance matrix.
      */
-    metric?: Metric | undefined;
+    metric?: Metric | "precomputed" | undefined;
     /**
      * - the seed for the random number generator.
      */
@@ -4335,9 +4367,10 @@ type ParametersFASTMAP = {
      */
     d?: number | undefined;
     /**
-     * - The metric which defines the distance between two points.
+     * - The metric which defines the distance between two
+     * points, or `"precomputed"` when `X` is an N × N distance matrix.
      */
-    metric?: Metric | undefined;
+    metric?: Metric | "precomputed" | undefined;
     /**
      * - The seed for the random number generator.
      */
@@ -4645,6 +4678,11 @@ type ParametersSMACOF = {
      * - the seed for the random number generator.
      */
     seed?: number | undefined;
+    /**
+     * - starting configuration
+     * (N × d). Random and centered when not given.
+     */
+    init_Y?: Matrix | Float64Array<ArrayBufferLike>[] | number[][] | null | undefined;
 };
 type ParametersSQDMDS = {
     d?: number | undefined;
@@ -4726,9 +4764,11 @@ type ParametersPaCMAP = {
      */
     d?: number | undefined;
     /**
-     * - the metric which defines the distance between two points.
+     * - the metric which defines the distance between two
+     * points, or `"precomputed"` when `X` is an N × N distance matrix. Then the start is classical MDS on
+     * it instead of PCA, and `apply_pca` has no effect.
      */
-    metric?: Metric | undefined;
+    metric?: Metric | "precomputed" | undefined;
     /**
      * - learning rate of the Adam optimizer.
      */
@@ -4772,9 +4812,11 @@ type ParametersLocalMAP = {
      */
     d?: number | undefined;
     /**
-     * - the metric which defines the distance between two points.
+     * - the metric which defines the distance between two
+     * points, or `"precomputed"` when `X` is an N × N distance matrix. Then the start is classical MDS on
+     * it instead of PCA, and `apply_pca` has no effect.
      */
-    metric?: Metric | undefined;
+    metric?: Metric | "precomputed" | undefined;
     /**
      * - learning rate of the Adam optimizer.
      */
