@@ -20,7 +20,7 @@ repository-code: "https://github.com/saehm/DruidJS"
 url: "https://saehm.github.io/DruidJS/"
 license: LGPL-3.0-or-later
 version: 0.10.0
-date-released: "2026-08-02"
+date-released: "2026-11-18"
 keywords:
   - dimensionality-reduction
   - visualization
