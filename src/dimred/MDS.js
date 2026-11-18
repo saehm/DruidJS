@@ -70,8 +70,10 @@ export class MDS extends DR {
         this._d_X = A;
         const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
 
-        const { eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-        this.Y = Matrix.from(V).transpose();
+        // Classical MDS is Y = V Λ^½. Negative eigenvalues (non-Euclidean distances) get no extent.
+        const { eigenvalues, eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
+        const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
+        this.Y = new Matrix(rows, d, (i, k) => V[k][i] * scales[k]);
 
         return this.projection;
     }

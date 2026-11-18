@@ -1,9 +1,23 @@
+import * as mistle from "@saehrimnir/mistle";
 import { describe, expect, it } from "vitest";
-import { ISOMAP } from "../../src/dimred/index.js";
+import { ISOMAP, MDS } from "../../src/dimred/index.js";
 import { generateTestData } from "../utils/data-generators.js";
 import { expectValidValues } from "../utils/helpers.js";
 
 describe("ISOMAP", () => {
+    it("should equal classical MDS when every point is a neighbor", () => {
+        // With the complete kNN graph, geodesic distances are the Euclidean distances, so the
+        // embedding (including the sqrt(eigenvalue) scaling of each axis) must match MDS.
+        const X = mistle.IRIS.values;
+        const I = /** @type {number[][]} */ (new ISOMAP(X, { d: 2, neighbors: X.length - 1 }).transform());
+        const M = /** @type {number[][]} */ (new MDS(X, { d: 2 }).transform());
+        for (let i = 0; i < X.length; ++i) {
+            for (let k = 0; k < 2; ++k) {
+                expect(Math.abs(I[i][k])).toBeCloseTo(Math.abs(M[i][k]), 6);
+            }
+        }
+    });
+
     it("should reduce dimensionality to d=2 by default", () => {
         const data = generateTestData(15, 4);
         const isomap = new ISOMAP(data, { neighbors: 4, seed: 42 });

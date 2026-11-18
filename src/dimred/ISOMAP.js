@@ -230,9 +230,10 @@ export class ISOMAP extends DR {
             const a__ = D_sq.mean();
             const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
 
-            // compute d eigenvectors
-            const { eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-            this.Y = Matrix.from(V).transpose();
+            // classical MDS on the geodesic distances: Y = V Λ^½
+            const { eigenvalues, eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
+            const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
+            this.Y = new Matrix(rows, d, (i, k) => V[k][i] * scales[k]);
         }
         // return embedding
         return this.projection;
