@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, next]
   pull_request:
-    branches: [master]
+    branches: [master, next]
   workflow_dispatch:
 
 # A newer push to the same branch supersedes the run in flight; master is never cancelled so the
