@@ -71,10 +71,13 @@ export class FASTMAP extends DR {
         const X = this.X;
         const N = X.shape[0];
         const d = /** @type {number} */ (this._parameters.d);
-        const metric = /** @type {typeof euclidean} */ (this._parameters.metric);
+        const metric = /** @type {typeof euclidean | "precomputed"} */ (this._parameters.metric);
+        if (metric === "precomputed" && X.shape[0] !== X.shape[1]) {
+            throw new Error("If metric is 'precomputed', then X has to be a square distance matrix!");
+        }
         const Y = new Matrix(N, d, 0);
         /** @type {(a: number, b: number) => number} */
-        let dist = (a, b) => metric(X.row(a), X.row(b));
+        let dist = metric === "precomputed" ? (a, b) => X.entry(a, b) : (a, b) => metric(X.row(a), X.row(b));
 
         for (let _col = 0; _col < d; ++_col) {
             const old_dist = dist;

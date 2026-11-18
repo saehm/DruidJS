@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FASTMAP } from "../../src/dimred/index.js";
-import { Matrix } from "../../src/matrix/index.js";
-import { cosine, manhattan } from "../../src/metrics/index.js";
+import { distance_matrix, Matrix } from "../../src/matrix/index.js";
+import { cosine, euclidean, manhattan } from "../../src/metrics/index.js";
 import { Randomizer } from "../../src/util/index.js";
 import { generateTestData } from "../utils/data-generators.js";
 import { expectValidValues } from "../utils/helpers.js";
@@ -59,6 +59,23 @@ describe("FASTMAP", () => {
     describe("distances", () => {
         const r = new Randomizer(2);
         const X = new Matrix(200, 6, () => r.random);
+
+        it.each([
+            ["euclidean", euclidean],
+            ["manhattan", manhattan],
+        ])("gives the same projection from a precomputed %s distance matrix", (_, metric) => {
+            const direct = /** @type {Matrix} */ (new FASTMAP(X, { metric, d: 3 }).transform());
+            const pre = /** @type {Matrix} */ (
+                new FASTMAP(distance_matrix(X, metric), { metric: "precomputed", d: 3 }).transform()
+            );
+            // equal up to the last bits of the distance computation
+            const diff = Math.max(...pre.values.map((v, i) => Math.abs(v - direct.values[i])));
+            expect(diff).toBeLessThan(1e-10);
+        });
+
+        it("rejects a non-square precomputed matrix", () => {
+            expect(() => new FASTMAP(new Matrix(10, 3, 1), { metric: "precomputed" }).transform()).toThrow(/square/);
+        });
 
         it("is a linear projection for Euclidean distances", () => {
             // Y = [X, 1] B exactly: every axis is the projection onto a line through two pivots

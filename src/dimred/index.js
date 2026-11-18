@@ -41,7 +41,8 @@ export { UMAP } from "./UMAP.js";
 /**
  * @typedef {Object} ParametersFASTMAP
  * @property {number} [d=2] - The dimensionality of the projection
- * @property {Metric} [metric=euclidean] - The metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - The metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix.
  * @property {number} [seed=1212] - The seed for the random number generator.
  */
 
