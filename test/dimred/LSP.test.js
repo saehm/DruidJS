@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LSP } from "../../src/dimred/index.js";
+import { distance_matrix, Matrix } from "../../src/matrix/index.js";
+import { euclidean, manhattan } from "../../src/metrics/index.js";
 import { generateTestData } from "../utils/data-generators.js";
 
 describe("LSP", () => {
@@ -70,5 +72,25 @@ describe("LSP", () => {
         const data = generateTestData(10, 5);
         const result = await LSP.transform_async(data, { d: 2 });
         expect(result).toHaveLength(10);
+    });
+
+    it.each([
+        ["euclidean", euclidean],
+        ["manhattan", manhattan],
+    ])("gives the same projection from a precomputed %s distance matrix", (_, metric) => {
+        const X = Matrix.from(generateTestData(60, 5));
+        const direct = /** @type {Matrix} */ (new LSP(X, { metric, seed: 3 }).transform());
+        const pre = /** @type {Matrix} */ (
+            new LSP(distance_matrix(X, metric), { metric: "precomputed", seed: 3 }).transform()
+        );
+        let diff = 0;
+        for (let i = 0; i < direct.values.length; ++i)
+            diff = Math.max(diff, Math.abs(direct.values[i] - pre.values[i]));
+        expect(diff).toBeLessThan(1e-8);
+    });
+
+    it("rejects a non-square precomputed matrix", () => {
+        const lsp = new LSP(new Matrix(10, 3, 1), { metric: "precomputed" });
+        expect(() => lsp.transform()).toThrow(/square/);
     });
 });

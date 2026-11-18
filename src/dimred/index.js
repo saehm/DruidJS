@@ -33,7 +33,8 @@ export { UMAP } from "./UMAP.js";
  * @property {number} [neighbors] - number of neighbors to consider.
  * @property {number} [control_points] - number of controlpoints
  * @property {number} [d=2] - the dimensionality of the projection.
- * @property {Metric} [metric=euclidean] - the metric which defines the distance between two points.
+ * @property {Metric | "precomputed"} [metric=euclidean] - the metric which defines the distance between two
+ *   points, or `"precomputed"` when `X` is an N × N distance matrix.
  * @property {number} [seed=1212] - the seed for the random number generator.
  */
 
