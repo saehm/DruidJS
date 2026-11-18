@@ -4,9 +4,9 @@ import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
 import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
-import { classical_mds } from "./classical_mds.js";
 import { DR } from "./DR.js";
 import { wasmDijkstraAPSP } from "./ISOMAP.wasm.js";
+import { MDS } from "./MDS.js";
 import { SMACOF } from "./SMACOF.js";
 
 /** @import {InputType} from "../index.js" */
@@ -223,7 +223,7 @@ export class ISOMAP extends DR {
                 const val = G.entry(i, j);
                 return val === Infinity ? big_val : val;
             });
-            this.Y = classical_mds(D_geodesic, d, eig_args);
+            this.Y = /** @type {Matrix} */ (new MDS(D_geodesic, { d, metric: "precomputed", eig_args }).transform());
         }
         // return embedding
         return this.projection;
