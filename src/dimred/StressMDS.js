@@ -1,7 +1,7 @@
-import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { WASM_MIN_ROWS } from "../wasm/thresholds.js";
+import { classical_mds } from "./classical_mds.js";
 import { DR } from "./DR.js";
 import { PCA } from "./PCA.js";
 import { wasmStressMDSEnergy, wasmStressMDSStep } from "./StressMDS.wasm.js";
@@ -169,17 +169,8 @@ export class StressMDS extends DR {
      * @returns {Matrix}
      */
     _classical_mds(D, d) {
-        const N = this._N;
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
-        const D_sq = new Matrix(N, N, (i, j) => D.entry(i, j) ** 2);
-        const ai_ = D_sq.meanCols();
-        const a_j = D_sq.meanRows();
-        const a__ = D_sq.mean();
-        const B = new Matrix(N, N, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-        const { eigenvalues, eigenvectors } = simultaneous_poweriteration(B, d, eig_args);
-        const scales = Array.from({ length: d }, (_, k) => Math.sqrt(Math.max(eigenvalues[k], 0)));
-        return new Matrix(N, d, (i, k) => eigenvectors[k][i] * scales[k]);
+        return classical_mds(D, d, eig_args);
     }
 
     /** Computes the target distances, the weights, and the starting configuration. */

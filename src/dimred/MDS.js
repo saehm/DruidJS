@@ -1,6 +1,6 @@
-import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { distance_matrix, Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
+import { classical_mds } from "./classical_mds.js";
 import { DR } from "./DR.js";
 
 /** @import {InputType} from "../index.js" */
@@ -52,28 +52,13 @@ export class MDS extends DR {
      */
     transform() {
         const X = this.X;
-        const rows = X.shape[0];
         const d = /** @type {number} */ (this.parameter("d"));
         const metric = /** @type {typeof euclidean | "precomputed"} */ (this.parameter("metric"));
         const eig_args = /** @type {Partial<EigenArgs>} */ (this.parameter("eig_args"));
         const A = metric === "precomputed" ? X : distance_matrix(X, metric);
 
-        const D_sq = new Matrix(rows, rows, (i, j) => {
-            const val = A.entry(i, j);
-            return val * val;
-        });
-
-        const ai_ = D_sq.meanCols();
-        const a_j = D_sq.meanRows();
-        const a__ = D_sq.mean();
-
         this._d_X = A;
-        const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-        // Classical MDS is Y = V Λ^½. Negative eigenvalues (non-Euclidean distances) get no extent.
-        const { eigenvalues, eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-        const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
-        this.Y = new Matrix(rows, d, (i, k) => V[k][i] * scales[k]);
+        this.Y = classical_mds(A, d, eig_args);
 
         return this.projection;
     }

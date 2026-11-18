@@ -44,21 +44,35 @@ describe("MDS", () => {
         }
     });
 
-    it("should give no extent to axes with negative eigenvalues", () => {
-        // Not Euclidean (d(2, 3) = 3 > d(2, 0) + d(0, 3) = 2): the double-centered matrix has the
-        // eigenvalues 4.5, -1.5, 0.5 and 0. Each axis has spread sqrt(max(λ, 0) / n).
-        const D = [
+    describe("with non-Euclidean distances", () => {
+        // d(2, 3) = 3 > d(2, 0) + d(0, 3) = 2, so the double-centered matrix has the eigenvalues
+        // 4.5, 0.5, 0 and -1.5. Each axis has spread sqrt(max(λ, 0) / n) for the largest λ by value,
+        // not by magnitude: -1.5 must not take the place of 0.5.
+        const D = Matrix.from([
             [0, 1, 1, 1],
             [1, 0, 1, 1],
             [1, 1, 0, 3],
             [1, 1, 3, 0],
-        ];
-        const Y = /** @type {Matrix} */ (new MDS(Matrix.from(D), { d: 3, metric: "precomputed" }).transform());
-        const extents = [0, 1, 2].map((k) => std(Array.from(Y.col(k))));
-        expect(extents[0]).toBeCloseTo(Math.sqrt(4.5 / 4), 6);
-        expect(extents[1]).toBeCloseTo(0, 6);
-        expect(extents[2]).toBeCloseTo(Math.sqrt(0.5 / 4), 6);
-        expectValidValues(Y.to2dArray(), "MDS");
+        ]);
+        /** @param {number} d */
+        const extents = (d) => {
+            const Y = /** @type {Matrix} */ (new MDS(D, { d, metric: "precomputed" }).transform());
+            expectValidValues(Y.to2dArray(), "MDS");
+            return Array.from({ length: d }, (_, k) => std(Array.from(Y.col(k))));
+        };
+
+        it("should use the largest positive eigenvalues", () => {
+            const [e0, e1] = extents(2);
+            expect(e0).toBeCloseTo(Math.sqrt(4.5 / 4), 6);
+            expect(e1).toBeCloseTo(Math.sqrt(0.5 / 4), 6);
+        });
+
+        it("should give no extent to axes beyond the positive eigenvalues", () => {
+            const [e0, e1, e2] = extents(3);
+            expect(e0).toBeCloseTo(Math.sqrt(4.5 / 4), 6);
+            expect(e1).toBeCloseTo(Math.sqrt(0.5 / 4), 6);
+            expect(e2).toBeCloseTo(0, 6);
+        });
     });
 
     it("should reduce dimensionality to specified d", () => {

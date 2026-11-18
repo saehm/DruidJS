@@ -1,10 +1,10 @@
 import { Heap } from "../datastructure/index.js";
 import { spatial_tree } from "../knn/index.js";
-import { simultaneous_poweriteration } from "../linear_algebra/index.js";
 import { Matrix } from "../matrix/index.js";
 import { euclidean } from "../metrics/index.js";
 import { WASM_MIN_PARALLEL_ROWS } from "../wasm/thresholds.js";
 import { parallel_available, run_row_range } from "../wasm/worker_pool.js";
+import { classical_mds } from "./classical_mds.js";
 import { DR } from "./DR.js";
 import { wasmDijkstraAPSP } from "./ISOMAP.wasm.js";
 import { SMACOF } from "./SMACOF.js";
@@ -218,22 +218,12 @@ export class ISOMAP extends DR {
             smacof.transform();
             this.Y = smacof.Y;
         } else {
-            // "MDS" (Classical MDS) via Eigendecomposition of double-centered squared distance matrix
-            const D_sq = new Matrix(rows, rows, (i, j) => {
-                let val = G.entry(i, j);
-                if (val === Infinity) val = big_val;
-                return val * val;
+            // "MDS": classical MDS on the geodesic distances
+            const D_geodesic = new Matrix(rows, rows, (i, j) => {
+                const val = G.entry(i, j);
+                return val === Infinity ? big_val : val;
             });
-
-            const ai_ = D_sq.meanCols();
-            const a_j = D_sq.meanRows();
-            const a__ = D_sq.mean();
-            const B = new Matrix(rows, rows, (i, j) => -0.5 * (D_sq.entry(i, j) - ai_[i] - a_j[j] + a__));
-
-            // classical MDS on the geodesic distances: Y = V Λ^½
-            const { eigenvalues, eigenvectors: V } = simultaneous_poweriteration(B, d, eig_args);
-            const scales = Array.from(eigenvalues, (lambda) => Math.sqrt(Math.max(lambda, 0)));
-            this.Y = new Matrix(rows, d, (i, k) => V[k][i] * scales[k]);
+            this.Y = classical_mds(D_geodesic, d, eig_args);
         }
         // return embedding
         return this.projection;
